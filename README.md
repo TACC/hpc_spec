@@ -1,4 +1,4 @@
 Collection of spec files.
 
-  examples/
+  examples
     -Template spec file and link to tutorial
