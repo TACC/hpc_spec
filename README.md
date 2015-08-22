@@ -1,4 +1,6 @@
 Collection of spec files.
 
-  examples
-    -Template spec file and link to tutorial
+Directory     | Content
+------------- | -------------
+examples      | Template spec file and link to tutorial
+
