@@ -9,8 +9,14 @@ Directory                 | Content
 
 Current branches include:
 
-[Lonestar 5](hpc_spec/tree/ls5)
-[Wrangler 1](hpc_spec/tree/wr1)
-[Maverick 2](hpc_spec/tree/mk2)
-[Stampede 3](hpc_spec/tree/st3)
-[Lonestar 4](hpc_spec/tree/ls4)
+[Univeral](https://github.com/TACC/hpc_spec/blob/uni)
+
+[Lonestar 5](https://github.com/TACC/hpc_spec/blob/ls5)
+
+[Wrangler 1](https://github.com/TACC/hpc_spec/blob/wr1)
+
+[Maverick 2](https://github.com/TACC/hpc_spec/blob/mk2)
+
+[Stampede 3](https://github.com/TACC/hpc_spec/blob/st3)
+
+[Lonestar 4](https://github.com/TACC/hpc_spec/blob/ls4)
