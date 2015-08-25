@@ -244,8 +244,10 @@ EOF
 ## Fix Modulefile During Post Install ##
 ########################################
 %post %{PACKAGE}
+export PACKAGE_POST=1
 %include post-defines.inc
 %post %{MODULEFILE}
+export MODULEFILE_POST=1
 %include post-defines.inc
 ########################################
 ############ Do Not Remove #############
