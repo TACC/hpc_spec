@@ -15,6 +15,11 @@ if [ ${PACKAGE_POST:=0} = 0 ] && [ ${MODULEFILE_POST:=0} = 0 ]; then
   printf "${R}ERROR: Did you modify your spec file post sections?\n"
   printf "${R}Exiting!${NC}\n"
   exit -1
+elif [ ${PACKAGE_POST:=0} = 1 ] && [ ${MODULEFILE_POST:=0} = 1 ]; then
+  printf "${R}ERROR: Both \${PACKAGE_POST} and \${MODULEFILE_POST} are set\n"
+  printf "${R}ERROR: Did you modify your spec file post sections?\n"
+  printf "${R}Exiting!${NC}\n"
+  exit -1
 fi 
 
 
