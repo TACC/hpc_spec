@@ -1,6 +1,5 @@
 #
 # W. Cyrus Proctor
-# Antonio Gomez
 # 2015-08-25
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
