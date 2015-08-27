@@ -58,7 +58,14 @@ Source:    %{pkg_base_name}-%{pkg_version}.tgz
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
+%define intel_major   %{nil}
 
+%if "%{is_intel15}" == "1"
+  %define intel_major 15.0
+%endif
+%if "%{is_intel14}" == "1"
+  %define intel_major 14.0
+%endif
 
 %package %{PACKAGE}
 Summary: The package RPM
@@ -478,8 +485,8 @@ whatis("Description: The premier software suite for macromolecular modeling")
 if (found) then
   local base_dir                              ="%{INSTALL_DIR}"
   prepend_path("PATH",                        pathJoin(base_dir, "bin"))
-  prepend_path("LD_LIBRARY_PATH",             pathJoin(base_dir, "build/src/release/linux/2.6/64/x86/icc/15.0/omp-mpi"))
-  prepend_path("LD_LIBRARY_PATH",             pathJoin(base_dir, "build/external/release/linux/2.6/64/x86/icc/15.0/omp-mpi"))
+  prepend_path("LD_LIBRARY_PATH",             pathJoin(base_dir, "build/src/release/linux/2.6/64/x86/icc/%{intel_major}/omp-mpi"))
+  prepend_path("LD_LIBRARY_PATH",             pathJoin(base_dir, "build/external/release/linux/2.6/64/x86/icc/%{intel_major}/omp-mpi"))
   setenv (     "TACC_%{MODULE_VAR}_DIR",      base_dir)
   setenv (     "TACC_%{MODULE_VAR}_DATABASE", pathJoin(base_dir, "rosetta_database"))
   setenv (     "TACC_%{MODULE_VAR}_BIN",      pathJoin(base_dir, "bin"))
