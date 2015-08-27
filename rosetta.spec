@@ -154,7 +154,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 ########################################  
 export rosetta=`pwd`
 export rosetta_install=%{INSTALL_DIR}
-export ncores=16
+export ncores=8
 ########################################  
 
 export rosetta_major=%{major_version}
@@ -381,7 +381,7 @@ echo -e "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}"
 echo -e "PATH=${PATH}"
 
 MODE=release
-EXTRAS=omp,mpi
+EXTRAS=mpi,omp
 
 ./scons.py -c
 rm -f .sconsign.dblite
