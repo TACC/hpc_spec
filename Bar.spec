@@ -8,6 +8,7 @@
 # NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
 #
 # Important Install-Time Environment Variables (see post-defines.inc)
+# VERBOSE=1       -> Print detailed information at install time
 # RPM_DBPATH      -> Path To Non-Standard RPM Database Location
 #
 # Typical Command-Line Example:
@@ -248,6 +249,9 @@ export PACKAGE_POST=1
 %include post-defines.inc
 %post %{MODULEFILE}
 export MODULEFILE_POST=1
+%include post-defines.inc
+%preun %{PACKAGE}
+export PACKAGE_PREUN=1
 %include post-defines.inc
 ########################################
 ############ Do Not Remove #############
