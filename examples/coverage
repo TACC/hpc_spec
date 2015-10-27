@@ -44,7 +44,7 @@ while test $# -gt 0; do
       rpm -e Bar-modulefile-1.1-1.x86_64
       ;;
     4)
-      echo "Test 4: P S 1 M L 2 D: Should FAIL because of wrong install order"
+      echo "Test 4: P S 1 M L 2 D: Should FAIL because of wrong install order iff sharefs defined"
       rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
       rpm -i --relocate /tmprpm=/scratch/03078/cproctor/rpmtest Bar-package-1.1-1.x86_64.rpm
       rpm -e Bar-package-1.1-1.x86_64
@@ -100,7 +100,7 @@ while test $# -gt 0; do
       rpm -e Bar-package-1.1-1.x86_64
       ;;
     12)
-      echo "Test 12: P S 1 M L 2 D R: Should FAIL because of wrong install order"
+      echo "Test 12: P S 1 M L 2 D R: Should FAIL because of wrong install order iff sharefs defined"
       rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
       rpm -i --relocate /tmprpm=/scratch/03078/cproctor/rpmtest Bar-package-1.1-1.x86_64.rpm
       rpm -e Bar-modulefile-1.1-1.x86_64
