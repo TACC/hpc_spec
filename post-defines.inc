@@ -2,6 +2,7 @@
 # W. Cyrus Proctor
 # John Fonner (Banner)
 #
+# 2015-10-27 WCP -- Tailored for LS5
 # 2015-10-25 WCP -- Finish the job!
 # 2015-10-03 WCP -- Updated for local/shared logic error/warns
 # 2015-10-01 WCP -- Updated for verbose print
@@ -31,8 +32,9 @@ function vcat() {
 }
 
 arraytest[0]='test' || (echo 'Failure: arrays not supported in this version of bash.' && exit 2)
-sharefs=(home1 work scratch share)
-sharerpm=/home1/03078/cproctor/rpmtest/sharerpm_config
+#sharefs=(home1 work scratch share)
+sharefs=()
+sharerpm=/admin/build/rpms/RPMS/x86_64/sharerpm_config
 
 
 R='\033[1;31m' # Red
