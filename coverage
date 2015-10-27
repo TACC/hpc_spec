@@ -1,0 +1,306 @@
+#!/usr/bin/env bash
+#
+# W. Cyrus Proctor
+# 2015-10-25
+
+#export VERBOSE=2
+export MY_RPM_DBPATH=/home1/03078/cproctor/rpm
+
+# P = Package RPM
+# M = Modulefile RPM
+# 
+# L = Local Install
+# S = Share Install
+#
+# 1 = Installed First
+# 2 = Installed Second
+#
+# D = Defaul RPM Database Location
+# N = Non-defaul RPM Database Location
+#
+# R = Reverse the Uninstall Order
+
+while test $# -gt 0; do
+  case "$1" in
+    1)
+      echo "Test 1: P L 1 M L 2 D: Should PASS"
+      rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+      rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+      rpm -e Bar-package-1.1-1.x86_64
+      rpm -e Bar-modulefile-1.1-1.x86_64
+      ;;
+    2)
+      echo "Test 2: P L 2 M L 1 D: Should PASS"
+      rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+      rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+      rpm -e Bar-modulefile-1.1-1.x86_64
+      rpm -e Bar-package-1.1-1.x86_64
+      ;;
+    3)
+      echo "Test 3: P S 1 M L 2 D: Should PASS with entry in \${sharpm}"
+      rpm -i --relocate /tmprpm=/scratch/03078/cproctor/rpmtest Bar-package-1.1-1.x86_64.rpm
+      rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+      rpm -e Bar-package-1.1-1.x86_64
+      rpm -e Bar-modulefile-1.1-1.x86_64
+      ;;
+    4)
+      echo "Test 4: P S 1 M L 2 D: Should FAIL because of wrong install order"
+      rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+      rpm -i --relocate /tmprpm=/scratch/03078/cproctor/rpmtest Bar-package-1.1-1.x86_64.rpm
+      rpm -e Bar-package-1.1-1.x86_64
+      rpm -e Bar-modulefile-1.1-1.x86_64
+      ;;
+    5)
+      echo "Test 5: P L 1 M S 2 D: Should PASS -- no warning but unusual case"
+      rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+      rpm -i --relocate /tmpmod=/scratch/03078/cproctor/rpmtest Bar-modulefile-1.1-1.x86_64.rpm
+      rpm -e Bar-package-1.1-1.x86_64
+      rpm -e Bar-modulefile-1.1-1.x86_64
+      ;;
+    6) 
+      echo "Test 6: P L 2 M S 1 D: Should PASS -- warning for unusual case"
+      rpm -i --relocate /tmpmod=/scratch/03078/cproctor/rpmtest Bar-modulefile-1.1-1.x86_64.rpm
+      rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+      rpm -e Bar-modulefile-1.1-1.x86_64
+      rpm -e Bar-package-1.1-1.x86_64
+      ;;
+    7)
+      echo "Test 7: P S 1 M S 2 D: Should PASS"
+      rpm -i --relocate /tmprpm=/scratch/03078/cproctor/rpmtest Bar-package-1.1-1.x86_64.rpm
+      rpm -i --relocate /tmpmod=/scratch/03078/cproctor/rpmtest Bar-modulefile-1.1-1.x86_64.rpm
+      rpm -e Bar-package-1.1-1.x86_64
+      rpm -e Bar-modulefile-1.1-1.x86_64
+      ;;
+    8)
+      echo "Test 8: P S 2 M S 1 D: Should PASS"
+      rpm -i --relocate /tmpmod=/scratch/03078/cproctor/rpmtest Bar-modulefile-1.1-1.x86_64.rpm
+      rpm -i --relocate /tmprpm=/scratch/03078/cproctor/rpmtest Bar-package-1.1-1.x86_64.rpm
+      rpm -e Bar-modulefile-1.1-1.x86_64
+      rpm -e Bar-package-1.1-1.x86_64
+      ;;
+    9)
+      echo "Test 9: P L 1 M L 2 D R: Should PASS"
+      rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+      rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+      rpm -e Bar-modulefile-1.1-1.x86_64
+      rpm -e Bar-package-1.1-1.x86_64
+      ;;
+    10) 
+      echo "Test 10: P L 2 M L 1 D R: Should PASS"
+      rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+      rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+      rpm -e Bar-package-1.1-1.x86_64
+      rpm -e Bar-modulefile-1.1-1.x86_64
+      ;;
+    11)
+      echo "Test 11: P S 1 M L 2 D R: Should PASS with entry in \${sharpm}"
+      rpm -i --relocate /tmprpm=/scratch/03078/cproctor/rpmtest Bar-package-1.1-1.x86_64.rpm
+      rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+      rpm -e Bar-modulefile-1.1-1.x86_64
+      rpm -e Bar-package-1.1-1.x86_64
+      ;;
+    12)
+      echo "Test 12: P S 1 M L 2 D R: Should FAIL because of wrong install order"
+      rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+      rpm -i --relocate /tmprpm=/scratch/03078/cproctor/rpmtest Bar-package-1.1-1.x86_64.rpm
+      rpm -e Bar-modulefile-1.1-1.x86_64
+      rpm -e Bar-package-1.1-1.x86_64
+      ;;
+    13)
+      echo "Test 13: P L 1 M S 2 D R: Should PASS -- no warning but unusual case"
+      rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+      rpm -i --relocate /tmpmod=/scratch/03078/cproctor/rpmtest Bar-modulefile-1.1-1.x86_64.rpm
+      rpm -e Bar-modulefile-1.1-1.x86_64
+      rpm -e Bar-package-1.1-1.x86_64
+      ;;
+    14)
+      echo "Test 14: P L 2 M S 1 D R: Should PASS -- warning for unusual case"
+      rpm -i --relocate /tmpmod=/scratch/03078/cproctor/rpmtest Bar-modulefile-1.1-1.x86_64.rpm
+      rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+      rpm -e Bar-package-1.1-1.x86_64
+      rpm -e Bar-modulefile-1.1-1.x86_64
+      ;;
+    15)
+      echo "Test 15: P S 1 M S 2 D R: Should PASS"
+      rpm -i --relocate /tmprpm=/scratch/03078/cproctor/rpmtest Bar-package-1.1-1.x86_64.rpm
+      rpm -i --relocate /tmpmod=/scratch/03078/cproctor/rpmtest Bar-modulefile-1.1-1.x86_64.rpm
+      rpm -e Bar-modulefile-1.1-1.x86_64
+      rpm -e Bar-package-1.1-1.x86_64
+      ;;
+    16)
+      echo "Test 16: P S 2 M S 1 D R: Should PASS"
+      rpm -i --relocate /tmpmod=/scratch/03078/cproctor/rpmtest Bar-modulefile-1.1-1.x86_64.rpm
+      rpm -i --relocate /tmprpm=/scratch/03078/cproctor/rpmtest Bar-package-1.1-1.x86_64.rpm
+      rpm -e Bar-package-1.1-1.x86_64
+      rpm -e Bar-modulefile-1.1-1.x86_64
+      ;;
+    17)
+      export RPM_DBPATH=${MY_RPM_DBPATH}
+      echo "Test 17: P L 1 M L 2 N: Should PASS with warn about non-standard RPM db location"
+      rpm -i --nodeps --dbpath ${RPM_DBPATH} --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+      rpm -i --nodeps --dbpath ${RPM_DBPATH} --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+      rpm -e --nodeps --dbpath ${RPM_DBPATH} Bar-package-1.1-1.x86_64
+      rpm -e --nodeps --dbpath ${RPM_DBPATH} Bar-modulefile-1.1-1.x86_64
+      ;;
+    18)
+      export RPM_DBPATH=${MY_RPM_DBPATH}
+      echo "Test 18: P L 2 M L 1 N: Should PASS with warn about non-standard RPM db location"
+      rpm -i --nodeps --dbpath ${RPM_DBPATH} --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+      rpm -i --nodeps --dbpath ${RPM_DBPATH} --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+      rpm -e --nodeps --dbpath ${RPM_DBPATH} Bar-modulefile-1.1-1.x86_64
+      rpm -e --nodeps --dbpath ${RPM_DBPATH} Bar-package-1.1-1.x86_64
+      ;;
+    19)
+      export RPM_DBPATH=${MY_RPM_DBPATH}
+      echo "Test 19: P S 1 M L 2 N: Should PASS with warn about non-standard RPM db location"
+      rpm -i --nodeps --dbpath ${RPM_DBPATH} --relocate /tmprpm=/scratch/03078/cproctor/rpmtest Bar-package-1.1-1.x86_64.rpm
+      rpm -i --nodeps --dbpath ${RPM_DBPATH} --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+      rpm -e --nodeps --dbpath ${RPM_DBPATH} Bar-package-1.1-1.x86_64
+      rpm -e --nodeps --dbpath ${RPM_DBPATH} Bar-modulefile-1.1-1.x86_64
+      ;;
+    20)
+      export RPM_DBPATH=${MY_RPM_DBPATH}
+      echo "Test 20: P S 1 M L 2 N: Should PASS with warn about non-standard RPM db location"
+      rpm -i --nodeps --dbpath ${RPM_DBPATH} --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+      rpm -i --nodeps --dbpath ${RPM_DBPATH} --relocate /tmprpm=/scratch/03078/cproctor/rpmtest Bar-package-1.1-1.x86_64.rpm
+      rpm -e --nodeps --dbpath ${RPM_DBPATH} Bar-package-1.1-1.x86_64
+      rpm -e --nodeps --dbpath ${RPM_DBPATH} Bar-modulefile-1.1-1.x86_64
+      ;;
+    21)
+      export RPM_DBPATH=${MY_RPM_DBPATH}
+      echo "Test 21: P L 1 M S 2 N: Should PASS with warn about non-standard RPM db location"
+      rpm -i --nodeps --dbpath ${RPM_DBPATH} --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+      rpm -i --nodeps --dbpath ${RPM_DBPATH} --relocate /tmpmod=/scratch/03078/cproctor/rpmtest Bar-modulefile-1.1-1.x86_64.rpm
+      rpm -e --nodeps --dbpath ${RPM_DBPATH} Bar-package-1.1-1.x86_64
+      rpm -e --nodeps --dbpath ${RPM_DBPATH} Bar-modulefile-1.1-1.x86_64
+      ;;
+    22) 
+      export RPM_DBPATH=${MY_RPM_DBPATH}
+      echo "Test 22: P L 2 M S 1 N: Should PASS with warn about non-standard RPM db location"
+      rpm --nodeps --dbpath ${RPM_DBPATH} -i --relocate /tmpmod=/scratch/03078/cproctor/rpmtest Bar-modulefile-1.1-1.x86_64.rpm
+      rpm --nodeps --dbpath ${RPM_DBPATH} -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+      rpm --nodeps --dbpath ${RPM_DBPATH} -e Bar-modulefile-1.1-1.x86_64
+      rpm --nodeps --dbpath ${RPM_DBPATH} -e Bar-package-1.1-1.x86_64
+      ;;
+    23)
+      export RPM_DBPATH=${MY_RPM_DBPATH}
+      echo "Test 23: P S 1 M S 2 N: Should PASS with warn about non-standard RPM db location"
+      rpm --nodeps --dbpath ${RPM_DBPATH} -i --relocate /tmprpm=/scratch/03078/cproctor/rpmtest Bar-package-1.1-1.x86_64.rpm
+      rpm --nodeps --dbpath ${RPM_DBPATH} -i --relocate /tmpmod=/scratch/03078/cproctor/rpmtest Bar-modulefile-1.1-1.x86_64.rpm
+      rpm --nodeps --dbpath ${RPM_DBPATH} -e Bar-package-1.1-1.x86_64
+      rpm --nodeps --dbpath ${RPM_DBPATH} -e Bar-modulefile-1.1-1.x86_64
+      ;;
+    24)
+      export RPM_DBPATH=${MY_RPM_DBPATH}
+      echo "Test 24: P S 2 M S 1 N: Should PASS with warn about non-standard RPM db location"
+      rpm --nodeps --dbpath ${RPM_DBPATH} -i --relocate /tmpmod=/scratch/03078/cproctor/rpmtest Bar-modulefile-1.1-1.x86_64.rpm
+      rpm --nodeps --dbpath ${RPM_DBPATH} -i --relocate /tmprpm=/scratch/03078/cproctor/rpmtest Bar-package-1.1-1.x86_64.rpm
+      rpm --nodeps --dbpath ${RPM_DBPATH} -e Bar-modulefile-1.1-1.x86_64
+      rpm --nodeps --dbpath ${RPM_DBPATH} -e Bar-package-1.1-1.x86_64
+      ;;
+    25)
+      export RPM_DBPATH=${MY_RPM_DBPATH}
+      echo "Test 25: P L 1 M L 2 N R: Should PASS with warn about non-standard RPM db location"
+      rpm --nodeps --dbpath ${RPM_DBPATH} -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+      rpm --nodeps --dbpath ${RPM_DBPATH} -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+      rpm --nodeps --dbpath ${RPM_DBPATH} -e Bar-modulefile-1.1-1.x86_64
+      rpm --nodeps --dbpath ${RPM_DBPATH} -e Bar-package-1.1-1.x86_64
+      ;;
+    26) 
+      export RPM_DBPATH=${MY_RPM_DBPATH}
+      echo "Test 26: P L 2 M L 1 N R: Should PASS with warn about non-standard RPM db location"
+      rpm --nodeps --dbpath ${RPM_DBPATH} -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+      rpm --nodeps --dbpath ${RPM_DBPATH} -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+      rpm --nodeps --dbpath ${RPM_DBPATH} -e Bar-package-1.1-1.x86_64
+      rpm --nodeps --dbpath ${RPM_DBPATH} -e Bar-modulefile-1.1-1.x86_64
+      ;;
+    27)
+      export RPM_DBPATH=${MY_RPM_DBPATH}
+      echo "Test 27: P S 1 M L 2 N R: Should PASS with warn about non-standard RPM db location"
+      rpm --nodeps --dbpath ${RPM_DBPATH} -i --relocate /tmprpm=/scratch/03078/cproctor/rpmtest Bar-package-1.1-1.x86_64.rpm
+      rpm --nodeps --dbpath ${RPM_DBPATH} -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+      rpm --nodeps --dbpath ${RPM_DBPATH} -e Bar-modulefile-1.1-1.x86_64
+      rpm --nodeps --dbpath ${RPM_DBPATH} -e Bar-package-1.1-1.x86_64
+      ;;
+    28)
+      export RPM_DBPATH=${MY_RPM_DBPATH}
+      echo "Test 28: P S 1 M L 2 N R: Should PASS with warn about non-standard RPM db location"
+      rpm --nodeps --dbpath ${RPM_DBPATH} -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+      rpm --nodeps --dbpath ${RPM_DBPATH} -i --relocate /tmprpm=/scratch/03078/cproctor/rpmtest Bar-package-1.1-1.x86_64.rpm
+      rpm --nodeps --dbpath ${RPM_DBPATH} -e Bar-modulefile-1.1-1.x86_64
+      rpm --nodeps --dbpath ${RPM_DBPATH} -e Bar-package-1.1-1.x86_64
+      ;;
+    29)
+      export RPM_DBPATH=${MY_RPM_DBPATH}
+      echo "Test 29: P L 1 M S 2 N R: Should PASS with warn about non-standard RPM db location"
+      rpm --nodeps --dbpath ${RPM_DBPATH} -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+      rpm --nodeps --dbpath ${RPM_DBPATH} -i --relocate /tmpmod=/scratch/03078/cproctor/rpmtest Bar-modulefile-1.1-1.x86_64.rpm
+      rpm --nodeps --dbpath ${RPM_DBPATH} -e Bar-modulefile-1.1-1.x86_64
+      rpm --nodeps --dbpath ${RPM_DBPATH} -e Bar-package-1.1-1.x86_64
+      ;;
+    30)
+      export RPM_DBPATH=${MY_RPM_DBPATH}
+      echo "Test 30: P L 2 M S 1 N R: Should PASS with warn about non-standard RPM db location"
+      rpm --nodeps --dbpath ${RPM_DBPATH} -i --relocate /tmpmod=/scratch/03078/cproctor/rpmtest Bar-modulefile-1.1-1.x86_64.rpm
+      rpm --nodeps --dbpath ${RPM_DBPATH} -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+      rpm --nodeps --dbpath ${RPM_DBPATH} -e Bar-package-1.1-1.x86_64
+      rpm --nodeps --dbpath ${RPM_DBPATH} -e Bar-modulefile-1.1-1.x86_64
+      ;;
+    31)
+      export RPM_DBPATH=${MY_RPM_DBPATH}
+      echo "Test 31: P S 1 M S 2 N R: Should PASS with warn about non-standard RPM db location"
+      rpm --nodeps --dbpath ${RPM_DBPATH} -i --relocate /tmprpm=/scratch/03078/cproctor/rpmtest Bar-package-1.1-1.x86_64.rpm
+      rpm --nodeps --dbpath ${RPM_DBPATH} -i --relocate /tmpmod=/scratch/03078/cproctor/rpmtest Bar-modulefile-1.1-1.x86_64.rpm
+      rpm --nodeps --dbpath ${RPM_DBPATH} -e Bar-modulefile-1.1-1.x86_64
+      rpm --nodeps --dbpath ${RPM_DBPATH} -e Bar-package-1.1-1.x86_64
+      ;;
+    32)
+      export RPM_DBPATH=${MY_RPM_DBPATH}
+      echo "Test 32: P S 2 M S 1 N R: Should PASS with warn about non-standard RPM db location"
+      rpm --nodeps --dbpath ${RPM_DBPATH} -i --relocate /tmpmod=/scratch/03078/cproctor/rpmtest Bar-modulefile-1.1-1.x86_64.rpm
+      rpm --nodeps --dbpath ${RPM_DBPATH} -i --relocate /tmprpm=/scratch/03078/cproctor/rpmtest Bar-package-1.1-1.x86_64.rpm
+      rpm --nodeps --dbpath ${RPM_DBPATH} -e Bar-package-1.1-1.x86_64
+      rpm --nodeps --dbpath ${RPM_DBPATH} -e Bar-modulefile-1.1-1.x86_64
+      ;;
+    33)
+      echo "Test 33: P L 1 M L 2 N: Should FAIL because RPM_DBPATH is not set -- can't find TACC canary files"
+      rpm -i --nodeps --dbpath ${MY_RPM_DBPATH} --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+      rpm -i --nodeps --dbpath ${MY_RPM_DBPATH} --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+      rpm -e --nodeps --dbpath ${MY_RPM_DBPATH} Bar-package-1.1-1.x86_64
+      rpm -e --nodeps --dbpath ${MY_RPM_DBPATH} Bar-modulefile-1.1-1.x86_64
+      ;;
+    34)
+      export RPM_DBPATH=${MY_RPM_DBPATH}
+      echo "Test 34: P L 1 M L 2 N: Should FAIL because RPM_DBPATH is set but rpms don't use dbpath flag -- can't find TACC canary files"
+      rpm -i --nodeps --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+      rpm -i --nodeps --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+      rpm -e --nodeps Bar-package-1.1-1.x86_64
+      rpm -e --nodeps Bar-modulefile-1.1-1.x86_64
+      ;;
+    35)
+      export RPM_DBPATH=${MY_RPM_DBPATH}
+      echo "Test 35: P L 1 M L 2 N: Should FAIL because rpm dependencies cannot be met; add --nodeps flag."
+      rpm -i --dbpath ${MY_RPM_DBPATH} --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+      rpm -i --dbpath ${MY_RPM_DBPATH} --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+      rpm -e --dbpath ${MY_RPM_DBPATH} Bar-package-1.1-1.x86_64
+      rpm -e --dbpath ${MY_RPM_DBPATH} Bar-modulefile-1.1-1.x86_64
+      ;;
+    36)
+      echo "Test 36: P L 1 M L 2 D: Should FAIL because relocate commands are mixed up."
+      rpm -i --relocate /tmpmod=/opt/apps Bar-package-1.1-1.x86_64.rpm
+      rpm -i --relocate /tmprpm=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+      rpm -e Bar-package-1.1-1.x86_64
+      rpm -e Bar-modulefile-1.1-1.x86_64
+      ;;
+    37)
+      echo "Test 37: P L 1 M L 2 D: Should PASS -- simultaneous install is okay."
+      rpm -i --relocate /tmpmod=/opt/apps Bar-package-1.1-1.x86_64.rpm --relocate /tmprpm=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+      rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
+      ;;
+    *) echo "Unknown Test: $1"
+      ;;
+  esac
+  shift
+done
+
+
