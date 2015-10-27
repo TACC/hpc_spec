@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+git $1 https://sidio47@github.com/TACC/hpc_spec.git $2:$2

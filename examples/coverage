@@ -3,8 +3,8 @@
 # W. Cyrus Proctor
 # 2015-10-25
 
-export VERBOSE=2
-export MY_RPM_DBPATH=/home1/03078/cproctor/rpms/db
+#export VERBOSE=2
+export MY_RPM_DBPATH=/home1/03078/cproctor/rpm
 
 # P = Package RPM
 # M = Modulefile RPM
