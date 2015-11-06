@@ -4,7 +4,7 @@
 # 2015-10-25
 
 #export VERBOSE=2
-export MY_RPM_DBPATH=/home1/03078/cproctor/rpm
+export MY_RPM_DBPATH=/tmp/dummy_rpm
 
 # P = Package RPM
 # M = Modulefile RPM
