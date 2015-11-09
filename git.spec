@@ -25,8 +25,8 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 # Create some macros (spec file variables)
 %define major_version 2
-%define minor_version 5
-%define micro_version 0
+%define minor_version 6
+%define micro_version 3
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -86,7 +86,6 @@ Git is easy to learn and has a tiny footprint with lightning fast performance.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-%setup -n %{pkg_base_name}-%{pkg_version}
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -114,8 +113,8 @@ Git is easy to learn and has a tiny footprint with lightning fast performance.
 %include system-load.inc
 
 # Insert necessary module commands
-ml purge
-ml gcc/5.2.0
+module purge
+module load gcc/4.9.3
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -141,12 +140,15 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
 
 export ncores=16
-export git=`pwd`/..
+export git=`pwd`
 export git_install=%{INSTALL_DIR}
 export git_version=%{pkg_version}
 export CC=gcc
 
-cd ${git}/git-${git_version}
+wget https://www.kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
+tar xvfz git-${git_version}.tar.gz
+
+cd git-${git_version}
 
 ${git}/git-${git_version}/configure \
 --prefix=${git_install}
@@ -158,8 +160,11 @@ if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 fi
 
-cp -r %{INSTALL_DIR} $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-umount %{INSTALL_DIR}
+echo "ID %{INSTALL_DIR}"
+echo "RID $RPM_BUILD_ROOT/%{INSTALL_DIR}"
+
+cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+umount %{INSTALL_DIR}/
 
 
   
@@ -190,9 +195,11 @@ handle everything from small to very large projects with speed and efficiency.
 Git is easy to learn and has a tiny footprint with lightning fast performance.
 
 The %{MODULE_VAR} module file defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_BIN, TACC_%{MODULE_VAR}_LIB
-for the location of the %{MODULE_VAR} distribution, binaries,
-and libraries respectively.
+TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_BIN, TACC_%{MODULE_VAR}_LIB for the
+location of the %{MODULE_VAR} distribution, binaries, and libraries
+respectively. GIT_EXEC_PATH, which is also defined, determines where Git looks
+for its sub-programs. You can check the current setting by running 
+"git --exec-path".
 
 Version %{version}
 ]])
@@ -205,11 +212,12 @@ whatis("URL: http://git-scm.com")
 whatis("Description: Fast Version Control System")
 
 
-prepend_path(                  "PATH", "%{INSTALL_DIR}/bin"       )
-prepend_path(               "MANPATH", "%{INSTALL_DIR}/share/man" )
-setenv (     "TACC_%{MODULE_VAR}_DIR", "%{INSTALL_DIR}"           )
-setenv (     "TACC_%{MODULE_VAR}_LIB", "%{INSTALL_DIR}/lib"       )
-setenv (     "TACC_%{MODULE_VAR}_BIN", "%{INSTALL_DIR}/bin"       )
+prepend_path(                  "PATH" , "%{INSTALL_DIR}/bin"              )
+prepend_path(               "MANPATH" , "%{INSTALL_DIR}/share/man"        )
+setenv (     "TACC_%{MODULE_VAR}_DIR" , "%{INSTALL_DIR}"                  )
+setenv (     "TACC_%{MODULE_VAR}_LIB" , "%{INSTALL_DIR}/lib"              )
+setenv (     "TACC_%{MODULE_VAR}_BIN" , "%{INSTALL_DIR}/bin"              )
+setenv (     "GIT_EXEC_PATH"          , "%{INSTALL_DIR}/libexec/git-core" )
 
 EOF
 
