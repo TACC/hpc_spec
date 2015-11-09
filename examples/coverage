@@ -30,7 +30,7 @@ while test $# -gt 0; do
       rpm -e Bar-modulefile-1.1-1.x86_64
       ;;
     2)
-      echo "Test 2: P L 2 M L 1 D: Should PASS"
+      echo "Test 2: P L 2 M L 1 D: Should PASS with conservative uninstall"
       rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
       rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
       rpm -e Bar-modulefile-1.1-1.x86_64

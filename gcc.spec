@@ -28,7 +28,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 %define minor_version 2
 %define micro_version 0
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -136,7 +136,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   #========================================
   # Insert Build/Install Instructions Here
-  #========i================================
+  #========================================
 
 ##################################################
 export gcc=`pwd`
@@ -332,7 +332,8 @@ printf "\n\n************************************************************\n"
 printf "gcc\n"
 printf "************************************************************\n\n"
 
-wget http://mirrors-usa.go-parts.com/gcc/releases/gcc-${gcc_version}/gcc-${gcc_version}.tar.gz
+#wget http://mirrors-usa.go-parts.com/gcc/releases/gcc-${gcc_version}/gcc-${gcc_version}.tar.gz
+wget http://mirrors.concertpass.com/gcc/releases/gcc-${gcc_version}/gcc-${gcc_version}.tar.gz
 tar xvfz gcc-${gcc_version}.tar.gz
 
 cd gcc-${gcc_version}
@@ -385,13 +386,26 @@ umount %{INSTALL_DIR}/
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_message = [[
-GNU Compiler Collection %{pkg_version}
+The GNU Compiler Collection %{pkg_version} includes front ends for C, C++,
+Objective-C, Fortran, Java, Ada, and Go, as well as libraries for these
+languages (libstdc++, libgcj,...). GCC was originally written as the compiler
+for the GNU operating system. The GNU system was developed to be 100% free
+software, free in the sense that it respects the users freedom.
 
 This module loads GCC Compiler variables.
 The command directory is added to PATH.
 The library directory is added to LD_LIBRARY_PATH.
 The include directory is added to INCLUDE.
 The man     directory is added to MANPATH.
+
+Also Defined:
+TACC_%{MODULE_VAR}_DIR   = %{MODULE_VAR} base             directory
+TACC_%{MODULE_VAR}_BIN   = %{MODULE_VAR} binary           directory
+TACC_%{MODULE_VAR}_LIB   = %{MODULE_VAR} library          directory
+TACC_%{MODULE_VAR}_LIB64 = %{MODULE_VAR} library (64-bit) directory
+TACC_%{MODULE_VAR}_INC   = %{MODULE_VAR} include          directory
+
+Version %{pkg_version}
 ]]
 
 help(help_message,"\n")
@@ -403,14 +417,19 @@ whatis("Keywords: System, compiler")
 whatis("URL: http://gcc.gnu.org")
 
 -- Create environment variables
-local gcc_dir                      = "%{INSTALL_DIR}"
-prepend_path("PATH",               pathJoin(gcc_dir,"bin"))
-prepend_path("LD_LIBRARY_PATH",    pathJoin(gcc_dir,"lib"))
-prepend_path("LD_LIBRARY_PATH",    pathJoin(gcc_dir,"lib64"))
-prepend_path("MANPATH",            pathJoin(gcc_dir,"man"))
-prepend_path("INCLUDE",            pathJoin(gcc_dir,"include"))
-prepend_path("MODULEPATH",         "%{MODULE_PREFIX}/gcc%{GCC_VER}/modulefiles")
-setenv(      "GCC_LIB",            pathJoin(gcc_dir,"lib64"))
+local gcc_dir                              = "%{INSTALL_DIR}"
+prepend_path( "PATH"                     , pathJoin(gcc_dir,"bin"       )               )
+prepend_path( "LD_LIBRARY_PATH"          , pathJoin(gcc_dir,"lib"       )               )
+prepend_path( "LD_LIBRARY_PATH"          , pathJoin(gcc_dir,"lib64"     )               )
+prepend_path( "MANPATH"                  , pathJoin(gcc_dir,"share/man" )               )
+prepend_path( "INCLUDE"                  , pathJoin(gcc_dir,"include"   )               )
+prepend_path( "MODULEPATH"               , "%{MODULE_PREFIX}/gcc%{GCC_VER}/modulefiles" )
+setenv(       "%{MODULE_VAR}_LIB"        , pathJoin(gcc_dir,"lib64"     )               )
+setenv(       "TACC_%{MODULE_VAR}_DIR"   , gcc_dir                                      )
+setenv(       "TACC_%{MODULE_VAR}_BIN"   , pathJoin(gcc_dir,"bin"       )               )
+setenv(       "TACC_%{MODULE_VAR}_LIB"   , pathJoin(gcc_dir,"lib"       )               )
+setenv(       "TACC_%{MODULE_VAR}_LIB64" , pathJoin(gcc_dir,"lib64"     )               )
+setenv(       "TACC_%{MODULE_VAR}_INC"   , pathJoin(gcc_dir,"include"   )               )
 
 family("compiler")
 EOF
