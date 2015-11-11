@@ -1,5 +1,6 @@
 #
 # W. Cyrus Proctor
+# 2015-11-10 Update for LS5 Chroot Jail
 # 2015-10-27
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
@@ -73,7 +74,11 @@ Group: Lmod/Modulefiles
 This is the modulefile RPM...
 
 %description
-The GNU Compiler Collection includes front ends for C, C++, Objective-C, Fortran, Java, Ada, and Go, as well as libraries for these languages (libstdc++, libgcj,...). GCC was originally written as the compiler for the GNU operating system. The GNU system was developed to be 100% free software, free in the sense that it respects the user's freedom.
+The GNU Compiler Collection includes front ends for C, C++, Objective-C,
+Fortran, Java, Ada, and Go, as well as libraries for these languages
+(libstdc++, libgcj,...). GCC was originally written as the compiler for the GNU
+operating system. The GNU system was developed to be 100% free software, free
+in the sense that it respects the user's freedom.
 
 #---------------------------------------
 %prep
