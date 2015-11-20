@@ -38,7 +38,6 @@ sharefs=()
 sharerpm=/admin/build/rpms/RPMS/x86_64/sharerpm_config
 default_rpmdb_path=%{_dbpath} ### Changed in /usr/lib/rpm/macros to /opt/apps/rpmdb
 
-
 R='\033[1;31m' # Red
 G='\033[1;32m' # Green
 B='\033[1;34m' # Blue

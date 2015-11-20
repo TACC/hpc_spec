@@ -1,16 +1,18 @@
 #
 # Spec file for idev
 #
-Summary:   idev: interactive access to production nodes
-Name:      idev
+%define name_prefix tacc-comp
+%define base_name idev
+Summary:   %{base_name}: interactive access to production nodes
+Name:      %{name_prefix}-%{base_name}
 Version:   1.0
-Release:   11
+Release:   12
 License:   TACC
 Vendor:    tacc.utexas.edu
 Group:     System Environment/Base
 Source:    idev-%{version}.tar.gz
 Packager:  TACC- milfeld@tacc.utexas.edu
-Buildroot: /var/tmp/%{name}-%{version}-buildroot
+Buildroot: /var/tmp/%{base_name}-%{version}-buildroot
 
 %include rpm-dir.inc
 
@@ -20,7 +22,7 @@ Buildroot: /var/tmp/%{name}-%{version}-buildroot
 
 
 %define INSTALL_DIR %{USER}
-%define  MODULE_DIR %{APPS}/%{MODULES}/%{name}
+%define  MODULE_DIR %{APPS}/%{MODULES}/%{base_name}
 
 %description 
 idev submits a batch job and provides interactive access
@@ -31,7 +33,7 @@ openmp executables, MIC executables and cuda programs.
 [ -n "$RPM_BUILD_ROOT" -a "$RPM_BUILD_ROOT" != / ] && rm -rf ${RPM_BUILD_ROOT}
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%setup
+%setup -n %{base_name}-%{version}
 
 %install
 
@@ -106,8 +108,8 @@ EOF
 
 %files
 %defattr(755,root,install)
-%{INSTALL_DIR}/%{name}
-%{INSTALL_DIR}/%{name}_utils
+%{INSTALL_DIR}/%{base_name}
+%{INSTALL_DIR}/%{base_name}_utils
 %{MODULE_DIR}
 
 %post

@@ -2,23 +2,24 @@
 # W. Cyrus Proctor
 # 2015-08-25
 
+%define name_prefix tacc-comp
 
 # Compiler Specific?
 %if "%{?comp_fam_ver}"
   # Compiler *and* MPI Specific
   %if "%{?mpi_fam_ver}"
-    %define pkg_name       %{pkg_base_name}-%{comp_fam_ver}-%{mpi_fam_ver}
+    %define pkg_name       %{name_prefix}-%{pkg_base_name}-%{comp_fam_ver}-%{mpi_fam_ver}
     %define MODULE_SUFFIX  %{comp_fam_ver}/%{mpi_fam_ver}/modulefiles/%{pkg_base_name}
     %define INSTALL_SUFFIX %{comp_fam_ver}/%{mpi_fam_ver}/%{pkg_base_name}/%{pkg_version}
   # Compiler Specific Only
   %else
-    %define pkg_name       %{pkg_base_name}-%{comp_fam_ver}
+    %define pkg_name       %{name_prefix}-%{pkg_base_name}-%{comp_fam_ver}
     %define MODULE_SUFFIX  %{comp_fam_ver}/modulefiles/%{pkg_base_name}
     %define INSTALL_SUFFIX %{comp_fam_ver}/%{pkg_base_name}/%{pkg_version}
   %endif
 # Compiler Non-specific
 %else
-  %define pkg_name       %{pkg_base_name}
+  %define pkg_name       %{name_prefix}-%{pkg_base_name}
   %define MODULE_SUFFIX  modulefiles/%{pkg_base_name}
   %define INSTALL_SUFFIX %{pkg_base_name}/%{pkg_version}
 %endif

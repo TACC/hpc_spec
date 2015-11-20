@@ -30,6 +30,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 %define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define gcc_ver gcc5_2
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -428,7 +429,7 @@ prepend_path( "LD_LIBRARY_PATH"          , pathJoin(gcc_dir,"lib"       )       
 prepend_path( "LD_LIBRARY_PATH"          , pathJoin(gcc_dir,"lib64"     )               )
 prepend_path( "MANPATH"                  , pathJoin(gcc_dir,"share/man" )               )
 prepend_path( "INCLUDE"                  , pathJoin(gcc_dir,"include"   )               )
-prepend_path( "MODULEPATH"               , "%{MODULE_PREFIX}/gcc%{GCC_VER}/modulefiles" )
+prepend_path( "MODULEPATH"               , "%{MODULE_PREFIX}/%{gcc_ver}/modulefiles" )
 setenv(       "%{MODULE_VAR}_LIB"        , pathJoin(gcc_dir,"lib64"     )               )
 setenv(       "TACC_%{MODULE_VAR}_DIR"   , gcc_dir                                      )
 setenv(       "TACC_%{MODULE_VAR}_BIN"   , pathJoin(gcc_dir,"bin"       )               )
