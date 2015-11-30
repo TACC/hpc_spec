@@ -1,7 +1,7 @@
 #
 # W. Cyrus Proctor
-# 2015-11-20 Need to investigate relocation -- use /opt/apps for now
-# 2015-11-20
+# Antonio Gomez
+# 2015-08-25
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -21,22 +21,20 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name ompi
-%define MODULE_VAR    OMPI
+%define pkg_base_name lbs
+%define MODULE_VAR    LBS
 
 # Create some macros (spec file variables)
-%define major_version 2
-%define minor_version x
-%define micro_version dev_686_g5616e12
-%define micro_version_dash dev-686-g5616e12
+%define major_version 1
+%define minor_version 0
+%define micro_version 0
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
-%define pkg_version_dash %{major_version}.%{minor_version}.%{micro_version_dash}
+%define pkg_version %{major_version}.%{minor_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
 %include compiler-defines.inc
-#%include mpi-defines.inc
+%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
@@ -52,10 +50,10 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1
-License:   BSD
-Group:     MPI
-URL:       https://www.open-mpi.org
-Packager:  TACC - cproctor@tacc.utexas.edu
+License:   GPL
+Group:     Applications/CFD
+URL:       https://github.com/carlosrosales/mplabs
+Packager:  TACC - carlos@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -64,20 +62,19 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: Lattice Boltzmann Hybrid MPI/OMP code
+Group: Applications/CFD
 %description package
 This is the long description for the package RPM...
 
 %package %{MODULEFILE}
-Summary: The modulefile RPM
+Summary: LBM  modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
 
 %description
-Open-MPI development library.
-
+Awesome LBM package
 
 #---------------------------------------
 %prep
@@ -101,6 +98,8 @@ Open-MPI development library.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
+%setup -n %{pkg_base_name}-%{pkg_version}
+
 
 #---------------------------------------
 %build
@@ -113,11 +112,14 @@ Open-MPI development library.
 
 # Setup modules
 %include system-load.inc
+module rm PrgEnv-cray
+module load PrgEnv-intel
+module load cray-mpich
+module load craype-haswell
+module rm cray-libscih
 
 # Insert necessary module commands
-ml purge
-ml %{comp_module}
-ml
+module purge
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -127,9 +129,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
-    
+  
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -141,57 +141,14 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
- 
- 
-export openmpi=`pwd`
-export openmpi_install=%{INSTALL_DIR}
-export ncores=16
-export openmpi_major=%{major_version}
-export openmpi_minor=%{minor_version}
-export openmpi_patch=%{micro_version_dash}
-export openmpi_version=${openmpi_major}.${openmpi_minor}-${openmpi_patch}
-if [ "%{comp_fam}" == "gcc" ]; then
-  echo "GCC Build"
-  export CC=gcc
-  export CXX=g++
-  export FC=gfortran
-elif [ "%{comp_fam}" == "intel" ]; then
-  echo "Intel Build"
-  export CC=icc
-  export CXX=icpc
-  export FC=ifort
-else
-  echo "Unrecognized compiler! Exiting!"
-  exit -1
-fi
-
-
-cd ${openmpi}
-wget https://www.open-mpi.org/nightly/v${openmpi_major}.${openmpi_minor}/openmpi-v${openmpi_version}.tar.gz --no-check-certificate
-
-tar xvfz openmpi-v${openmpi_version}.tar.gz
-cd openmpi-v${openmpi_version}
-
-${openmpi}/openmpi-v${openmpi_version}/configure                    \
---prefix=${openmpi_install}                                         \
---enable-orterun-prefix-by-default                                  \
---disable-dlopen                                                    \
---enable-shared                                                     \
---with-slurm
-
-make -j ${ncores}
-make -j ${ncores} install
-
-if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-fi
-
-cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-umount %{INSTALL_DIR}/
   
+  # Create some dummy directories and files for fun
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+  make 
 
-
-
+  # Copy everything from tarball over to the installation directory
+  cp ./lbs3d-mpi. $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/lbs
+  
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -214,57 +171,28 @@ umount %{INSTALL_DIR}/
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_msg=[[
-The Open MPI Project is an open source Message Passing Interface implementation
-that is developed and maintained by a consortium of academic, research, and
-industry partners. Open MPI is therefore able to combine the expertise,
-technologies, and resources from all across the High Performance Computing
-community in order to build the best MPI library available. Open MPI offers
-advantages for system and software vendors, application developers and computer
-science researchers.
-
-This module loads the openmpi environment built with
-Intel compilers. By loading this module, the following commands
-will be automatically available for compiling MPI applications:
-mpif77       (F77 source)
-mpif90       (F90 source)
-mpicc        (C   source)
-mpiCC/mpicxx (C++ source)
-
-The %{MODULE_VAR} module also defines the following environment variables:
+The %{MODULE_VAR} module defines the following environment variables:
 TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
 TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
 include files, and tools respectively.
-
-Version %{version}
 ]]
 
 --help(help_msg)
 help(help_msg)
 
+whatis("Name: bar")
+whatis("Version: %{pkg_version}%{dbg}")
+%if "%{is_debug}" == "1"
+setenv("TACC_%{MODULE_VAR}_DEBUG","1")
+%endif
 
-whatis("Name: OpenMPI"                                                 )
-whatis("Version: %{version}"                                                 )
-whatis("Category: MPI library, Runtime Support"                              )
-whatis("Description: OpenMPI Library (C/C++/Fortran for x86_64) "  )
-whatis("URL: https://www.open-mpi.org/ "  )
+-- Create environment variables.
+local bar_dir           = "%{INSTALL_DIR}"
 
-
--- Create environment variables
-local base = "%{INSTALL_DIR}"
-prepend_path( "MPICH_HOME"            , base )
-prepend_path( "PATH"                  , pathJoin( base, "bin" ))
-prepend_path( "LD_LIBRARY_PATH"       , pathJoin( base, "lib" ))
-prepend_path( "LD_LIBRARY_PATH"       , "/opt/cray/pmi/5.0.8-1.0000.10843.170.1.ari/lib64")
-prepend_path( "MANPATH"               , pathJoin( base, "share/man" ))
-prepend_path( "MODULEPATH"            , "%{MODULE_PREFIX}/%{comp_fam_verion}/ompi_2_x/modulefiles")
-
-setenv(       "TACC_OPENMPI_DIR"        , base )
-setenv(       "TACC_OPENMPI_BIN"        , pathJoin( base, "bin" ))
-setenv(       "TACC_OPENMPI_LIB"        , pathJoin( base, "lib" ))
-setenv(       "TACC_OPENMPI_INC"        , pathJoin( base, "include" ))
-
-family("MPI")
-
+family("bar")
+prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
+setenv( "TACC_%{MODULE_VAR}_DIR",                bar_dir)
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(bar_dir, "bin"))
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
@@ -292,6 +220,7 @@ EOF
   %defattr(-,root,install,)
   # RPM package contains files within these directories
   %{INSTALL_DIR}
+  %{INSTALL_DIR}/bin
 
 #-----------------------
 %endif # BUILD_PACKAGE |

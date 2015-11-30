@@ -1,5 +1,6 @@
 #
 # W. Cyrus Proctor
+# 2015-11-20 Need to investigate relocation -- use /opt/apps for now
 # 2015-11-10 Update for LS5 Chroot Jail
 # 2015-10-27
 #
