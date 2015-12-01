@@ -53,8 +53,8 @@ License:   GPL
 Group:     Utility
 URL:       http://www.boost.org
 Packager:  TACC - agomez@tacc.utexas.edu
-Source0:   %{pkg_base_name}-%{pkg_version}.tar.gz
-Source1:   icu4c-56_1-src.tgz
+#Source0:   %{pkg_base_name}-%{pkg_version}.tar.gz
+#Source1:   icu4c-56_1-src.tgz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -121,8 +121,10 @@ proposed for the upcoming TR2.
 
 # Setup modules
 %include system-load.inc
-# Insert necessary module commands
+%include compiler-defines.inc
+# %include mpi-defines.inc
 module purge
+module load intel
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -162,30 +164,34 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
         export CONFIGURE_FLAGS=--with-toolset=gcc
   %endif
 
-
+  wget http://download.icu-project.org/files/icu4c/56.1/icu4c-56_1-src.tgz
+  wget http://downloads.sourceforge.net/project/boost/boost/1.59.0/boost_1_59_0.tar.gz
+  tar -xzf icu4c-56_1-src.tgz
+  tar -xzf boost_1_59_0.tar.gz
   WD=`pwd`
 
-  if [ "$CXX" != mpicxx ]; then
+#  if [ "$CXX" != mpicxx ]; then
     	cd icu/source
     	./runConfigureICU  $ICU_MODE --prefix=%{INSTALL_DIR}
     	make
     	make install
     	rm -f ~/user-config.jam
-  fi
+#  fi
 
   cd $WD
+  cd boost_1_59_0
   EXTRA="-sICU_PATH=%{INSTALL_DIR}"
-  if [ "$CXX" = mpicxx ]; then
-  	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=mpi"
-  	EXTRA=""
-  	mpipath=`which mpicxx`
-	cat > $WD/tools/build/v2/user-config.jam << EOF
-	#using mpi $mpipath ;
-	using mpi ;
-	EOF
-  else
+  #if [ "$CXX" = mpicxx ]; then
+ # 	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=mpi"
+ # 	EXTRA=""
+ # 	mpipath=`which mpicxx`
+#	cat > $WD/tools/build/v2/user-config.jam << EOF
+#	#using mpi $mpipath ;
+#	using mpi ;
+#	EOF
+#  else
   	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all --without-libraries=mpi"
-  fi
+#  fi
 
   ./bootstrap.sh --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
   ./b2 --prefix=%{INSTALL_DIR} $EXTRA install
