@@ -47,7 +47,7 @@
   %define mpi_module  %{mpi_fam}/%{mpi_module_version}
 %endif
 
-%if "%{is_mpich}" == "1"
+%if "%{is_cmpich}" == "1"
   %if %{undefined mpiV}
     %define mpi_label 7_2
     %define mpi_module_version 7.2.4
@@ -56,8 +56,8 @@
     %define mpi_label 7_2
     %define mpi_module_version 7.2.4
   %endif
-  %define mpi_fam     impi
-  %define mpi_fam_ver impi_%{mpi_label}
+  %define mpi_fam     cmpi
+  %define mpi_fam_ver cmpi_%{mpi_label}
   %define mpi_module  %{mpi_fam}/%{mpi_module_version}
 %endif
 
