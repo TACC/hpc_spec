@@ -9,11 +9,11 @@ Summary: MPI Profiling Library
 %define MODULE_VAR    MPIP
 
 # Create some macros (spec file variables)
-%define major_version 1
-%define minor_version 0
-%define micro_version 0
+%define major_version 3
+%define minor_version 4
+%define micro_version 1
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -34,16 +34,13 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 
-Name: mpiP
-
-Version: %{pkg_version}
 Release: 1
 License: GPL
 Group: System Environment/Base
-Source: %{name}-%{version}.tar.gz
+Source: mpiP-%{version}.tar.gz
 Packager: agomez@tacc.utexas.edu
 Buildroot: /tmp/rpm/%{name}-%{version}-buildroot
-%define _topdir /home/build/rpms/
+%define _topdir /admin/build/rpms/
 
 # %define APPS /opt/apps
 # %define MODULES modulefiles
@@ -56,10 +53,14 @@ Buildroot: /tmp/rpm/%{name}-%{version}-buildroot
 %package %{PACKAGE}
 Summary: mpiP
 Group: Profiler
+%description package
+This is the long description.
 
 %package %{MODULEFILE}
 Summary: mpiP modulefile
 Group: Profiler
+%description modulefile
+This is the ong description
 
 %description
 
@@ -95,20 +96,23 @@ mpiP: Lightweight, Scalable MPI Profiling
 %install
 
 %include system-load.inc
-%include compiler-load.inc
-%include mpi-load.inc
+#%include compiler-load.inc
+#%include mpi-load.inc
 
 module purge
+
+module load taccswitch
+source taccswitch
+module load intel
 module load cmpich
-module load PrgEnv-intel
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
 export ARCH=x86_64
 export CC=mpicc
-export F90=mpif90
-
+export F77=mpif90
+export PATH=/opt/apps/tacc/bin/:$PATH
 #------------------------
 %if %{?BUILD_PACKAGE}
 #------------------------
@@ -129,6 +133,8 @@ export F90=mpif90
   
   # Create some dummy directories and files for fun
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+
+ ./configure CFLAGS="-g" --enable-demangling --disable-bfd --disable-libunwind --prefix=%{INSTALL_DIR} 
   
   make
   make shared
