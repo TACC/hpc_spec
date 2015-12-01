@@ -227,7 +227,7 @@ prepend_path("PE_PKGCONFIG_PRODUCTS","PE_MPICH")
 local base_dir           = "%{INSTALL_DIR}"
 prepend_path("PATH", pathJoin(base_dir, "bin"))
 prepend_path("LD_LIBRARY_PATH", pathJoin(base_dir, "lib"))
-prepend_path( "MODULEPATH"            , "%{MODULE_PREFIX}/%{comp_fam_verion}/cmpich_7_2/modulefiles")
+prepend_path( "MODULEPATH"            , "%{MODULE_PREFIX}/%{comp_fam_version}/cmpich_7_2/modulefiles")
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
