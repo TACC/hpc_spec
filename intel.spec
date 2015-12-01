@@ -200,7 +200,7 @@ whatis("Description: Intel Compiler Family (C/C++/Fortran for x86_64)"      )
 whatis("URL: http://software.intel.com/en-us/articles/intel-compilers"      )
 
 -- Create environment variables.
-local base         = "/opt/apps/exp/intel/16"
+local base         = "/opt/apps/intel/16"
 local full_xe      = "compilers_and_libraries_2016.0.109/linux"
 local arch         = "intel64"
 local installDir   = pathJoin(base,full_xe)
@@ -323,7 +323,7 @@ setenv( "TACC_ICC_BIN" ,      pathJoin(installDir , "bin/intel64" ) )
 setenv( "TACC_ICC_LIB" ,      pathJoin(installDir , "compiler/lib/intel64" ) )
 setenv( "TACC_ICC_INC" ,      pathJoin(installDir , "compiler/include/intel64" ) )
 
-prepend_path( "MODULEPATH" , "/opt/apps/exp/intel16/modulefiles" )
+prepend_path( "MODULEPATH" , "/opt/apps/intel16/modulefiles" )
 family("compiler")
 EOF
   
