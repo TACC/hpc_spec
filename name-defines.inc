@@ -2,7 +2,7 @@
 # W. Cyrus Proctor
 # 2015-08-25
 
-%define name_prefix tacc-comp
+%define name_prefix tacc
 
 # Compiler Specific?
 %if "%{?comp_fam_ver}"
