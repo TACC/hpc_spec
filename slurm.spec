@@ -1,5 +1,6 @@
 #
 # W. Cyrus Proctor
+# 2015-12-01 incorporated into TACC module -- this spec is obsolete
 # 2015-11-12
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
