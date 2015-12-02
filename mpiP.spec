@@ -96,11 +96,13 @@ mpiP: Lightweight, Scalable MPI Profiling
 %install
 
 %include system-load.inc
+module purge
+
 #%include compiler-load.inc
 #%include mpi-load.inc
 
-module purge
 
+#This shouldn't be necessary (temporary fix)
 module load taccswitch
 source taccswitch
 module load intel

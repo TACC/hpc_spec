@@ -5,7 +5,7 @@
 %{nil}
 
 %global pkgver sles11.3
-%include SPECS/rpm-dir.inc
+%include rpm-dir.inc
 
 %define APPS /opt/apps
 %define MODULES modulefiles
@@ -21,9 +21,9 @@ License:	Redistributable, no modification permitted
 Group:		Development/Languages
 URL:		http://www.nvidia.com/cuda
 %if !0%{?rhel}
-Source0:	http://developer.download.nvidia.com/compute/cuda/7_0/Prod/local_installers/cuda_7.0.28_linux.run
+Source0:	http://developer.download.nvidia.com/compute/cuda/7.5/Prod/local_installers/cuda_7.5.18_linux.run
 %endif
-Source1:	http://developer.download.nvidia.com/compute/cuda/7_0/Prod/local_installers/cuda_7.0.28_linux.run
+Source1:	http://developer.download.nvidia.com/compute/cuda/7.5/Prod/local_installers/cuda_7.5.18_linux.run
 BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
 ExclusiveArch:  		x86_64
