@@ -20,8 +20,8 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name taccexp
-%define MODULE_VAR    TACCEXP
+%define pkg_base_name TACC
+%define MODULE_VAR    TACC
 
 # Create some macros (spec file variables)
 %define major_version 1
@@ -36,13 +36,14 @@ Summary: A Nice little relocatable skeleton spec file example.
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+%include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
 
 ############ Do Not Change #############
-Name:      %{pkg_name}
+# hacked for reason name WCP 2015-12-01
+Name:      tacc-tacc_world
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
@@ -106,10 +107,10 @@ Welcome to the TACC Module way!
 #---------------------------------------
 
 # Setup modules
-%include system-load.inc
+# Nothing to do!
 
 # Insert necessary module commands
-module purge
+# None to have!
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -186,20 +187,40 @@ setenv( "STTY_ARGS", "sane")
 setenv( "SYSTEM",    "linux")
 
 load("intel/16.0.109")
-load("impi/5.1.1")
+load("cray_mpich/7.2.4")
 try_load("autotools")
 try_load("cmake")
 try_load("git")
 try_load("hwloc")
 
-setenv("APPS","/opt/apps/exp")
+setenv("APPS","/opt/apps")
 prepend_path("MANPATH","/usr/local/man:/usr/share/man:/usr/X11R6/man:/usr/kerberos/man:/usr/man")
-prepend_path("PATH","%{INSTALL_DIR}/bin")
 
 -- Environment change - assume single threaded to fix silly MKL
 if (mode() == "load" and os.getenv("OMP_NUM_THREADS") == nil) then
   setenv("OMP_NUM_THREADS","1")
 end
+
+
+-- Create slurm environment variables.
+local base_dir           = "/opt/slurm/15.08.0"
+
+prepend_path("PATH",             pathJoin(base_dir, "bin")       )
+prepend_path("LD_LIBRARY_PATH" , pathJoin(base_dir, "lib")       )
+prepend_path("MANPATH"         , pathJoin(base_dir, "share/man") )
+prepend_path("MANPATH"         , "/usr/share/man"                )
+prepend_path("PERL5LIB"        , pathJoin(base_dir,"lib/perl5/site_perl/5.10.0/x86_64-linux-thread-multi"))
+setenv(      "SINFO_FORMAT"    , "%20P %5a %.10l %16F")
+setenv(      "SQUEUE_FORMAT"   , "%.18i %.9P %.9j %.8u %.2t %.10M %.6D %R")
+setenv(      "SQUEUE_SORT"     , "-t,e,S")
+
+setenv( "TACC_SLURM_DIR",                base_dir)
+setenv( "TACC_SLURM_INC",       pathJoin(base_dir, "include"))
+setenv( "TACC_SLURM_LIB",       pathJoin(base_dir, "lib"))
+setenv( "TACC_SLURM_BIN",       pathJoin(base_dir, "bin"))
+
+-- "Wimmy Wham Wham Wozzle!" -- Slurms MacKenzie
+
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'

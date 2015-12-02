@@ -138,8 +138,8 @@ if [ -f "$BASH_ENV" ]; then
   . $BASH_ENV
   module purge
   clearMT
-  export MODULEPATH=/opt/apps/exp/modulefiles
-  module load taccexp
+  export MODULEPATH=/opt/apps/modulefiles:/opt/apps/tools/modulefiles
+  module load TACC
 fi
 EOF
 chmod a+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/taccswitch
