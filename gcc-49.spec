@@ -1,5 +1,6 @@
 #
 # W. Cyrus Proctor
+# 2015-12-01 Build version 493 to support cray_mpich and fortran modules
 # 2015-12-01 Add name-defines-noreloc.inc
 # 2015-11-20 Need to investigate relocation -- use /opt/apps for now
 # 2015-11-10 Update for LS5 Chroot Jail
@@ -27,12 +28,12 @@ Summary: A Nice little non-relocatable skeleton spec file example.
 %define MODULE_VAR    GCC
 
 # Create some macros (spec file variables)
-%define major_version 5
-%define minor_version 2
-%define micro_version 0
+%define major_version 4
+%define minor_version 9
+%define micro_version 3
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
-%define gcc_ver gcc5_2
+%define gcc_ver gcc4_9
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -120,8 +121,10 @@ in the sense that it respects the user's freedom.
 
 # Insert necessary module commands
 module purge
-module load TACC
-module load gcc/4.9.3
+# module load TACC
+# module load crayswitch
+# source crayswitch
+# module load gcc/4.9.3
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -166,31 +169,31 @@ export isl_patch=2
 
 export mpfr_major=3
 export mpfr_minor=1
-export mpfr_patch=3
+export mpfr_patch=2
 
-#export ppl_major=1
-#export ppl_minor=1
+export ppl_major=1
+export ppl_minor=1
 
-#export cloog_major=0
-#export cloog_minor=18
-#export cloog_patch=1
+export cloog_major=0
+export cloog_minor=18
+export cloog_patch=1
 
 export mpc_major=1
 export mpc_minor=0
-export mpc_patch=3
+export mpc_patch=2
 
 export binutils_major=2
 export binutils_minor=25
 
-export gcc_major=5
-export gcc_minor=2
-export gcc_patch=0
+export gcc_major=4
+export gcc_minor=9
+export gcc_patch=3
 
 export gmp_version=${gmp_major}.${gmp_minor}.${gmp_patch}
 export isl_version=${isl_major}.${isl_minor}.${isl_patch}
 export mpfr_version=${mpfr_major}.${mpfr_minor}.${mpfr_patch}
-#export ppl_version=${ppl_major}.${ppl_minor}
-#export cloog_version=${cloog_major}.${cloog_minor}.${cloog_patch}
+export ppl_version=${ppl_major}.${ppl_minor}
+export cloog_version=${cloog_major}.${cloog_minor}.${cloog_patch}
 export mpc_version=${mpc_major}.${mpc_minor}.${mpc_patch}
 export binutils_version=${binutils_major}.${binutils_minor}
 export gcc_version=${gcc_major}.${gcc_minor}.${gcc_patch}
@@ -255,45 +258,45 @@ ${gcc}/mpfr-${mpfr_version}/configure \
 make -j ${ncores}
 make install -j ${ncores}
 
-# cd ${gcc}
-# 
-# printf "\n\n************************************************************\n"
-# printf "ppl\n"
-# printf "************************************************************\n\n"
-# 
-# wget http://bugseng.com/products/ppl/download/ftp/releases/${ppl_version}/ppl-${ppl_version}.tar.gz
-# tar xvfz ppl-${ppl_version}.tar.gz
-# 
-# cd ppl-${ppl_version}
-# 
-# ${gcc}/ppl-${ppl_version}/configure \
-# --prefix=${gcc_install} \
-# --with-gmp=${gcc_install}
-# 
-# make -j ${ncores}
-# make install -j ${ncores}
-# 
-# cd ${gcc}
-# 
-# printf "\n\n************************************************************\n"
-# printf "cloog\n"
-# printf "************************************************************\n\n"
-# 
-# wget http://ftp.vim.org/languages/gcc/infrastructure/cloog-${cloog_version}.tar.gz
-# tar xvfz cloog-${cloog_version}.tar.gz
-# 
-# cd cloog-${cloog_version}
-# 
-# ${gcc}/cloog-${cloog_version}/configure \
-# --prefix=${gcc_install} \
-# --with-gmp-prefix=${gcc_install} \
-# --with-gmp=system \
-# --with-isl=system \
-# --with-isl-prefix=${gcc_install}
-# 
-# make -j ${ncores}
-# make install -j ${ncores}
-# 
+cd ${gcc}
+
+printf "\n\n************************************************************\n"
+printf "ppl\n"
+printf "************************************************************\n\n"
+
+wget http://bugseng.com/products/ppl/download/ftp/releases/${ppl_version}/ppl-${ppl_version}.tar.gz
+tar xvfz ppl-${ppl_version}.tar.gz
+
+cd ppl-${ppl_version}
+
+${gcc}/ppl-${ppl_version}/configure \
+--prefix=${gcc_install} \
+--with-gmp=${gcc_install}
+
+make -j ${ncores}
+make install -j ${ncores}
+
+cd ${gcc}
+
+printf "\n\n************************************************************\n"
+printf "cloog\n"
+printf "************************************************************\n\n"
+
+wget http://ftp.vim.org/languages/gcc/infrastructure/cloog-${cloog_version}.tar.gz
+tar xvfz cloog-${cloog_version}.tar.gz
+
+cd cloog-${cloog_version}
+
+${gcc}/cloog-${cloog_version}/configure \
+--prefix=${gcc_install} \
+--with-gmp-prefix=${gcc_install} \
+--with-gmp=system \
+--with-isl=system \
+--with-isl-prefix=${gcc_install}
+
+make -j ${ncores}
+make install -j ${ncores}
+
 cd ${gcc}
 
 printf "\n\n************************************************************\n"
