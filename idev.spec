@@ -1,7 +1,7 @@
 #
 # Spec file for idev
 #
-%define name_prefix tacc-comp
+%define name_prefix tacc
 %define base_name idev
 Summary:   %{base_name}: interactive access to production nodes
 Name:      %{name_prefix}-%{base_name}

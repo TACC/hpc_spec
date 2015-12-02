@@ -101,12 +101,9 @@ module purge
 #%include compiler-load.inc
 #%include mpi-load.inc
 
-
-#This shouldn't be necessary (temporary fix)
-module load taccswitch
-source taccswitch
+# Fixing merge conflict WCP 2015-12-01 23:07
 module load intel
-module load cmpich
+module load cray_mpich
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
