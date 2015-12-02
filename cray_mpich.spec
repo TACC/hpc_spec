@@ -1,7 +1,8 @@
 #
 # W. Cyrus Proctor
 # Antonio Gomez
-# 2015-08-25
+# Jerome Vienne
+# 2015-01-12
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -21,7 +22,7 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name cmpich
+%define pkg_base_name cray_mpich
 %define MODULE_VAR    CMPICH
 
 # Create some macros (spec file variables)
@@ -109,9 +110,8 @@ Cray-MPICH wrappers
 
 # Setup modules
 %include system-load.inc
-
-# Insert necessary module commands
-module purge
+%include compiler-defines.inc
+%include compiler-load.inc
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -136,26 +136,23 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   
   # Create some dummy directories and files for fun
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
  
 cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicc << 'EOF'
 #!/usr/bin/env bash
-icc -I/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0/include -L/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0/lib -lmpich_intel $@
+icc -I$TACC_CRAY_MPT_INC -I$TACC_CRAY_XPMEM_INC -I$TACC_CRAY_UGNI_INC -I$TACC_CRAY_UDREG_INC -I$TACC_CRAY_DMAPP_INC -I$TACC_CRAY_PMI_INC -L$TACC_CRAY_XPMEM_LIB -L$TACC_CRAY_UGNI_LIB -L$TACC_CRAY_UDREG_LIB -L$TACC_CRAY_PMI_LIB -L$TACC_CRAY_DMAPP_LIB -L$TACC_CRAY_MPT_LIB -ldl -lmpich_intel -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg "$@"
 EOF
+chmod ugo+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicc
 cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicxx << 'EOF'
 #!/usr/bin/env bash
-icpc -I/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0/include -L/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0/lib -lmpichcxx_intel $@
+icpc -I$TACC_CRAY_MPT_INC -I$TACC_CRAY_XPMEM_INC -I$TACC_CRAY_UGNI_INC -I$TACC_CRAY_UDREG_INC -I$TACC_CRAY_DMAPP_INC -I$TACC_CRAY_PMI_INC -L$TACC_CRAY_XPMEM_LIB -L$TACC_CRAY_UGNI_LIB -L$TACC_CRAY_UDREG_LIB -L$TACC_CRAY_PMI_LIB -L$TACC_CRAY_DMAPP_LIB -L$TACC_CRAY_MPT_LIB -ldl -lmpichcxx_intel -lmpich_intel -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg "$@"
 EOF
+chmod ugo+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicxx
 cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90 << 'EOF'
 #!/usr/bin/env bash
-ifort -I/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0/include -L/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0/lib -lmpichf90_intel $@
+ifort -I$TACC_CRAY_MPT_INC -I$TACC_CRAY_XPMEM_INC -I$TACC_CRAY_UGNI_INC -I$TACC_CRAY_UDREG_INC -I$TACC_CRAY_DMAPP_INC -I$TACC_CRAY_PMI_INC -L$TACC_CRAY_XPMEM_LIB -L$TACC_CRAY_UGNI_LIB -L$TACC_CRAY_UDREG_LIB -L$TACC_CRAY_PMI_LIB -L$TACC_CRAY_DMAPP_LIB -L$TACC_CRAY_MPT_LIB -ldl -lmpichf90_intel -lmpich_intel -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg "$@"
 EOF
+chmod ugo+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
 
-ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpich_intel.so $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpi_dbg.so
-ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpichcxx_intel.so $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpigc4.so
-ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpichf90_intel.so $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpigf.so
-ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpich_intel.so $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpi.so
-  
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -185,7 +182,7 @@ Cray-MPICH Wrappers.
 --help(help_msg)
 help(help_msg)
 
-whatis("Name: cmpich")
+whatis("Name: cray_mpich")
 whatis("Version: %{pkg_version}%{dbg}")
 
 -- Create environment variables.
@@ -221,13 +218,36 @@ setenv("PE_MPICH_TARGET_VAR_nvidia20","-lcudart")
 setenv("PE_MPICH_TARGET_VAR_nvidia35","-lcudart")
 setenv("PE_MPICH_VOLATILE_PKGCONFIG_PATH","/opt/cray/mpt/7.2.4/gni/mpich2-@PRGENV@@PE_MPICH_DIR_DEFAULT64@/@PE_MPICH_GENCOMPS@/lib/pkgconfig")
 setenv("PE_MPICH_VOLATILE_PRGENV","CRAY GNU PGI")
+
+--TACC env for Cray Lib/Include (added bu Jerome 12:1:2015)
+setenv("TACC_CRAY_XPMEM_INC","/opt/cray/xpmem/0.1-2.0502.55507.3.2.ari/include")
+setenv("TACC_CRAY_XPMEM_LIB","/opt/cray/xpmem/0.1-2.0502.55507.3.2.ari/lib64")
+setenv("TACC_CRAY_UGNI_INC","/opt/cray/ugni/5.0-1.0502.9685.4.24.ari/include")
+setenv("TACC_CRAY_UGNI_LIB","/opt/cray/ugni/5.0-1.0502.9685.4.24.ari/lib64")
+setenv("TACC_CRAY_UDREG_INC","/opt/cray/udreg/2.3.2-1.0502.9275.1.12.ari/include")
+setenv("TACC_CRAY_UDREG_LIB","/opt/cray/udreg/2.3.2-1.0502.9275.1.12.ari/lib64")
+setenv("TACC_CRAY_PMI_INC","/opt/cray/pmi/5.0.8-1.0000.10843.170.1.ari/include")
+setenv("TACC_CRAY_PMI_LIB","/opt/cray/pmi/5.0.8-1.0000.10843.170.1.ari/lib64")
+setenv("TACC_CRAY_DMAPP_INC","/opt/cray/dmapp/7.0.1-1.0502.10246.8.47.ari/include")
+setenv("TACC_CRAY_DMAPP_LIB","/opt/cray/dmapp/7.0.1-1.0502.10246.8.47.ari/lib64")
+setenv("TACC_CRAY_MPT_INC","/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0/include")
+setenv("TACC_CRAY_MPT_LIB","/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0/lib")
+
 prepend_path("PE_PKGCONFIG_LIBS","mpich")
 prepend_path("PE_PKGCONFIG_PRODUCTS","PE_MPICH")
 
+
+-- Update LD_LIBRARY_PATH with Cray Libs (added by Jerome 12:1:2015)
+prepend_path('LD_LIBRARY_PATH',"/opt/cray/xpmem/0.1-2.0502.57015.1.15.ari/lib64")
+prepend_path('LD_LIBRARY_PATH',"/opt/cray/dmapp/7.0.1-1.0502.10246.8.47.ari/lib64")
+prepend_path('LD_LIBRARY_PATH',"/opt/cray/pmi/5.0.8-1.0000.10843.170.1.ari/lib64")
+prepend_path('LD_LIBRARY_PATH',"/opt/cray/ugni/6.0-1.0502.10245.9.9.ari/lib64")
+prepend_path('LD_LIBRARY_PATH',"/opt/cray/udreg/2.3.2-1.0502.9889.2.20.ari/lib64")
+
 local base_dir           = "%{INSTALL_DIR}"
 prepend_path("PATH", pathJoin(base_dir, "bin"))
-prepend_path("LD_LIBRARY_PATH", pathJoin(base_dir, "lib"))
-prepend_path( "MODULEPATH"            , "%{MODULE_PREFIX}/%{comp_fam_version}/cmpich_7_2/modulefiles")
+prepend_path("LD_LIBRARY_PATH", "/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0/lib")
+prepend_path( "MODULEPATH"            , "%{MODULE_PREFIX}/%{comp_fam_ver}/cray_mpich_7_2/modulefiles")
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
