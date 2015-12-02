@@ -1,5 +1,5 @@
 
-%define name_prefix tacc-comp
+%define name_prefix tacc
 %define base_name ls5_login_scripts
 
 Summary:   Standard LS5 TACC Login scripts
@@ -30,7 +30,7 @@ Group: System Environment/Base
 These are the scripts for login nodes
 
 %description -n %{name}-compute
-These are the scripts for compute nodes
+These are the scripts for login nodes
 
 %prep
 %setup -q -n %{base_name}-%{version}
@@ -94,8 +94,10 @@ find $SHELL_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/etc/tacc
 
 
 ###%build
+### old path for pre tacc_world/cray_world
+###MPATH="/opt/apps/modulefiles /opt/cray/modulefiles /opt/cray/ari/modulefiles  /opt/cray/craype/default/modulefiles /opt/modulefiles"
+MPATH="/opt/apps/modulefiles /opt/apps/tools/modulefiles"
 
-MPATH="/opt/apps/modulefiles /opt/cray/modulefiles /opt/cray/ari/modulefiles  /opt/cray/craype/default/modulefiles /opt/modulefiles"
 
 #MODULEPATH="/opt/apps/xsede/modulefiles /opt/apps/modulefiles /opt/modulefiles"
 

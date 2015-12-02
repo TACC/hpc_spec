@@ -1,11 +1,13 @@
-
-%define name_prefix tacc-comp
+#
+# $Id%
+#
+%define name_prefix tacc
 %define base_name base-modules
 
 Summary:   TACC Baseline Environment Modules
 Name:      %{name_prefix}-%{base_name}
 Version:   2.0
-Release:   20
+Release:   21
 License:   GPL
 Group:     System Environment/Base
 Packager:  mclay@tacc.utexas.edu 
@@ -21,7 +23,7 @@ Buildroot: /tmp/rpm/%{base_name}-%{version}-buildroot
 
 Modules are really cool.  We like things that are cool. 
 
-%define INSTALL_MODULES   /opt/apps/modulefiles
+%define INSTALL_MODULES   /opt/apps/cray_world/modulefiles
 
 %prep
 
@@ -32,6 +34,11 @@ Modules are really cool.  We like things that are cool.
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_MODULES}/
 
 cat >  $RPM_BUILD_ROOT/%{INSTALL_MODULES}/TACC <<'EOF'
+
+#%Module1.0#####################################################################
+#
+# $Id$
+#############################################################################
 
 proc ModulesHelp { } {
 puts stderr "The TACC modulefile defines the default paths and environment"
@@ -68,7 +75,7 @@ if [module-info mode load] {
      if { [file exists /opt/cray/ari/modulefiles/switch] } {
         module load switch
      }
-
+     ### WCP 2015-12-01 Don't load Base-opts if you want typical compute module env
      #if { [file exists /opt/modulefiles/Base-opts] } {
      #   module load Base-opts
      #}
@@ -78,34 +85,38 @@ if [module-info mode load] {
      }
      module load craype-network-aries PrgEnv-intel cray-mpich craype-haswell
 
+     ### WCP 2015-12-01 Don't load cray slurm -- see tacc slurm below
      #if { [file exists /opt/modulefiles/slurm] } {
      #   module load slurm
      #}
 }
 
 if [ module-info mode remove ] {
-     module del slurm craype-haswell cray-libsci cray-mpich PrgEnv-intel craype-network-aries 
+     #module del slurm craype-haswell cray-mpich PrgEnv-intel craype-network-aries 
+     module del craype-haswell cray-mpich PrgEnv-intel craype-network-aries 
      #module del Base-opts switch
      module del switch
 }
+
+### WCP 2015-12-01 Add tacc slurm information instead.
+set base_dir "/opt/slurm/15.08.0"
+prepend-path PATH            "$base_dir/bin"
+prepend-path LD_LIBRARY_PATH "$base_dir/lib"
+prepend-path MANPATH         "$base_dir/share/man"
+prepend-path MANPATH         "/usr/share/man"
+prepend-path PERL5LIB        "$base_dir/lib/perl5/site_perl/5.10.0/x86_64-linux-thread-multi"
+setenv SINFO_FORMAT          {%20P %5a %.10l %16F}
+setenv SQUEUE_FORMAT         {%.18i %.9P %.9j %.8u %.2t %.10M %.6D %R}
+setenv SQUEUE_SORT           {-t,e,S}
+
+setenv TACC_SLURM_DIR        "$base_dir"
+setenv TACC_SLURM_INC        "$base_dir/include"
+setenv TACC_SLURM_LIB        "$base_dir/lib"
+setenv TACC_SLURM_BIN        "$base_dir/bin"
+
+# "Wimmy Wham Wham Wozzle!" -- Slurms MacKenzie
+
 EOF
-
-
-mkdir  $RPM_BUILD_ROOT/%{INSTALL_MODULES}/.base
-cat >  $RPM_BUILD_ROOT/%{INSTALL_MODULES}/.base/PrgEnv-base.lua <<EOF
-local name = myModuleName():gsub("PrgEnv%%-","")
-local mpath = pathJoin("/opt/apps",name,myModuleVersion())
-inherit()
-prepend_path("MODULEPATH",mpath)
-family("MPI_COMPILER")
-EOF
-
-for pe in PrgEnv-gnu PrgEnv-intel PrgEnv-cray; do
-   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_MODULES}/$pe
-   for v in 5.2.40.lua; do
-      ln -s ../.base/PrgEnv-base.lua $RPM_BUILD_ROOT/%{INSTALL_MODULES}/$pe/$v
-   done
-done
 
 
 %files
