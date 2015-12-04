@@ -42,8 +42,8 @@ Summary: A Nice little relocatable skeleton spec file example.
 ########################################
 
 ############ Do Not Change #############
-# hacked for reason name WCP 2015-12-01
-Name:      tacc-tacc_world
+# hacked for reasonable name WCP 2015-12-01
+Name:      tacc-tacc_world_base_modules
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
@@ -180,18 +180,12 @@ end
 setenv(         "TACC_SYSTEM",  syshost)
 setenv(         "TACC_DOMAIN",  domain)
 
-append_path(    "PATH"       ,  ".")
-append_path(    "MANPATH"    ,  "/usr/local/man")
+if (os.getenv("USER") ~= "root") then
+  append_path("PATH",  ".")
+end
 
-setenv( "STTY_ARGS", "sane")
-setenv( "SYSTEM",    "linux")
-
-load("intel/16.0.109")
-load("cray_mpich/7.2.4")
-try_load("autotools")
-try_load("cmake")
-try_load("git")
-try_load("hwloc")
+load("intel")
+load("cray_mpich")
 
 setenv("APPS","/opt/apps")
 prepend_path("MANPATH","/usr/local/man:/usr/share/man:/usr/X11R6/man:/usr/kerberos/man:/usr/man")
@@ -205,14 +199,14 @@ end
 -- Create slurm environment variables.
 local base_dir           = "/opt/slurm/15.08.0"
 
-prepend_path("PATH",             pathJoin(base_dir, "bin")       )
+append_path( "PATH"            , pathJoin( base_dir, "bin")      )
 prepend_path("LD_LIBRARY_PATH" , pathJoin(base_dir, "lib")       )
 prepend_path("MANPATH"         , pathJoin(base_dir, "share/man") )
 prepend_path("MANPATH"         , "/usr/share/man"                )
 prepend_path("PERL5LIB"        , pathJoin(base_dir,"lib/perl5/site_perl/5.10.0/x86_64-linux-thread-multi"))
-setenv(      "SINFO_FORMAT"    , "%20P %5a %.10l %16F")
-setenv(      "SQUEUE_FORMAT"   , "%.18i %.9P %.9j %.8u %.2t %.10M %.6D %R")
-setenv(      "SQUEUE_SORT"     , "-t,e,S")
+-- setenv(      "SINFO_FORMAT"    , "%20P %5a %.10l %16F")
+-- setenv(      "SQUEUE_FORMAT"   , "%.18i %.9P %.9j %.8u %.2t %.10M %.6D %R")
+-- setenv(      "SQUEUE_SORT"     , "-t,e,S")
 
 setenv( "TACC_SLURM_DIR",                base_dir)
 setenv( "TACC_SLURM_INC",       pathJoin(base_dir, "include"))
@@ -233,7 +227,7 @@ set     ModulesVersion      "%{version}"
 EOF
   
   # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  ####%{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
