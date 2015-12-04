@@ -190,9 +190,10 @@ prepend_path("LD_LIBRARY_PATH" , pathJoin(base_dir, "lib")       )
 prepend_path("MANPATH"         , pathJoin(base_dir, "share/man") )
 prepend_path("MANPATH"         , "/usr/share/man"                )
 prepend_path("PERL5LIB"        , pathJoin(base_dir,"lib/perl5/site_perl/5.10.0/x86_64-linux-thread-multi"))
-setenv(      "SINFO_FORMAT"    , "%20P %5a %.10l %16F")
-setenv(      "SQUEUE_FORMAT"   , "%.18i %.9P %.9j %.8u %.2t %.10M %.6D %R")
-setenv(      "SQUEUE_SORT"     , "-t,e,S")
+
+###setenv(      "SINFO_FORMAT"    , "%20P %5a %.10l %16F")
+###setenv(      "SQUEUE_FORMAT"   , "%.18i %.9P %.9j %.8u %.2t %.10M %.6D %R")
+###setenv(      "SQUEUE_SORT"     , "-t,e,S")
 
 setenv( "TACC_SLURM_DIR",                base_dir)
 setenv( "TACC_SLURM_INC",       pathJoin(base_dir, "include"))
