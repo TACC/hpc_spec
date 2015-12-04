@@ -30,10 +30,12 @@ Summary: Boost spec file (www.boost.org)
 
 %define pkg_version %{major_version}.%{minor_version}
 
+%define mpi_fam none
+
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
 %include compiler-defines.inc
-# %include mpi-defines.inc
+#%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
@@ -122,9 +124,10 @@ proposed for the upcoming TR2.
 # Setup modules
 %include system-load.inc
 %include compiler-defines.inc
-# %include mpi-defines.inc
+#%include mpi-defines.inc
 module purge
-module load intel
+%include compiler-load.inc
+#module load intel
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -173,7 +176,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #  if [ "$CXX" != mpicxx ]; then
     	cd icu/source
     	./runConfigureICU  $ICU_MODE --prefix=%{INSTALL_DIR}
-    	make
+    	make -j 8
     	make install
     	rm -f ~/user-config.jam
 #  fi
@@ -194,7 +197,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #  fi
 
   ./bootstrap.sh --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
-  ./b2 --prefix=%{INSTALL_DIR} $EXTRA install
+  ./b2 -j 8 --prefix=%{INSTALL_DIR} $EXTRA install
 
   mkdir -p              $RPM_BUILD_ROOT/%{INSTALL_DIR}
   cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
