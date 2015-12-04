@@ -35,14 +35,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
 %include compiler-defines.inc
-#%include mpi-defines.inc
-########################################
-### Construct name based on includes ###
-########################################
 %include name-defines.inc
-########################################
-############ Do Not Remove #############
-########################################
 
 ############ Do Not Change #############
 Name:      %{pkg_name}
@@ -50,10 +43,10 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   3
 License:   GPL
 Group:     Development/Tools
-Packager:  TACC - cproctor@tacc.utexas.edu
+Packager:  TACC - carlos@tacc.utexas.edu,cproctor@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -65,16 +58,18 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 Summary: The package RPM
 Group: Development/Tools
 %description package
-This is the long description for the package RPM...
+This package provides Cray Message Passing Toolkit 7.2.4, a Cray 
+optimized version of hte MPICH libraries and runtime.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...
+This modulefile provides access to the Cray Message Passing Toolkit 7.2.4
 
 %description
-Cray-MPICH wrappers
+This module provides access to the Cray Message Passing Toolkit 7.2.4, a Cray 
+optimized version of the MPICH libraries and runtime.  
 
 #---------------------------------------
 %prep
@@ -118,16 +113,12 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
 #------------------------
 %if %{?BUILD_PACKAGE}
-#------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
-  #######################################
   touch $RPM_BUILD_ROOT/%{INSTALL_DIR}/.tacc_install_canary
-  #######################################
-  ########### Do Not Remove #############
   #######################################
 
   #========================================
@@ -136,7 +127,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   
   # Create some dummy directories and files for fun
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
- 
+
+%if "%{comp_fam}" == "intel"
 cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicc << 'EOF'
 #!/usr/bin/env bash
 icc -I$TACC_CRAY_MPT_INC -I$TACC_CRAY_XPMEM_INC -I$TACC_CRAY_UGNI_INC -I$TACC_CRAY_UDREG_INC -I$TACC_CRAY_DMAPP_INC -I$TACC_CRAY_PMI_INC -L$TACC_CRAY_XPMEM_LIB -L$TACC_CRAY_UGNI_LIB -L$TACC_CRAY_UDREG_LIB -L$TACC_CRAY_PMI_LIB -L$TACC_CRAY_DMAPP_LIB -L$TACC_CRAY_MPT_LIB -ldl -lmpich_intel -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg "$@"
@@ -152,31 +144,55 @@ cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90 << 'EOF'
 ifort -I$TACC_CRAY_MPT_INC -I$TACC_CRAY_XPMEM_INC -I$TACC_CRAY_UGNI_INC -I$TACC_CRAY_UDREG_INC -I$TACC_CRAY_DMAPP_INC -I$TACC_CRAY_PMI_INC -L$TACC_CRAY_XPMEM_LIB -L$TACC_CRAY_UGNI_LIB -L$TACC_CRAY_UDREG_LIB -L$TACC_CRAY_PMI_LIB -L$TACC_CRAY_DMAPP_LIB -L$TACC_CRAY_MPT_LIB -ldl -lmpichf90_intel -lmpich_intel -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg "$@"
 EOF
 chmod ugo+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
+%endif
+%if "%{comp_fam}" == "gcc"
+cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicc << 'EOF'
+#!/usr/bin/env bash
+gcc -I$TACC_CRAY_MPT_INC -I$TACC_CRAY_XPMEM_INC -I$TACC_CRAY_UGNI_INC -I$TACC_CRAY_UDREG_INC -I$TACC_CRAY_DMAPP_INC -I$TACC_CRAY_PMI_INC -L$TACC_CRAY_XPMEM_LIB -L$TACC_CRAY_UGNI_LIB -L$TACC_CRAY_UDREG_LIB -L$TACC_CRAY_PMI_LIB -L$TACC_CRAY_DMAPP_LIB -L$TACC_CRAY_MPT_LIB -ldl -lmpich_gnu_49 -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg "$@"
+EOF
+chmod ugo+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicc
+cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicxx << 'EOF'
+#!/usr/bin/env bash
+g++ -I$TACC_CRAY_MPT_INC -I$TACC_CRAY_XPMEM_INC -I$TACC_CRAY_UGNI_INC -I$TACC_CRAY_UDREG_INC -I$TACC_CRAY_DMAPP_INC -I$TACC_CRAY_PMI_INC -L$TACC_CRAY_XPMEM_LIB -L$TACC_CRAY_UGNI_LIB -L$TACC_CRAY_UDREG_LIB -L$TACC_CRAY_PMI_LIB -L$TACC_CRAY_DMAPP_LIB -L$TACC_CRAY_MPT_LIB -ldl -lmpichcxx_gnu_49 -lmpich_gnu_49 -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg "$@"
+EOF
+chmod ugo+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicxx
+cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90 << 'EOF'
+#!/usr/bin/env bash
+gfortran -I$TACC_CRAY_MPT_INC -I$TACC_CRAY_XPMEM_INC -I$TACC_CRAY_UGNI_INC -I$TACC_CRAY_UDREG_INC -I$TACC_CRAY_DMAPP_INC -I$TACC_CRAY_PMI_INC -L$TACC_CRAY_XPMEM_LIB -L$TACC_CRAY_UGNI_LIB -L$TACC_CRAY_UDREG_LIB -L$TACC_CRAY_PMI_LIB -L$TACC_CRAY_DMAPP_LIB -L$TACC_CRAY_MPT_LIB -ldl -lmpichf90_gnu_49 -lmpich_gnu_49 -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg "$@"
+EOF
+chmod ugo+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
+%endif
 
 
-#-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
 
 
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-#---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
   
-  #######################################
   ##### Create TACC Canary Files ########
-  #######################################
   touch $RPM_BUILD_ROOT/%{MODULE_DIR}/.tacc_module_canary
-  #######################################
-  ########### Do Not Remove #############
   #######################################
   
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_msg=[[
-Cray-MPICH Wrappers.
+This module provides access to the Cray Message Passing Toolkit 7.2.4, a Cray
+optimized version of the MPICH libraries and runtime. The following commands 
+will be automatically available for compiling MPI applications:
+ 
+ mpif90 (F90/F77 source)
+ mpicc  (C       source)
+ mpicxx (C++     source)
+ 
+If you wish to take advantage of the DMAPP optimizations for small payloads
+(<=16 bytes) in MPI_Allreduce you will need to load the hugetlbfs module and
+follow the help instructions, as well as adding libdmapp to your link line.
+
+Version  7.2.4
 ]]
 
 --help(help_msg)
@@ -186,12 +202,26 @@ whatis("Name: cray_mpich")
 whatis("Version: %{pkg_version}%{dbg}")
 
 -- Create environment variables.
-setenv("CRAY_MPICH2_BASEDIR","/opt/cray/mpt/7.2.4/gni")
+%if "%{comp_fam}" == "gcc"
+local base_path="/opt/cray/mpt/7.2.4/gni/mpich2-gnu/4.9"
+setenv("CRAY_MPICH2_DIR","/opt/cray/mpt/7.2.4/gni/mpich2-gnu/4.9")
+setenv("MPICH_DIR","/opt/cray/mpt/7.2.4/gni/mpich2-gnu/4.9")
+setenv("TACC_CRAY_MPT_INC","/opt/cray/mpt/7.2.4/gni/mpich2-gnu/4.9/include")
+setenv("TACC_CRAY_MPT_LIB","/opt/cray/mpt/7.2.4/gni/mpich2-gnu/4.9/lib")
+prepend_path("LD_LIBRARY_PATH", "/opt/cray/mpt/7.2.4/gni/mpich2-gnu/4.9/lib")
+%endif
+%if "%{comp_fam}" == "intel"
+local base_path="/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0"
 setenv("CRAY_MPICH2_DIR","/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0")
+setenv("MPICH_DIR","/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0")
+setenv("TACC_CRAY_MPT_INC","/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0/include")
+setenv("TACC_CRAY_MPT_LIB","/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0/lib")
+prepend_path("LD_LIBRARY_PATH", "/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0/lib")
+%endif
+setenv("CRAY_MPICH2_BASEDIR","/opt/cray/mpt/7.2.4/gni")
 setenv("CRAY_MPICH2_ROOTDIR","/opt/cray/mpt/7.2.4")
 setenv("CRAY_MPICH2_VER","7.2.4")
 prepend_path("MANPATH","/opt/cray/mpt/7.2.4/gni/man/mpich2")
-setenv("MPICH_DIR","/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0")
 prepend_path("PATH","/opt/cray/mpt/7.2.4/gni/bin")
 setenv("PE_CXX_PKGCONFIG_LIBS","mpichcxx")
 setenv("PE_FORTRAN_PKGCONFIG_LIBS","mpichf90")
@@ -219,35 +249,32 @@ setenv("PE_MPICH_TARGET_VAR_nvidia35","-lcudart")
 setenv("PE_MPICH_VOLATILE_PKGCONFIG_PATH","/opt/cray/mpt/7.2.4/gni/mpich2-@PRGENV@@PE_MPICH_DIR_DEFAULT64@/@PE_MPICH_GENCOMPS@/lib/pkgconfig")
 setenv("PE_MPICH_VOLATILE_PRGENV","CRAY GNU PGI")
 
---TACC env for Cray Lib/Include (added bu Jerome 12:1:2015)
-setenv("TACC_CRAY_XPMEM_INC","/opt/cray/xpmem/0.1-2.0502.55507.3.2.ari/include")
-setenv("TACC_CRAY_XPMEM_LIB","/opt/cray/xpmem/0.1-2.0502.55507.3.2.ari/lib64")
-setenv("TACC_CRAY_UGNI_INC","/opt/cray/ugni/5.0-1.0502.9685.4.24.ari/include")
-setenv("TACC_CRAY_UGNI_LIB","/opt/cray/ugni/5.0-1.0502.9685.4.24.ari/lib64")
-setenv("TACC_CRAY_UDREG_INC","/opt/cray/udreg/2.3.2-1.0502.9275.1.12.ari/include")
-setenv("TACC_CRAY_UDREG_LIB","/opt/cray/udreg/2.3.2-1.0502.9275.1.12.ari/lib64")
-setenv("TACC_CRAY_PMI_INC","/opt/cray/pmi/5.0.8-1.0000.10843.170.1.ari/include")
-setenv("TACC_CRAY_PMI_LIB","/opt/cray/pmi/5.0.8-1.0000.10843.170.1.ari/lib64")
-setenv("TACC_CRAY_DMAPP_INC","/opt/cray/dmapp/7.0.1-1.0502.10246.8.47.ari/include")
-setenv("TACC_CRAY_DMAPP_LIB","/opt/cray/dmapp/7.0.1-1.0502.10246.8.47.ari/lib64")
-setenv("TACC_CRAY_MPT_INC","/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0/include")
-setenv("TACC_CRAY_MPT_LIB","/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0/lib")
+--TACC env for Cray Lib/Include (added by Jerome 12:1:2015)
+setenv("TACC_CRAY_XPMEM_INC","/opt/cray/xpmem/default/include")
+setenv("TACC_CRAY_XPMEM_LIB","/opt/cray/xpmem/default/lib64")
+setenv("TACC_CRAY_UGNI_INC","/opt/cray/ugni/default/include")
+setenv("TACC_CRAY_UGNI_LIB","/opt/cray/ugni/default/lib64")
+setenv("TACC_CRAY_UDREG_INC","/opt/cray/udreg/default/include")
+setenv("TACC_CRAY_UDREG_LIB","/opt/cray/udreg/default/lib64")
+setenv("TACC_CRAY_PMI_INC","/opt/cray/pmi/default/include")
+setenv("TACC_CRAY_PMI_LIB","/opt/cray/pmi/default/lib64")
+setenv("TACC_CRAY_DMAPP_INC","/opt/cray/dmapp/default/include")
+setenv("TACC_CRAY_DMAPP_LIB","/opt/cray/dmapp/default/lib64")
 
 prepend_path("PE_PKGCONFIG_LIBS","mpich")
 prepend_path("PE_PKGCONFIG_PRODUCTS","PE_MPICH")
 
 
 -- Update LD_LIBRARY_PATH with Cray Libs (added by Jerome 12:1:2015)
-prepend_path('LD_LIBRARY_PATH',"/opt/cray/xpmem/0.1-2.0502.57015.1.15.ari/lib64")
-prepend_path('LD_LIBRARY_PATH',"/opt/cray/dmapp/7.0.1-1.0502.10246.8.47.ari/lib64")
-prepend_path('LD_LIBRARY_PATH',"/opt/cray/pmi/5.0.8-1.0000.10843.170.1.ari/lib64")
-prepend_path('LD_LIBRARY_PATH',"/opt/cray/ugni/6.0-1.0502.10245.9.9.ari/lib64")
-prepend_path('LD_LIBRARY_PATH',"/opt/cray/udreg/2.3.2-1.0502.9889.2.20.ari/lib64")
+prepend_path('LD_LIBRARY_PATH',"/opt/cray/xpmem/default/lib64")
+prepend_path('LD_LIBRARY_PATH',"/opt/cray/dmapp/default/lib64")
+prepend_path('LD_LIBRARY_PATH',"/opt/cray/pmi/default/lib64")
+prepend_path('LD_LIBRARY_PATH',"/opt/cray/ugni/default/lib64")
+prepend_path('LD_LIBRARY_PATH',"/opt/cray/udreg/default/lib64")
 
 local base_dir           = "%{INSTALL_DIR}"
 prepend_path("PATH", pathJoin(base_dir, "bin"))
-prepend_path("LD_LIBRARY_PATH", "/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0/lib")
-prepend_path( "MODULEPATH"            , "%{MODULE_PREFIX}/%{comp_fam_ver}/cray_mpich_7_2/modulefiles")
+prepend_path( "MODULEPATH"    , "%{MODULE_PREFIX}/%{comp_fam_ver}/cray_mpich_7_2/modulefiles")
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
@@ -262,7 +289,6 @@ EOF
   # Check the syntax of the generated lua modulefile
   %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
-#--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
@@ -270,32 +296,27 @@ EOF
 #------------------------
 %if %{?BUILD_PACKAGE}
 %files package
-#------------------------
 
   %defattr(-,root,install,)
   # RPM package contains files within these directories
   %{INSTALL_DIR}
 
-#-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
 %files modulefile 
-#---------------------------
 
   %defattr(-,root,install,)
   # RPM modulefile contains files within these directories
   %{MODULE_DIR}
 
-#--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
 
 ########################################
 ## Fix Modulefile During Post Install ##
-########################################
 %post %{PACKAGE}
 export PACKAGE_POST=1
 %include post-defines.inc
@@ -305,8 +326,6 @@ export MODULEFILE_POST=1
 %preun %{PACKAGE}
 export PACKAGE_PREUN=1
 %include post-defines.inc
-########################################
-############ Do Not Remove #############
 ########################################
 
 #---------------------------------------
