@@ -88,6 +88,9 @@ rpm -qi <rpm-name>
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+%setup -n %{pkg_base_name}-%{pkg_version}
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -101,7 +104,6 @@ rpm -qi <rpm-name>
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n %{pkg_base_name}-%{pkg_version}
 
 
 #---------------------------------------
