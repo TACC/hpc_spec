@@ -99,9 +99,9 @@ echo "Nothing to build"
 export TMPDIR=/var/tmp
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 #   -toolkit            : Install CUDA 6.0 Toolkit
-#   -toolkitpath=<PATH> : Specify path for CUDA location (default: /usr/local/cuda-7.0)
+#   -toolkitpath=<PATH> : Specify path for CUDA location (default: /usr/local/cuda-7.5)
 #   -samples            : Install CUDA 6.0 Samples
-#   -samplespath=<PATH> : Specify path for Samples location (default: /usr/local/cuda-7.0/samples)
+#   -samplespath=<PATH> : Specify path for Samples location (default: /usr/local/cuda-7.5/samples)
 %global install_options -silent -override -toolkit -toolkitpath=$RPM_BUILD_ROOT%{INSTALL_DIR} -samples -samplespath=$RPM_BUILD_ROOT%{INSTALL_DIR}/samples
 %ifarch %{ix86}
 bash %{SOURCE0} %{install_options}
@@ -125,10 +125,10 @@ find $RPM_BUILD_ROOT%{INSTALL_DIR}/samples -name Makefile |
 find $RPM_BUILD_ROOT%{INSTALL_DIR}/pkgconfig -name "*.pc" | 
    xargs sed -i -e s,$RPM_BUILD_ROOT,,g
 # Remove shipped cairo library
-rm $RPM_BUILD_ROOT%{INSTALL_DIR}/libnsight/libcairo-swt.so
-rm $RPM_BUILD_ROOT%{INSTALL_DIR}/libnvvp/libcairo-swt.so
-rm $RPM_BUILD_ROOT%{INSTALL_DIR}/bin/uninstall_cuda_7.0.pl
-rm $RPM_BUILD_ROOT%{INSTALL_DIR}/bin/.uninstall_manifest_do_not_delete.txt
+rm -f $RPM_BUILD_ROOT%{INSTALL_DIR}/libnsight/libcairo-swt.so
+rm -f $RPM_BUILD_ROOT%{INSTALL_DIR}/libnvvp/libcairo-swt.so
+rm -f $RPM_BUILD_ROOT%{INSTALL_DIR}/bin/uninstall_cuda_7.5.pl
+rm -f $RPM_BUILD_ROOT%{INSTALL_DIR}/bin/.uninstall_manifest_do_not_delete.txt
 
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}/
 
@@ -211,7 +211,7 @@ EOF
 %{INSTALL_DIR}/bin/cudafe++
 %{INSTALL_DIR}/bin/cuda-gdb
 %{INSTALL_DIR}/bin/cuda-gdbserver
-%{INSTALL_DIR}/bin/cuda-install-samples-7.0.sh
+%{INSTALL_DIR}/bin/cuda-install-samples-7.5.sh
 %{INSTALL_DIR}/bin/cuda-memcheck
 %{INSTALL_DIR}/bin/cuobjdump
 %{INSTALL_DIR}/bin/fatbinary
@@ -235,6 +235,7 @@ EOF
 %{INSTALL_DIR}/jre
 %{INSTALL_DIR}/samples
 %{INSTALL_DIR}/share
+%{INSTALL_DIR}/version.txt
 %{MODULE_DIR}
 
 #%files libs
