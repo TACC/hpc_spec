@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   proprietary
 Group:     Compiler
 URL:       https://software.intel.com/en-us/intel-compilers
@@ -214,10 +214,10 @@ setenv( "MKLROOT" ,                  mklRoot )
 --MKLROOT=
 --/opt/apps/intel/16/compilers_and_libraries_2016.0.109/linux/mkl
 
-prepend_path( "MANPATH" ,             pathJoin( base ,       "man/common" ) )
-prepend_path( "MANPATH" ,             pathJoin( installDir , "man/en_US" ) )
 prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2016/en/debugger/gdb-ia/man" ) )
 prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2016/en/debugger/gdb-igfx/man" ) )
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2016/en/man/common" ) )
+prepend_path( "MANPATH" ,             pathJoin( mklRoot ,    "benchmarks/mp_linpack/man" ) )
 
 --MANPATH=
 --/opt/apps/intel/16/man/common
