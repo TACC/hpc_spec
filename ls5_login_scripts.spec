@@ -5,7 +5,7 @@
 Summary:   Standard LS5 TACC Login scripts
 Name:      %{name_prefix}-%{base_name}
 Version:   1.0
-Release:   5
+Release:   6
 License:   Proprietary
 Group:     System Environment/Base
 Source0:   %{base_name}-%{version}.tar.gz
@@ -46,7 +46,9 @@ mkdir -p $RPM_BUILD_ROOT%{PROFILE_D_PATH}  $RPM_BUILD_ROOT/etc/tacc/zsh
 
 PROFILE_D_FILES="
                profile.d/00_shell_startup.SH
+               profile.d/00_shell_startup.CSH
                profile.d/work_archive.sh
+               profile.d/work_archive.csh
                profile.d/zzz00_lmod.sh
                profile.d/zzz84_tacc.sh
                profile.d/zzz87_tacc_login.sh
@@ -127,8 +129,11 @@ done
 
 %files -n %{name}-compute
 %defattr(755,root,root,)
+%{PROFILE_D_PATH}/00_shell_startup.CSH
 %{PROFILE_D_PATH}/00_shell_startup.SH
+%{PROFILE_D_PATH}/work_archive.csh
 %{PROFILE_D_PATH}/work_archive.sh
+%{PROFILE_D_PATH}/zzz00_lmod.csh
 %{PROFILE_D_PATH}/zzz00_lmod.sh
 %{PROFILE_D_PATH}/zzz84_tacc.sh
 %{PROFILE_D_PATH}/zzz87_tacc_login.sh
@@ -143,8 +148,11 @@ done
 
 %files -n %{name}-login
 %defattr(755,root,root,)
+%{PROFILE_D_PATH}/00_shell_startup.CSH
 %{PROFILE_D_PATH}/00_shell_startup.SH
+%{PROFILE_D_PATH}/work_archive.csh
 %{PROFILE_D_PATH}/work_archive.sh
+%{PROFILE_D_PATH}/zzz00_lmod.csh
 %{PROFILE_D_PATH}/zzz00_lmod.sh
 %{PROFILE_D_PATH}/zzz84_tacc.sh
 %{PROFILE_D_PATH}/zzz87_tacc_login.sh
