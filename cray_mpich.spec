@@ -43,7 +43,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3
+Release:   4
 License:   GPL
 Group:     Development/Tools
 Packager:  TACC - carlos@tacc.utexas.edu,cproctor@tacc.utexas.edu
@@ -189,8 +189,7 @@ will be automatically available for compiling MPI applications:
  mpicxx (C++     source)
  
 If you wish to take advantage of the DMAPP optimizations for small payloads
-(<=16 bytes) in MPI_Allreduce you will need to load the hugetlbfs module and
-follow the help instructions, as well as adding libdmapp to your link line.
+(<=16 bytes) in MPI_Allreduce you will need to add libdmapp to your link line.
 
 Version  7.2.4
 ]]
