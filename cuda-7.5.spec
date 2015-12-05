@@ -15,7 +15,7 @@
 
 Summary:	NVIDIA CUDA Toolkit libraries
 Version:	7.5
-Name:		cuda-%{version}
+Name:		tacc-cuda-%{version}
 Release:        18	
 License:	Redistributable, no modification permitted
 Group:		Development/Languages
