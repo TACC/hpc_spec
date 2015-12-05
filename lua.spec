@@ -1,5 +1,5 @@
 
-%define name_prefix tacc-comp
+%define name_prefix tacc
 %define base_name lua
 
 Summary:   Local Lua binary install
@@ -17,7 +17,7 @@ Buildroot: /var/tmp/%{base_name}-%{version}-buildroot
 
 %define APPS        /opt/apps
 %define PKG_BASE    %{APPS}/%{base_name}
-%define MODULES     modulefiles
+%define MODULES     tools/modulefiles
 
 %define INSTALL_DIR %{PKG_BASE}/%{version}
 %define MODULE_DIR  %{APPS}/%{MODULES}/%{base_name}

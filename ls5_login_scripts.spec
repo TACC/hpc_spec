@@ -1,11 +1,11 @@
 
-%define name_prefix tacc-comp
+%define name_prefix tacc
 %define base_name ls5_login_scripts
 
 Summary:   Standard LS5 TACC Login scripts
 Name:      %{name_prefix}-%{base_name}
 Version:   1.0
-Release:   3
+Release:   5
 License:   Proprietary
 Group:     System Environment/Base
 Source0:   %{base_name}-%{version}.tar.gz
@@ -46,14 +46,17 @@ mkdir -p $RPM_BUILD_ROOT%{PROFILE_D_PATH}  $RPM_BUILD_ROOT/etc/tacc/zsh
 
 PROFILE_D_FILES="
                profile.d/00_shell_startup.SH
+               profile.d/work_archive.sh
                profile.d/zzz00_lmod.sh
                profile.d/zzz84_tacc.sh
+               profile.d/zzz87_tacc_login.sh
+               profile.d/zzz88_taccinfo.sh
+               profile.d/zzz89_tacc_tips.sh
+               profile.d/zzz90_compute_modules.sh
                profile.d/zzz90_login_modules.sh
 "
 
-#rm -rf $RPM_BUILD_ROOT/usr/local/bin          $RPM_BUILD_ROOT/usr/local/etc/
-#mkdir -p                                      $RPM_BUILD_ROOT/usr/local/bin
-#find fsMounted workdir | cpio -pduv --owner=build: $RPM_BUILD_ROOT/usr/local/bin/
+find fsMounted workdir archive | cpio -pduv --owner=build: $RPM_BUILD_ROOT/etc/tacc
 
 
 find ./profile.d $PROFILE_D_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT%{PROFILE_D_PATH}/..
@@ -93,39 +96,67 @@ find $SHELL_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/etc/tacc
 #find $ZSH_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/etc/tacc
 
 
-###%build
+MPATH_TACC="/opt/apps/modulefiles /opt/apps/tools/modulefiles"
+MPATH_CRAY="/opt/apps/cray_world/modulefiles /opt/cray/modulefiles /opt/cray/ari/modulefiles  /opt/cray/craype/default/modulefiles /opt/modulefiles /opt/apps/tools/modulefiles"
 
-MPATH="/opt/apps/modulefiles /opt/cray/modulefiles /opt/cray/ari/modulefiles  /opt/cray/craype/default/modulefiles /opt/modulefiles"
-
-#MODULEPATH="/opt/apps/xsede/modulefiles /opt/apps/modulefiles /opt/modulefiles"
-
-for i in $RPM_BUILD_ROOT/etc/profile.d/zzz00_lmod.sh; do
+for i in $RPM_BUILD_ROOT/etc/profile.d/{zzz00_lmod,zzz87_tacc_login}.sh; do
   mv ${i} ${i}.tmp
-  sed -e "s|@modulepath@|$MPATH|g" ${i}.tmp > ${i}
+  sed -e "s|@modulepath_tacc@|$MPATH_TACC|g" \
+      -e "s|@modulepath_cray@|$MPATH_CRAY|g" \
+    ${i}.tmp > ${i}
   rm ${i}.tmp
 done
 
+myhost=$(uname -n)
+myhost=${myhost%.tacc.utexas.edu}
+first=${myhost%%.*}
+SYSHOST=${myhost#*.}
+
+SYSTEM_DIRS="work scratch"
+ALIAS_DIRS="work scratch stockyard"
+
+#for i in $RPM_BUILD_ROOT/etc/profile.d/{z*,work_archive}.{sh,csh}; do
+for i in $RPM_BUILD_ROOT/etc/profile.d/{z*,work_archive}.sh; do
+  mv ${i} ${i}.tmp
+  sed -e "s|@system_dir_create_list@|$ALIAS_DIRS|g"  \
+      -e "s|@system_dir_list@|$SYSTEM_DIRS|g"        \
+          ${i}.tmp > ${i}
+  rm ${i}.tmp
+done
 
 
 %files -n %{name}-compute
 %defattr(755,root,root,)
 %{PROFILE_D_PATH}/00_shell_startup.SH
+%{PROFILE_D_PATH}/work_archive.sh
 %{PROFILE_D_PATH}/zzz00_lmod.sh
 %{PROFILE_D_PATH}/zzz84_tacc.sh
-%{PROFILE_D_PATH}/zzz90_login_modules.sh
+%{PROFILE_D_PATH}/zzz87_tacc_login.sh
+%{PROFILE_D_PATH}/zzz88_taccinfo.sh
+%{PROFILE_D_PATH}/zzz90_compute_modules.sh
 /etc/tacc/bash.bashrc
 /etc/tacc/profile
 /etc/tacc/tacc_functions
+/etc/tacc/archive
+/etc/tacc/fsMounted
+/etc/tacc/workdir
 
 %files -n %{name}-login
 %defattr(755,root,root,)
 %{PROFILE_D_PATH}/00_shell_startup.SH
+%{PROFILE_D_PATH}/work_archive.sh
 %{PROFILE_D_PATH}/zzz00_lmod.sh
 %{PROFILE_D_PATH}/zzz84_tacc.sh
+%{PROFILE_D_PATH}/zzz87_tacc_login.sh
+%{PROFILE_D_PATH}/zzz88_taccinfo.sh
+%{PROFILE_D_PATH}/zzz89_tacc_tips.sh
 %{PROFILE_D_PATH}/zzz90_login_modules.sh
 /etc/tacc/bash.bashrc
 /etc/tacc/profile
 /etc/tacc/tacc_functions
+/etc/tacc/archive
+/etc/tacc/fsMounted
+/etc/tacc/workdir
 
 %clean
 rm -rf $RPM_BUILD_ROOT

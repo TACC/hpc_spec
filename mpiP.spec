@@ -96,15 +96,10 @@ mpiP: Lightweight, Scalable MPI Profiling
 %install
 
 %include system-load.inc
-#%include compiler-load.inc
-#%include mpi-load.inc
-
 module purge
 
-module load taccswitch
-source taccswitch
-module load intel
-module load cmpich
+%include compiler-load.inc
+%include mpi-load.inc
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -112,7 +107,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 export ARCH=x86_64
 export CC=mpicc
 export F77=mpif90
-export PATH=/opt/apps/tacc/bin/:$PATH
 #------------------------
 %if %{?BUILD_PACKAGE}
 #------------------------

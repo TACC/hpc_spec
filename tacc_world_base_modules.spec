@@ -1,7 +1,6 @@
 #
 # W. Cyrus Proctor
-# Antonio Gomez
-# 2015-08-25
+# 2015-11-20
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -21,37 +20,37 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name cmpich
-%define MODULE_VAR    CMPICH
+%define pkg_base_name TACC
+%define MODULE_VAR    TACC
 
 # Create some macros (spec file variables)
-%define major_version 7
-%define minor_version 2
-%define micro_version 4
+%define major_version 1
+%define minor_version 0
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{major_version}.%{minor_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-%include compiler-defines.inc
+#%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+%include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
 
 ############ Do Not Change #############
-Name:      %{pkg_name}
+# hacked for reasonable name WCP 2015-12-01
+Name:      tacc-tacc_world_base_modules
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1
 License:   GPL
-Group:     Development/Tools
+Group:     Module Magic
 Packager:  TACC - cproctor@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
@@ -73,7 +72,7 @@ Group: Lmod/Modulefiles
 This is the long description for the modulefile RPM...
 
 %description
-Cray-MPICH wrappers
+Welcome to the TACC Module way!
 
 #---------------------------------------
 %prep
@@ -108,10 +107,10 @@ Cray-MPICH wrappers
 #---------------------------------------
 
 # Setup modules
-%include system-load.inc
+# Nothing to do!
 
 # Insert necessary module commands
-module purge
+# None to have!
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -133,29 +132,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-  
-  # Create some dummy directories and files for fun
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
- 
-cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicc << 'EOF'
-#!/usr/bin/env bash
-icc -I/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0/include -L/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0/lib -lmpich_intel $@
-EOF
-cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicxx << 'EOF'
-#!/usr/bin/env bash
-icpc -I/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0/include -L/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0/lib -lmpichcxx_intel $@
-EOF
-cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90 << 'EOF'
-#!/usr/bin/env bash
-ifort -I/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0/include -L/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0/lib -lmpichf90_intel $@
-EOF
 
-ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpich_intel.so $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpi_dbg.so
-ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpichcxx_intel.so $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpigc4.so
-ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpichf90_intel.so $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpigf.so
-ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpich_intel.so $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpi.so
-  
+  # Nothing to see here!
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -178,56 +156,65 @@ ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpich_intel.so $RPM_BUILD_
   
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
-Cray-MPICH Wrappers.
+local helpMsg = [[
+The %{MODULE_VAR} modulefile defines the default paths and environment
+variables needed to use the local software and utilities
+available, placing them after the vendor-supplied
+paths in PATH and MANPATH.
 ]]
 
---help(help_msg)
-help(help_msg)
+help(helpMsg)
 
-whatis("Name: cmpich")
-whatis("Version: %{pkg_version}%{dbg}")
 
--- Create environment variables.
-setenv("CRAY_MPICH2_BASEDIR","/opt/cray/mpt/7.2.4/gni")
-setenv("CRAY_MPICH2_DIR","/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0")
-setenv("CRAY_MPICH2_ROOTDIR","/opt/cray/mpt/7.2.4")
-setenv("CRAY_MPICH2_VER","7.2.4")
-prepend_path("MANPATH","/opt/cray/mpt/7.2.4/gni/man/mpich2")
-setenv("MPICH_DIR","/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0")
-prepend_path("PATH","/opt/cray/mpt/7.2.4/gni/bin")
-setenv("PE_CXX_PKGCONFIG_LIBS","mpichcxx")
-setenv("PE_FORTRAN_PKGCONFIG_LIBS","mpichf90")
-setenv("PE_INTEL_FIXED_PKGCONFIG_PATH","/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0/lib/pkgconfig")
-setenv("PE_MPICH_CXX_PKGCONFIG_LIBS","mpichcxx")
-setenv("PE_MPICH_DIR_CRAY_DEFAULT64","64")
-setenv("PE_MPICH_DIR_PGI_DEFAULT64","64")
-setenv("PE_MPICH_FIXED_PRGENV","INTEL")
-setenv("PE_MPICH_FORTRAN_PKGCONFIG_LIBS","mpichf90")
-setenv("PE_MPICH_GENCOMPILERS_CRAY","8.3")
-setenv("PE_MPICH_GENCOMPILERS_GNU","4.9 4.8")
-setenv("PE_MPICH_GENCOMPILERS_PGI","15.3")
-setenv("PE_MPICH_GENCOMPS_CRAY","83")
-setenv("PE_MPICH_GENCOMPS_GNU","49 48")
-setenv("PE_MPICH_GENCOMPS_PGI","153")
-setenv("PE_MPICH_MODULE_NAME","cray-mpich")
-setenv("PE_MPICH_MULTITHREADED_LIBS_multithreaded","_mt")
-setenv("PE_MPICH_NV_LIBS","")
-setenv("PE_MPICH_NV_LIBS_nvidia20","-lcudart")
-setenv("PE_MPICH_NV_LIBS_nvidia35","-lcudart")
-setenv("PE_MPICH_PKGCONFIG_LIBS","mpich")
-setenv("PE_MPICH_PKGCONFIG_VARIABLES","PE_MPICH_NV_LIBS_@accelerator@:PE_MPICH_MULTITHREADED_LIBS_@multithreaded@")
-setenv("PE_MPICH_TARGET_VAR_nvidia20","-lcudart")
-setenv("PE_MPICH_TARGET_VAR_nvidia35","-lcudart")
-setenv("PE_MPICH_VOLATILE_PKGCONFIG_PATH","/opt/cray/mpt/7.2.4/gni/mpich2-@PRGENV@@PE_MPICH_DIR_DEFAULT64@/@PE_MPICH_GENCOMPS@/lib/pkgconfig")
-setenv("PE_MPICH_VOLATILE_PRGENV","CRAY GNU PGI")
-prepend_path("PE_PKGCONFIG_LIBS","mpich")
-prepend_path("PE_PKGCONFIG_PRODUCTS","PE_MPICH")
+--------------------------------------------------------------------------
+-- Define TACC_SYSTEM and TACC_DOMAIN
 
-local base_dir           = "%{INSTALL_DIR}"
-prepend_path("PATH", pathJoin(base_dir, "bin"))
-prepend_path("LD_LIBRARY_PATH", pathJoin(base_dir, "lib"))
-prepend_path( "MODULEPATH"            , "%{MODULE_PREFIX}/%{comp_fam_version}/cmpich_7_2/modulefiles")
+local syshost = posix.uname("%n"):gsub("%.tacc%.utexas%.edu",""):gsub("^[^.]*%.","")
+local domain  = syshost
+
+if (domain:find("^ls%d$"))then
+   domain = "lonestar"
+end
+
+
+setenv(         "TACC_SYSTEM",  syshost)
+setenv(         "TACC_DOMAIN",  domain)
+
+if (os.getenv("USER") ~= "root") then
+  append_path("PATH",  ".")
+end
+
+load("intel")
+load("cray_mpich")
+
+setenv("APPS","/opt/apps")
+prepend_path("MANPATH","/usr/local/man:/usr/share/man:/usr/X11R6/man:/usr/kerberos/man:/usr/man")
+
+-- Environment change - assume single threaded to fix silly MKL
+if (mode() == "load" and os.getenv("OMP_NUM_THREADS") == nil) then
+  setenv("OMP_NUM_THREADS","1")
+end
+
+
+-- Create slurm environment variables.
+local base_dir           = "/opt/slurm/15.08.0"
+
+append_path( "PATH"            , pathJoin( base_dir, "bin")      )
+prepend_path("LD_LIBRARY_PATH" , pathJoin(base_dir, "lib")       )
+prepend_path("MANPATH"         , pathJoin(base_dir, "share/man") )
+prepend_path("MANPATH"         , "/usr/share/man"                )
+prepend_path("PERL5LIB"        , pathJoin(base_dir,"lib/perl5/site_perl/5.10.0/x86_64-linux-thread-multi"))
+-- setenv(      "SINFO_FORMAT"    , "%20P %5a %.10l %16F")
+-- setenv(      "SQUEUE_FORMAT"   , "%.18i %.9P %.9j %.8u %.2t %.10M %.6D %R")
+-- setenv(      "SQUEUE_SORT"     , "-t,e,S")
+
+setenv( "TACC_SLURM_DIR",                base_dir)
+setenv( "TACC_SLURM_INC",       pathJoin(base_dir, "include"))
+setenv( "TACC_SLURM_LIB",       pathJoin(base_dir, "lib"))
+setenv( "TACC_SLURM_BIN",       pathJoin(base_dir, "bin"))
+
+-- "Wimmy Wham Wham Wozzle!" -- Slurms MacKenzie
+
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
@@ -240,7 +227,7 @@ set     ModulesVersion      "%{version}"
 EOF
   
   # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  ####%{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------
 %endif # BUILD_MODULEFILE |

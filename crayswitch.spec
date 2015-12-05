@@ -138,7 +138,7 @@ if [ -f "$BASH_ENV" ]; then
   . $BASH_ENV
   module purge
   clearMT
-  export MODULEPATH=/opt/apps/modulefiles:/opt/cray/modulefiles:/opt/cray/ari/modulefiles:/opt/cray/craype/default/modulefiles:/opt/modulefiles
+  export MODULEPATH=/opt/apps/cray_world/modulefiles:/opt/cray/modulefiles:/opt/cray/ari/modulefiles:/opt/cray/craype/default/modulefiles:/opt/modulefiles:/opt/apps/tools/modulefiles
   module load TACC
 fi
 EOF

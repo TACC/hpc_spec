@@ -22,11 +22,11 @@
 %if "%{is_openmpi}" == "1" 
   %if %{undefined mpiV}
     %define mpi_label 2_x
-    %define mpi_module_version 2.x-dev-579-gde5086c
+    %define mpi_module_version 2.x-dev_686_g5616e12
   %endif
   %if "%{mpiV}" == "2_x"
     %define mpi_label 2_x
-    %define mpi_module_version 2.x-dev-579-gde5086c
+    %define mpi_module_version 2.x-dev_686_g5616e12
   %endif
   %define mpi_fam     openmpi
   %define mpi_fam_ver openmpi_%{mpi_label}
@@ -58,6 +58,20 @@
   %endif
   %define mpi_fam     cray_mpich
   %define mpi_fam_ver cray_mpich_%{mpi_label}
+  %define mpi_module  %{mpi_fam}/%{mpi_module_version}
+%endif
+
+%if "%{is_ampich}" == "1"
+  %if %{undefined mpiV}
+    %define mpi_label 3_2
+    %define mpi_module_version 3.2
+  %endif
+  %if "%{mpiV}" == "3_2"
+    %define mpi_label 3_2
+    %define mpi_module_version 3.2
+  %endif
+  %define mpi_fam     argonne_mpich
+  %define mpi_fam_ver argonne_mpich_%{mpi_label}
   %define mpi_module  %{mpi_fam}/%{mpi_module_version}
 %endif
 

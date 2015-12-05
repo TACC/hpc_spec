@@ -111,15 +111,13 @@ Awesome LBM package
 #---------------------------------------
 
 # Setup modules
-%include system-load.inc
-module rm PrgEnv-cray
-module load PrgEnv-intel
-module load cray-mpich
-module load craype-haswell
-module rm cray-libscih
-
-# Insert necessary module commands
 module purge
+%include system-load.inc
+%include compiler-load.inc
+%include mpi-load.inc
+
+module list
+echo $LD_LIBRARY_PATH
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"

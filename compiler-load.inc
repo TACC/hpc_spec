@@ -7,14 +7,7 @@ if [ -f "$BASH_ENV" ]; then
   . $BASH_ENV
   module purge
   clearMT
-  myhost=$(hostname -f)
-  myhost=${myhost%.tacc.utexas.edu}
-  SYSHOST=${myhost#*.}
-  MP_basic="/opt/apps/modulefiles:/opt/modulefiles"
-  MP_ls4="/share1/apps/teragrid/modulefiles:$MP_basic"
-  MP_longhorn=$MP_basic
-  MP_stampede="/opt/apps/xsede/modulefiles:$MP_basic"
-  eval "MP=\${MP_$SYSHOST}"
+  MP="/opt/apps/tools/modulefiles:/opt/apps/modulefiles"
 
   if [ -z "$MODULEPATH" ]; then
     export MODULEPATH=$(/opt/apps/lmod/lmod/libexec/addto --append MODULEPATH ${MP//:/ })

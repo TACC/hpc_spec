@@ -1,6 +1,6 @@
 #
 # W. Cyrus Proctor
-# 2015-11-20
+# 2015-12-01
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -20,8 +20,8 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name taccexp
-%define MODULE_VAR    TACCEXP
+%define pkg_base_name sge_wrapper
+%define MODULE_VAR    SGE_WRAPPER
 
 # Create some macros (spec file variables)
 %define major_version 1
@@ -36,7 +36,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+%include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -49,7 +49,7 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
 Release:   1
 License:   GPL
-Group:     Module Magic
+Group:     Development/Tools
 Packager:  TACC - cproctor@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
@@ -71,7 +71,7 @@ Group: Lmod/Modulefiles
 This is the long description for the modulefile RPM...
 
 %description
-Welcome to the TACC Module way!
+Wrap SGE commands to point users to user guide information.
 
 #---------------------------------------
 %prep
@@ -106,10 +106,8 @@ Welcome to the TACC Module way!
 #---------------------------------------
 
 # Setup modules
-%include system-load.inc
 
 # Insert necessary module commands
-module purge
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -119,6 +117,10 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+  mkdir -p $RPM_BUILD_ROOT/opt/apps/tacc/bin
+  mkdir -p %{INSTALL_DIR}
+  mount -t tmpfs tmpfs %{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -132,7 +134,77 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
 
-  # Nothing to see here!
+# Create generic wrapper script
+cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/sge_wrapper << "EOF"
+#!/usr/bin/env bash
+
+# Constants
+export zero=0
+export  one=1
+export    R='\033[1;31m' # Red
+export    G='\033[1;32m' # Green
+export   NC='\033[0m'    # No Color
+export  err="[ ${R}ERROR${NC} ]"
+
+# Print functions
+eprintf(){
+printf "${err} $@"
+}
+
+printf "\n"
+printf "=%.0s" {1..85}
+printf "\n"
+eprintf "You have invoked an SGE job scheduler-specific command:\n"
+eprintf "$0\n"
+eprintf "Lonestar5 uses the SLURM job scheduler\n"
+eprintf "For more information on appropriate SLURM commands\n"
+eprintf "please visit our user guide here:\n"
+eprintf "${G}https://portal.tacc.utexas.edu/user-guides/lonestar5#slurm-on-lonestar5${NC}\n"
+printf "=%.0s" {1..85}
+printf "\n"
+printf "\n"
+exit ${one}
+
+EOF
+chmod a+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/sge_wrapper
+
+
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qselect  
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qmake    
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qrsub    
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qstat    
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qrstat   
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qacct    
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qquota   
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qsh      
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qping    
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qtcsh    
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/showq    
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qhost    
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qconf    
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qrdel    
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qrsh     
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qmod     
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qhold    
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qalter   
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qresub   
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qsub     
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/sgepasswd
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qdel     
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qlogin   
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qrls     
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qmon     
+
+
+if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+fi
+
+cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+umount %{INSTALL_DIR}/
+
+
+
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -152,67 +224,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
-# Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local helpMsg = [[
-The %{MODULE_VAR} modulefile defines the default paths and environment
-variables needed to use the local software and utilities
-available, placing them after the vendor-supplied
-paths in PATH and MANPATH.
-]]
 
-help(helpMsg)
-
-
---------------------------------------------------------------------------
--- Define TACC_SYSTEM and TACC_DOMAIN
-
-local syshost = posix.uname("%n"):gsub("%.tacc%.utexas%.edu",""):gsub("^[^.]*%.","")
-local domain  = syshost
-
-if (domain:find("^ls%d$"))then
-   domain = "lonestar"
-end
-
-
-setenv(         "TACC_SYSTEM",  syshost)
-setenv(         "TACC_DOMAIN",  domain)
-
-append_path(    "PATH"       ,  ".")
-append_path(    "MANPATH"    ,  "/usr/local/man")
-
-setenv( "STTY_ARGS", "sane")
-setenv( "SYSTEM",    "linux")
-
-load("intel/16.0.109")
-load("impi/5.1.1")
-try_load("autotools")
-try_load("cmake")
-try_load("git")
-try_load("hwloc")
-
-setenv("APPS","/opt/apps/exp")
-prepend_path("MANPATH","/usr/local/man:/usr/share/man:/usr/X11R6/man:/usr/kerberos/man:/usr/man")
-prepend_path("PATH","%{INSTALL_DIR}/bin")
-
--- Environment change - assume single threaded to fix silly MKL
-if (mode() == "load" and os.getenv("OMP_NUM_THREADS") == nil) then
-  setenv("OMP_NUM_THREADS","1")
-end
-EOF
-  
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module3.1.1#################################################
-##
-## version file for %{BASENAME}%{version}
-##
-
-set     ModulesVersion      "%{version}"
-EOF
-  
-  # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+# Nothing to do!
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
@@ -227,6 +240,32 @@ EOF
   %defattr(-,root,install,)
   # RPM package contains files within these directories
   %{INSTALL_DIR}
+/opt/apps/tacc/bin/qselect  
+/opt/apps/tacc/bin/qmake    
+/opt/apps/tacc/bin/qrsub    
+/opt/apps/tacc/bin/qstat    
+/opt/apps/tacc/bin/qrstat   
+/opt/apps/tacc/bin/qacct    
+/opt/apps/tacc/bin/qquota   
+/opt/apps/tacc/bin/qsh      
+/opt/apps/tacc/bin/qping    
+/opt/apps/tacc/bin/qtcsh    
+/opt/apps/tacc/bin/showq    
+/opt/apps/tacc/bin/qhost    
+/opt/apps/tacc/bin/qconf    
+/opt/apps/tacc/bin/qrdel    
+/opt/apps/tacc/bin/qrsh     
+/opt/apps/tacc/bin/qmod     
+/opt/apps/tacc/bin/qhold    
+/opt/apps/tacc/bin/qalter   
+/opt/apps/tacc/bin/qresub   
+/opt/apps/tacc/bin/qsub     
+/opt/apps/tacc/bin/sgepasswd
+/opt/apps/tacc/bin/qdel     
+/opt/apps/tacc/bin/qlogin   
+/opt/apps/tacc/bin/qrls     
+/opt/apps/tacc/bin/qmon     
+
 
 #-----------------------
 %endif # BUILD_PACKAGE |

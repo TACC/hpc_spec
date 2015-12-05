@@ -1,6 +1,6 @@
 #
-# W. Cyrus Proctor
-# 2015-11-12
+# Antonio Gomez
+# 2015-02-02
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -10,23 +10,17 @@
 # VERBOSE=1       -> Print detailed information at install time
 # RPM_DBPATH      -> Path To Non-Standard RPM Database Location
 #
-# Typical Command-Line Example:
-# ./build_rpm.sh Bar.spec
-# cd ../RPMS/x86_64
-# rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
-# rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
-# rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: A Nice little relocatable skeleton spec file example.
+Summary: PAPI/Perfctr Library - Local TACC Build
 
 # Give the package a base name
-%define pkg_base_name slurm
-%define MODULE_VAR    SLURM
+%define pkg_base_name papi
+%define MODULE_VAR    PAPI
 
 # Create some macros (spec file variables)
-%define major_version 15
-%define minor_version 08
-%define micro_version 0
+%define major_version 5
+%define minor_version 4
+%define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -49,10 +43,10 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1
-License:   GPL
-Group:     Scheduler
-URL:       https://github.com/SchedMD/slurm
-Packager:  TACC - cproctor@tacc.utexas.edu
+License:   LGPL
+Group:     Development/Tools
+URL:       http://icl.cs.utk.edu/papi/
+Packager:  TACC - agomez@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -64,7 +58,9 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 Summary: The package RPM
 Group: Development/Tools
 %description package
-This is the long description for the package RPM...
+This package provides the perfctr hardware counter and PAPI
+library support.  It must be built against a kernel with the
+appropriate perfctr patches.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
@@ -73,8 +69,10 @@ Group: Lmod/Modulefiles
 This is the long description for the modulefile RPM...
 
 %description
-This is specifically an rpm for the slurm modulefile
-used on LS5.
+This package provides the perfctr hardware counter and PAPI
+library support.  It must be built against a kernel with the
+appropriate perfctr patches.
+
 
 #---------------------------------------
 %prep
@@ -97,6 +95,8 @@ used on LS5.
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
+
+%setup -n %{pkg_base_name}-%{pkg_version}
 
 
 #---------------------------------------
@@ -131,12 +131,13 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   ########### Do Not Remove #############
   #######################################
 
-  #========================================
-  # Insert Build/Install Instructions Here
-  #========================================
- 
-  # Nothing to do!
   
+  cd src
+  export ARCH=x86_64
+  ./configure --prefix=%{INSTALL_DIR} --with-perf_events
+  make
+  make DESTDIR=$RPM_BUILD_ROOT install
+
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -159,44 +160,49 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_msg=[[
-Slurm is an open-source workload manager designed for Linux clusters of all
-sizes. It provides three key functions. First it allocates exclusive and/or
-non-exclusive access to resources (computer nodes) to users for some duration
-of time so they can perform work. Second, it provides a framework for starting,
-executing, and monitoring work (typically a parallel job) on a set of allocated
-nodes. Finally, it arbitrates contention for resources by managing a queue of
-pending work.
+The %{MODULE_VAR} module file defines the following environment variables:
+TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC for
+the location of the %{name} distribution, libraries,
+and include files, respectively.
 
-The %{MODULE_VAR} module defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
-TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
-include files, and tools respectively.
+To use the %{MODULE_VAR} library, compile the source code with the option:
+-I\$TACC_%{MODULE_VAR}_INC
+add the following options to the link step:
+-Wl,-rpath,\$TACC_%{MODULE_VAR}_LIB -L\$TACC_%{MODULE_VAR}_LIB -lpapi
 
-Version %{version}
+The -Wl,-rpath,\$TACC_%{MODULE_VAR}_LIB option is not required, however,
+if it is used, then this module will not have to be loaded
+to run the program during future login sessions.
+
+Version %{pkg_version}
 ]]
 
 --help(help_msg)
 help(help_msg)
 
-whatis("Name: Slurm")
-whatis("Version: %{version}")
+whatis("PAPI: Performance Application Programming Interface")
+whatis("Version: %{pkg_version}%{dbg}")
+whatis("Category: library, performance measurement")
+whatis("Keywords: Profiling, Library, Performance Measurement")
+whatis("Description: Interface to monitor performance counter hardware for quantifying application behavior")
+whatis("URL: http://icl.cs.utk.edu/papi/")
+
+
+%if "%{is_debug}" == "1"
+setenv("TACC_%{MODULE_VAR}_DEBUG","1")
+%endif
 
 -- Create environment variables.
-local base_dir           = "/opt/slurm/15.08.0"
+local papi_dir           = "%{INSTALL_DIR}"
 
-prepend_path("PATH",             pathJoin(base_dir, "bin")       )
-prepend_path("LD_LIBRARY_PATH" , pathJoin(base_dir, "lib")       )
-prepend_path("MANPATH"         , pathJoin(base_dir, "share/man") )
-prepend_path("MANPATH"         , "/usr/share/man"                )
-prepend_path("PERL5LIB"        , pathJoin(base_dir,"lib/perl5/site_perl/5.10.0/x86_64-linux-thread-multi"))
-setenv(      "SINFO_FORMAT"    , "%20P %5a %.10l %16F")
-setenv(      "SQUEUE_FORMAT"   , "%.18i %.9P %.9j %.8u %.2t %.10M %.6D %R")
-setenv(      "SQUEUE_SORT"     , "-t,e,S")
-
-setenv( "TACC_SLURM_DIR",                base_dir)
-setenv( "TACC_SLURM_INC",       pathJoin(base_dir, "include"))
-setenv( "TACC_SLURM_LIB",       pathJoin(base_dir, "lib"))
-setenv( "TACC_SLURM_BIN",       pathJoin(base_dir, "bin"))
+family("papi")
+prepend_path(    "PATH",                pathJoin(papi_dir, "bin"))
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(pai_dir, "lib"))
+prepend_path(    "MANPATH",             pathJoin(papi_dir, "share/man"))
+setenv( "TACC_%{MODULE_VAR}_DIR",                papi_dir)
+setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(papi_dir, "lib"))
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(papi_dir, "bin"))
+setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(papi_dir, "include"))
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'

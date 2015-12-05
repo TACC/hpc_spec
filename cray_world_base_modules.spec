@@ -1,7 +1,6 @@
 #
 # W. Cyrus Proctor
-# Antonio Gomez
-# 2015-08-25
+# 2015-11-20
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -21,13 +20,12 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name Bar
-%define MODULE_VAR    BAR
+%define pkg_base_name TACC
+%define MODULE_VAR    TACC
 
 # Create some macros (spec file variables)
 %define major_version 1
-%define minor_version 1
-%define micro_version 0
+%define minor_version 0
 
 %define pkg_version %{major_version}.%{minor_version}
 
@@ -38,22 +36,24 @@ Summary: A Nice little relocatable skeleton spec file example.
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+%include name-defines-noreloc.inc
+#### Note the cray_world addition to separate the cray_world from tacc_world in /opt/apps
+%define MODULE_DIR      %{MODULE_PREFIX}/cray_world/%{MODULE_SUFFIX}
 ########################################
 ############ Do Not Remove #############
 ########################################
 
 ############ Do Not Change #############
-Name:      %{pkg_name}
+# hacked for reasonable name WCP 2015-12-03
+Name:      tacc-cray_world_base_modules
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1
 License:   GPL
-Group:     Development/Tools
-URL:       http://www.gnu.org/software/bar
-Packager:  TACC - agomez@tacc.utexas.edu, cproctor@tacc.utexas.edu
+Group:     Module Magic
+Packager:  TACC - cproctor@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -74,10 +74,7 @@ Group: Lmod/Modulefiles
 This is the long description for the modulefile RPM...
 
 %description
-The longer-winded description of the package that will 
-end in up inside the rpm and is queryable if installed via:
-rpm -qi <rpm-name>
-
+Welcome to the Cray Module way!
 
 #---------------------------------------
 %prep
@@ -88,9 +85,6 @@ rpm -qi <rpm-name>
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-%setup -n %{pkg_base_name}-%{pkg_version}
-
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -105,7 +99,6 @@ rpm -qi <rpm-name>
 #--------------------------
 
 
-
 #---------------------------------------
 %build
 #---------------------------------------
@@ -116,10 +109,10 @@ rpm -qi <rpm-name>
 #---------------------------------------
 
 # Setup modules
-%include system-load.inc
+# Nothing to do!
 
 # Insert necessary module commands
-module purge
+# None to have!
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -141,15 +134,9 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-  
-  # Create some dummy directories and files for fun
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
-  
-  # Copy everything from tarball over to the installation directory
-  cp * $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
+
+  # Nothing to see here!
+
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -158,6 +145,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #---------------------------
 %if %{?BUILD_MODULEFILE}
 #---------------------------
+
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
   
@@ -170,47 +158,86 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
-The %{MODULE_VAR} module defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
-TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
-include files, and tools respectively.
-]]
+#### Note modulefile name is only version number with no .lua for tmod
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version} << 'EOF'
+proc ModulesHelp { } {
+puts stderr "The TACC modulefile defines the default paths and environment"
+puts stderr "variables needed to use the local Cray software and utilities"
+puts stderr "available, placing them after the vendor-supplied"
+puts stderr "paths in PATH and MANPATH.:"
+}
 
---help(help_msg)
-help(help_msg)
+proc inMPath { path } {
+    global env
+    if { ! [file exists $path] } {
+       return 0
+    }
+    if {[info exists env(MODULEPATH)]} {
+       set separator ":"
+       foreach dir [split $env(MODULEPATH) $separator] {
+         if { $dir == $path } {
+           return 1
+         }
+       }
+    } 
+    return 0
+}
 
-whatis("Name: bar")
-whatis("Version: %{pkg_version}%{dbg}")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
+setenv ESWRAP_LOGIN login0
 
--- Create environment variables.
-local bar_dir           = "%{INSTALL_DIR}"
+if [module-info mode load] {
+     if { ! [inMPath /opt/modulefiles] } {
+        module use   /opt/modulefiles
+     }
+     if { ! [inMPath /opt/cray/ari/modulefiles] } {
+        module use   /opt/cray/ari/modulefiles
+     }
+     if { [file exists /opt/cray/ari/modulefiles/switch] } {
+        module load switch
+     }
+     ### WCP 2015-12-01 Don't load Base-opts if you want typical compute module env
+     #if { [file exists /opt/modulefiles/Base-opts] } {
+     #   module load Base-opts
+     #}
 
-family("bar")
-prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "lib"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/bar1_1/modulefiles")
-setenv( "TACC_%{MODULE_VAR}_DIR",                bar_dir)
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(bar_dir, "include"))
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(bar_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(bar_dir, "bin"))
+     if { ! [inMPath /opt/cray/craype/default/modulefiles] } {
+        module use   /opt/cray/craype/default/modulefiles
+     }
+     module load craype-network-aries PrgEnv-intel cray-mpich craype-haswell
+
+     ### WCP 2015-12-01 Don't load cray slurm -- see tacc slurm below
+     #if { [file exists /opt/modulefiles/slurm] } {
+     #   module load slurm
+     #}
+}
+
+if [ module-info mode remove ] {
+     #module del slurm craype-haswell cray-mpich PrgEnv-intel craype-network-aries 
+     module del craype-haswell cray-mpich PrgEnv-intel craype-network-aries 
+     #module del Base-opts switch
+     module del switch
+}
+
+### WCP 2015-12-01 Add tacc slurm information instead.
+set base_dir "/opt/slurm/15.08.0"
+append-path PATH             "$base_dir/bin"
+prepend-path LD_LIBRARY_PATH "$base_dir/lib"
+prepend-path MANPATH         "$base_dir/share/man"
+prepend-path MANPATH         "/usr/share/man"
+prepend-path PERL5LIB        "$base_dir/lib/perl5/site_perl/5.10.0/x86_64-linux-thread-multi"
+## setenv SINFO_FORMAT          {%20P %5a %.10l %16F}
+## setenv SQUEUE_FORMAT         {%.18i %.9P %.9j %.8u %.2t %.10M %.6D %R}
+## setenv SQUEUE_SORT           {-t,e,S}
+
+setenv TACC_SLURM_DIR        "$base_dir"
+setenv TACC_SLURM_INC        "$base_dir/include"
+setenv TACC_SLURM_LIB        "$base_dir/lib"
+setenv TACC_SLURM_BIN        "$base_dir/bin"
+
+# "Wimmy Wham Wham Wozzle!" -- Slurms MacKenzie
+
 EOF
   
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module3.1.1#################################################
-##
-## version file for %{BASENAME}%{version}
-##
-
-set     ModulesVersion      "%{version}"
-EOF
-  
-  # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
