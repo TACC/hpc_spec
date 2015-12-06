@@ -27,8 +27,8 @@ Summary: A Nice little relocatable skeleton spec file example.
 # Create some macros (spec file variables)
 %define major_version 2
 %define minor_version x
-%define micro_version dev_686_g5616e12
-%define micro_version_dash dev-686-g5616e12
+%define micro_version dev_693_g1960f2c
+%define micro_version_dash dev-693-g1960f2c
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 %define pkg_version_dash %{major_version}.%{minor_version}.%{micro_version_dash}
@@ -40,7 +40,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines-hidden.inc
+%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -51,7 +51,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   BSD
 Group:     MPI
 URL:       https://www.open-mpi.org
@@ -256,7 +256,7 @@ prepend_path( "PATH"                  , pathJoin( base, "bin" ))
 prepend_path( "LD_LIBRARY_PATH"       , pathJoin( base, "lib" ))
 prepend_path( "LD_LIBRARY_PATH"       , "/opt/cray/pmi/5.0.8-1.0000.10843.170.1.ari/lib64")
 prepend_path( "MANPATH"               , pathJoin( base, "share/man" ))
-prepend_path( "MODULEPATH"            , "%{MODULE_PREFIX}/%{comp_fam_verion}/ompi_2_x/modulefiles")
+prepend_path( "MODULEPATH"            , "%{MODULE_PREFIX}/%{comp_fam_ver}/ompi_2_x/modulefiles")
 
 setenv(       "TACC_OPENMPI_DIR"        , base )
 setenv(       "TACC_OPENMPI_BIN"        , pathJoin( base, "bin" ))
@@ -276,9 +276,10 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 set     ModulesVersion      "%{version}"
 EOF
   
-  # Check the syntax of the generated lua modulefile
-  ### only check when not a hidden module
-  ### %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %endif
 
 #--------------------------
 %endif # BUILD_MODULEFILE |

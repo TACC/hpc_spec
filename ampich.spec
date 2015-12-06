@@ -36,7 +36,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines-hidden.inc
+%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -47,7 +47,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   BSD
 Group:     MPI
 URL:       http://www.mpich.org
@@ -248,7 +248,7 @@ prepend_path( "MPICH_HOME"            , base )
 prepend_path( "PATH"                  , pathJoin( base, "bin" ))
 prepend_path( "LD_LIBRARY_PATH"       , pathJoin( base, "lib" ))
 prepend_path( "MANPATH"               , pathJoin( base, "share/man" ))
-prepend_path( "MODULEPATH"            , "%{MODULE_PREFIX}/%{comp_fam_verion}/ampich_3_2/modulefiles")
+prepend_path( "MODULEPATH"            , "%{MODULE_PREFIX}/%{comp_fam_ver}/ampich_3_2/modulefiles")
 
 setenv(       "TACC_MPICH_DIR"        , base )
 setenv(       "TACC_MPICH_BIN"        , pathJoin( base, "bin" ))
@@ -268,9 +268,10 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 set     ModulesVersion      "%{version}"
 EOF
   
-  # Check the syntax of the generated lua modulefile
-  ### Only check when not hidden
-  ### %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %endif
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
