@@ -2,6 +2,7 @@
 # W. Cyrus Proctor
 # John Fonner (Banner)
 #
+# 2015-12-03 WCP -- Adding NORELOC and HIDDEN canaries
 # 2015-11-10 WCP -- Adding variable for default rpmdb path
 # 2015-10-27 WCP -- Tailored for LS5
 # 2015-10-25 WCP -- Finish the job!
@@ -56,6 +57,11 @@ elif [ $(( ${PACKAGE_POST:=0} + ${MODULEFILE_POST:=0} + ${PACKAGE_PREUN:=0} > 1 
   printf "${R}Exiting!${NC}\n"
   exit -1
 fi 
+
+export   RELOC=%{RELOC}
+export VISIBLE=%{VISIBLE}
+vprintf "Relocatable: ${RELOC}\n"
+vprintf "Visible: ${VISIBLE}\n"
 
 
 vprintf "${F}======================================================================${NC}\n"
@@ -352,13 +358,13 @@ if [ ${PACKAGE_PREUN:=0} = 1 ]; then
 fi
 if [ ! ${POST_INSTALL_PREFIX:-x} = x ] && [ ! ${POST_MODULE_PREFIX:-x} = x ]; then                                              # |
   export POST_INSTALL_ERR=0
-  if [ "%{INSTALL_PREFIX}" = "${POST_INSTALL_PREFIX}" ];then
+  if [ "%{INSTALL_PREFIX}" = "${POST_INSTALL_PREFIX}" ] && [ "${RELOC}" = "${one}" ];then
     echo -e "${R}ERROR: \$POST_INSTALL_PREFIX matches temporary install prefix %{INSTALL_PREFIX}!${NC}"
     echo -e "${R}ERROR: Use the --relocate %{INSTALL_PREFIX}=/some/real/path${NC}"
     export POST_INSTALL_ERR=1
   fi
   export POST_MODULE_ERR=0
-  if [ "%{MODULE_PREFIX}" = "${POST_MODULE_PREFIX}" ];then
+  if [ "%{MODULE_PREFIX}" = "${POST_MODULE_PREFIX}" ] && [ "${RELOC}" = "${one}" ];then
     echo -e "${R}ERROR: \$POST_MODULE_PREFIX matches temporary module prefix %{MODULE_PREFIX}!${NC}"
     echo -e "${R}ERROR: Use the --relocate %{MODULE_PREFIX}=/some/real/path${NC}"
     export POST_MODULE_ERR=1

@@ -1,6 +1,6 @@
 #
 # W. Cyrus Proctor
-# 2015-12-01 Create for non-relocatable rpms
+# 2015-12-05 Add hidden and non-relocatable version
 # 2015-08-25
 
 %define name_prefix tacc
@@ -32,6 +32,11 @@
 # relocation via rpm. They must be unique and *not* nested. 
 # /tmpmod and /tmprpm should *never* be the final install locations.
 
+# Add canary to let post-defines know this is a non-relocatable rpm
+%define RELOC 0
+
+# Add canary to let post-defines know this is a visible module
+%define VISIBLE  1
 
 # Module macros
 %define MODULE_PREFIX   /opt/apps
