@@ -5,7 +5,7 @@
 Summary:   Standard LS5 TACC Login scripts
 Name:      %{name_prefix}-%{base_name}
 Version:   1.0
-Release:   6
+Release:   10
 License:   Proprietary
 Group:     System Environment/Base
 Source0:   %{base_name}-%{version}.tar.gz
@@ -49,12 +49,19 @@ PROFILE_D_FILES="
                profile.d/00_shell_startup.CSH
                profile.d/work_archive.sh
                profile.d/work_archive.csh
+               profile.d/zzz00_lmod.csh
                profile.d/zzz00_lmod.sh
+               profile.d/zzz84_tacc.csh
                profile.d/zzz84_tacc.sh
+               profile.d/zzz87_tacc_login.csh
                profile.d/zzz87_tacc_login.sh
+               profile.d/zzz88_taccinfo.csh
                profile.d/zzz88_taccinfo.sh
+               profile.d/zzz89_tacc_tips.csh
                profile.d/zzz89_tacc_tips.sh
+               profile.d/zzz90_compute_modules.csh
                profile.d/zzz90_compute_modules.sh
+               profile.d/zzz90_login_modules.csh
                profile.d/zzz90_login_modules.sh
 "
 
@@ -83,6 +90,8 @@ SHELL_STARTUP_FILES="
          bash.bashrc
          profile
          tacc_functions
+         csh.login
+         csh.cshrc
 "
 
 find $SHELL_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/etc/tacc
@@ -117,8 +126,7 @@ SYSHOST=${myhost#*.}
 SYSTEM_DIRS="work scratch"
 ALIAS_DIRS="work scratch stockyard"
 
-#for i in $RPM_BUILD_ROOT/etc/profile.d/{z*,work_archive}.{sh,csh}; do
-for i in $RPM_BUILD_ROOT/etc/profile.d/{z*,work_archive}.sh; do
+for i in $RPM_BUILD_ROOT/etc/profile.d/{z*,work_archive}.{sh,csh}; do
   mv ${i} ${i}.tmp
   sed -e "s|@system_dir_create_list@|$ALIAS_DIRS|g"  \
       -e "s|@system_dir_list@|$SYSTEM_DIRS|g"        \
@@ -135,12 +143,18 @@ done
 %{PROFILE_D_PATH}/work_archive.sh
 %{PROFILE_D_PATH}/zzz00_lmod.csh
 %{PROFILE_D_PATH}/zzz00_lmod.sh
+%{PROFILE_D_PATH}/zzz84_tacc.csh
 %{PROFILE_D_PATH}/zzz84_tacc.sh
+%{PROFILE_D_PATH}/zzz87_tacc_login.csh
 %{PROFILE_D_PATH}/zzz87_tacc_login.sh
+%{PROFILE_D_PATH}/zzz88_taccinfo.csh
 %{PROFILE_D_PATH}/zzz88_taccinfo.sh
+%{PROFILE_D_PATH}/zzz90_compute_modules.csh
 %{PROFILE_D_PATH}/zzz90_compute_modules.sh
 /etc/tacc/bash.bashrc
 /etc/tacc/profile
+/etc/tacc/csh.cshrc
+/etc/tacc/csh.login
 /etc/tacc/tacc_functions
 /etc/tacc/archive
 /etc/tacc/fsMounted
@@ -154,13 +168,20 @@ done
 %{PROFILE_D_PATH}/work_archive.sh
 %{PROFILE_D_PATH}/zzz00_lmod.csh
 %{PROFILE_D_PATH}/zzz00_lmod.sh
+%{PROFILE_D_PATH}/zzz84_tacc.csh
 %{PROFILE_D_PATH}/zzz84_tacc.sh
+%{PROFILE_D_PATH}/zzz87_tacc_login.csh
 %{PROFILE_D_PATH}/zzz87_tacc_login.sh
+%{PROFILE_D_PATH}/zzz88_taccinfo.csh
 %{PROFILE_D_PATH}/zzz88_taccinfo.sh
+%{PROFILE_D_PATH}/zzz89_tacc_tips.csh
 %{PROFILE_D_PATH}/zzz89_tacc_tips.sh
 %{PROFILE_D_PATH}/zzz90_login_modules.sh
+%{PROFILE_D_PATH}/zzz90_login_modules.csh
 /etc/tacc/bash.bashrc
 /etc/tacc/profile
+/etc/tacc/csh.cshrc
+/etc/tacc/csh.login
 /etc/tacc/tacc_functions
 /etc/tacc/archive
 /etc/tacc/fsMounted
