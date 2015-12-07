@@ -123,7 +123,7 @@ myhost=${myhost%.tacc.utexas.edu}
 first=${myhost%%.*}
 SYSHOST=${myhost#*.}
 
-SYSTEM_DIRS="work scratch"
+SYSTEM_DIRS="work scratch opt/apps"
 ALIAS_DIRS="work scratch stockyard"
 
 for i in $RPM_BUILD_ROOT/etc/profile.d/{z*,work_archive}.{sh,csh}; do
