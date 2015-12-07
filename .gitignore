@@ -5,3 +5,5 @@
 nohup.out
 *.[0-9]
 .kent
+stampede-rpms
+CHROOT_ONLY*
