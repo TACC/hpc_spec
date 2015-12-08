@@ -50,7 +50,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2
+Release:   3
 License:   GPL
 Group:     Module Magic
 Packager:  TACC - cproctor@tacc.utexas.edu
@@ -235,6 +235,10 @@ setenv TACC_SLURM_LIB        "$base_dir/lib"
 setenv TACC_SLURM_BIN        "$base_dir/bin"
 
 # "Wimmy Wham Wham Wozzle!" -- Slurms MacKenzie
+
+
+prepend-path PATH /opt/apps/tacc/bin 10
+
 
 EOF
   
