@@ -43,7 +43,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4
+Release:   5
 License:   GPL
 Group:     Development/Tools
 Packager:  TACC - carlos@tacc.utexas.edu,cproctor@tacc.utexas.edu
@@ -144,6 +144,11 @@ cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90 << 'EOF'
 ifort -I$TACC_CRAY_MPT_INC -I$TACC_CRAY_XPMEM_INC -I$TACC_CRAY_UGNI_INC -I$TACC_CRAY_UDREG_INC -I$TACC_CRAY_DMAPP_INC -I$TACC_CRAY_PMI_INC -L$TACC_CRAY_XPMEM_LIB -L$TACC_CRAY_UGNI_LIB -L$TACC_CRAY_UDREG_LIB -L$TACC_CRAY_PMI_LIB -L$TACC_CRAY_DMAPP_LIB -L$TACC_CRAY_MPT_LIB -ldl -lmpichf90_intel -lmpich_intel -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg "$@"
 EOF
 chmod ugo+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
+cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif77 << 'EOF'
+#!/usr/bin/env bash
+ifort -I$TACC_CRAY_MPT_INC -I$TACC_CRAY_XPMEM_INC -I$TACC_CRAY_UGNI_INC -I$TACC_CRAY_
+EOF
+chmod ugo+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif77
 %endif
 %if "%{comp_fam}" == "gcc"
 cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicc << 'EOF'
@@ -161,6 +166,11 @@ cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90 << 'EOF'
 gfortran -I$TACC_CRAY_MPT_INC -I$TACC_CRAY_XPMEM_INC -I$TACC_CRAY_UGNI_INC -I$TACC_CRAY_UDREG_INC -I$TACC_CRAY_DMAPP_INC -I$TACC_CRAY_PMI_INC -L$TACC_CRAY_XPMEM_LIB -L$TACC_CRAY_UGNI_LIB -L$TACC_CRAY_UDREG_LIB -L$TACC_CRAY_PMI_LIB -L$TACC_CRAY_DMAPP_LIB -L$TACC_CRAY_MPT_LIB -ldl -lmpichf90_gnu_49 -lmpich_gnu_49 -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg "$@"
 EOF
 chmod ugo+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
+cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif77 << 'EOF'
+#!/usr/bin/env bash
+gfortran -I$TACC_CRAY_MPT_INC -I$TACC_CRAY_XPMEM_INC -I$TACC_CRAY_UGNI_INC -I$TACC_CR
+EOF
+chmod ugo+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif77
 %endif
 
 
@@ -183,13 +193,15 @@ local help_msg=[[
 This module provides access to the Cray Message Passing Toolkit 7.2.4, a Cray
 optimized version of the MPICH libraries and runtime. The following commands 
 will be automatically available for compiling MPI applications:
- 
- mpif90 (F90/F77 source)
- mpicc  (C       source)
- mpicxx (C++     source)
- 
+
+ mpicc  (C   source)
+ mpicxx (C++ source)
+ mpif90 (F90 source)
+ mpif77 (F77 source)
+
 If you wish to take advantage of the DMAPP optimizations for small payloads
 (<=16 bytes) in MPI_Allreduce you will need to add libdmapp to your link line.
+This can be achieved by simply adding "-ldmapp" to the link flags.
 
 Version  7.2.4
 ]]
