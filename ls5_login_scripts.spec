@@ -5,7 +5,7 @@
 Summary:   Standard LS5 TACC Login scripts
 Name:      %{name_prefix}-%{base_name}
 Version:   1.0
-Release:   10
+Release:   14
 License:   Proprietary
 Group:     System Environment/Base
 Source0:   %{base_name}-%{version}.tar.gz
@@ -51,8 +51,6 @@ PROFILE_D_FILES="
                profile.d/work_archive.csh
                profile.d/zzz00_lmod.csh
                profile.d/zzz00_lmod.sh
-               profile.d/zzz84_tacc.csh
-               profile.d/zzz84_tacc.sh
                profile.d/zzz87_tacc_login.csh
                profile.d/zzz87_tacc_login.sh
                profile.d/zzz88_taccinfo.csh
@@ -65,7 +63,7 @@ PROFILE_D_FILES="
                profile.d/zzz90_login_modules.sh
 "
 
-find fsMounted workdir archive | cpio -pduv --owner=build: $RPM_BUILD_ROOT/etc/tacc
+find taccinfo fsMounted workdir archive | cpio -pduv --owner=build: $RPM_BUILD_ROOT/etc/tacc
 
 
 find ./profile.d $PROFILE_D_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT%{PROFILE_D_PATH}/..
@@ -96,21 +94,21 @@ SHELL_STARTUP_FILES="
 
 find $SHELL_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/etc/tacc
 
-#ZSH_STARTUP_FILES="
-#         zsh/zlogin
-#         zsh/zlogout
-#         zsh/zprofile
-#         zsh/zshenv
-#         zsh/zshrc
-#"
-#
-#find $ZSH_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/etc/tacc
+ZSH_STARTUP_FILES="
+         zsh/zlogin
+         zsh/zlogout
+         zsh/zprofile
+         zsh/zshenv
+         zsh/zshrc
+"
+
+find $ZSH_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/etc/tacc
 
 
 MPATH_TACC="/opt/apps/modulefiles /opt/apps/tools/modulefiles"
 MPATH_CRAY="/opt/apps/cray_world/modulefiles /opt/cray/modulefiles /opt/cray/ari/modulefiles  /opt/cray/craype/default/modulefiles /opt/modulefiles /opt/apps/tools/modulefiles"
 
-for i in $RPM_BUILD_ROOT/etc/profile.d/{zzz00_lmod,zzz87_tacc_login}.sh; do
+for i in $RPM_BUILD_ROOT/etc/profile.d/zzz00_lmod.{csh,sh}; do
   mv ${i} ${i}.tmp
   sed -e "s|@modulepath_tacc@|$MPATH_TACC|g" \
       -e "s|@modulepath_cray@|$MPATH_CRAY|g" \
@@ -143,8 +141,6 @@ done
 %{PROFILE_D_PATH}/work_archive.sh
 %{PROFILE_D_PATH}/zzz00_lmod.csh
 %{PROFILE_D_PATH}/zzz00_lmod.sh
-%{PROFILE_D_PATH}/zzz84_tacc.csh
-%{PROFILE_D_PATH}/zzz84_tacc.sh
 %{PROFILE_D_PATH}/zzz87_tacc_login.csh
 %{PROFILE_D_PATH}/zzz87_tacc_login.sh
 %{PROFILE_D_PATH}/zzz88_taccinfo.csh
@@ -158,7 +154,14 @@ done
 /etc/tacc/tacc_functions
 /etc/tacc/archive
 /etc/tacc/fsMounted
+/etc/tacc/taccinfo
 /etc/tacc/workdir
+/etc/tacc/zsh/zlogin
+/etc/tacc/zsh/zlogout
+/etc/tacc/zsh/zprofile
+/etc/tacc/zsh/zshenv
+/etc/tacc/zsh/zshrc
+
 
 %files -n %{name}-login
 %defattr(755,root,root,)
@@ -168,8 +171,6 @@ done
 %{PROFILE_D_PATH}/work_archive.sh
 %{PROFILE_D_PATH}/zzz00_lmod.csh
 %{PROFILE_D_PATH}/zzz00_lmod.sh
-%{PROFILE_D_PATH}/zzz84_tacc.csh
-%{PROFILE_D_PATH}/zzz84_tacc.sh
 %{PROFILE_D_PATH}/zzz87_tacc_login.csh
 %{PROFILE_D_PATH}/zzz87_tacc_login.sh
 %{PROFILE_D_PATH}/zzz88_taccinfo.csh
@@ -185,7 +186,13 @@ done
 /etc/tacc/tacc_functions
 /etc/tacc/archive
 /etc/tacc/fsMounted
+/etc/tacc/taccinfo
 /etc/tacc/workdir
+/etc/tacc/zsh/zlogin
+/etc/tacc/zsh/zlogout
+/etc/tacc/zsh/zprofile
+/etc/tacc/zsh/zshenv
+/etc/tacc/zsh/zshrc
 
 %clean
 rm -rf $RPM_BUILD_ROOT
