@@ -7,3 +7,4 @@ nohup.out
 .kent
 stampede-rpms
 CHROOT_ONLY*
+*.bak
