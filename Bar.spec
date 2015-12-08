@@ -33,8 +33,8 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
-#%include mpi-defines.inc
+%include compiler-defines.inc
+%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
@@ -120,6 +120,8 @@ rpm -qi <rpm-name>
 
 # Setup modules
 %include system-load.inc
+#%include compiler-load.inc
+#%include mpi-load.inc
 
 # Insert necessary module commands
 module purge
