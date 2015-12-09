@@ -47,7 +47,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2
+Release:   3
 License:   GPL
 Group:     Development/Tools
 Packager:  TACC - cproctor@tacc.utexas.edu
@@ -179,7 +179,6 @@ ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qquota
 ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qsh      
 ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qping    
 ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qtcsh    
-ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/showq    
 ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qhost    
 ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qconf    
 ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qrdel    
@@ -250,7 +249,6 @@ umount %{INSTALL_DIR}/
 /opt/apps/tacc/bin/qsh      
 /opt/apps/tacc/bin/qping    
 /opt/apps/tacc/bin/qtcsh    
-/opt/apps/tacc/bin/showq    
 /opt/apps/tacc/bin/qhost    
 /opt/apps/tacc/bin/qconf    
 /opt/apps/tacc/bin/qrdel    
