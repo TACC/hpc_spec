@@ -55,7 +55,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   GPL
 Group:     Theoretical and Computational Biophysics Group, UIUC
 URL:       http://www.ks.uiuc.edu/Development/Download/download.cgi?PackageName=NAMD
@@ -132,7 +132,6 @@ cd charm-6.6.1/
 cp src/arch/mpi-linux-x86_64/cc-mpicxx.sh cc-mpicxx.sh.bak
 cat src/arch/mpi-linux-x86_64/cc-mpicxx.sh | sed 's/\-show 2>\/dev\/null/\-v 2>\&1 \| head -n 1/g' > 1 ; mv 1 src/arch/mpi-linux-x86_64/cc-mpicxx.sh
 env MPICXX=mpicxx CC=icc CXX=icpc ./build charm++ mpi-linux-x86_64 mpicxx --no-build-shared --with-production -j10
-#./build charm++ mpi-crayxc --no-build-shared --with-production -j10
 cd ..
 
 tar -zxvf $RPM_SOURCE_DIR/fftw-crayxt3.tar.gz
@@ -140,8 +139,8 @@ tar -zxvf $RPM_SOURCE_DIR/tcl8.5.9-crayxe.tar.gz
 
 
 export namd_home=`pwd`
+cat arch/Linux-x86_64-icc.arch  | sed 's/-ip -no-vec/-xhost -ip -no-vec/g' > 1.tmp ; mv 1.tmp arch/Linux-x86_64-icc.arch
 ./config Linux-x86_64-icc --charm-arch mpi-linux-x86_64-mpicxx --with-fftw --fftw-prefix $namd_home/fftw-crayxt3 --with-tcl --tcl-prefix $namd_home/tcl8.5.9-crayxe
-#./config CRAY-XC-intel --charm-arch mpi-linux-x86_64-mpicxx --with-fftw --fftw-prefix $namd_home/fftw-crayxt3 --with-tcl --tcl-prefix $namd_home/tcl8.5.9-crayxe
 cd Linux-x86_64-icc
 make -j 10
 
@@ -197,7 +196,10 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #---------------------------
 %if %{?BUILD_MODULEFILE}
 #---------------------------
-
+  echo "Here: -----"
+  echo $RPM_BUILD_ROOT
+  echo %{MODULE_DIR}
+  echo %{MODULE_FILENAME}
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
   
   #######################################
