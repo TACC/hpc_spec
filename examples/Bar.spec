@@ -33,12 +33,15 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
-#%include mpi-defines.inc
+%include compiler-defines.inc
+%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
 %include name-defines.inc
+#%include name-defines-noreloc.inc
+#%include name-defines-hidden.inc
+#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -88,6 +91,9 @@ rpm -qi <rpm-name>
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+%setup -n %{pkg_base_name}-%{pkg_version}
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -101,7 +107,6 @@ rpm -qi <rpm-name>
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n %{pkg_base_name}-%{pkg_version}
 
 
 #---------------------------------------
@@ -115,6 +120,8 @@ rpm -qi <rpm-name>
 
 # Setup modules
 %include system-load.inc
+#%include compiler-load.inc
+#%include mpi-load.inc
 
 # Insert necessary module commands
 module purge
@@ -207,9 +214,10 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 set     ModulesVersion      "%{version}"
 EOF
   
-  # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %endif
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -239,7 +247,6 @@ EOF
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
 
 ########################################
 ## Fix Modulefile During Post Install ##

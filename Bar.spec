@@ -120,11 +120,11 @@ rpm -qi <rpm-name>
 
 # Setup modules
 %include system-load.inc
+module purge
 #%include compiler-load.inc
 #%include mpi-load.inc
 
-# Insert necessary module commands
-module purge
+# Insert further module commands
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
