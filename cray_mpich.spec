@@ -43,7 +43,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   5
+Release:   6
 License:   GPL
 Group:     Development/Tools
 Packager:  TACC - carlos@tacc.utexas.edu,cproctor@tacc.utexas.edu
@@ -146,7 +146,7 @@ EOF
 chmod ugo+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
 cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif77 << 'EOF'
 #!/usr/bin/env bash
-ifort -I$TACC_CRAY_MPT_INC -I$TACC_CRAY_XPMEM_INC -I$TACC_CRAY_UGNI_INC -I$TACC_CRAY_
+ifort -I$TACC_CRAY_MPT_INC -I$TACC_CRAY_XPMEM_INC -I$TACC_CRAY_UGNI_INC -I$TACC_CRAY_UDREG_INC -I$TACC_CRAY_DMAPP_INC -I$TACC_CRAY_PMI_INC -L$TACC_CRAY_XPMEM_LIB -L$TACC_CRAY_UGNI_LIB -L$TACC_CRAY_UDREG_LIB -L$TACC_CRAY_PMI_LIB -L$TACC_CRAY_DMAPP_LIB -L$TACC_CRAY_MPT_LIB -ldl -lmpichf90_intel -lmpich_intel -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg "$@"
 EOF
 chmod ugo+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif77
 %endif
@@ -168,7 +168,7 @@ EOF
 chmod ugo+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
 cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif77 << 'EOF'
 #!/usr/bin/env bash
-gfortran -I$TACC_CRAY_MPT_INC -I$TACC_CRAY_XPMEM_INC -I$TACC_CRAY_UGNI_INC -I$TACC_CR
+gfortran -I$TACC_CRAY_MPT_INC -I$TACC_CRAY_XPMEM_INC -I$TACC_CRAY_UGNI_INC -I$TACC_CRAY_UDREG_INC -I$TACC_CRAY_DMAPP_INC -I$TACC_CRAY_PMI_INC -L$TACC_CRAY_XPMEM_LIB -L$TACC_CRAY_UGNI_LIB -L$TACC_CRAY_UDREG_LIB -L$TACC_CRAY_PMI_LIB -L$TACC_CRAY_DMAPP_LIB -L$TACC_CRAY_MPT_LIB -ldl -lmpichf90_gnu_49 -lmpich_gnu_49 -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg "$@"
 EOF
 chmod ugo+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif77
 %endif
