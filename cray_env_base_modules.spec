@@ -45,7 +45,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 ############ Do Not Change #############
 # hacked for reasonable name WCP 2015-12-03
-Name:      tacc-cray_world_base_modules
+Name:      tacc-cray_env_base_modules
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
