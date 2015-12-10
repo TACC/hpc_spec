@@ -35,13 +35,13 @@
 # Add canary to let post-defines know this is a relocatable rpm
 %define RELOC 1
 
-# Add canary to let post-defines know this is a visible module
-%define VISIBLE  1
+# Add canary to let post-defines know this is a hidden module
+%define VISIBLE  0
 
 # Module macros
 %define MODULE_PREFIX   /tmpmod 
 %define MODULE_DIR      %{MODULE_PREFIX}/%{MODULE_SUFFIX}
-%define MODULE_FILENAME %{version}.lua
+%define MODULE_FILENAME .%{version}.lua
 
 # Install macros
 %define INSTALL_PREFIX  /tmprpm

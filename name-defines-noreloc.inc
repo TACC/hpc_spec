@@ -32,19 +32,19 @@
 # relocation via rpm. They must be unique and *not* nested. 
 # /tmpmod and /tmprpm should *never* be the final install locations.
 
-# Add canary to let post-defines know this is a relocatable rpm
-%define RELOC 1
+# Add canary to let post-defines know this is a non-relocatable rpm
+%define RELOC 0
 
 # Add canary to let post-defines know this is a visible module
 %define VISIBLE  1
 
 # Module macros
-%define MODULE_PREFIX   /tmpmod 
+%define MODULE_PREFIX   /opt/apps
 %define MODULE_DIR      %{MODULE_PREFIX}/%{MODULE_SUFFIX}
 %define MODULE_FILENAME %{version}.lua
 
 # Install macros
-%define INSTALL_PREFIX  /tmprpm
+%define INSTALL_PREFIX  /opt/apps
 %define INSTALL_DIR     %{INSTALL_PREFIX}/%{INSTALL_SUFFIX}
 
 # Subpackage macros
@@ -55,15 +55,3 @@
 %define RPM_PACKAGE_NAME    %{name}-%{PACKAGE}-%{version}-%{release}
 %define RPM_MODULEFILE_NAME %{name}-%{MODULEFILE}-%{version}-%{release}
 
-#---------------------------------------
-#---------------------------------------
-#---------------------------------------
-# Default installation prefixes
-# May be overridden at install
-# with:
-# rpm --relocate /foo=/bar <rpm-name>.rpm 
-Prefix:    %{MODULE_PREFIX}
-Prefix:    %{INSTALL_PREFIX}
-#---------------------------------------
-#---------------------------------------
-#---------------------------------------
