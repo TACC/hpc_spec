@@ -76,10 +76,14 @@ cmake -VV \
   -D Trilinos_ENABLE_TriKota:BOOL=ON \
   -D Trilinos_ENABLE_Zoltan:BOOL=ON \
   \
-  -D CMAKE_PYTHON_INCLUDE_DIR:PATH="${TACC_PYTHON_INC}" \
-  -D CMAKE_PYTHON_LIBRARIES:STRING="${TACC_PYTHON_LIB}" \
-  -D Trilinos_ENABLE_PyTrilinos:Bool=ON \
-  -D SWIG_EXECUTABLE:FILEPATH=${TACC_SWIG_DIR}/bin/swig \
-  \
   ${TRILINOS_LOCATION}/trilinos-${VERSION} \
-  | tee /admin/build/admin/rpms/stampede/SPECS/trilinos-${VERSION}-cmake.log 2>&1
+  | tee /admin/build/rpms/SPECS/trilinos-${VERSION}-cmake.log 2>&1
+
+# /bin/true \
+#   \
+#   -D CMAKE_PYTHON_INCLUDE_DIR:PATH="${TACC_PYTHON_INC}" \
+#   -D CMAKE_PYTHON_LIBRARIES:STRING="${TACC_PYTHON_LIB}" \
+#   -D Trilinos_ENABLE_PyTrilinos:Bool=ON \
+#   \
+#   -D SWIG_EXECUTABLE:FILEPATH=${TACC_SWIG_DIR}/bin/swig \
+#   notrue
