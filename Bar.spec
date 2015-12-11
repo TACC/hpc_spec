@@ -33,8 +33,8 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-%include compiler-defines.inc
-%include mpi-defines.inc
+#%include compiler-defines.inc
+#%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
@@ -121,7 +121,9 @@ rpm -qi <rpm-name>
 # Setup modules
 %include system-load.inc
 module purge
+# Load Compiler
 #%include compiler-load.inc
+# Load MPI Library
 #%include mpi-load.inc
 
 # Insert further module commands
@@ -153,7 +155,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
   
   # Copy everything from tarball over to the installation directory
-  cp * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
   
 #-----------------------  
 %endif # BUILD_PACKAGE |
