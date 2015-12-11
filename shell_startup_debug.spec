@@ -1,11 +1,11 @@
 
-%define name_prefix tacc-comp
+%define name_prefix tacc
 %define base_name shell_startup_debug
 
 Summary: Shell Startup tracing tool 
 Name: %{name_prefix}-%{base_name}
 Version: 1.6
-Release: 1
+Release: 2
 License:   LGPL
 Group: System Environment/Base
 URL: www.tacc.utexas.edu
