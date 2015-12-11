@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2
+Release:   4
 License:   proprietary
 Group:     Compiler
 URL:       https://software.intel.com/en-us/intel-compilers
@@ -177,6 +177,13 @@ $ICC_BIN                (path to icc/icpc compilers          )
 $ICC_LIB                (path to C/C++  libraries            )
 $IFC_BIN                (path to ifort compiler              )
 $IFC_LIB                (path to Fortran libraries           )
+$TACC_MKL_DIR           (path to Math Kernel Library root    )
+$TACC_MKL_LIB           (path to Math Kernel Library libs    )
+$TACC_MKL_INC           (path to Math Kernel Library includes)
+
+In general, users need only to add the "-mkl" flag during compile
+and link time to utlize thei Math Kernel Library provided by Intel. 
+This includes any calls to BLAS and LAPACK functions.
  
 See the man pages for icc, icpc, and ifort for detailed information
 on available compiler options and command-line syntax.
@@ -209,7 +216,10 @@ local mklRoot      = pathJoin(installDir,"mkl")
 local ippRoot      = pathJoin(installDir,"ipp")
 
 
-setenv( "MKLROOT" ,                  mklRoot )
+setenv( "MKLROOT"      ,                  mklRoot )
+setenv( "TACC_MKL_DIR" ,                  mklRoot )
+setenv( "TACC_MKL_LIB" ,              pathJoin( mklRoot , "lib/intel64" ) )
+setenv( "TACC_MKL_INC" ,              pathJoin( mklRoot , "include" ) )
 
 --MKLROOT=
 --/opt/apps/intel/16/compilers_and_libraries_2016.0.109/linux/mkl
