@@ -9,3 +9,4 @@ stampede-rpms
 CHROOT_ONLY*
 *.bak
 *.cmake-cache
+*.orig
