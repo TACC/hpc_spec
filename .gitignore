@@ -1,7 +1,7 @@
 *.log
 *.swp
 *~
-#*#
+\#*\#
 nohup.out
 *.[0-9]
 .kent
