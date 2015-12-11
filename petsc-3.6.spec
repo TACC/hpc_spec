@@ -34,6 +34,7 @@ Summary: PETSc rpm build script
 %include rpm-dir.inc                  
 %include compiler-defines.inc
 %include mpi-defines.inc
+
 ########################################
 ### Construct name based on includes ###
 ########################################
@@ -48,7 +49,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2
+Release:   3
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.mcs.anl.gov/petsc/
@@ -295,20 +296,20 @@ export hdf5string=
 export hdf5download=
 export hdf5versionextra=
 
-%if "%{comp_fam}" == "intel" && "%{comp_fam_ver}" != "intel15"
+# %if "%{comp_fam}" == "intel" && "%{comp_fam_ver}" != "intel15"
     export hdf5string="hdf5"
-    export hdf5download="--with-hdf5=1 --with-hdf5-dir=${TACC_HDF5_DIR}"
-    export hdf5versionextra="; hdf5 support"
-%endif
-
-## totally disabled for now
-export hdf5string=
-export hdf5download=
-export hdf5versionextra=
+# %endif
 
 if [ ! -z "${hdf5string}" ] ; then
     module load phdf5
+    export hdf5download="--with-hdf5=1 --with-hdf5-dir=${TACC_HDF5_DIR}"
+    export hdf5versionextra="; hdf5 support"
 fi
+
+# ## totally disabled for now
+# export hdf5string=
+# export hdf5download=
+# export hdf5versionextra=
 
 export versionextra="${versionextra}${hdf5versionextra}"
 
@@ -396,7 +397,6 @@ case "${ext}" in
            export scalar="--with-scalar-type=complex --with-fortran-kernels=1"
            ;;
 esac
-export packages=
 
 #
 # blas/lapack
@@ -404,11 +404,6 @@ export packages=
 export BLAS_LAPACK_OPTIONS="\
   ${BLAS_LAPACK_LOAD} \
   "
-export noblas="\
-  --with-blas-lib=[${THEBLAS}] \
-  --with-lapack-lib=[${THEBLAS}] \
-  "
-
 #
 # cuda
 #
@@ -468,7 +463,7 @@ esac
 
 export PETSC_ARCH=${architecture}
 noprefix=--prefix=%{INSTALL_DIR}/${architecture}
-export packages=
+#export packages=
 if [ "${ext}" = "tau" ] ; then
   module load papi/5.3.0 tau
   export TAU_MAKEFILE=$TACC_TAU_DIR/x86_64/lib/Makefile.tau-phase-icpc-papi-mpi-pdt
@@ -618,7 +613,8 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-#
+* Thu Dec 10 2015 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: all packages
 * Tue Dec 08 2015 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: no longer relocatable
 * Mon Dec 07 2015 eijkhout <eijkhout@tacc.utexas.edu>
