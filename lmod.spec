@@ -8,7 +8,7 @@ Prefix:    /opt/apps
 Summary:   lmod: Lua based Modules
 Name:      %{name_prefix}-%{base_name}
 Version:   6.0.24
-Release:   1
+Release:   2
 License:   MIT
 Vendor:    Robert McLay
 Group:     System Environment/Base
@@ -64,7 +64,12 @@ EOF
 fi
 
 if [ "$SYSHOST" = "ls5" ]; then
-   EXTRA="--with-tmodPathRule=yes"
+  EXTRA="--with-tmodPathRule=yes"
+  CACHE_DIR="--with-spiderCacheDescript=cacheDescript.txt"
+
+cat > cacheDescript.txt << EOF
+/home1/moduleData/cacheDir/tacc:/home1/moduleData/cacheDir/tacc_cache_timestamp.txt
+EOF
 fi
 
 
@@ -86,6 +91,7 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR} $RPM_BUILD_ROOT/%{ZSH_SITE_FUNC}
 ./configure --prefix=%{APPS} $CACHE_DIR --with-settarg=FULL $EXTRA
 make DESTDIR=$RPM_BUILD_ROOT install
 cp contrib/TACC/*.lua $RPM_BUILD_ROOT/%{INSTALL_DIR}/libexec
+sed -e 's|/home1/moduleData/cacheDir/tacc|/home1/moduleData/cacheDir/cray|g' < $RPM_BUILD_ROOT/%{INSTALL_DIR}/init/lmodrc.lua > $RPM_BUILD_ROOT/%{INSTALL_DIR}/init/lmodrc_cray_world.lua
 
 rm $RPM_BUILD_ROOT/%{INSTALL_DIR}/../lmod
 
