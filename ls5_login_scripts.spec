@@ -5,7 +5,7 @@
 Summary:   Standard LS5 TACC Login scripts
 Name:      %{name_prefix}-%{base_name}
 Version:   1.0
-Release:   16
+Release:   17
 License:   Proprietary
 Group:     System Environment/Base
 Source0:   %{base_name}-%{version}.tar.gz
@@ -106,7 +106,7 @@ find $ZSH_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/etc/tacc
 
 
 MPATH_TACC="/opt/apps/modulefiles /opt/apps/tools/modulefiles"
-MPATH_CRAY="/opt/apps/cray_world/modulefiles /opt/cray/modulefiles /opt/cray/ari/modulefiles  /opt/cray/craype/default/modulefiles /opt/modulefiles /opt/apps/tools/modulefiles"
+MPATH_CRAY="/opt/apps/cray_world/modulefiles /opt/cray/modulefiles /opt/cray/ari/modulefiles /opt/cray/craype/default/modulefiles /opt/modulefiles /opt/apps/tools/modulefiles"
 
 for i in $RPM_BUILD_ROOT/etc/profile.d/zzz00_lmod.{csh,sh}; do
   mv ${i} ${i}.tmp
