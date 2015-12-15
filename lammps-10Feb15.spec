@@ -1,4 +1,4 @@
-##rpmbuild -bb --define 'is_intel16 1' --define 'is_cmpich 1' --define 'mpiV 7_2' lammps-10Feb15.spec | tee lammps-
+##rpmbuild -bb --define 'is_intel16 1' --define 'is_cmpich 1' --define 'mpiV 7_2' lammps-10Feb15.spec | tee lammps.log.x
 Summary: LAMMPS is a Classical Molecular Dynamics package.
 
 %define pkg_base_name lammps
@@ -20,7 +20,7 @@ Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
-Release:   1
+Release:   2
 License:   GPL
 Vendor:    Sandia
 Group:     applications/chemistry
@@ -105,9 +105,9 @@ as well as a syntax for looping over runs and breaking out of loops.
 #          Use default IFC_LIB
   IFC_RPATH=-Wl,-rpath,$IFC_LIB
 
-#                  Use our Makefile.stampede file!
-   rm    src/MAKE/MACHINES/Makefile.stampede   
-   cp                      Makefile.stampede   src/MAKE/MACHINES
+#                  Use our Makefile.tacc file!
+   rm    src/MAKE/MACHINES/Makefile.tacc   
+   cp                      Makefile.tacc   src/MAKE/MACHINES
 
 #  PREP
 #                          Create kim in real directory 
@@ -481,54 +481,54 @@ make package-status
 ##                    Removed from library, see note above.
 ##                    Users can add this library by building lammps from /work/apps/lammps directory.
 
-   echo make -j 4 stampede  # |& tee make_stampede.log
-        make -j 12 stampede  # |& tee make_stampede.log
-  #echo make      stampede  # |& tee make_stampede.log
-  #     make      stampede  # |& tee make_stampede.log
-        mv lmp_stampede _lmp_stampede
+   echo make -j 4 tacc  # |& tee make_tacc.log
+        make -j 12 tacc  # |& tee make_tacc.log
+  #echo make      tacc  # |& tee make_tacc.log
+  #     make      tacc  # |& tee make_tacc.log
+        mv lmp_tacc _lmp_tacc
 
-echo "Finished Making _lmp_stampede"
+echo "Finished Making _lmp_tacc"
 
 #
 make yes-gpu
 
         module load cuda/$CUDA_VER
 
-        make -j 12 stampede CUDA_HOME=$TACC_CUDA_DIR
-        mv lmp_stampede _lmp_stampede_gpu
+        make -j 12 tacc CUDA_HOME=$TACC_CUDA_DIR
+        mv lmp_tacc _lmp_tacc_gpu
 
         module unload cuda/$CUDA_VER
 
 make no-gpu
-echo "Finished Making _lmp_stampede_gpu"
+echo "Finished Making _lmp_tacc_gpu"
 
 
-make clean-stampede
+make clean-tacc
 
 make yes-user-omp
 
-        make -j 12 stampede OMP=-openmp
-        mv lmp_stampede _lmp_stampede_omp
+        make -j 12 tacc OMP=-openmp
+        mv lmp_tacc _lmp_tacc_omp
 
-echo "Finished Making   _lmp_stampede_omp"
+echo "Finished Making   _lmp_tacc_omp"
 
 
 #make yes-USER-INTEL
 #make package-status
 
-#   echo make -j 4 stampede  # |& tee make_stampede.log
-#        make -j 4 stampede  # |& tee make_stampede.log
-  #echo make      stampede  # |& tee make_stampede.log
-  #     make      stampede  # |& tee make_stampede.log
-#        mv lmp_stampede _lmp_stampede_mic
+#   echo make -j 4 tacc  # |& tee make_tacc.log
+#        make -j 4 tacc  # |& tee make_tacc.log
+  #echo make      tacc  # |& tee make_tacc.log
+  #     make      tacc  # |& tee make_tacc.log
+#        mv lmp_tacc _lmp_tacc_mic
 
-#echo "Finished Making _lmp_stampede_mic"
+#echo "Finished Making _lmp_tacc_mic"
 
 
 
 # Make the shared lib, for python, etc.
 #      make makeshlib                     # creates Makefile.shlib
-#      make SHLIBFLAGS=-shared -f Makefile.shlib stampede    # build for whatever machine target you wish
+#      make SHLIBFLAGS=-shared -f Makefile.shlib tacc    # build for whatever machine target you wish
 
 cd ..
 
@@ -588,13 +588,13 @@ cd ..
     
     
      mkdir                          $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-     cp src/_lmp_stampede           $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/lmp_stampede
-     cp src/_lmp_stampede_gpu       $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/lmp_stampede_gpu
-     cp src/_lmp_stampede_omp       $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/lmp_stampede_omp
-    #cp src/_lmp_stampede_mic       $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/lmp_stampede_mic
+     cp src/_lmp_tacc           $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/lmp_tacc
+     cp src/_lmp_tacc_gpu       $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/lmp_tacc_gpu
+     cp src/_lmp_tacc_omp       $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/lmp_tacc_omp
+    #cp src/_lmp_tacc_mic       $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/lmp_tacc_mic
     
-     rm -rf src/Obj_shlib_stampede
-     rm -rf src/Obj_stampede
+     rm -rf src/Obj_shlib_tacc
+     rm -rf src/Obj_tacc
      mv  src/_lmp_* .               #Keep them around if build directory saved.
     
     #cp -pR bench           $RPM_BUILD_ROOT/%{INSTALL_DIR}/bench
@@ -641,15 +641,15 @@ The modulefile also appends TACC_LAMMPS_BIN & TACC_LAMMPS_TOOLS to PATH.
 To run LAMMPS, please include the following lines in your job script:
 
        module load lammps
-       ibrun lmp_stampede <options>    < my_lammps_script.in
+       ibrun lmp_tacc <options>    < my_lammps_script.in
   or
-       ibrun lmp_stampede <options> -in  my_lammps_script.in
+       ibrun lmp_tacc <options> -in  my_lammps_script.in
 
 *NEW* Additional accelerated versions now available in the module: *NEW*
 
-       lmp_stampede_omp  // built with USER-OMP package pair styles
-       lmp_stampede_gpu  // built with GPU package
-       lmp_stampede_mic  // (stampede only)-- with USER-INTEL pkg (MIC offload)
+       lmp_tacc_omp  // built with USER-OMP package pair styles
+       lmp_tacc_gpu  // built with GPU package
+       lmp_tacc_mic  // (tacc only)-- with USER-INTEL pkg (MIC offload)
 
 See the Intel website for additiona information on Phi (mix) execution:
 https://software.intel.com/en-us/articles/lammps-for-intel-xeon-phi-coprocessor
