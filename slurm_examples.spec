@@ -2,7 +2,7 @@
 Summary:    Slurm Examples for Lonestar 5
 Name:       tacc-slurm_examples
 Version:    1.0
-Release:    1
+Release:    2
 License:    GPL
 Vendor:     TACC
 Group:      System/Info
@@ -44,7 +44,7 @@ Slurm examples for Lonestar 5
 # INSTALLATION DIRECTORY
 #------------------------------------------------
 # Buildroot: defaults to null if not included here
-%define INSTALL_DIR %{APPS}/tacc/doc
+%define INSTALL_DIR %{APPS}/tacc/doc/slurm
 
 #------------------------------------------------
 # PREPARATION SECTION
