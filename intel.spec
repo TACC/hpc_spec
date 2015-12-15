@@ -26,7 +26,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 # Create some macros (spec file variables)
 %define major_version 16
 %define minor_version 0
-%define micro_version 109
+%define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4
+Release:   5
 License:   proprietary
 Group:     Compiler
 URL:       https://software.intel.com/en-us/intel-compilers
@@ -208,6 +208,7 @@ whatis("URL: http://software.intel.com/en-us/articles/intel-compilers"      )
 
 -- Create environment variables.
 local base         = "/opt/apps/intel/16"
+local gcc_base     = "/opt/apps/gcc/4.9.3"
 local full_xe      = "compilers_and_libraries_2016.0.109/linux"
 local arch         = "intel64"
 local installDir   = pathJoin(base,full_xe)
@@ -268,6 +269,9 @@ prepend_path( "LIBRARY_PATH" ,        pathJoin( installDir , "daal/../compiler/l
 --/opt/apps/intel/16/compilers_and_libraries_2016.0.109/linux/daal/../tbb/lib/intel64_lin/gcc4.4
 --/opt/apps/intel/16/compilers_and_libraries_2016.0.109/linux/daal/../compiler/lib/intel64_lin
 
+prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( gcc_base , "lib" ) )
+prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( gcc_base , "lib64" ) )
+
 prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( installDir , "compiler/lib/intel64" ) )
 prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( installDir , "ipp/../compiler/lib/intel64" ) )
 prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( installDir , "ipp/lib/intel64" ) )
@@ -279,7 +283,10 @@ prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( installDir , "daal/lib/intel64_l
 prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( installDir , "daal/../tbb/lib/intel64_lin/gcc4.4" ) )
 prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( installDir , "daal/../compiler/lib/intel64_lin" ) )
 
+
 --LD_LIBRARY_PATH=
+--/opt/apps/gcc/4.9.3/lib64
+--/opt/apps/gcc/4.9.3/lib
 --/opt/apps/intel/16/compilers_and_libraries_2016.0.109/linux/compiler/lib/intel64
 --/opt/apps/intel/16/compilers_and_libraries_2016.0.109/linux/mpi/intel64/lib
 --/opt/apps/intel/16/compilers_and_libraries_2016.0.109/linux/ipp/../compiler/lib/intel64
@@ -312,10 +319,14 @@ prepend_path( "NLSPATH" ,     pathJoin( base       , "debugger_2016/gdb/intel64/
 --/opt/apps/intel/16/compilers_and_libraries_2016.0.109/linux/mkl/lib/intel64/locale/%l_%t/%N
 --/opt/apps/intel/16/debugger_2016/gdb/intel64/share/locale/%l_%t/%N
 
+
+prepend_path( "PATH" ,        pathJoin( gcc_base , "bin" ) )
+
 prepend_path( "PATH" ,        pathJoin( installDir , "bin/intel64" ) )
 --prepend_path( "PATH" ,        pathJoin( installDir , "mpi/intel64/bin" ) )
 
 --PATH=
+--/opt/apps/gcc/4.9.3/bin
 --/opt/apps/intel/16/compilers_and_libraries_2016.0.109/linux/bin/intel64
 --/opt/apps/intel/16/compilers_and_libraries_2016.0.109/linux/mpi/intel64/bin
 
