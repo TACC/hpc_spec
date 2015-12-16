@@ -53,7 +53,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.gnu.org/software
@@ -353,8 +353,8 @@ ${gcc}/gcc-${gcc_version}/configure \
 --enable-lto                        \
 --enable-libssp                     \
 --enable-gold                       \
---with-arch=native                  \
---with-tune=native                  \
+--with-arch=core-avx-i              \
+--with-tune=core-avx2               \
 --enable-languages='c,c++,fortran'  \
 --disable-multilib                  \
 --prefix=${gcc_install}             \
