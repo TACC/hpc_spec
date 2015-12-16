@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   5
+Release:   6
 License:   proprietary
 Group:     Compiler
 URL:       https://software.intel.com/en-us/intel-compilers
@@ -165,11 +165,10 @@ register width in Intel Xeon processors, Intel Xeon Phi coprocessors and
 compatible processors. The Intel compilers plug right into popular development
 environments and are compatible with compilers including GCC (Linux).
 
-The Intel module enables the Intel family of compilers (C/C++
-and Fortran) and updates the $PATH, $LD_LIBRARY_PATH, 
-$INCLUDE, and $MANPATH environment variables to access the 
-compiler binaries, libraries, include files, and available man 
-pages, respectively.
+The Intel module enables the Intel family of compilers (C/C++ and Fortran) and
+updates the $PATH, $LD_LIBRARY_PATH, $INCLUDE, and $MANPATH environment
+variables to access the compiler binaries, libraries, include files, and
+available man pages, respectively.
 
 The following additional environment variables are also defined:
 
@@ -181,18 +180,20 @@ $TACC_MKL_DIR           (path to Math Kernel Library root    )
 $TACC_MKL_LIB           (path to Math Kernel Library libs    )
 $TACC_MKL_INC           (path to Math Kernel Library includes)
 
-In general, users need only to add the "-mkl" flag during compile
-and link time to utlize thei Math Kernel Library provided by Intel. 
-This includes any calls to BLAS and LAPACK functions.
+In general, users need only to add the "-mkl" flag during compile and link time
+to utlize thei Math Kernel Library provided by Intel.  This includes any calls
+to BLAS and LAPACK functions.
  
-See the man pages for icc, icpc, and ifort for detailed information
-on available compiler options and command-line syntax.
+See the man pages for icc, icpc, and ifort for detailed information on
+available compiler options and command-line syntax.
 
+Note: To provide C++11/14 support for the Intel compiler, this module adds the
+paths for the gcc/4.9.3 bin, lib, and lib64 directories to your environment.
 
 The %{MODULE_VAR} module also defines the following environment variables:
 TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
-TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
-include files, and tools respectively.
+TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution,
+libraries, include files, and tools respectively.
 
 Version %{version}
 ]]
