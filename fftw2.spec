@@ -6,7 +6,7 @@
 Summary:   %{base_name}
 Name:      %{name_prefix}-%{base_name}
 Version:   2.1.5
-Release:   1
+Release:   3
 License: GPL
 Vendor:    www.fftw.org 
 Group:     System Environment/Base
@@ -26,8 +26,8 @@ Packager:  alamas@tacc.utexas.edu
 %include compiler-defines.inc
 %include mpi-defines.inc
 
-%define INSTALL_DIR %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{name}/%{version}
-%define MODULE_DIR  %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{MODULES}/%{name}
+%define INSTALL_DIR %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{base_name}/%{version}
+%define MODULE_DIR  %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{MODULES}/%{base_name}
 
 %package -n %{name}-%{comp_fam_ver}-%{mpi_fam_ver}
 Summary: FFTW %{version} local binary install
