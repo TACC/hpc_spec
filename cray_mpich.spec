@@ -1,7 +1,6 @@
 #
 # W. Cyrus Proctor
 # Antonio Gomez
-# Jerome Vienne
 # 2015-01-12
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
@@ -43,10 +42,10 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   6
+Release:   7
 License:   GPL
 Group:     Development/Tools
-Packager:  TACC - carlos@tacc.utexas.edu,cproctor@tacc.utexas.edu
+Packager:  TACC - carlos@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -72,7 +71,7 @@ This module provides access to the Cray Message Passing Toolkit 7.2.4, a Cray
 optimized version of the MPICH libraries and runtime.  
 
 #---------------------------------------
-%prep
+%prep -n %{pkg_base_name}-%{version}
 #---------------------------------------
 
 #------------------------
@@ -80,6 +79,7 @@ optimized version of the MPICH libraries and runtime.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+%setup -n %{pkg_base_name}-%{version}
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -125,52 +125,15 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
   
-  # Create some dummy directories and files for fun
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
 
 %if "%{comp_fam}" == "intel"
-cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicc << 'EOF'
-#!/usr/bin/env bash
-icc -I$TACC_CRAY_MPT_INC -I$TACC_CRAY_XPMEM_INC -I$TACC_CRAY_UGNI_INC -I$TACC_CRAY_UDREG_INC -I$TACC_CRAY_DMAPP_INC -I$TACC_CRAY_PMI_INC -L$TACC_CRAY_XPMEM_LIB -L$TACC_CRAY_UGNI_LIB -L$TACC_CRAY_UDREG_LIB -L$TACC_CRAY_PMI_LIB -L$TACC_CRAY_DMAPP_LIB -L$TACC_CRAY_MPT_LIB -ldl -lmpich_intel -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg "$@"
-EOF
-chmod ugo+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicc
-cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicxx << 'EOF'
-#!/usr/bin/env bash
-icpc -I$TACC_CRAY_MPT_INC -I$TACC_CRAY_XPMEM_INC -I$TACC_CRAY_UGNI_INC -I$TACC_CRAY_UDREG_INC -I$TACC_CRAY_DMAPP_INC -I$TACC_CRAY_PMI_INC -L$TACC_CRAY_XPMEM_LIB -L$TACC_CRAY_UGNI_LIB -L$TACC_CRAY_UDREG_LIB -L$TACC_CRAY_PMI_LIB -L$TACC_CRAY_DMAPP_LIB -L$TACC_CRAY_MPT_LIB -ldl -lmpichcxx_intel -lmpich_intel -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg "$@"
-EOF
-chmod ugo+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicxx
-cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90 << 'EOF'
-#!/usr/bin/env bash
-ifort -I$TACC_CRAY_MPT_INC -I$TACC_CRAY_XPMEM_INC -I$TACC_CRAY_UGNI_INC -I$TACC_CRAY_UDREG_INC -I$TACC_CRAY_DMAPP_INC -I$TACC_CRAY_PMI_INC -L$TACC_CRAY_XPMEM_LIB -L$TACC_CRAY_UGNI_LIB -L$TACC_CRAY_UDREG_LIB -L$TACC_CRAY_PMI_LIB -L$TACC_CRAY_DMAPP_LIB -L$TACC_CRAY_MPT_LIB -ldl -lmpichf90_intel -lmpich_intel -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg "$@"
-EOF
-chmod ugo+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
-cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif77 << 'EOF'
-#!/usr/bin/env bash
-ifort -I$TACC_CRAY_MPT_INC -I$TACC_CRAY_XPMEM_INC -I$TACC_CRAY_UGNI_INC -I$TACC_CRAY_UDREG_INC -I$TACC_CRAY_DMAPP_INC -I$TACC_CRAY_PMI_INC -L$TACC_CRAY_XPMEM_LIB -L$TACC_CRAY_UGNI_LIB -L$TACC_CRAY_UDREG_LIB -L$TACC_CRAY_PMI_LIB -L$TACC_CRAY_DMAPP_LIB -L$TACC_CRAY_MPT_LIB -ldl -lmpichf90_intel -lmpich_intel -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg "$@"
-EOF
-chmod ugo+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif77
+cp ./intel/mpi* $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+chmod ugo+rx $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpi*
 %endif
 %if "%{comp_fam}" == "gcc"
-cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicc << 'EOF'
-#!/usr/bin/env bash
-gcc -I$TACC_CRAY_MPT_INC -I$TACC_CRAY_XPMEM_INC -I$TACC_CRAY_UGNI_INC -I$TACC_CRAY_UDREG_INC -I$TACC_CRAY_DMAPP_INC -I$TACC_CRAY_PMI_INC -L$TACC_CRAY_XPMEM_LIB -L$TACC_CRAY_UGNI_LIB -L$TACC_CRAY_UDREG_LIB -L$TACC_CRAY_PMI_LIB -L$TACC_CRAY_DMAPP_LIB -L$TACC_CRAY_MPT_LIB -ldl -lmpich_gnu_49 -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg "$@"
-EOF
-chmod ugo+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicc
-cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicxx << 'EOF'
-#!/usr/bin/env bash
-g++ -I$TACC_CRAY_MPT_INC -I$TACC_CRAY_XPMEM_INC -I$TACC_CRAY_UGNI_INC -I$TACC_CRAY_UDREG_INC -I$TACC_CRAY_DMAPP_INC -I$TACC_CRAY_PMI_INC -L$TACC_CRAY_XPMEM_LIB -L$TACC_CRAY_UGNI_LIB -L$TACC_CRAY_UDREG_LIB -L$TACC_CRAY_PMI_LIB -L$TACC_CRAY_DMAPP_LIB -L$TACC_CRAY_MPT_LIB -ldl -lmpichcxx_gnu_49 -lmpich_gnu_49 -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg "$@"
-EOF
-chmod ugo+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicxx
-cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90 << 'EOF'
-#!/usr/bin/env bash
-gfortran -I$TACC_CRAY_MPT_INC -I$TACC_CRAY_XPMEM_INC -I$TACC_CRAY_UGNI_INC -I$TACC_CRAY_UDREG_INC -I$TACC_CRAY_DMAPP_INC -I$TACC_CRAY_PMI_INC -L$TACC_CRAY_XPMEM_LIB -L$TACC_CRAY_UGNI_LIB -L$TACC_CRAY_UDREG_LIB -L$TACC_CRAY_PMI_LIB -L$TACC_CRAY_DMAPP_LIB -L$TACC_CRAY_MPT_LIB -ldl -lmpichf90_gnu_49 -lmpich_gnu_49 -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg "$@"
-EOF
-chmod ugo+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
-cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif77 << 'EOF'
-#!/usr/bin/env bash
-gfortran -I$TACC_CRAY_MPT_INC -I$TACC_CRAY_XPMEM_INC -I$TACC_CRAY_UGNI_INC -I$TACC_CRAY_UDREG_INC -I$TACC_CRAY_DMAPP_INC -I$TACC_CRAY_PMI_INC -L$TACC_CRAY_XPMEM_LIB -L$TACC_CRAY_UGNI_LIB -L$TACC_CRAY_UDREG_LIB -L$TACC_CRAY_PMI_LIB -L$TACC_CRAY_DMAPP_LIB -L$TACC_CRAY_MPT_LIB -ldl -lmpichf90_gnu_49 -lmpich_gnu_49 -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg "$@"
-EOF
-chmod ugo+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif77
+cp ./gcc/mpi* $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+chmod ugo+rx $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpi*
 %endif
 
 
