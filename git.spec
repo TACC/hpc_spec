@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   GPLv2
 Group:     System Environment/Base
 URL:       https://git-scm.com
@@ -144,6 +144,8 @@ export git=`pwd`
 export git_install=%{INSTALL_DIR}
 export git_version=%{pkg_version}
 export CC=gcc
+export CFLAGS="-march=core-avx-i -mtune=core-avx2"
+export LDFLAGS="-march=core-avx-i -mtune=core-avx2"
 
 wget https://www.kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
 tar xvfz git-${git_version}.tar.gz

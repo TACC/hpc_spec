@@ -27,8 +27,8 @@ Summary: A Nice little relocatable skeleton spec file example.
 # Create some macros (spec file variables)
 %define major_version 2
 %define minor_version x
-%define micro_version dev_693_g1960f2c
-%define micro_version_dash dev-693-g1960f2c
+%define micro_version dev_849_g5b1b823
+%define micro_version_dash dev-849-g5b1b823
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 %define pkg_version_dash %{major_version}.%{minor_version}.%{micro_version_dash}
@@ -51,7 +51,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2
+Release:   3
 License:   BSD
 Group:     MPI
 URL:       https://www.open-mpi.org
@@ -155,11 +155,19 @@ if [ "%{comp_fam}" == "gcc" ]; then
   export CC=gcc
   export CXX=g++
   export FC=gfortran
+  export CFLAGS="-march=core-avx-i -mtune=core-avx2"
+  export CXXFLAGS="-march=core-avx-i -mtune=core-avx2"
+  export FCFLAGS="-march=core-avx-i -mtune=core-avx2"
+  export LDFLAGS="-march=core-avx-i -mtune=core-avx2"
 elif [ "%{comp_fam}" == "intel" ]; then
   echo "Intel Build"
   export CC=icc
   export CXX=icpc
   export FC=ifort
+  export CFLAGS="-xCORE-AVX-I -axCORE-AVX2"
+  export CXXFLAGS="-xCORE-AVX-I -axCORE-AVX2"
+  export FCFLAGS="-xCORE-AVX-I -axCORE-AVX2"
+  export LDFLAGS="-xCORE-AVX-I -axCORE-AVX2"
 else
   echo "Unrecognized compiler! Exiting!"
   exit -1

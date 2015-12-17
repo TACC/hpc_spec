@@ -47,7 +47,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2
+Release:   3
 License:   BSD
 Group:     MPI
 URL:       http://www.mpich.org
@@ -150,11 +150,19 @@ if [ "%{comp_fam}" == "gcc" ]; then
   export CC=gcc
   export CXX=g++
   export FC=gfortran
+  export CFLAGS="-march=core-avx-i -mtune=core-avx2"
+  export CXXFLAGS="-march=core-avx-i -mtune=core-avx2"
+  export FCFLAGS="-march=core-avx-i -mtune=core-avx2"
+  export LDFLAGS="-march=core-avx-i -mtune=core-avx2"
 elif [ "%{comp_fam}" == "intel" ]; then
   echo "Intel Build"
   export CC=icc
   export CXX=icpc
   export FC=ifort
+  export CFLAGS="-xCORE-AVX-I -axCORE-AVX2"
+  export CXXFLAGS="-xCORE-AVX-I -axCORE-AVX2"
+  export FCFLAGS="-xCORE-AVX-I -axCORE-AVX2"
+  export LDFLAGS="-xCORE-AVX-I -axCORE-AVX2"
 else
   echo "Unrecognized compiler! Exiting!"
   exit -1
@@ -168,7 +176,7 @@ cd mpich-${ampich_version}
 
 ${ampich}/mpich-${ampich_version}/configure \
 --prefix=${ampich_install}                  \
---with-slurm=/opt/slurm/15.08.0
+--with-slurm=/opt/slurm/default
 
 make -j ${ncores}
 make -j ${ncores} install

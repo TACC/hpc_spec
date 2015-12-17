@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   GPL
 Group:     Utility
 URL:       http://www.gnu.org
@@ -125,7 +125,7 @@ in a seamless manner.
 
 # Insert necessary module commands
 module purge
-module load gcc/5.2.0
+module load gcc/4.9.3
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -178,7 +178,10 @@ export  libtool_version=${libtool_major}.${libtool_minor}.${libtool_patch}
 export ncores=16
 
 export CC=gcc
-export CFLAGS=-fPIC
+export CFLAGS="-fPIC -march=core-avx-i -mtune=core-avx2"
+export CXXFLAGS="-march=core-avx-i -mtune=core-avx2"
+export LDFLAGS="-march=core-avx-i -mtune=core-avx2"
+
 
 ### M4
 cd ${auto}
