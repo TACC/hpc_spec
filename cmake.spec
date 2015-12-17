@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   BSD
 Group:     System/Utils
 URL:       http://www.cmake.org
@@ -121,7 +121,7 @@ the usual way.
 
 # Insert necessary module commands
 module purge
-module load gcc/5.2.0
+module load gcc/4.9.3
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -143,8 +143,10 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-  
-  export LDFLAGS="-Wl,-rpath,${GCC_LIB}" # Location of correct libstdc++.so.6
+ 
+  export CC=gcc
+  export CFLAGS="-march=core-avx-i -mtune=core-avx2"
+  export LDFLAGS="-Wl,-rpath,${GCC_LIB} -march=core-avx-i -mtune=core-avx2" # Location of correct libstdc++.so.6
   echo ${LD_LIBRARY_PATH}
   echo ${LDFLAGS}
   # DO NOT preppend $RPM_BUILD_ROOT in prefix
