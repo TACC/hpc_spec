@@ -39,8 +39,8 @@ BuildRoot:  /var/tmp/%{name}-%{version}-buildroot
 %description
 %description -n %{name}
 Default/example startup files for Lonestar 5.
-This are NOT currently the master files used by create_user scripts.
-In fact, create_user does cat on a here file to generate each startup script.
+Also includes a script user can run to copy these files safely to user account.
+These are NOT currently the master files used by create_user scripts.
 
 #------------------------------------------------
 # INSTALLATION DIRECTORY
@@ -52,7 +52,8 @@ In fact, create_user does cat on a here file to generate each startup script.
 # PREPARATION SECTION
 #------------------------------------------------
 # Use -n <name> if source file different from <name>-<version>.tar.gz
-%prep -n startup_scripts-%{version}.tar.gz
+#### %prep -n startup_scripts-%{version}.tar.gz
+%prep
 
 # Remove older attempts
 rm   -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
@@ -60,34 +61,23 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 # Unpack source
 # This will unpack the source to /tmp/BUILD/<name>-<version>
-%setup -n startup_scripts-%{version}
+#### %setup -n startup_scripts-%{version}
+%setup
 
 #------------------------------------------------
 # BUILD SECTION
 #------------------------------------------------
 %build
-# Use mount temp trick
- mkdir -p             %{INSTALL_DIR}
- mount -t tmpfs tmpfs %{INSTALL_DIR}
 
-#-----------------------------
-# Build parallel version
-#-----------------------------
-
-# Build Utilities
-cp ./*.slurm %{INSTALL_DIR}
+### Nothing necessary here; all we have are some files to copy
 
 #------------------------------------------------
 # INSTALL SECTION
 #------------------------------------------------
 %install
 
- mkdir -p                 $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-#  Kluge, the make install, installs in /tmp/carlos
-cp    -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-umount                                   %{INSTALL_DIR}
-
+# Just copy files from exploded tarball to temporary install
+cp ./* $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #------------------------------------------------
 # FILES SECTION
@@ -97,11 +87,17 @@ umount                                   %{INSTALL_DIR}
 # Define files permisions, user and group
 %defattr(-,root,install)
 %{INSTALL_DIR}
+%attr(755, root, root)  install_default_scripts
+%attr(644, root, root)  dot.*
+%attr(644, root, root)  transition.txt
 
 #------------------------------------------------
 # CLEAN UP SECTION
 #------------------------------------------------
 %post
+
+# Nothing necessary here
+
 %clean
 # Make sure we are not within one of the directories we try to delete
 cd /tmp
