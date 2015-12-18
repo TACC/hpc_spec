@@ -53,7 +53,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2
+Release:   3
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.gnu.org/software
@@ -446,7 +446,7 @@ family("compiler")
 EOF
 
  
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version << 'EOF'
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.version << 'EOF'
 #%Module3.1.1#################################################
 ##
 ## version file for %{BASENAME}%{version}
