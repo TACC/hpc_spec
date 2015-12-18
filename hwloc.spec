@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2
+Release:   3
 License:   BSD-2
 Group:     Development/Tools
 URL:       https://www.open-mpi.org/projects/hwloc
@@ -121,7 +121,6 @@ hardware so as to exploit it accordingly and efficiently.
 
 # Insert necessary module commands
 module purge
-ml gcc/4.9.3
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -153,9 +152,9 @@ export hwloc_version=%{pkg_version}
 
 export CC=gcc
 export CXX=g++
-export CFLAGS="-march=core-avx-i -mtune=core-avx2"
-export CXXFLAGS="-march=core-avx-i -mtune=core-avx2"
-export LDFLAGS="-march=core-avx-i -mtune=core-avx2"
+export CFLAGS="-mtune=generic"
+export CXXFLAGS="-mtune=generic"
+export LDFLAGS="-mtune=generic"
 
 cd ${hwloc}/hwloc-${hwloc_version}
 

@@ -26,7 +26,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 # Create some macros (spec file variables)
 %define major_version 2
 %define minor_version 6
-%define micro_version 3
+%define micro_version 4
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2
+Release:   1
 License:   GPLv2
 Group:     System Environment/Base
 URL:       https://git-scm.com
@@ -114,7 +114,6 @@ Git is easy to learn and has a tiny footprint with lightning fast performance.
 
 # Insert necessary module commands
 module purge
-module load gcc/4.9.3
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -144,8 +143,8 @@ export git=`pwd`
 export git_install=%{INSTALL_DIR}
 export git_version=%{pkg_version}
 export CC=gcc
-export CFLAGS="-march=core-avx-i -mtune=core-avx2"
-export LDFLAGS="-march=core-avx-i -mtune=core-avx2"
+export CFLAGS="-mtune=generic"
+export LDFLAGS="-mtune=generic"
 
 wget https://www.kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
 tar xvfz git-${git_version}.tar.gz
