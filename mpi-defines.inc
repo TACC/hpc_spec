@@ -49,8 +49,8 @@
 
 %if "%{is_cmpich}" == "1"
   %if %{undefined mpiV}
-    %define mpi_label 7_2
-    %define mpi_module_version 7.2.4
+    %define mpi_label 7_3
+    %define mpi_module_version 7.3.0
   %endif
   %if "%{mpiV}" == "7_2"
     %define mpi_label 7_2
