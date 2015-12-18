@@ -22,7 +22,7 @@
   %define comp_fam_ver intel16
   %define comp_fam_name Intel
   %define is_intel 1
-  %define comp_module intel/16.0.0
+  %define comp_module intel/16.0.1
 %endif
 
 %if "%{comp_fam}" == "error"
