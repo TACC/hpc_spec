@@ -2,7 +2,7 @@
 Summary:    Startup Scripts (Defaults/Examples) for Lonestar 5
 Name:       tacc-startup_scripts
 Version:    1.0
-Release:    1
+Release:    2
 License:    GPL
 Vendor:     TACC
 Group:      System/Info
@@ -36,7 +36,6 @@ BuildRoot:  /var/tmp/%{name}-%{version}-buildroot
 #------------------------------------------------
 # PACKAGE DESCRIPTION
 #------------------------------------------------
-%description
 %description -n %{name}
 Default/example startup files for Lonestar 5.
 Also includes a script user can run to copy these files safely to user account.
@@ -52,17 +51,14 @@ These are NOT currently the master files used by create_user scripts.
 # PREPARATION SECTION
 #------------------------------------------------
 # Use -n <name> if source file different from <name>-<version>.tar.gz
-#### %prep -n startup_scripts-%{version}.tar.gz
-%prep
+%prep -n startup_scripts-%{version}.tar.gz
 
 # Remove older attempts
 rm   -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 # Unpack source
-# This will unpack the source to /tmp/BUILD/<name>-<version>
-#### %setup -n startup_scripts-%{version}
-%setup
+# This will unpack the source to /admin/rpms/BUILD
+%setup -n startup_scripts-%{version}
 
 #------------------------------------------------
 # BUILD SECTION
@@ -77,19 +73,21 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 %install
 
 # Just copy files from exploded tarball to temporary install
+
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}   # can't do this too early; gets wiped
 cp ./* $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #------------------------------------------------
 # FILES SECTION
 #------------------------------------------------
-%files -n %{name}
+### %files -n %{name}
+%files
 
 # Define files permisions, user and group
-%defattr(-,root,install)
+#### %defattr(-,root,install)
+%defattr(644,root,root,755)
 %{INSTALL_DIR}
-%attr(755, root, root)  install_default_scripts
-%attr(644, root, root)  dot.*
-%attr(644, root, root)  transition.txt
+%attr(755, root, root)  %{INSTALL_DIR}/install_default_scripts
 
 #------------------------------------------------
 # CLEAN UP SECTION

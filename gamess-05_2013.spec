@@ -22,7 +22,7 @@ Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
-Release:   1
+Release:   2
 License:   GPL
 Vendor:    Ames Lab 
 Group:     applications/chemistry
@@ -93,7 +93,9 @@ the computation into small fragments.
   unset MODULEPATH
   if [ -f "$BASH_ENV" ]; then
     . $BASH_ENV
+  set +xv
     module purge
+  set -xv
     clearMT
     MP="/opt/apps/tools/modulefiles:/opt/apps/modulefiles"
 
@@ -101,9 +103,10 @@ the computation into small fragments.
      export MODULEPATH=$(/opt/apps/lmod/lmod/libexec/addto --append MODULEPATH ${MP//:/ })
     fi  
   fi
-
+set +xv
   module load %{comp_module}
   module load %{mpi_module}
+set -xv
 
   echo "Installing the package?:    %{BUILD_PACKAGE}"
   echo "Installing the modulefile?: %{BUILD_MODULEFILE}"
@@ -152,7 +155,9 @@ the computation into small fragments.
 %install
 
   %include system-load.inc
+  set +xv
   module purge
+  set -xv
  
   echo "Installing the package?:    %{BUILD_PACKAGE}"
   echo "Installing the modulefile?: %{BUILD_MODULEFILE}"
