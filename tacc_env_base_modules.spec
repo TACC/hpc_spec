@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3
+Release:   4
 License:   GPL
 Group:     Module Magic
 Packager:  TACC - cproctor@tacc.utexas.edu
@@ -197,7 +197,7 @@ end
 
 
 -- Create slurm environment variables.
-local base_dir           = "/opt/slurm/15.08.0"
+local base_dir           = "/opt/slurm/default"
 
 append_path( "PATH"            , pathJoin( base_dir, "bin")      )
 -- append_path("LD_LIBRARY_PATH" , pathJoin(base_dir, "lib")       )

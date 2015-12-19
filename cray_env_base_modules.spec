@@ -50,7 +50,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3
+Release:   4
 License:   GPL
 Group:     Module Magic
 Packager:  TACC - cproctor@tacc.utexas.edu
@@ -219,7 +219,7 @@ if [ module-info mode remove ] {
 }
 
 ### WCP 2015-12-01 Add tacc slurm information instead.
-set base_dir "/opt/slurm/15.08.0"
+set base_dir "/opt/slurm/default"
 append-path PATH             "$base_dir/bin"
 ## append-path LD_LIBRARY_PATH  "$base_dir/lib"
 prepend-path MANPATH         "$base_dir/share/man"
