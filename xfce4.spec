@@ -11,7 +11,7 @@
 %define MODULES modulefiles
 
 %define INSTALL_DIR %{APPS}/xfce/%{version}
-%define MODULE_DIR %{APPS}/%{MODULES}/cuda
+%define MODULE_DIR %{APPS}/%{MODULES}/xfce
 
 Summary:	Xfce X Windows manager
 Version:	4.8
@@ -28,9 +28,6 @@ Provides:			xfce-4.8 = %{version}-%{release}
 AutoReqProv: 			no
 
 
-
-# Filter out provides
-#%filter_provides_in (%{_datadir}|%{_libdir}/cuda/libnvvp)
 
 %description
 Xfce is a lightweight desktop environment for UNIX-like operating systems. 
