@@ -46,11 +46,18 @@ echo "Nothing to build"
 
 %install
 export TMPDIR=/var/tmp
-export PKG_CONFIG_PATH=${RPM_BUILD_ROOT}/build_deps/lib/pkgconfig:${PKG_CONFIG_PATH}
-export LD_LIBRARY_PATH=${RPM_BUILD_ROOT}/build_deps/lib:${LD_LIBRARY_PATH}
-export PATH=${RPM_BUILD_ROOT}/build_deps/bin:${PATH}
+export XFCE_PREFIX=${RPM_BUILD_ROOT}/%{INSTALL_DIR}
+if [ "${XFCE_PREFIX}" != "${RPM_BUILD_ROOT}/%{INSTALL_DIR}" ]; then
+  echo "creating tmpfs mount"
+  mkdir -p ${XFCE_PREFIX}
+  mount -t tmpfs tmpfs-xfce ${XFCE_PREFIX}
+fi
+export XFCE_BUILD_DEPS=${TMPDIR}/build_deps
+export PKG_CONFIG_PATH=${XFCE_BUILD_DEPS}/lib/pkgconfig:${PKG_CONFIG_PATH}
+export LD_LIBRARY_PATH=${XFCE_BUILD_DEPS}/lib:${LD_LIBRARY_PATH}
+export PATH=${XFCE_BUILD_DEPS}/bin:${PATH}
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-mkdir -p ${RPM_BUILD_ROOT}/build_deps
+mkdir -p ${XFCE_BUILD_DEPS}
 cd ${RPM_BUILD_ROOT}
 tar xf %{SOURCE0}
 
@@ -58,135 +65,184 @@ tar xf %{SOURCE0}
 # intltool
 tar xf intltool-0.40.6.tar.bz2
 pushd intltool-0.40.6
-./configure --prefix=${RPM_BUILD_ROOT}/build_deps && make && make install
+./configure --prefix=${XFCE_BUILD_DEPS} && make && make install
 popd
+rm -rf intltool-0.40.6
+rm intltool-0.40.6.tar.bz2
 
 # dbus-glib
 tar xf dbus-glib-0.76.tar.gz
 pushd dbus-glib-0.76
-./configure --prefix=${RPM_BUILD_ROOT}/build_deps && make && make install
+./configure --prefix=${XFCE_BUILD_DEPS} && make && make install
 popd
+rm -rf dbus-glib-0.76
+rm dbus-glib-0.76.tar.gz
 
 # libwnck
 tar xf libwnck-2.26.2.tar.bz2
 pushd libwnck-2.26.2
-./configure --prefix=${RPM_BUILD_ROOT}/build_deps && make && make install
+./configure --prefix=${XFCE_BUILD_DEPS} && make && make install
 popd
+rm -rf libwnck-2.26.2
+rm libwnck-2.26.2.tar.bz2
 
 # libglade
 tar xf libglade-2.6.4.tar.bz2
 pushd libglade-2.6.4
-./configure --prefix=${RPM_BUILD_ROOT}/build_deps && make && make install
+./configure --prefix=${XFCE_BUILD_DEPS} && make && make install
 popd
+rm -rf libglade-2.6.4
+rm libglade-2.6.4.tar.bz2
 
 
 
 #
 # and now for the XFCE
 #
-export PKG_CONFIG_PATH=${RPM_BUILD_ROOT}/%{INSTALL_DIR}/lib/pkgconfig:${PKG_CONFIG_PATH}
+export PKG_CONFIG_PATH=${XFCE_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}
 
 # xfce-dev-tools
 tar xf xfce4-dev-tools-4.8.0.tar.bz2
 pushd xfce4-dev-tools-4.8.0
-./configure --prefix=${RPM_BUILD_ROOT}/%{INSTALL_DIR} && make && make install
+./configure --prefix=${XFCE_PREFIX} && make && make install
 popd
+rm -rf xfce4-dev-tools-4.8.0
+rm xfce4-dev-tools-4.8.0.tar.bz2
 
 # libxfce4util
 tar xf libxfce4util-4.8.1.tar.bz2
 pushd libxfce4util-4.8.1
-./configure --prefix=${RPM_BUILD_ROOT}/%{INSTALL_DIR} && make && make install
+./configure --prefix=${XFCE_PREFIX} && make && make install
 popd
+rm -rf libxfce4util-4.8.1
+rm libxfce4util-4.8.1.tar.bz2
 
 # xfconf
 tar xf xfconf-4.8.0.tar.bz2
 pushd xfconf-4.8.0
-./configure --prefix=${RPM_BUILD_ROOT}/%{INSTALL_DIR} && make && make install
+./configure --prefix=${XFCE_PREFIX} && make && make install
 popd
+rm -rf xfconf-4.8.0
+rm xfconf-4.8.0.tar.bz2
 
 # libxfce4ui
 tar xf libxfce4ui-4.8.0.tar.bz2
 pushd libxfce4ui-4.8.0
-./configure --prefix=${RPM_BUILD_ROOT}/%{INSTALL_DIR} && make && make install
+./configure --prefix=${XFCE_PREFIX} && make && make install
 popd
+rm -rf libxfce4ui-4.8.0
+rm libxfce4ui-4.8.0.tar.bz2
 
 # exo
 tar xf exo-0.6.0.tar.bz2
 pushd exo-0.6.0
-./configure --prefix=${RPM_BUILD_ROOT}/%{INSTALL_DIR} --with-gio-module-dir=${RPM_BUILD_ROOT}/%{INSTALL_DIR}/lib/gio/modules && make && make install
+./configure --prefix=${XFCE_PREFIX} --with-gio-module-dir=${XFCE_PREFIX}/lib/gio/modules && make && make install
 popd
+rm -rf exo-0.6.0
+rm exo-0.6.0.tar.bz2
 
 # garcon
 tar xf garcon-0.1.12.tar.bz2
 pushd garcon-0.1.12
-./configure --prefix=${RPM_BUILD_ROOT}/%{INSTALL_DIR} && make && make install
+./configure --prefix=${XFCE_PREFIX} && make && make install
 popd
+rm -rf garcon-0.1.12
+rm garcon-0.1.12.tar.bz2
 
 # xfce4-panel
 tar xf xfce4-panel-4.8.0.tar.bz2
 pushd xfce4-panel-4.8.0
-./configure --prefix=${RPM_BUILD_ROOT}/%{INSTALL_DIR} && make && make install
+./configure --prefix=${XFCE_PREFIX} && make && make install
 popd
+rm -rf xfce4-panel-4.8.0
+rm xfce4-panel-4.8.0.tar.bz2
 
 # Thunar
 tar xf Thunar-1.2.0.tar.bz2
 pushd Thunar-1.2.0
-./configure --prefix=${RPM_BUILD_ROOT}/%{INSTALL_DIR} && make && make install
+./configure --prefix=${XFCE_PREFIX} && make && make install
 popd
+rm -rf Thunar-1.2.0
+rm Thunar-1.2.0.tar.bz2
 
 # thunar-vfs
 tar xf thunar-vfs-1.2.0.tar.bz2
 pushd thunar-vfs-1.2.0
-./configure --prefix=${RPM_BUILD_ROOT}/%{INSTALL_DIR} && make && make install
+./configure --prefix=${XFCE_PREFIX} && make && make install
 popd
+rm -rf thunar-vfs-1.2.0
+rm thunar-vfs-1.2.0.tar.bz2
 
 # xfce4-settings
 tar xf xfce4-settings-4.8.0.tar.bz2
 pushd xfce4-settings-4.8.0
-./configure --prefix=${RPM_BUILD_ROOT}/%{INSTALL_DIR} && make && make install
+./configure --prefix=${XFCE_PREFIX} && make && make install
 popd
+rm -rf xfce4-settings-4.8.0
+rm xfce4-settings-4.8.0.tar.bz2
 
 # xfce4-session
 tar xf xfce4-session-4.8.0.tar.bz2
 pushd xfce4-session-4.8.0
-./configure --prefix=${RPM_BUILD_ROOT}/%{INSTALL_DIR} && make && make install
+./configure --prefix=${XFCE_PREFIX} && make && make install
 popd
+rm -rf xfce4-session-4.8.0
+rm xfce4-session-4.8.0.tar.bz2
 
 # xfdesktop
 tar xf xfdesktop-4.8.0.tar.bz2
 pushd xfdesktop-4.8.0
-./configure --prefix=${RPM_BUILD_ROOT}/%{INSTALL_DIR} && make && make install
+./configure --prefix=${XFCE_PREFIX} && make && make install
 popd
+rm -rf xfdesktop-4.8.0
+rm xfdesktop-4.8.0.tar.bz2
 
 # xfwm4
 tar xf xfwm4-4.8.0.tar.bz2
 pushd xfwm4-4.8.0
-./configure --prefix=${RPM_BUILD_ROOT}/%{INSTALL_DIR} && make && make install
+./configure --prefix=${XFCE_PREFIX} && make && make install
 popd
+rm -rf xfwm4-4.8.0
+rm xfwm4-4.8.0.tar.bz2
 
 # xfce-utils
 tar xf xfce-utils-4.8.0.tar.bz2
 pushd xfce-utils-4.8.0
-./configure --prefix=${RPM_BUILD_ROOT}/%{INSTALL_DIR} --with-xsession-prefix=${RPM_BUILD_ROOT}/%{INSTALL_DIR}/share/xsessions && make && make install
+./configure --prefix=${XFCE_PREFIX} --with-xsession-prefix=${XFCE_PREFIX}/share/xsessions && make && make install
 popd
+rm -rf xfce-utils-4.8.0
+rm xfce-utils-4.8.0.tar.bz2
 
 # xfce4-appfinder
 tar xf xfce4-appfinder-4.8.0.tar.bz2
 pushd xfce4-appfinder-4.8.0
-./configure --prefix=${RPM_BUILD_ROOT}/%{INSTALL_DIR} && make && make install
+./configure --prefix=${XFCE_PREFIX} && make && make install
 popd
+rm -rf xfce4-appfinder-4.8.0
+rm xfce4-appfinder-4.8.0.tar.bz2
 
 # gtk-xfce-engine
 tar xf gtk-xfce-engine-2.8.0.tar.bz2
 pushd gtk-xfce-engine-2.8.0
-./configure --prefix=${RPM_BUILD_ROOT}/%{INSTALL_DIR} && make && make install
+./configure --prefix=${XFCE_PREFIX} && make && make install
 popd
+rm -rf gtk-xfce-engine-2.8.0
+rm gtk-xfce-engine-2.8.0.tar.bz2
 
 # libxfcegui
 tar xf libxfcegui4-4.8.0.tar.bz2
 pushd libxfcegui4-4.8.0
-./configure --prefix=${RPM_BUILD_ROOT}/%{INSTALL_DIR} && make && make install
+./configure --prefix=${XFCE_PREFIX} && make && make install
 popd
+rm -rf libxfcegui4-4.8.0
+rm libxfcegui4-4.8.0.tar.bz2
+
+rm -rf ${XFCE_BUILD_DEPS}
+if [ "${XFCE_PREFIX}" != "${RPM_BUILD_ROOT}/%{INSTALL_DIR}" ]; then
+  echo "copying install from tmpfs to RPM_BUILD_ROOT"
+  cp -r ${XFCE_PREFIX} ${RPM_BUILD_ROOT}/%{INSTALL_DIR}
+  umount tmpfs-xfce
+fi
 
 
 %post -p /sbin/ldconfig
@@ -194,7 +250,6 @@ popd
 %postun -p /sbin/ldconfig
 
 %files
-
 %{INSTALL_DIR}/include/xfce4/libxfce4util/xfce-fileutils.h
 %{INSTALL_DIR}/include/xfce4/libxfce4util/libxfce4util-config.h
 %{INSTALL_DIR}/include/xfce4/libxfce4util/xfce-resource.h
@@ -3590,6 +3645,95 @@ popd
 %{INSTALL_DIR}/etc/xdg/autostart/xfce4-tips-autostart.desktop
 %{INSTALL_DIR}/etc/xdg/autostart/xfconf-migration-4.6.desktop
 %{INSTALL_DIR}/etc/xdg/autostart/xfce4-settings-helper-autostart.desktop
+%{INSTALL_DIR}/bin/thunar
+%{INSTALL_DIR}/lib/libexo-1.so
+%{INSTALL_DIR}/lib/libexo-1.so.0
+%{INSTALL_DIR}/lib/libgarcon-1.so
+%{INSTALL_DIR}/lib/libgarcon-1.so.0
+%{INSTALL_DIR}/lib/libthunar-vfs-1.so
+%{INSTALL_DIR}/lib/libthunar-vfs-1.so.2
+%{INSTALL_DIR}/lib/libthunarx-2.so
+%{INSTALL_DIR}/lib/libthunarx-2.so.0
+%{INSTALL_DIR}/lib/libxfce4kbd-private-2.so
+%{INSTALL_DIR}/lib/libxfce4kbd-private-2.so.0
+%{INSTALL_DIR}/lib/libxfce4panel-1.0.so
+%{INSTALL_DIR}/lib/libxfce4panel-1.0.so.3
+%{INSTALL_DIR}/lib/libxfce4ui-1.so
+%{INSTALL_DIR}/lib/libxfce4ui-1.so.0
+%{INSTALL_DIR}/lib/libxfce4util.so
+%{INSTALL_DIR}/lib/libxfce4util.so.4
+%{INSTALL_DIR}/lib/libxfcegui4.so
+%{INSTALL_DIR}/lib/libxfcegui4.so.4
+%{INSTALL_DIR}/lib/libxfconf-0.so
+%{INSTALL_DIR}/lib/libxfconf-0.so.2
+%{INSTALL_DIR}/lib/libxfsm-4.6.so
+%{INSTALL_DIR}/lib/libxfsm-4.6.so.0
+%{INSTALL_DIR}/share/doc/Thunar/html/bn/images
+%{INSTALL_DIR}/share/doc/Thunar/html/ca/images
+%{INSTALL_DIR}/share/doc/Thunar/html/da/images
+%{INSTALL_DIR}/share/doc/Thunar/html/el/images
+%{INSTALL_DIR}/share/doc/Thunar/html/es/images
+%{INSTALL_DIR}/share/doc/Thunar/html/eu/images
+%{INSTALL_DIR}/share/doc/Thunar/html/gl/images
+%{INSTALL_DIR}/share/doc/Thunar/html/id/images
+%{INSTALL_DIR}/share/doc/Thunar/html/it/images
+%{INSTALL_DIR}/share/doc/Thunar/html/nl/images
+%{INSTALL_DIR}/share/doc/Thunar/html/ru/images
+%{INSTALL_DIR}/share/doc/Thunar/html/sv/images
+%{INSTALL_DIR}/share/doc/Thunar/html/tr/images
+%{INSTALL_DIR}/share/doc/Thunar/html/ug/images
+%{INSTALL_DIR}/share/doc/Thunar/html/zh_CN/images
+%{INSTALL_DIR}/share/doc/Thunar/html/zh_TW/images
+%{INSTALL_DIR}/share/doc/exo/html/bn/images
+%{INSTALL_DIR}/share/doc/exo/html/ca/images
+%{INSTALL_DIR}/share/doc/exo/html/da/images
+%{INSTALL_DIR}/share/doc/exo/html/de/images
+%{INSTALL_DIR}/share/doc/exo/html/el/images
+%{INSTALL_DIR}/share/doc/exo/html/fr/images
+%{INSTALL_DIR}/share/doc/exo/html/gl/images
+%{INSTALL_DIR}/share/doc/exo/html/id/images
+%{INSTALL_DIR}/share/doc/exo/html/it/images
+%{INSTALL_DIR}/share/doc/exo/html/pt/images
+%{INSTALL_DIR}/share/doc/exo/html/pt_BR/images
+%{INSTALL_DIR}/share/doc/exo/html/ru/images
+%{INSTALL_DIR}/share/doc/exo/html/sv/images
+%{INSTALL_DIR}/share/doc/exo/html/tr/images
+%{INSTALL_DIR}/share/doc/exo/html/ug/images
+%{INSTALL_DIR}/share/doc/exo/html/zh_CN/images
+%{INSTALL_DIR}/share/doc/xfce-utils/html/da/images
+%{INSTALL_DIR}/share/doc/xfce-utils/html/el/images
+%{INSTALL_DIR}/share/doc/xfce-utils/html/gl/images
+%{INSTALL_DIR}/share/doc/xfce-utils/html/it/images
+%{INSTALL_DIR}/share/doc/xfce-utils/html/ja/images
+%{INSTALL_DIR}/share/doc/xfce-utils/html/sv/images
+%{INSTALL_DIR}/share/doc/xfce-utils/html/ug/images
+%{INSTALL_DIR}/share/doc/xfce4-session/html/da/images
+%{INSTALL_DIR}/share/doc/xfce4-session/html/el/images
+%{INSTALL_DIR}/share/doc/xfce4-session/html/gl/images
+%{INSTALL_DIR}/share/doc/xfce4-session/html/it/images
+%{INSTALL_DIR}/share/doc/xfce4-session/html/ja/images
+%{INSTALL_DIR}/share/doc/xfce4-session/html/ru/images
+%{INSTALL_DIR}/share/doc/xfce4-session/html/sv/images
+%{INSTALL_DIR}/share/doc/xfce4-session/html/ug/images
+%{INSTALL_DIR}/share/doc/xfdesktop/html/bn/images
+%{INSTALL_DIR}/share/doc/xfdesktop/html/ca/images
+%{INSTALL_DIR}/share/doc/xfdesktop/html/da/images
+%{INSTALL_DIR}/share/doc/xfdesktop/html/el/images
+%{INSTALL_DIR}/share/doc/xfdesktop/html/gl/images
+%{INSTALL_DIR}/share/doc/xfdesktop/html/id/images
+%{INSTALL_DIR}/share/doc/xfdesktop/html/it/images
+%{INSTALL_DIR}/share/doc/xfdesktop/html/ru/images
+%{INSTALL_DIR}/share/doc/xfdesktop/html/sv/images
+%{INSTALL_DIR}/share/doc/xfdesktop/html/ug/images
+%{INSTALL_DIR}/share/doc/xfdesktop/html/zh_CN/images
+%{INSTALL_DIR}/share/doc/xfwm4/html/da/images
+%{INSTALL_DIR}/share/doc/xfwm4/html/el/images
+%{INSTALL_DIR}/share/doc/xfwm4/html/gl/images
+%{INSTALL_DIR}/share/doc/xfwm4/html/sv/images
+%{INSTALL_DIR}/share/doc/xfwm4/html/ug/images
 
 %changelog
 
+%clean
+rm -rf ${XFCE_PREFIX}
+rm -rf ${RPM_BUILD_ROOT}
