@@ -245,16 +245,72 @@ rm libxfcegui4-4.8.0.tar.bz2
 rm -rf ${XFCE_BUILD_DEPS}
 if [ "${XFCE_PREFIX}" != "${RPM_BUILD_ROOT}/%{INSTALL_DIR}" ]; then
   echo "copying install from tmpfs to RPM_BUILD_ROOT"
-  cp -r ${XFCE_PREFIX} ${RPM_BUILD_ROOT}/%{INSTALL_DIR}
+  cp -r ${XFCE_PREFIX}/. ${RPM_BUILD_ROOT}/%{INSTALL_DIR}
   umount tmpfs-xfce
 fi
 
+mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}/
+
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version} << 'EOF'
+#%Module1.0#####################################################################
+##
+## Xfce X Windows Manager
+##
+proc ModulesHelp { } {
+
+puts stderr ""
+puts stderr "This module loads the Xfce X Windows manager and updates the \$PATH "
+puts stderr "and \$LD_LIBRARY_PATH environment "
+puts stderr "variables to access the binaries and libraries respectively."
+puts stderr ""
+puts stderr "The following additional environment variables are also defined:"
+puts stderr ""
+puts stderr "\$TACC_XFCE_DIR"
+puts stderr "\$TACC_XFCE_BIN"
+puts stderr "\$TACC_XFCE_LIB"
+puts stderr " "
+puts stderr "Version %{version}\n"
+
+}
+
+module-whatis "Name: Xfce X Windows Manager"
+module-whatis "Version: %{version}"
+module-whatis "Category: utility"
+module-whatis "Description: lightweight yet full-featured X windows manager"
+module-whatis "URL: http://xfce.org/"
+
+# for Tcl script use only
+
+set     version                 %{version}
+
+prepend-path    PATH            %{INSTALL_DIR}/bin
+prepend-path    MANPATH         %{INSTALL_DIR}/share/man
+prepend-path    INCLUDE         %{INSTALL_DIR}/include
+prepend-path    LD_LIBRARY_PATH %{INSTALL_DIR}/lib
+
+setenv TACC_XFCE_DIR  %{INSTALL_DIR}
+setenv TACC_XFCE_BIN  %{INSTALL_DIR}/bin
+setenv TACC_XFCE_LIB  %{INSTALL_DIR}/lib
+EOF
+
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
+#%Module1.0#################################################
+##
+## Version file for %{version}.
+##
+
+set     ModulesVersion     "%{version}"
+
+EOF
+
+%{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
 
 %post -p /sbin/ldconfig
 
 %postun -p /sbin/ldconfig
 
 %files
+%{MODULE_DIR}
 %{INSTALL_DIR}/include/xfce4/libxfce4util/xfce-fileutils.h
 %{INSTALL_DIR}/include/xfce4/libxfce4util/libxfce4util-config.h
 %{INSTALL_DIR}/include/xfce4/libxfce4util/xfce-resource.h
