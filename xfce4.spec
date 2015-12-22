@@ -46,7 +46,12 @@ echo "Nothing to build"
 
 %install
 export TMPDIR=/var/tmp
-export XFCE_PREFIX=${RPM_BUILD_ROOT}/%{INSTALL_DIR}
+if [ `whoami` == "root" ]; then
+  XFCE_PREFIX=%{INSTALL_DIR}
+else
+  XFCE_PREFIX=${RPM_BUILD_ROOT}/%{INSTALL_DIR}
+fi
+export XFCE_PREFIX
 if [ "${XFCE_PREFIX}" != "${RPM_BUILD_ROOT}/%{INSTALL_DIR}" ]; then
   echo "creating tmpfs mount"
   mkdir -p ${XFCE_PREFIX}
