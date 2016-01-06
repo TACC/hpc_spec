@@ -42,7 +42,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   8
+Release:   9
 License:   GPL
 Group:     Development/Tools
 Packager:  TACC - carlos@tacc.utexas.edu
@@ -270,6 +270,7 @@ prepend_path( 'LD_LIBRARY_PATH', "/opt/cray/udreg/default/lib64" )
 local base_dir = "%{INSTALL_DIR}"
 prepend_path( "PATH", pathJoin( base_dir, "bin" ) )
 prepend_path( "MODULEPATH"    , "%{MODULE_PREFIX}/%{comp_fam_ver}/cray_mpich_7_2/modulefiles")
+prepend_path( "MODULEPATH"    , "%{MODULE_PREFIX}/%{comp_fam_ver}/cray_mpich_7_3/modulefiles")
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
