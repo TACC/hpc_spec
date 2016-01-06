@@ -25,7 +25,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 # Create some macros (spec file variables)
 %define major_version 1
-%define minor_version 0
+%define minor_version 1
 
 %define pkg_version %{major_version}.%{minor_version}
 
@@ -47,7 +47,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3
+Release:   1
 License:   GPL
 Group:     Development/Tools
 Packager:  TACC - cproctor@tacc.utexas.edu
@@ -135,44 +135,46 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Create some dummy directories and files for fun
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
 
-# ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpichcxx_intel.so $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpichcxx.so
-# ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpichf90_intel.so $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpichf90.so
-# ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpich_intel.so    $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpich.so
-# ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpich_intel.so    $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpich.so.12
-# ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpich_intel.so    $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpi_dbg.so
-# ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpichf90_intel.so $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpifort.so
-# ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpichf90_intel.so $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpifort.so.12
-# ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpichcxx_intel.so $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpigc4.so
-# ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpichf90_intel.so $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpigf.so
-# ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpich_intel.so    $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpi.so
-# ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpich_intel.so    $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpi.so.12
-# ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpl.so            $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpl.so
-# ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpl.so            $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libopa.so
-# 
-# ln -s /opt/apps/intel16/impi/5.1.1/impi/5.1.1.109/lib64/libmpigi.a      $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpigi.a
+# cray_mpich/7.2.4
+# ln -s /opt/apps/intel/16/compilers_and_libraries_2016.0.109/linux/compiler/lib/intel64_lin/libimf.so     $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libimf.so       
+# ln -s /opt/apps/intel/16/compilers_and_libraries_2016.0.109/linux/compiler/lib/intel64_lin/libintlc.so   $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libintlc.so     
+# ln -s /opt/apps/intel/16/compilers_and_libraries_2016.0.109/linux/compiler/lib/intel64_lin/libintlc.so.5 $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libintlc.so.5   
+# ln -s /opt/apps/intel/16/compilers_and_libraries_2016.0.109/linux/compiler/lib/intel64_lin/libirng.so    $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libirng.so      
+# ln -s /opt/apps/intel/16/compilers_and_libraries_2016.0.109/linux/compiler/lib/intel64_lin/libsvml.so    $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libsvml.so      
+# ln -s /opt/apps/intel16/impi/5.1.1/compilers_and_libraries_2016.0.109/linux/mpi/intel64/lib/libmpigi.a   $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpigi.a      
+# ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpichcxx_intel.so                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpichcxx.so  
+# ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpichf90_intel.so                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpichf90.so  
+# ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpich_intel.so                                     $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpich.so     
+# ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpich_intel.so                                     $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpich.so.12  
+# ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpich_intel.so                                     $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpi_dbg.so   
+# ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpichf90_intel.so                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpifort.so   
+# ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpichf90_intel.so                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpifort.so.12
+# ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpichcxx_intel.so                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpigc4.so    
+# ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpichf90_intel.so                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpigf.so     
+# ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpich_intel.so                                     $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpi.so       
+# ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpl.so                                             $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpl.so       
+# ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpl.so                                             $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libopa.so       
+# ln -s libmpi.so                                                                                          $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpi.so.12    
 
-
-
-ln -s /opt/apps/intel/16/compilers_and_libraries_2016.0.109/linux/compiler/lib/intel64_lin/libimf.so     $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libimf.so       
-ln -s /opt/apps/intel/16/compilers_and_libraries_2016.0.109/linux/compiler/lib/intel64_lin/libintlc.so   $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libintlc.so     
-ln -s /opt/apps/intel/16/compilers_and_libraries_2016.0.109/linux/compiler/lib/intel64_lin/libintlc.so.5 $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libintlc.so.5   
-ln -s /opt/apps/intel/16/compilers_and_libraries_2016.0.109/linux/compiler/lib/intel64_lin/libirng.so    $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libirng.so      
-ln -s /opt/apps/intel/16/compilers_and_libraries_2016.0.109/linux/compiler/lib/intel64_lin/libsvml.so    $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libsvml.so      
-ln -s /opt/apps/intel16/impi/5.1.1/compilers_and_libraries_2016.0.109/linux/mpi/intel64/lib/libmpigi.a   $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpigi.a      
-ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpichcxx_intel.so                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpichcxx.so  
-ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpichf90_intel.so                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpichf90.so  
-ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpich_intel.so                                     $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpich.so     
-ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpich_intel.so                                     $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpich.so.12  
-ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpich_intel.so                                     $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpi_dbg.so   
-ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpichf90_intel.so                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpifort.so   
-ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpichf90_intel.so                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpifort.so.12
-ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpichcxx_intel.so                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpigc4.so    
-ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpichf90_intel.so                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpigf.so     
-ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpich_intel.so                                     $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpi.so       
-ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpl.so                                             $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpl.so       
-ln -s /opt/cray/mpt/7.2.4/gni/mpich2-INTEL/140/lib/libmpl.so                                             $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libopa.so       
-ln -s libmpi.so                                                                                          $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpi.so.12    
-
+ln -s /opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/compiler/lib/intel64_lin/libsvml.so    $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libsvml.so
+ln -s /opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/compiler/lib/intel64_lin/libirng.so    $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libirng.so
+ln -s /opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/compiler/lib/intel64_lin/libintlc.so.5 $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libintlc.so.5
+ln -s /opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/compiler/lib/intel64_lin/libintlc.so   $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libintlc.so
+ln -s /opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/compiler/lib/intel64_lin/libimf.so     $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libimf.so
+ln -s /opt/apps/intel16/impi/5.1.1/compilers_and_libraries_2016.0.109/linux/mpi/intel64/lib/libmpigi.a           $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpigi.a
+ln -s /opt/cray/mpt/7.3.0/gni/mpich-intel/140/lib/libmpl.so                                                      $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libopa.so
+ln -s /opt/cray/mpt/7.3.0/gni/mpich-intel/140/lib/libmpl.so                                                      $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpl.so
+ln -s /opt/cray/mpt/7.3.0/gni/mpich-intel/140/lib/libmpich_intel.so                                              $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpi.so
+ln -s /opt/cray/mpt/7.3.0/gni/mpich-intel/140/lib/libmpichf90_intel.so                                           $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpif.so
+ln -s /opt/cray/mpt/7.3.0/gni/mpich-intel/140/lib/libmpichcxx_intel.so                                           $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpigc4.so
+ln -s /opt/cray/mpt/7.3.0/gni/mpich-intel/140/lib/libmpichf90_intel.so                                           $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpifort.so.12
+ln -s /opt/cray/mpt/7.3.0/gni/mpich-intel/140/lib/libmpichf90_intel.so                                           $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpifort.so
+ln -s /opt/cray/mpt/7.3.0/gni/mpich-intel/140/lib/libmpich_intel.so                                              $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpi_dbg.so
+ln -s /opt/cray/mpt/7.3.0/gni/mpich-intel/140/lib/libmpich_intel.so                                              $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpich.so.12
+ln -s /opt/cray/mpt/7.3.0/gni/mpich-intel/140/lib/libmpich_intel.so                                              $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpich.so
+ln -s /opt/cray/mpt/7.3.0/gni/mpich-intel/140/lib/libmpichf90_intel.so                                           $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpichf90.so
+ln -s /opt/cray/mpt/7.3.0/gni/mpich-intel/140/lib/libmpichcxx_intel.so                                           $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpichcxx.so
+ln -s libmpi.so                                                                                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/libmpi.so.12
 
 
 
