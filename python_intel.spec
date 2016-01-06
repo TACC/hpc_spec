@@ -1,7 +1,7 @@
 Summary:    Python is a high-level general-purpose programming language.
 Name:       tacc-python 
 Version:    2.7.10
-Release:    1 
+Release:    2
 License:    GPLv2
 Vendor:     Python Software Foundation
 Group:      Applications
@@ -94,7 +94,7 @@ echo %{_topdir}/SOURCES
      tar -xzf %{_topdir}/SOURCES/Python-%{version}.tgz -C ${SRC_DIR}
      cd ${SRC_DIR}/Python-%{version}
 
-     ./configure --prefix=%{INSTALL_DIR_COMP} CC=icc CXX=icpc CFLAGS="-ipo -fPIC -mkl -O3 -fp-model strict -fomit-frame-pointer -xhost" CPPFLAGS="-ipo -fPIC -mkl -O3 -fp-model strict -fomit-frame-pointer -xhost" LDFLAGS="-ipo -fp-model strict -fomit-frame-pointer -xhost -lpthread -mkl" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth
+     ./configure --prefix=%{INSTALL_DIR_COMP} CC=icc CXX=icpc CFLAGS="-ipo -fPIC -mkl -O3 -fp-model strict -fomit-frame-pointer -axCORE-AVX2,CORE-AVX-I" CPPFLAGS="-ipo -fPIC -mkl -O3 -fp-model strict -fomit-frame-pointer -axCORE-AVX2,CORE-AVX-I" LDFLAGS="-ipo -fp-model strict -fomit-frame-pointer -axCORE-AVX2,CORE-AVX-I -lpthread -mkl" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth
      make -j 16
      make sharedinstall
      make -i install
@@ -157,7 +157,11 @@ library_dirs = ${MKLROOT}/lib/intel64
 include_dirs = ${MKLROOT}/include
 mkl_libs = mkl_rt
 lapack_libs = " > site.cfg
-    sed -i 's/-m64/-O3 -g -fp-model strict -fPIC -fomit-frame-pointer -openmp -xhost/' numpy/distutils/intelccompiler.py
+
+    sed -i 's/-m64/-O3 -g -fp-model strict -fPIC -fomit-frame-pointer -openmp -axCORE-AVX2,CORE-AVX-I/' numpy/distutils/intelccompiler.py
+
+    sed -i 's/-xhost/-axCORE-AVX2,CORE-AVX-I/' numpy/distutils/fcompiler/intel.py
+
 
     %{INSTALL_DIR_COMP}/bin/python setup.py config --compiler=intelem --fcompiler=intelem build_clib --compiler=intelem --fcompiler=intelem build_ext --compiler=intelem --fcompiler=intelem install --prefix=%{INSTALL_DIR_COMP}
 
