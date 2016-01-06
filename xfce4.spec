@@ -11,7 +11,7 @@
 %define MODULES modulefiles
 
 %define INSTALL_DIR %{APPS}/xfce/%{version}
-%define MODULE_DIR %{APPS}/%{MODULES}/cuda
+%define MODULE_DIR %{APPS}/%{MODULES}/xfce
 
 Summary:	Xfce X Windows manager
 Version:	4.8
@@ -28,9 +28,6 @@ Provides:			xfce-4.8 = %{version}-%{release}
 AutoReqProv: 			no
 
 
-
-# Filter out provides
-#%filter_provides_in (%{_datadir}|%{_libdir}/cuda/libnvvp)
 
 %description
 Xfce is a lightweight desktop environment for UNIX-like operating systems. 
@@ -310,7 +307,6 @@ EOF
 %postun -p /sbin/ldconfig
 
 %files
-%{MODULE_DIR}
 %{INSTALL_DIR}/include/xfce4/libxfce4util/xfce-fileutils.h
 %{INSTALL_DIR}/include/xfce4/libxfce4util/libxfce4util-config.h
 %{INSTALL_DIR}/include/xfce4/libxfce4util/xfce-resource.h
@@ -3792,6 +3788,7 @@ EOF
 %{INSTALL_DIR}/share/doc/xfwm4/html/gl/images
 %{INSTALL_DIR}/share/doc/xfwm4/html/sv/images
 %{INSTALL_DIR}/share/doc/xfwm4/html/ug/images
+%{MODULE_DIR}
 
 %changelog
 
