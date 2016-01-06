@@ -49,7 +49,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3
+Release:   4
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.mcs.anl.gov/petsc/
@@ -434,6 +434,7 @@ export FPIC_OPTIONS=
 %endif
 
 export PETSC_MPICH_HOME=/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0
+export PETSC_MPICH_HOME=/opt/cray/mpt/7.3.0/gni/mpich-intel/14.0
 #/opt/apps/intel16/cray_mpich/7.2.4
 export mpi="--with-mpi-compilers=1 --with-mpi-dir=${PETSC_MPICH_HOME}"
 # --with-cc=/opt/apps/intel/16/compilers_and_libraries_2016.0.109/linux/bin/intel64/icc"
@@ -613,6 +614,8 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Tue Dec 22 2015 eijkhout <eijkhout@tacc.utexas.edu>
+- release 4: new cray mpich version
 * Thu Dec 10 2015 eijkhout <eijkhout@tacc.utexas.edu>
 - release 3: all packages
 * Tue Dec 08 2015 eijkhout <eijkhout@tacc.utexas.edu>
