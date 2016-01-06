@@ -8,7 +8,7 @@ Prefix:    /opt/apps
 Summary:   lmod: Lua based Modules
 Name:      %{name_prefix}-%{base_name}
 Version:   6.0.24
-Release:   2
+Release:   3
 License:   MIT
 Vendor:    Robert McLay
 Group:     System Environment/Base
@@ -91,7 +91,7 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR} $RPM_BUILD_ROOT/%{ZSH_SITE_FUNC}
 ./configure --prefix=%{APPS} $CACHE_DIR --with-settarg=FULL $EXTRA
 make DESTDIR=$RPM_BUILD_ROOT install
 cp contrib/TACC/*.lua $RPM_BUILD_ROOT/%{INSTALL_DIR}/libexec
-sed -e 's|/home1/moduleData/cacheDir/tacc|/home1/moduleData/cacheDir/cray|g' < $RPM_BUILD_ROOT/%{INSTALL_DIR}/init/lmodrc.lua > $RPM_BUILD_ROOT/%{INSTALL_DIR}/init/lmodrc_cray_world.lua
+sed -e '/^scDescriptT = {/,/^}/d' < $RPM_BUILD_ROOT/%{INSTALL_DIR}/init/lmodrc.lua > $RPM_BUILD_ROOT/%{INSTALL_DIR}/init/lmodrc_cray_world.lua
 
 rm $RPM_BUILD_ROOT/%{INSTALL_DIR}/../lmod
 
