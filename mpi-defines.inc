@@ -56,6 +56,10 @@
     %define mpi_label 7_2
     %define mpi_module_version 7.2.4
   %endif
+  %if "%{mpiV}" == "7_3"
+    %define mpi_label 7_3
+    %define mpi_module_version 7.3.0
+  %endif
   %define mpi_fam     cray_mpich
   %define mpi_fam_ver cray_mpich_%{mpi_label}
   %define mpi_module  %{mpi_fam}/%{mpi_module_version}
