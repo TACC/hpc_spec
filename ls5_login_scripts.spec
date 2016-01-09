@@ -5,7 +5,7 @@
 Summary:   Standard LS5 TACC Login scripts
 Name:      %{name_prefix}-%{base_name}
 Version:   1.0
-Release:   21
+Release:   22
 License:   Proprietary
 Group:     System Environment/Base
 Source0:   %{base_name}-%{version}.tar.gz
@@ -143,8 +143,6 @@ done
 %{PROFILE_D_PATH}/zzz00_lmod.sh
 %{PROFILE_D_PATH}/zzz87_tacc_login.csh
 %{PROFILE_D_PATH}/zzz87_tacc_login.sh
-%{PROFILE_D_PATH}/zzz88_taccinfo.csh
-%{PROFILE_D_PATH}/zzz88_taccinfo.sh
 %{PROFILE_D_PATH}/zzz90_compute_modules.csh
 %{PROFILE_D_PATH}/zzz90_compute_modules.sh
 /etc/tacc/bash.bashrc
