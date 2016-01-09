@@ -11,7 +11,6 @@
 # RPM_DBPATH      -> Path To Non-Standard RPM Database Location
 #
 # Typical Command-Line Example:
-# ./build_rpm.sh Bar.spec
 # cd ../RPMS/x86_64
 # rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
@@ -39,7 +38,8 @@ Summary: Boost spec file (www.boost.org)
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+#%include name-defines.inc
+%include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -50,12 +50,12 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   GPL
 Group:     Utility
 URL:       http://www.boost.org
 Packager:  TACC - agomez@tacc.utexas.edu
-#Source0:   %{pkg_base_name}-%{pkg_version}.tar.gz
+#Source0:   boost_1_59_0.tar.gz
 #Source1:   icu4c-56_1-src.tgz
 
 # Turn off debug package mode
@@ -98,6 +98,9 @@ proposed for the upcoming TR2.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+#%setup -n %{pkg_base_name}-%{pkg_version}
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -176,7 +179,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #  if [ "$CXX" != mpicxx ]; then
     	cd icu/source
     	./runConfigureICU  $ICU_MODE --prefix=%{INSTALL_DIR}
-    	make -j 8
+    	make -j 10
     	make install
     	rm -f ~/user-config.jam
 #  fi
@@ -197,7 +200,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #  fi
 
   ./bootstrap.sh --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
-  ./b2 -j 8 --prefix=%{INSTALL_DIR} $EXTRA install
+  ./b2 -j 10 --prefix=%{INSTALL_DIR} $EXTRA install
 
   mkdir -p              $RPM_BUILD_ROOT/%{INSTALL_DIR}
   cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
