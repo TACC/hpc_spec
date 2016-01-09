@@ -45,7 +45,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   GPL
 Group:     Development/Tools
 Packager:  TACC - agomez@tacc.utexas.edu
@@ -204,7 +204,6 @@ family("grvy")
 prepend_path(    "PATH",                pathJoin(grvy_dir, "bin"))
 prepend_path(    "LD_LIBRARY_PATH",     pathJoin(grvy_dir, "lib64"))
 prepend_path(    "PKG_CONFIG_PATH",     pathJoin(grvy_dir, "lib/pkgconfig"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/modulefiles")
 
 setenv( "GRVY_DIR",                     grvy_dir)
 setenv( "TACC_%{MODULE_VAR}_DIR",       grvy_dir)
