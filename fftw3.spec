@@ -1,54 +1,152 @@
+# Antia Lamas-Linares
+# 2016-01-11
 #
-# Spec file for FFTW 3.3.4 - Lonestar 5 version
-#i
-%define name_prefix tacc
-%define base_name fftw3
-Summary: %{base_name}
-Name:  %{name_prefix}-%{base_name}
-Version: 3.3.4
-Release: 1
-License: GPL
-Vendor: www.fftw.org 
-Group: System Environment/Base
-Source: fftw-%{version}.tar.gz
-Packager: alamas@tacc.utexas.edu
+# Important Build-Time Environment Variables (see name-defines.inc)
+# NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
+# NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
+#
+# Important Install-Time Environment Variables (see post-defines.inc)
+# VERBOSE=1       -> Print detailed information at install time
+# RPM_DBPATH      -> Path To Non-Standard RPM Database Location
+#
+# Typical Command-Line Example:
+# ./build_rpm.sh Bar.spec
+# cd ../RPMS/x86_64
+# rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+# rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+# rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-%define debug_package %{nil}
-%include rpm-dir.inc
+Summary: A Nice little relocatable skeleton spec file example.
 
-%define APPS /opt/apps
-%define MODULES modulefiles
+# Give the package a base name
+%define pkg_base_name fftw3
+%define MODULE_VAR    FFTW3
 
+# Create some macros (spec file variables)
+%define major_version 3
+%define minor_version 3
+%define micro_version 4
+
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+
+### Toggle On/Off ###
+%include rpm-dir.inc                  
 %include compiler-defines.inc
 %include mpi-defines.inc
+########################################
+### Construct name based on includes ###
+########################################
+%include name-defines.inc
+#%include name-defines-noreloc.inc
+#%include name-defines-hidden.inc
+#%include name-defines-hidden-noreloc.inc
+########################################
+############ Do Not Remove #############
+########################################
 
-%define INSTALL_DIR %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{base_name}/%{version}
-%define MODULE_DIR  %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{MODULES}/%{base_name}
+############ Do Not Change #############
+Name:      %{pkg_name}
+Version:   %{pkg_version}
+BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
+########################################
 
-%package -n %{name}-%{comp_fam_ver}-%{mpi_fam_ver}
-Summary: FFTW %{version} local binary install
-Group: System Environment/Base
+Release:   1
+License:   GPL
+Group:     System Environment/Base
+URL:       http://www.fftw.org
+Packager:  TACC - alamas@tacc.utexas.edu
+Source:    fftw-%{pkg_version}.tar.gz
+
+# Turn off debug package mode
+%define debug_package %{nil}
+%define dbg           %{nil}
+
+
+%package %{PACKAGE}
+Summary: The package RPM
+Group: Development/Tools
+%description package
+This is the long description for the package RPM...
+
+%package %{MODULEFILE}
+Summary: The modulefile RPM
+Group: Lmod/Modulefiles
+%description modulefile
+This is the long description for the modulefile RPM...
 
 %description
-%description -n %{name}-%{comp_fam_ver}-%{mpi_fam_ver}
-FFTW is a C subroutine library for computing the discrete Fourier
-transform (DFT) in one or more dimensions, of arbitrary input size, and of
-both real and complex data (as well as of even/odd data, i.e. the discrete
+FFTW is a C subroutine library for computing the discrete Fourier                                             |                                                                                                             
+transform (DFT) in one or more dimensions, of arbitrary input size, and of                                    |%package %{PACKAGE}                                                                                          
+both real and complex data (as well as of even/odd data, i.e. the discrete                                    |Summary: The package RPM                                                                                     
 cosine/sine transforms or DCT/DST). 
 
+#---------------------------------------
 %prep
-rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+#---------------------------------------
+
+#------------------------
+%if %{?BUILD_PACKAGE}
+#------------------------
+  # Delete the package installation directory.
+  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+%setup -n fftw-%{pkg_version}
+
+#-----------------------
+%endif # BUILD_PACKAGE |
+#-----------------------
+
+#---------------------------
+%if %{?BUILD_MODULEFILE}
+#---------------------------
+  #Delete the module installation directory.
+  rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
+#--------------------------
+%endif # BUILD_MODULEFILE |
+#--------------------------
 
 
-%setup -n fftw-%{version}
 
+#---------------------------------------
 %build
+#---------------------------------------
 
+
+#---------------------------------------
 %install
+#---------------------------------------
 
+# Setup modules
+%include system-load.inc
+module purge
+# Load Compiler
 %include compiler-load.inc
+# Load MPI Library
 %include mpi-load.inc
+
+# Insert further module commands
+
+echo "Building the package?:    %{BUILD_PACKAGE}"
+echo "Building the modulefile?: %{BUILD_MODULEFILE}"
+
+#------------------------
+%if %{?BUILD_PACKAGE}
+#------------------------
+
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  
+  #######################################
+  ##### Create TACC Canary Files ########
+  #######################################
+  touch $RPM_BUILD_ROOT/%{INSTALL_DIR}/.tacc_install_canary
+  #######################################
+  ########### Do Not Remove #############
+  #######################################
+
+  #========================================
+  # Insert Build/Install Instructions Here
+  #========================================
+
 
 ## Notes on fftw3 configure options
 ## --with-pic try to use only PIC/non-PIC objects [default=use both]
@@ -96,7 +194,14 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 %endif
 
 %if "%is_intel" == "1"
-  export CFLAGS="-O3 -xAVX"
+  export CFLAGS="-O3 -xAVX -axCORE-AVX2"
+  export LDFLAGS="-xAVX -axCORE-AVX2"
+  echo "I'm intelling"
+%endif
+
+%if "%is_gcc" == "1"
+  export CFLAGS="-O3 -march=sandybridge -mtune=haswell"
+  export LDFLAGS="-march=sandybridge -mtune=haswell"
 %endif
 
 ./configure --with-pic \
@@ -127,11 +232,29 @@ make clean
 make -j 16
 make DESTDIR=$RPM_BUILD_ROOT install
 
+  # Copy everything from tarball over to the installation directory
+  
+#-----------------------  
+%endif # BUILD_PACKAGE |
+#-----------------------
 
-## Module for fftw-3.3
-mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 
+#---------------------------
+%if %{?BUILD_MODULEFILE}
+#---------------------------
+
+  mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
+  
+  #######################################
+  ##### Create TACC Canary Files ########
+  #######################################
+  touch $RPM_BUILD_ROOT/%{MODULE_DIR}/.tacc_module_canary
+  #######################################
+  ########### Do Not Remove #############
+  #######################################
+  
+# Write out the modulefile associated with the application
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_message=[[
 The FFTW 3.3 modulefile defines the following environment variables:
 TACC_FFTW3_DIR, TACC_FFTW3_LIB, and TACC_FFTW3_INC
@@ -186,22 +309,66 @@ append_path("PKG_CONFIG_PATH",pathJoin(fftw_dir,"lib/pkgconfig"))
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module1.0#################################################
+#%Module3.1.1#################################################
 ##
-## version file for FFTW3
+## version file for %{BASENAME}%{version}
 ##
 
-set     ModulesVersion      "%version"
+set     ModulesVersion      "%{version}"
 EOF
+  
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %endif
+#--------------------------
+%endif # BUILD_MODULEFILE |
+#--------------------------
 
-%{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
 
-%files -n %{name}-%{comp_fam_ver}-%{mpi_fam_ver}
-%defattr(-,root,install)
-%{INSTALL_DIR}
-%{MODULE_DIR}
+#------------------------
+%if %{?BUILD_PACKAGE}
+%files package
+#------------------------
 
+  %defattr(-,root,install,)
+  # RPM package contains files within these directories
+  %{INSTALL_DIR}
 
-%post
+#-----------------------
+%endif # BUILD_PACKAGE |
+#-----------------------
+#---------------------------
+%if %{?BUILD_MODULEFILE}
+%files modulefile 
+#---------------------------
+
+  %defattr(-,root,install,)
+  # RPM modulefile contains files within these directories
+  %{MODULE_DIR}
+
+#--------------------------
+%endif # BUILD_MODULEFILE |
+#--------------------------
+
+########################################
+## Fix Modulefile During Post Install ##
+########################################
+%post %{PACKAGE}
+export PACKAGE_POST=1
+%include post-defines.inc
+%post %{MODULEFILE}
+export MODULEFILE_POST=1
+%include post-defines.inc
+%preun %{PACKAGE}
+export PACKAGE_PREUN=1
+%include post-defines.inc
+########################################
+############ Do Not Remove #############
+########################################
+
+#---------------------------------------
 %clean
+#---------------------------------------
 rm -rf $RPM_BUILD_ROOT
+
