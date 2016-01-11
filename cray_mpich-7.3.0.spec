@@ -42,7 +42,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   9
+Release:   10
 License:   GPL
 Group:     Development/Tools
 Packager:  TACC - carlos@tacc.utexas.edu
@@ -191,7 +191,7 @@ local mpt_path    = pathJoin( mpt_base, mpt_version, "gni" )
 
 -- Paths specific to GCC
 %if "%{comp_fam}" == "gcc"
-local comp_dir  = "/mpich-gnu/4.9"
+local comp_dir  = "/mpich-gnu/5.1"
 local full_path = pathJoin( mpt_path, comp_dir )
 setenv( "CRAY_MPICH2_DIR", full_path )
 setenv( "MPICH_DIR", full_path )
@@ -228,10 +228,10 @@ setenv( "PE_MPICH_DIR_PGI_DEFAULT64",  "64" )
 setenv( "PE_MPICH_FIXED_PRGENV", "INTEL" )
 setenv( "PE_MPICH_FORTRAN_PKGCONFIG_LIBS", "mpichf90" )
 setenv( "PE_MPICH_GENCOMPILERS_CRAY", "8.3" )
-setenv( "PE_MPICH_GENCOMPILERS_GNU", "4.9 4.8" )
+setenv( "PE_MPICH_GENCOMPILERS_GNU", "51" )
 setenv( "PE_MPICH_GENCOMPILERS_PGI", "15.3" )
 setenv( "PE_MPICH_GENCOMPS_CRAY", "83" )
-setenv( "PE_MPICH_GENCOMPS_GNU", "49 48" )
+setenv( "PE_MPICH_GENCOMPS_GNU", "51" )
 setenv( "PE_MPICH_GENCOMPS_PGI", "153" )
 setenv( "PE_MPICH_MODULE_NAME", "cray-mpich" )
 setenv( "PE_MPICH_MULTITHREADED_LIBS_multithreaded", "_mt" )
