@@ -11,6 +11,12 @@
   %define comp_fam_name GNU
   %define comp_module gcc/4.9.3
 %endif
+%if "%{is_gcc51}" == "1"
+  %define comp_fam gcc
+  %define comp_fam_ver gcc5_1
+  %define comp_fam_name GNU
+  %define comp_module gcc/5.1.0
+%endif
 %if "%{is_gcc52}" == "1"
   %define comp_fam gcc
   %define comp_fam_ver gcc5_2
