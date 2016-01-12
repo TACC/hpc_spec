@@ -47,7 +47,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3
+Release:   4
 License:   GPL
 Group:     Development/Tools
 Packager:  TACC - cproctor@tacc.utexas.edu
@@ -159,7 +159,7 @@ eprintf "  $0\n"
 eprintf "Lonestar5 uses the SLURM job scheduler.\n"
 eprintf "For more information on appropriate SLURM commands,\n"
 eprintf "please visit our user guide here:\n"
-eprintf "${G}https://portal.tacc.utexas.edu/user-guides/lonestar5#slurm-on-lonestar5${NC}\n"
+eprintf "${G}https://portal.tacc.utexas.edu/user-guides/lonestar5${NC}\n"
 printf "=%.0s" {1..85}
 printf "\n"
 printf "\n"
