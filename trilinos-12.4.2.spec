@@ -24,7 +24,7 @@ Summary: Trilinos rpm build script
 
 # Create some macros (spec file variables)
 %define major_version 12
-%define minor_version 2
+%define minor_version 4
 %define micro_version 2
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
@@ -119,7 +119,7 @@ rpm -qi <rpm-name>
 %include mpi-load.inc
 
 # Insert necessary module commands
-module load boost cmake phdf5 parallel-netcdf
+module load boost cmake phdf5 parallel-netcdf python
 # python
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
@@ -257,13 +257,13 @@ cmake -VV \
   -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
   -D Trilinos_ENABLE_TESTS:BOOL=ON \
   -D Trilinos_ENABLE_EXAMPLES:BOOL=ON \
-  -D Trilinos_ENABLE_Export_Makefiles:BOOL=ON \
   -D Trilinos_ENABLE_Fortran:BOOL=ON \
   \
   -D CMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION} \
   -D CMAKE_BUILD_TYPE:STRING=RELEASE \
-  -D CMAKE_C_FLAGS:STRING="-mkl -cxxlib-nostd ${CPP_PATHS}" \
-  -D CMAKE_CXX_FLAGS:STRING="-mkl -cxxlib-nostd ${CPP_PATHS}" \
+  -D CMAKE_C_FLAGS:STRING="-mkl ${CPP_PATHS}" \
+  -D CMAKE_CXX_FLAGS:STRING="-mkl ${CPP_PATHS}" \
+  -D Trilinos_CXX11_FLAGS="-std=c++11" \
   \
   -D BLAS_INCLUDE_DIRS:PATH="${TACC_MKL_INC}" \
   -D BLAS_LIBRARY_DIRS:PATH="${TACC_MKL_LIB}" \
@@ -296,7 +296,7 @@ cmake -VV \
   ${TRILINOS_PACKAGES} \
   \
   ${TRILINOS_LOCATION}/trilinos-${VERSION} \
-  | tee /admin/build/rpms/SPECS/trilinos-${VERSION}-cmake.log 2>&1
+  | tee /admin/rpms/SPECS/trilinos-${VERSION}-cmake.log 2>&1
 
 # /bin/true \
 #   \
