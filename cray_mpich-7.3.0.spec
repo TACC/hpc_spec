@@ -42,7 +42,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   10
+Release:   11
 License:   GPL
 Group:     Development/Tools
 Packager:  TACC - carlos@tacc.utexas.edu
@@ -132,7 +132,7 @@ cp ./intel/mpi* $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
 chmod ugo+rx $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpi*
 %endif
 %if "%{comp_fam}" == "gcc"
-cp ./gcc/mpi* $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+cp ./%{comp_fam_ver}/mpi* $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
 chmod ugo+rx $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpi*
 %endif
 
@@ -190,6 +190,7 @@ local mpt_version = "default"
 local mpt_path    = pathJoin( mpt_base, mpt_version, "gni" ) 
 
 -- Paths specific to GCC
+-- These seem to be valid for both 5.1 and 5.2
 %if "%{comp_fam}" == "gcc"
 local comp_dir  = "/mpich-gnu/5.1"
 local full_path = pathJoin( mpt_path, comp_dir )
