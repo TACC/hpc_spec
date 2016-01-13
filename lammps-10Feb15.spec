@@ -1,4 +1,4 @@
-##rpmbuild -bb --define 'is_intel16 1' --define 'is_cmpich 1' --define 'mpiV 7_2' lammps-10Feb15.spec | tee lammps.log.x
+##rpmbuild -bb --define 'is_intel16 1' --define 'is_cmpich 1' --define 'mpiV 7_3' lammps-10Feb15.spec | tee lammps.log.x
 Summary: LAMMPS is a Classical Molecular Dynamics package.
 
 %define pkg_base_name lammps
@@ -20,7 +20,7 @@ Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
-Release:   2
+Release:   3
 License:   GPL
 Vendor:    Sandia
 Group:     applications/chemistry
@@ -274,7 +274,7 @@ echo Working on pymol_asphere -------------------------------
  echo Working on xmovie -------------------------------
 
    rm -rf *.o
-   make
+   make LIBS="-L/usr/lib64/ -lX11 -lXaw -lm -lXt -lXext -lXmu -lXpm"
    rm -rf *.o
 
    cd ..
@@ -318,21 +318,23 @@ cd ..
     echo "Working on atc"
     make -j 8 -f Makefile.icc \
          CC=mpicxx  LINK=mpicxx \
-         CCFLAGS="-O -g -fPIC -I../../src -DMPICH_IGNORE_CXX_SEEK -diag-disable 858"
+         CCFLAGS="-xAVX -axCORE-AVX2 -diag-disable remark -O -g -fPIC -I../../src -DMPICH_IGNORE_CXX_SEEK -diag-disable 858"
 
     cp Makefile.lammps.empty Makefile.lammps
  cd ../..
 
  cd lib/awpmd
     echo "Working on awpmd"
-    make -j 8 -f Makefile.mpicc CC=mpicxx
+    make -j 8 -f Makefile.mpicc CC=mpicxx \
+         CCFLAGS="-xAVX -axCORE-AVX2 -diag-disable remark -O -fPIC -Isystems/interact/TCP/ -Isystems/interact -Iivutils/include"
 
     cp Makefile.lammps.empty Makefile.lammps
  cd ../..
 
  cd lib/colvars
     echo "Working on colvars"
-    make -j 8 -f Makefile.g++ CXX=icpc
+    make -j 8 -f Makefile.g++ CXX=icpc \
+         CXXFLAGS="-xAVX -axCORE-AVX2 -diag-disable remark -O2 -g -fPIC -funroll-loops"
  cd ../..
 
  cd         %{INSTALL_DIR}/lib/kim
@@ -363,8 +365,9 @@ cd ..
 
    cp Makefile.lammps  $LMP_DIR/src/KIM
    export PATH=$HOME/bin:$PATH
-    make KIM_DIR=`pwd` CC="icc $IFC_RPATH" CXX="icpc $IFC_RPATH" FC="ifort $IFC_RPATH" FFLAGS="-diag-disable 7712"
-    make KIM_DIR=`pwd` CC="icc $IFC_RPATH" CXX="icpc $IFC_RPATH" FC="ifort $IFC_RPATH" FFLAGS="-diag-disable 7712" examples
+
+   make KIM_DIR=`pwd` CC="icc $IFC_RPATH" CXX="icpc $IFC_RPATH" FC="ifort $IFC_RPATH" FFLAGS="-xAVX -axCORE-AVX2 -diag-disable remark -diag-disable 7712"
+   make KIM_DIR=`pwd` CC="icc $IFC_RPATH" CXX="icpc $IFC_RPATH" FC="ifort $IFC_RPATH" FFLAGS="-xAVX -axCORE-AVX2 -diag-disable remark -diag-disable 7712" examples
 
     cd src
     ln -s libkim-api-v${KIM_VER}+INTEL.linux.64bit.dynamic-load.so libkim.so
@@ -381,7 +384,8 @@ cd ..
  cd lib/meam
     echo "Working on meam"
 
-    make -f Makefile.ifort F90=ifort
+    make -f Makefile.ifort F90=ifort \
+         F90FLAGS="-xAVX -axCORE-AVX2 -diag-disable remark -O -fPIC"
 
     sed -e "s@/opt/intel/fce/10.0.023/lib@${IFC_LIB} ${IFC_RPATH}@"  Makefile.lammps.ifort | \
     sed -e "s/-lompstub/${OMP_STUBS_LIB}/"                          >Makefile.lammps
@@ -390,7 +394,8 @@ cd ..
 
  cd lib/poems
     echo "Working on poems"
-    make -j 8 -f Makefile.icc CC=icc
+    make -j 8 -f Makefile.icc CC=icc \
+         CCFLAGS="-xAVX -axCORE-AVX2 -diag-disable remark -O -fPIC -Wall -Wcheck -wd869,981,1572"
  cd ../..
 
  cd lib/qmmm
@@ -403,7 +408,8 @@ cd ..
    qmmm_SYSPATH     = -L$PWD
 EOF
 
-   make -f Makefile.gfortran
+   make -f Makefile.gfortran \
+         MPICXX=" mpicxx -xAVX -axCORE-AVX2 -diag-disable remark"
 
  cd ../..
 
@@ -413,7 +419,8 @@ EOF
 
 ## cd lib/reax
 ##    echo "Working on reax"
-##    make -j 4 -f Makefile.ifort F90=ifort  F90FLAGS="-O -fPIC -diag-disable 8290"
+##    make -j 4 -f Makefile.ifort F90=ifort  \
+#          F90FLAGS="-xAVX -axCORE-AVX2 -diag-disable remark -O -fPIC -diag-disable 8290"
 ##
 ##    sed -e "s/-lompstub/${OMP_STUBS_LIB}/"  Makefile.lammps.ifort | \
 ##    sed -e 's@PATH.*@PATH = -L'$IFC_LIB'@' >Makefile.lammps
@@ -431,7 +438,8 @@ EOF
 EOF
    cp Makefile.lammps ../../src/VORONOI
 
-    make -j 8 PREFIX=`pwd` CFLAGS="-Wall -ansi -pedantic -O3 -fPIC" CXX=icpc
+    make -j 8 PREFIX=`pwd` \
+          CFLAGS="-xAVX -axCORE-AVX2 -diag-disable remark -Wall -ansi -pedantic -O3 -fPIC" CXX=icpc
     make install PREFIX=`pwd`
    #icpc -shared -fPIC src/*.o -o lib/libvoro++.so
 
