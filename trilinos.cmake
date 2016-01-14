@@ -55,7 +55,6 @@ cmake -VV \
   -D                 Intrepid_ENABLE_TESTS:BOOL=ON \
   -D Trilinos_ENABLE_ML:BOOL=ON \
   -D Trilinos_ENABLE_MOOCHO:BOOL=ON \
-  -D Trilinos_ENABLE_MueLu:BOOL=ON \
   -D Trilinos_ENABLE_NOX=ON \
   -D                 NOX_ENABLE_TESTS:BOOL=ON \
   -D Trilinos_ENABLE_Pamgen:Bool=ON \
@@ -80,6 +79,7 @@ cmake -VV \
   | tee /admin/build/rpms/SPECS/trilinos-${VERSION}-cmake.log 2>&1
 
 # /bin/true \
+#   -D Trilinos_ENABLE_MueLu:BOOL=ON \
 #   \
 #   -D CMAKE_PYTHON_INCLUDE_DIR:PATH="${TACC_PYTHON_INC}" \
 #   -D CMAKE_PYTHON_LIBRARIES:STRING="${TACC_PYTHON_LIB}" \
