@@ -384,23 +384,19 @@ EOF
   # Check the syntax of the generated lua modulefile
   %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua
 
+##
+## end of configure install section
+##
+
+module unload python
+cp -r %{INSTALL_DIR}/* ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
+
+#tacctmpfs -u %{INSTALL_DIR}
+umount tmpfs
+
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
-rm -rf ${architecture}/obj
-
-##
-## end of for ext loop
-##
-done 
-
-cp -r bin config externalpackages include lib makefile src    \
-                    $RPM_BUILD_ROOT/%{INSTALL_DIR}
-cp -r haswell*      $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-popd
-  
 
 #------------------------
 %if %{?BUILD_PACKAGE}
