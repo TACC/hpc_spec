@@ -118,6 +118,8 @@ rpm -qi <rpm-name>
 %include compiler-load.inc
 %include mpi-load.inc
 
+export modulefilename=%{pkg_version}
+
 # Insert necessary module commands
 module load boost cmake phdf5 parallel-netcdf python
 # python
