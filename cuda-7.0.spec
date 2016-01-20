@@ -166,17 +166,14 @@ module-whatis "URL: http://www.nvidia.com/object/cuda_get.html"
 
 set     version         	%{version}
 
-prepend-path    PATH            %{INSTALL_DIR}/bin/
-prepend-path    MANPATH         %{INSTALL_DIR}/man/
-prepend-path    INCLUDE         %{INSTALL_DIR}/include/
-prepend-path    LD_LIBRARY_PATH %{INSTALL_DIR}/lib64/
+prepend-path    PATH            %{INSTALL_DIR}/bin
+prepend-path    MANPATH         %{INSTALL_DIR}/man
+prepend-path    INCLUDE         %{INSTALL_DIR}/include
+prepend-path    LD_LIBRARY_PATH %{INSTALL_DIR}/lib64
 
-append-path     PATH            %{INSTALL_DIR}/computeprof/bin
-append-path     LD_LIBRARY_PATH %{INSTALL_DIR}/computeprof/bin
-
-setenv TACC_CUDA_DIR  %{INSTALL_DIR}/
-setenv TACC_CUDA_BIN  %{INSTALL_DIR}/bin/
-setenv TACC_CUDA_LIB  %{INSTALL_DIR}/lib64/
+setenv TACC_CUDA_DIR  %{INSTALL_DIR}
+setenv TACC_CUDA_BIN  %{INSTALL_DIR}/bin
+setenv TACC_CUDA_LIB  %{INSTALL_DIR}/lib64
 setenv TACC_CUDA_INC  %{INSTALL_DIR}/include
 EOF
 
