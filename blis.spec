@@ -1,4 +1,8 @@
 #
+# blis.spec
+# Victor Eijkhout
+#
+# based on Bar.spec
 # W. Cyrus Proctor
 # Antonio Gomez
 # 2015-08-25
@@ -21,27 +25,25 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name Bar
-%define MODULE_VAR    BAR
+%define pkg_base_name blis
+%define MODULE_VAR    BLIS
 
 # Create some macros (spec file variables)
-%define major_version 1
+%define major_version 0
 %define minor_version 1
-%define micro_version 0
+%define micro_version 8
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
-#%include mpi-defines.inc
+%include compiler-defines.inc
+
 ########################################
 ### Construct name based on includes ###
 ########################################
 %include name-defines.inc
-#%include name-defines-noreloc.inc
 #%include name-defines-hidden.inc
-#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -53,10 +55,10 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1
-License:   GPL
+License:   BSD
 Group:     Development/Tools
-URL:       http://www.gnu.org/software/bar
-Packager:  TACC - agomez@tacc.utexas.edu, cproctor@tacc.utexas.edu
+URL:       https://code.google.com/p/blis/
+Packager:  TACC - eijkhout@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -65,8 +67,8 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: Blas alternative
+Group: Numerical library
 %description package
 This is the long description for the package RPM...
 
@@ -74,12 +76,10 @@ This is the long description for the package RPM...
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...
+RvdG's BLAS-like Library Instantiation Software
 
 %description
-The longer-winded description of the package that will 
-end in up inside the rpm and is queryable if installed via:
-rpm -qi <rpm-name>
+RvdG's BLAS-like Library Instantiation Software
 
 
 #---------------------------------------
@@ -122,14 +122,9 @@ rpm -qi <rpm-name>
 %include system-load.inc
 module purge
 # Load Compiler
-#%include compiler-load.inc
-# Load MPI Library
-#%include mpi-load.inc
+%include compiler-load.inc
 
 # Insert further module commands
-
-echo "Building the package?:    %{BUILD_PACKAGE}"
-echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -149,11 +144,10 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
   
-  # Create some dummy directories and files for fun
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
-  
+./configure -p $RPM_BUILD_ROOT/%{INSTALL_DIR} haswell
+make
+make install
+
   # Copy everything from tarball over to the installation directory
   cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
   
@@ -178,33 +172,31 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
-The %{MODULE_VAR} module defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
-TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
-include files, and tools respectively.
+local help_message = [[
+
+This module provides the BLIS environment variables:
+TACC_BLIS_DIR, TACC_BLIS_LIB, TACC_BLIS_INC
+
+Version %{version}
 ]]
 
---help(help_msg)
-help(help_msg)
+help(help_message,"\n")
 
-whatis("Name: bar")
-whatis("Version: %{pkg_version}%{dbg}")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
+whatis("Name: BLIS")
+whatis("Version: %{version}")
+whatis("Category: ")
+whatis("Keywords: library, numerics, BLAS")
+whatis("URL: https://code.google.com/p/blis/")
+whatis("Description: BLAS-like Library Instantiation Software")
 
--- Create environment variables.
-local bar_dir           = "%{INSTALL_DIR}"
+local blis_dir="%{INSTALL_DIR}"
 
-family("bar")
-prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "lib"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/bar1_1/modulefiles")
-setenv( "TACC_%{MODULE_VAR}_DIR",                bar_dir)
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(bar_dir, "include"))
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(bar_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(bar_dir, "bin"))
+setenv("TACC_BLIS_DIR",blis_dir)
+setenv("TACC_BLIS_LIB",pathJoin(blis_dir,"lib"))
+setenv("TACC_BLIS_INC",pathJoin(blis_dir,"include"))
+
+append_path("LD_LIBRARY_PATH",pathJoin(blis_dir,"lib"))
+
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
@@ -220,6 +212,15 @@ EOF
   %if %{?VISIBLE}
     %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
   %endif
+
+find . -name config.mk
+cat ./config.mk | sed 's/INSTALL_PREFIX.*/INSTALL_PREFIX=\/opt\/apps\/blis\/%{comp_fam_ver}\/%{version}/' \
+    > $RPM_BUILD_ROOT/%{INSTALL_DIR}/config.mk
+chmod 644 $RPM_BUILD_ROOT/%{INSTALL_DIR}/config.mk # ?????
+cp -r config testsuite \
+  $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
