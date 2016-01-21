@@ -51,7 +51,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2 
 License:   GPLv2
 Group:     Applications/Statistics 
 URL:       http://cran.r-project.org/ 
@@ -152,7 +152,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   
 echo "Once more into the breach...."
 
-module purge
+#module purge
 module load TACC
 #module swap intel intel/15.0.1 # This is the default on Wrangler, no need to import
 
@@ -163,6 +163,9 @@ module load TACC
 #module load netcdf
 module load boost
 #module load cxx11
+
+# Move /usr area back in from of /root for the root user
+export PATH=/usr/sbin:/usr/bin:${PATH}
 
 echo COMPILER LOAD: %{comp_fam_ver_load}
 echo MPI      LOAD: %{mpi_fam_ver_load}
