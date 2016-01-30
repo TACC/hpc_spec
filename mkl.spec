@@ -47,7 +47,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   3
 License:   proprietary
 Group:     Compiler
 URL:       https://software.intel.com/en-us/intel-compilers
@@ -191,8 +191,8 @@ whatis("Description: Intel Math Kernel Library"                             )
 whatis("URL: https://software.intel.com/en-us/intel-mkl"                    )
 
 -- Create environment variables.
-local base         = "/opt/apps/intel/16"
-local full_xe      = "compilers_and_libraries_2016.0.109/linux"
+local base         = "/opt/apps/intel/16.0.1.150"
+local full_xe      = "compilers_and_libraries_2016.1.150/linux"
 local installDir   = pathJoin(base,full_xe)
 local mklRoot      = pathJoin(installDir,"mkl")
 
@@ -201,6 +201,10 @@ setenv( "TACC_MKL_DIR" ,              mklRoot )
 setenv( "TACC_MKL_LIB" ,              pathJoin( mklRoot    , "lib/intel64" ) )
 setenv( "TACC_MKL_INC" ,              pathJoin( mklRoot    , "include" ) )
 setenv( "TACC_MKL_DOC" ,              pathJoin( installDir , "documentation/en/mkl" ) )
+
+prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( mklRoot    , "lib/intel64" ) )
+
+prepend_path( "INCLUDE" ,             pathJoin( mklRoot    , "include" ) )
 
 prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2016/en/debugger/gdb-ia/man" ) )
 prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2016/en/debugger/gdb-igfx/man" ) )
