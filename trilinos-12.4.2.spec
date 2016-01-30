@@ -121,7 +121,7 @@ rpm -qi <rpm-name>
 export modulefilename=%{pkg_version}
 
 # Insert necessary module commands
-module load boost cmake phdf5 parallel-netcdf python
+module load boost cmake phdf5 parallel-netcdf python swig
 # python
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
@@ -234,6 +234,10 @@ export TRILINOS_PACKAGES=" \
   -D Trilinos_ENABLE_Teuchos:BOOL=ON \
   -D Trilinos_ENABLE_TriKota:BOOL=ON \
   -D Trilinos_ENABLE_Zoltan:BOOL=ON \
+   \
+   -D CMAKE_PYTHON_INCLUDE_DIR:PATH="${TACC_PYTHON_INC}" \
+   -D CMAKE_PYTHON_LIBRARIES:STRING="${TACC_PYTHON_LIB}" \
+   -D Trilinos_ENABLE_PyTrilinos:Bool=ON \
   "
 export NO_TRILINOS_PACKAGES=" \
   -D Trilinos_ENABLE_MueLu:BOOL=ON \
@@ -447,6 +451,8 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 #
+* Tue Jan 26 2016 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: adding python bindings now that we have swig
 * Tue Dec 08 2015 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: no longer relocatable
 * Mon Dec 07 2015 eijkhout <eijkhout@tacc.utexas.edu>
