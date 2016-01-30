@@ -47,7 +47,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4
+Release:   5
 License:   GPL
 Group:     Development/Tools
 Packager:  TACC - cproctor@tacc.utexas.edu
@@ -170,7 +170,7 @@ chmod a+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/sge_wrapper
 
 
 ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qselect  
-ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qmake    
+#ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qmake    ### conflicts with Qt qmake
 ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qrsub    
 ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qstat    
 ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/qrstat   
@@ -240,7 +240,7 @@ umount %{INSTALL_DIR}/
   # RPM package contains files within these directories
   %{INSTALL_DIR}
 /opt/apps/tacc/bin/qselect  
-/opt/apps/tacc/bin/qmake    
+#/opt/apps/tacc/bin/qmake    ### conflicts with Qt qmake
 /opt/apps/tacc/bin/qrsub    
 /opt/apps/tacc/bin/qstat    
 /opt/apps/tacc/bin/qrstat   
