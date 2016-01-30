@@ -6,7 +6,7 @@
 Summary:   %{base_name}: interactive access to production nodes
 Name:      %{name_prefix}-%{base_name}
 Version:   1.0
-Release:   16
+Release:   17
 License:   TACC
 Vendor:    tacc.utexas.edu
 Group:     System Environment/Base
