@@ -51,7 +51,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2 
+Release:   3 
 License:   GPLv2
 Group:     Applications/Statistics 
 URL:       http://cran.r-project.org/ 
@@ -253,10 +253,10 @@ R CMD INSTALL Rmpi_0.6-5-custom.tar.gz --configure-args="--with-Rmpi-include=${M
 cd ${SRC_DIR}
 wget -q -N 'http://cran.r-project.org/src/contrib/rlecuyer_0.3-4.tar.gz'
 sleep 5
-wget -q -N 'http://cran.r-project.org/src/contrib/pbdMPI_0.3-0.tar.gz'
+wget -q -N 'http://cran.r-project.org/src/contrib/pbdMPI_0.3-1.tar.gz'
 sleep 5
 R CMD INSTALL rlecuyer_0.3-4.tar.gz
-R CMD INSTALL pbdMPI_0.3-0.tar.gz --configure-args=" --with-mpi-include=${MPICH_HOME}/include --with-mpi-libpath=${MPICH_HOME}/lib --with-mpi-type=MPICH2 --enable-opa=no" --no-test-load
+R CMD INSTALL pbdMPI_0.3-1.tar.gz --configure-args=" --with-mpi-include=${MPICH_HOME}/include --with-mpi-libpath=${MPICH_HOME}/lib --with-mpi-type=MPICH2 --enable-opa=no" --no-test-load
 
 ############################################
 # rgdal - Depends gdal & proj + R package 'sp'
@@ -330,12 +330,33 @@ R CMD INSTALL rjags_4-5.tar.gz
 rm rjags_4-5.tar.gz
 
 ##########################################
+# Custom SNOW install
+##########################################
+
+cd ${SRC_DIR}
+wget -q -N https://cran.r-project.org/src/contrib/snow_0.4-1.tar.gz 
+sleep 5
+tar xfz snow_0.4-1.tar.gz
+# We need to replace RMPISNOW with our own version
+wget -q -N --no-check-certificate https://gitlab.tacc.utexas.edu/data-group/R-patches/raw/master/snow/RMPISNOW
+mv snow/inst/RMPISNOW snow/inst/RMPISNOW.orig
+cp RMPISNOW snow/inst
+chmod 755 snow/inst/RMPISNOW
+# Remove the checksum info for RMPISNOW so it will install
+sed -i '/14228e3f50d14bc0672d4badb6971975/d' snow/MD5
+# Repackage and install
+tar cfz snow-cust.tar.gz snow
+R CMD INSTALL snow-cust.tar.gz
+# cleanup
+rm snow-cust.tar.gz snow_0.4-1.tar.gz RMPISNOW 
+
+
+##########################################
 # Install other 'easy' packages
 ##########################################
 
 echo 'options("repos" = c(CRAN="http://cran.fhcrc.org"))
 Sys.setenv(MAKEFLAGS="-j16");
-install.packages("snow");
 install.packages("pbdSLAP");
 install.packages("pbdBASE");
 install.packages("pbdDMAT");
