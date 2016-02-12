@@ -12,6 +12,8 @@ License: GPLv3+
 Url: http://www.gnu.org/software/bash
 Source0: ftp://ftp.gnu.org/gnu/bash/bash-%{baseversion}.tar.gz
 
+%include rpm-dir.inc
+
 # For now there isn't any doc
 #Source2: ftp://ftp.gnu.org/gnu/bash/bash-doc-%{version}.tar.gz
 
@@ -286,6 +288,7 @@ This package contains documentation files for %{name}.
 %patch140 -p1 -b .check-debugger
 %patch141 -p1 -b .command-subst
 %patch142 -p0 -b .export
+%patch300 -p0
 
 echo %{version} > _distribution
 echo %{release} > _patchlevel
