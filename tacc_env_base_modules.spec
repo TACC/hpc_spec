@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4
+Release:   5
 License:   GPL
 Group:     Module Magic
 Packager:  TACC - cproctor@tacc.utexas.edu
@@ -169,16 +169,16 @@ help(helpMsg)
 --------------------------------------------------------------------------
 -- Define TACC_SYSTEM and TACC_DOMAIN
 
-local syshost = posix.uname("%n"):gsub("%.tacc%.utexas%.edu",""):gsub("^[^.]*%.","")
-local domain  = syshost
+--local syshost = posix.uname("%n"):gsub("%.tacc%.utexas%.edu",""):gsub("^[^.]*%.","")
+--local domain  = syshost
 
-if (domain:find("^ls%d$"))then
-   domain = "lonestar"
-end
+--if (domain:find("^ls%d$"))then
+--   domain = "lonestar"
+--end
 
 
-setenv(         "TACC_SYSTEM",  syshost)
-setenv(         "TACC_DOMAIN",  domain)
+setenv(         "TACC_SYSTEM",  "ls5")
+setenv(         "TACC_DOMAIN",  "ls5")
 
 if (os.getenv("USER") ~= "root") then
   append_path("PATH",  ".")

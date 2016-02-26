@@ -47,7 +47,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2 
 License:   Legacy Licensed Source Code
 Group:     Visualization
 URL:       https://wci.llnl.gov/simulation/computer-codes/silo 
@@ -144,10 +144,10 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   export CXX=icpc;
   ./configure --prefix=%{INSTALL_DIR} --disable-silex --with-hdf5=$TACC_HDF5_INC,$TACC_HDF5_LIB
   make -j 4
-  make install
+  make DESTDIR=$RPM_BUILD_ROOT  install
 
   # Copy everything from tarball over to the installation directory
-  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+#  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
   
 #-----------------------  
 %endif # BUILD_PACKAGE |
