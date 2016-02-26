@@ -56,7 +56,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   GPL
 Group:     Applications/Chemistry
 URL:       http://www.nwchem-sw.org/
@@ -120,9 +120,9 @@ export TARGET="LINUX64"
 
 export ARMCI_NETWORK="MPI-PR"
 
-export MPI_LIB="-L$TACC_CRAY_XPMEM_LIB -L$TACC_CRAY_UGNI_LIB -L$TACC_CRAY_UDREG_LIB -L$TACC_CRAY_PMI_LIB -L$TACC_CRAY_DMAPP_LIB -L$TACC_CRAY_MPT_LIB"
-export MPI_INCLUDE="-I$TACC_CRAY_MPT_INC -I$TACC_CRAY_XPMEM_INC -I$TACC_CRAY_UGNI_INC -I$TACC_CRAY_UDREG_INC -I$TACC_CRAY_DMAPP_INC -I$TACC_CRAY_PMI_INC"
-export LIBMPI="-ldl -lmpichf90_intel -lmpich_intel -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg"
+#export MPI_LIB="-L$TACC_CRAY_XPMEM_LIB -L$TACC_CRAY_UGNI_LIB -L$TACC_CRAY_UDREG_LIB -L$TACC_CRAY_PMI_LIB -L$TACC_CRAY_DMAPP_LIB -L$TACC_CRAY_MPT_LIB"
+#export MPI_INCLUDE="-I$TACC_CRAY_MPT_INC -I$TACC_CRAY_XPMEM_INC -I$TACC_CRAY_UGNI_INC -I$TACC_CRAY_UDREG_INC -I$TACC_CRAY_DMAPP_INC -I$TACC_CRAY_PMI_INC"
+#export LIBMPI="-ldl -lmpichf90_intel -lmpich_intel -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg"
 export USE_MPI="y"
 
 export LARGE_FILES="TRUE"
@@ -139,6 +139,9 @@ export USE_PYTHON=y
 export USE_PYTHONCONFIG=Y
 
 export USE_INTERNALBLAS=y
+
+mv $NWCHEM_TOP/src/config/makefile.h makefile.h.orig
+cp $NWCHEM_TOP/makefile.h.6.6.fat $NWCHEM_TOP/src/config/makefile.h
 
 cd $NWCHEM_TOP/src
 make nwchem_config
