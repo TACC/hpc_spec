@@ -5,7 +5,7 @@
 Summary: Matlab
 Name: matlab
 Version: 2015b
-Release: 1
+Release: 2
 License: Mathworks License
 Vendor: Mathworks
 Group: Matlab
@@ -77,11 +77,12 @@ whatis("Description: Matlab 2015b from MathWorks")
 
 prepend_path("PATH", "/opt/apps/matlab/2015b/bin")
 
-prepend_path("LD_LIBRARY_PATH", "/opt/apps/matlab/2015b/bin/glnxa64")
-prepend_path("LD_LIBRARY_PATH", "/opt/apps/matlab/2015b/runtime/glnxa64")
-prepend_path("LD_LIBRARY_PATH", "/opt/apps/matlab/2015b/sys/java/jre/glnxa64/jre/lib/amd64/server/")
+append_path("LD_LIBRARY_PATH", "/opt/apps/matlab/2015b/bin/glnxa64")
+append_path("LD_LIBRARY_PATH", "/opt/apps/matlab/2015b/runtime/glnxa64")
+append_path("LD_LIBRARY_PATH", "/opt/apps/matlab/2015b/sys/java/jre/glnxa64/jre/lib/amd64/server/")
 
 setenv ("TACC_MATLAB_DIR", "/opt/apps/matlab/2015b")
+setenv ("DVS_CACHE","off")
 
 EOF
 
