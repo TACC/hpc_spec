@@ -5,7 +5,7 @@
 # Inspired by Bar.spec; W. Cyrus Proctor Antonio Gomez 2015-08-25
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
-# NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
+#    -> Do Not Build/Rebuild Package RPM
 # NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
 #
 # Important Install-Time Environment Variables (see post-defines.inc)
@@ -22,8 +22,8 @@
 Summary: Mumps spec file by piggy-backing on PETSc
 
 # Give the package a base name
-%define pkg_base_name Bar
-%define MODULE_VAR    BAR
+%define pkg_base_name mumps
+%define MODULE_VAR    MUMPS
 
 # Create some macros (spec file variables)
 %define major_version 4
@@ -35,8 +35,9 @@ Summary: Mumps spec file by piggy-backing on PETSc
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
-#%include mpi-defines.inc
+%include compiler-defines.inc
+%include mpi-defines.inc
+
 ########################################
 ### Construct name based on includes ###
 ########################################
@@ -60,7 +61,7 @@ Group:    Development/Numerial-Libraries
 Vendor:   ENS-Lyon
 URL:      http://graal.ens-lyon.fr/MUMPS/
 Packager: TACC - eijkhout@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+# no Source
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -86,17 +87,17 @@ Mumps is a direct solver for distributed sparse linear system.
 %prep
 #---------------------------------------
 
-#------------------------
-%if %{?BUILD_PACKAGE}
-#------------------------
-  # Delete the package installation directory.
-  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+# #------------------------
+# %if %{?BUILD_PACKAGE}
+# #------------------------
+#   # Delete the package installation directory.
+#   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%setup -n %{pkg_base_name}-%{pkg_version}
+# ### %setup -n %{pkg_base_name}-%{pkg_version}
 
-#-----------------------
-%endif # BUILD_PACKAGE |
-#-----------------------
+# #-----------------------
+# %endif # BUILD_PACKAGE |
+# #-----------------------
 
 #---------------------------
 %if %{?BUILD_MODULEFILE}
@@ -133,58 +134,28 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
 export dynamic="debug cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug "
 
-#------------------------
-%if %{?BUILD_PACKAGE}
-#------------------------
+# #------------------------
+# %if %{?BUILD_PACKAGE}
+# #------------------------
 
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+#   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
   
-  #######################################
-  ##### Create TACC Canary Files ########
-  #######################################
-  touch $RPM_BUILD_ROOT/%{INSTALL_DIR}/.tacc_install_canary
-  #######################################
-  ########### Do Not Remove #############
-  #######################################
+#   #######################################
+#   ##### Create TACC Canary Files ########
+#   #######################################
+#   touch $RPM_BUILD_ROOT/%{INSTALL_DIR}/.tacc_install_canary
+#   #######################################
+#   ########### Do Not Remove #############
+#   #######################################
 
-  #========================================
-  # Insert Build/Install Instructions Here
-  #========================================
+#   #========================================
+#   # Insert Build/Install Instructions Here
+#   #========================================
   
-##
-## configure install loop
-##
 
-for ext in \
-  "" \
-  ${dynamic} \
-  ; do
-
-export noext="\
-  ${static} \
-  uni unidebug \
-  nono"
-
-echo "module file for ${ext}"
-
-module unload petsc
-if [ -z "${ext}" ] ; then
-  export architecture=sandybridge
-  module load petsc/%{petscversion}
-else
-  export architecture=sandybridge-${ext}
-  module load petsc/%{petscversion}-${ext}
-fi
-
-## end of configure install loop
-done
-  
-  # Copy everything from tarball over to the installation directory
-  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
-#-----------------------  
-%endif # BUILD_PACKAGE |
-#-----------------------
+# #-----------------------  
+# %endif # BUILD_PACKAGE |
+# #-----------------------
 
 
 #---------------------------
@@ -211,53 +182,50 @@ for ext in \
 
 if [ -z "${ext}" ] ; then
   export modulefilename=%{version}
+  export architecture=sandybridge
+  module load petsc/%{petscversion}
 else
   export modulefilename=%{version}-${ext}
+  export architecture=sandybridge-${ext}
+  module load petsc/%{petscversion}-${ext}
 fi
 
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua << EOF
+help( [[
 The %{MODULE_VAR} module defines the following environment variables:
 TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
 TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
 include files, and tools respectively.
-]]
+]] )
 
---help(help_msg)
-help(help_msg)
-
-whatis("Name: bar")
-whatis("Version: %{pkg_version}%{dbg}")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
+whatis("Name: mumps")
+whatis("Version: %{pkg_version}")
 
 -- Create environment variables.
-local bar_dir           = "%{INSTALL_DIR}"
+local mumps_dir           = "${TACC_PETSC_DIR}"
+local mumps_arch          = "${PETSC_ARCH}"
+local mumps_inc           = pathJoin(mumps_dir,mumps_arch,"include")
+local mumps_lib           = pathJoin(mumps_dir,mumps_arch,"lib")
 
-family("bar")
-prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "lib"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/bar1_1/modulefiles")
-setenv( "TACC_%{MODULE_VAR}_DIR",                bar_dir)
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(bar_dir, "include"))
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(bar_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(bar_dir, "bin"))
+family("mumps")
+prepend_path("LD_LIBRARY_PATH", mumps_lib)
+setenv("TACC_MUMPS_INC",        mumps_inc )
+setenv("TACC_MUMPS_LIB",        mumps_lib)
 EOF
   
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
 #%Module3.1.1#################################################
 ##
 ## version file for %{BASENAME}%{version}
 ##
 
-set     ModulesVersion      "%{version}"
+set     ModulesVersion      "${modulefilename}"
 EOF
   
   # Check the syntax of the generated lua modulefile only if a visible module
   %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua
   %endif
 
 done
@@ -266,18 +234,18 @@ done
 #--------------------------
 
 
-#------------------------
-%if %{?BUILD_PACKAGE}
-%files package
-#------------------------
+# #------------------------
+# %if %{?BUILD_PACKAGE}
+# %files package
+# #------------------------
 
-  %defattr(-,root,install,)
-  # RPM package contains files within these directories
-  %{INSTALL_DIR}
+#   %defattr(-,root,install,)
+#   # RPM package contains files within these directories
+#   %{INSTALL_DIR}
 
-#-----------------------
-%endif # BUILD_PACKAGE |
-#-----------------------
+# #-----------------------
+# %endif # BUILD_PACKAGE |
+# #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
 %files modulefile 
