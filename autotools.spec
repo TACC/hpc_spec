@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3
+Release:   4
 License:   GPL
 Group:     Utility
 URL:       http://www.gnu.org
@@ -229,6 +229,7 @@ make -j ${ncores} install
 
 # add support for pkg-config macros
 cp $RPM_SOURCE_DIR/pkg.m4 %{INSTALL_DIR}/share/aclocal
+chmod a+r %{INSTALL_DIR}/share/aclocal/pkg.m4
 
 
 if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
