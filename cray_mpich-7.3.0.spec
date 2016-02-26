@@ -42,7 +42,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   11
+Release:   12
 License:   GPL
 Group:     Development/Tools
 Packager:  TACC - carlos@tacc.utexas.edu
