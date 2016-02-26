@@ -53,7 +53,7 @@ mpi="none"
 mpiV="%{nil}"
 build=b
 
-TEMP=`getopt -o hb:fdlg:i:j:p:m:o:v --long help,build:,debug,log,gcc:,intel:,pgi:,impi:,,mvapich2:,openmpi:,cmpich:,force,show,version \
+TEMP=`getopt -o hb:fdlg:i:j:p:m:o:c:v --long help,build:,debug,log,gcc:,intel:,pgi:,impi:,,mvapich2:,openmpi:,cmpich:,force,show,version \
      -n 'build' -- "$@"`
 if [ $? != 0 ] ; then
   echo "For usage of $0 do: $0 --help"
