@@ -55,12 +55,12 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   GPL
 Group:     Applications/Chemistry
 URL:       https://www.vasp.at/
 Packager:  TACC - hliu@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}_all_TACC.tar.gz
+Source:    %{pkg_base_name}-%{pkg_version}_05Feb16_all_TACC.tar.gz
 #Source0:   %{pkg_base_name}-%{pkg_version}.tar.bz2
 #Source1:   libint-1.1.5.tar.gz
 #Source2:   libxc-2.0.1.tar.gz
@@ -106,7 +106,7 @@ The Vienna Ab initio Simulation Package (VASP)
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n %{pkg_base_name}-%{pkg_version}_all_TACC
+%setup -n %{pkg_base_name}.%{pkg_version}_05Feb16_all_TACC
 
 
 #---------------------------------------
@@ -115,24 +115,33 @@ The Vienna Ab initio Simulation Package (VASP)
 %include compiler-load.inc
 %include mpi-load.inc
 
+module load cuda
+
 cd wannier90-2.0.1/
 make lib
 
 cd ../beef
-./configure CC=icc --prefix=$PWD
+./configure CC="icc -xAVX -axCORE-AVX2"  --prefix=$PWD
 make
 make install
 
 cd ../vasp.5.4.1
 make all
+make gpu
+make gpu_ncl
 #make std
 
 cd ../vasp.5.4.1.vtst
 make all
+make gpu
+make gpu_ncl
+
 cd ./bin
 mv vasp_std vasp_std_vtst
 mv vasp_gam vasp_gam_vtst
 mv vasp_ncl vasp_ncl_vtst
+mv vasp_gpu vasp_gpu_vtst
+mv vasp_gpu_ncl vasp_gpu_ncl_vtst
 
 cd ../../
 
@@ -178,14 +187,19 @@ cd vasp.5.4.1/bin/
 cp vasp_std $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
 cp vasp_gam $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
 cp vasp_ncl $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_gpu $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_gpu_ncl $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+
 cd ../../vasp.5.4.1.vtst/bin
 cp vasp_std_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
 cp vasp_gam_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
 cp vasp_ncl_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_gpu_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_gpu_ncl_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
 cd ../../beef/bin
 cp bee $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
 cd ../../
-cp -r vtstscripts-902 $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp -r vtstscripts-914 $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
 
 
 #-----------------------  
@@ -211,7 +225,6 @@ cp -r vtstscripts-902 $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_msg=[[
 
-
 The TACC VASP module appends the path to the vasp executables
 to the PATH environment variable.  Also TACC_VASP_DIR, and
 TACC_VASP_BIN are set to VASP home and bin directories.
@@ -224,15 +237,24 @@ The VASP executables are
 vasp_std: compiled with pre processing flag: -DNGZhalf
 vasp_gam: compiled with pre processing flag: -DNGZhalf -DwNGZhalf
 vasp_ncl: compiled without above pre processing flags
+vasp_gpu: vasp_std with GPU acceleration
+vasp_gpu_ncl: vasp_ncl with GPU acceleration
 vasp_std_vtst: vasp_std with VTST
 vasp_gam_vtst: vasp_gam with VTST
 vasp_ncl_vtst: vasp_ncl with VTST
-vtstscripts-902/: utility scripts of VTST
+vasp_gpu_vtst: vasp_std with VTST and GPU acceleration
+vasp_gpu_ncl_vtst: vasp_ncl with VTST and GPU acceleration
+vtstscripts-914/: utility scripts of VTST
 bee: BEEF analysis code
 
-All above VASP binaries are all Advanced MD techniques enabled by pre processing flag -Dtbdyn
-linked against WANNIER90 library by pre processing flag -DVASP2WANNIER90
-and BEEF library by pre precessing flag -Dlibbeef
+This the VASP.5.4.1.05FEB2016 release.
+
+The GPU acceleration in VASP is newly released feature, use it by your own caution. Brief introduction can be found
+http://cms.mpi.univie.ac.at/wiki/index.php/GPU_port_of_VASP
+The combination of VTST and GPU acceleration seems compatible at compilation, not sure if they are at run time.
+
+To run GPU enabled VASP codes, in addition to vasp/5.4.1, you also need to load cuda/6.5 module.
+In case of any issue, let us know and contact developers of GPU VASP for possible fixes.
 
 Version %{version}
 ]]
