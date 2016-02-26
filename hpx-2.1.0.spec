@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   3
 License:   GPL
 Group:     Development/Tools
 URL:       https://hpx.crest.iu.edu/
@@ -186,6 +186,8 @@ export GCC_VERSION=4.9.3
 export CPP_PATHS="-I/opt/apps/gcc/${GCC_VERSION}/include/c++/${GCC_VERSION} -I/opt/apps/gcc/${GCC_VERSION}/include/c++/${GCC_VERSION}/x86_64-unknown-linux-gnu "
 # leads to: /opt/apps/gcc/4.9.3/include/c++/4.9.3/ext/atomicity.h(49): error: identifier "__ATOMIC_ACQ_REL" is undefined
 
+cp -r hpx-apps %{INSTALL_DIR}
+
 cd hpx
 ./configure --prefix=%{INSTALL_DIR} \
     CC=mpicc CXX=mpicxx --enable-mpi CFLAGS="-O3 -g" CXXFLAGS="-O3 -g" \
@@ -196,7 +198,6 @@ make
 ####
 #### Testing
 ####
-#ctest -VV
 
 ####
 #### Install permanently
@@ -213,16 +214,17 @@ make install
 #---------------------------
 
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua << EOF
-help( [[
-The hpx module defines the following environment variables:
-TACC_HPX_DIR, TACC_HPX_BIN, and
-TACC_HPX_LIB for the location
-of the Hpx distribution, documentation, binaries,
-and libraries.
+# The hpx module defines the following environment variables:
+# TACC_HPX_DIR, TACC_HPX_BIN, and
+# TACC_HPX_LIB for the location
+# of the Hpx distribution, documentation, binaries,
+# and libraries.
 
-Version %{version}
-]] )
+# Version %{version}
+# ]] )
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua << EOF
+local help_msg=[[ foo ]]
+help( help_msg )
 
 whatis( "Name: Hpx" )
 whatis( "Version: %{version}" )
@@ -230,10 +232,12 @@ whatis( "Category: library, mathematics" )
 whatis( "URL: https://hpx.crest.iu.edu/" )
 whatis( "Description: Parallel programming system" )
 
-local             hpx_dir =     "%{INSTALL_DIR}/"
+local             hpx_dir =     "%{INSTALL_DIR}"
 
 prepend_path("PATH",            pathJoin(hpx_dir,"bin") )
+prepend_path("LD_LIBRARY_PATH", pathJoin(hpx_dir,"lib64") )
 prepend_path("LD_LIBRARY_PATH", pathJoin(hpx_dir,"lib") )
+prepend_path("PKG_CONFIG_PATH", pathJoin(hpx_dir,"lib","pkgconfig") )
 
 setenv("TACC_HPX_DIR",        hpx_dir)
 setenv("TACC_HPX_BIN",        pathJoin(hpx_dir,"bin") )
@@ -316,6 +320,9 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 #
+* Wed Feb 24 2016 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: include example applications
+* Wed Feb 10 2016 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: tinkering with paths in modulefile
 * Mon Feb 01 2016 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release
-
