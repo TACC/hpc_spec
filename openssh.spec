@@ -1,3 +1,6 @@
+# W. Cyrus Proctor
+# 2016-03-06
+
 %define ver 7.1p2
 %define rel 1
 
