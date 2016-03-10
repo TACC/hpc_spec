@@ -2,8 +2,8 @@
 
 Summary: TACC TIPS
 Name: tacc_tips
-Version: 0.4
-Release: 1
+Version: 0.5
+Release: 2
 License: GPLv2
 Group: System Environment/Base
 Source0:  %{name}-%{version}.tar.bz2
