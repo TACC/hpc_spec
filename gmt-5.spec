@@ -35,6 +35,8 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
+%define gshhg_version 2.3.4
+
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
 %include compiler-defines.inc
@@ -42,7 +44,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+%include name-defines-noreloc.inc
 #%include name-defines-hidden.inc
 ########################################
 ############ Do Not Remove #############
@@ -54,7 +56,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   GNU
 Group:     Development/Tools
 URL:       http://gmt.soest.hawaii.edu/
@@ -181,6 +183,15 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 #
 
 mkdir -p %{INSTALL_DIR}
+
+# edit path for gshhg-gmt
+#     target line: '# set (GSHHG_ROOT "gshhg_path")'
+# we do this in the build directory; pushd after this
+sed -i \
+    -e '/GSHHG_ROOT/s/^#//' -e 's!gshhg_path!%{INSTALL_DIR}/share/gshhg-gmt-%{gshhg_version}!' \
+    cmake/ConfigUserTemplate.cmake
+grep -i gshhg cmake/ConfigUserTemplate.cmake
+
 pushd %{INSTALL_DIR}
 
 # use icc not gcc
@@ -195,6 +206,8 @@ make
 mkdir -p                 $RPM_BUILD_ROOT/%{INSTALL_DIR}
 make install
 
+# unpack extra datasets
+( cd share ; tar fxz %{_topdir}/SOURCES/gshhg-gmt-%{gshhg_version}.tar.gz )
 
 # Also need to unpack the supplemental tarballs containing maps and such
 # I made a single tarball named GMT_suppl_share.tar.bz2 containing the following archives:
@@ -235,7 +248,7 @@ popd
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << EOF
 local help_message = [[
 
 This module provides the GMT environment variables:
@@ -259,6 +272,7 @@ setenv("TACC_GMT_DIR",gmt_dir)
 setenv("TACC_GMT_BIN",pathJoin(gmt_dir,"bin"))
 setenv("TACC_GMT_LIB",pathJoin(gmt_dir,"lib64"))
 setenv("TACC_GMT_SHARE",pathJoin(gmt_dir,"share"))
+setenv("TACC_GMT_GSHHG_DIR",pathJoin(gmt_dir,"share","gshhg-gmt-%{gshhg_version}"))
 
 prepend_path("PATH",pathJoin(gmt_dir,"bin"))
 prepend_path("PATH",pathJoin(gmt_dir,"share"))
@@ -334,3 +348,11 @@ export PACKAGE_PREUN=1
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
 
+#---------------------------------------
+%changelog
+#---------------------------------------
+#
+* Wed Mar 09 2016 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: adding gshhg-gmt dataset
+* Wed Feb 22 2016 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial release
