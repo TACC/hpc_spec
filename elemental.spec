@@ -25,7 +25,7 @@ Summary: Elemental rpm build script
 
 # Create some macros (spec file variables)
 %define major_version 0
-%define minor_version 85
+%define minor_version 20160229
 
 %define pkg_version %{major_version}.%{minor_version}
 
