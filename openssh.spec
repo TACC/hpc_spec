@@ -12,10 +12,10 @@
 %define aversion 1.2.4.1
 
 # Do we want to disable building of x11-askpass? (1=yes 0=no)
-%define no_x11_askpass 0
+%define no_x11_askpass 1
 
 # Do we want to disable building of gnome-askpass? (1=yes 0=no)
-%define no_gnome_askpass 0
+%define no_gnome_askpass 1
 
 # Do we want to link against a static libcrypto? (1=yes 0=no)
 %define static_libcrypto 0
@@ -80,6 +80,9 @@ Release: %{rel}
 URL: http://www.openssh.com/portable.html
 ###Source0: ftp://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-%{version}.tar.gz
 Source0:openssh-hpn-isshd-3.19.1.tar.gz
+#Source0:openssh-hpn-isshd-isshd.tar.gz
+#Source0:openssh-7.2p1.tar.gz
+#Source0:openssh-hpn-isshd-V_6_8.tar.gz
 %if ! %{no_x11_askpass}
 #Source1: http://www.jmknoble.net/software/x11-ssh-askpass/x11-ssh-askpass-%{aversion}.tar.gz
 Source1: x11-ssh-askpass-%{aversion}.tar.gz
@@ -98,7 +101,7 @@ Requires: initscripts >= 5.20
 BuildRequires: perl, openssl-devel
 BuildRequires: /bin/login
 %if ! %{build6x}
-BuildPreReq: glibc-devel, pam
+BuildRequires: glibc-devel, pam
 %else
 BuildRequires: /usr/include/security/pam_appl.h
 %endif
@@ -183,8 +186,12 @@ environment.
 
 %if ! %{no_x11_askpass}
 %setup -q -a 1 -n openssh-hpn-isshd-3.19.1
+#%setup -q -a 1 -n openssh-hpn-isshd-isshd
+#%setup -q -a 1 -n openssh-hpn-isshd-V_6_8
 %else
-%setup -q
+%setup -q -n openssh-hpn-isshd-3.19.1
+#%setup -q -n openssh-hpn-isshd-isshd
+#%setup -q -n openssh-hpn-isshd-V_6_8
 %endif
 
 %patch100 -p0
@@ -194,13 +201,13 @@ environment.
 CFLAGS="$RPM_OPT_FLAGS -Os"; export CFLAGS
 %endif
 
+
 %if %{kerberos5}
 K5DIR=`rpm -ql krb5-devel | grep include/krb5.h | sed 's,\/include\/krb5.h,,'`
 echo K5DIR=$K5DIR
 %endif
 
 autoreconf
-
 %configure \
 	--sysconfdir=%{_sysconfdir}/ssh \
 	--libexecdir=%{_libexecdir}/openssh \
@@ -210,6 +217,12 @@ autoreconf
 	--with-superuser-path=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin \
 	--with-privsep-path=%{_var}/empty/sshd \
 	--with-md5-passwords \
+        --disable-strip              \
+        --without-zlib-version-check \
+        --with-ssl-engine            \
+        --with-ipaddr-display        \
+        --with-libedit               \
+        --with-nerscmod              \
 %if %{scard}
 	--with-smartcard \
 %endif
@@ -221,6 +234,7 @@ autoreconf
 %if %{kerberos5}
 	 --with-kerberos5=$K5DIR \
 %endif
+
 
 
 %if %{static_libcrypto}
