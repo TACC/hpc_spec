@@ -1,7 +1,7 @@
 Summary:    Python is a high-level general-purpose programming language.
 Name:       tacc-python 
 Version:    2.7.11
-Release:    1
+Release:    3
 License:    GPLv2
 Vendor:     Python Software Foundation
 Group:      Applications
@@ -13,11 +13,11 @@ Packager:   TACC - rtevans@tacc.utexas.edu
 # CONFIGURATION DEFINITIONS
 #------------------------------------------------
 
-%define build_new        0
-%define build_numpy      0
+%define build_new        1
+%define build_numpy      1
 %define build_scipy      1
 %define build_matplotlib 1
-%define build_blitz      1
+%define build_blitz      0
 %define build_mpi4py     0
 #%include mpi-defines.inc	
 
@@ -42,7 +42,7 @@ Packager:   TACC - rtevans@tacc.utexas.edu
 %endif
 
 %package -n %{PACKAGE_NAME}
-Summary: Python built with Intel Compilers
+Summary: Python built for TACC systems
 Group:   Programming Language
 
 %description
@@ -97,10 +97,10 @@ export PYTHONPATH=%{INSTALL_DIR_COMP}/lib/python2.7/site-packages:$PYTHONPATH
      cd ${SRC_DIR}/Python-%{version}
 
      %if "%{comp_fam_name}" == "Intel"
-     	 ./configure --prefix=%{INSTALL_DIR_COMP} CC=icc CXX=icpc CFLAGS="-ipo -fPIC -mkl -O3 -fp-model strict -fomit-frame-pointer -xhost" CPPFLAGS="-ipo -fPIC -mkl -O3 -fp-model strict -fomit-frame-pointer -xhost" LDFLAGS="-lpthread" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth
+     	 ./configure --prefix=%{INSTALL_DIR_COMP} CC=icc CXX=icpc CFLAGS="-ipo -fPIC -mkl -O3 -fp-model strict -fomit-frame-pointer -axCORE-AVX2,CORE-AVX-I -fma" CPPFLAGS="-ipo -fPIC -mkl -O3 -fp-model strict -fomit-frame-pointer -axCORE-AVX2,CORE-AVX-I -fma" LDFLAGS="-lpthread" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth
      %endif
      %if "%{comp_fam_name}" == "GNU"
-     	 ./configure --prefix=%{INSTALL_DIR_COMP} CFLAGS="-pthread -fPIC -fno-strict-aliasing -g -DNDEBUG -O3 -fwrapv -Wall -Wstrict-prototypes -march=sandybridge" CPPFLAGS="-pthread -fPIC -fno-strict-aliasing -g -DNDEBUG -O3 -fwrapv -Wall -Wstrict-prototypes -march=sandybridge" LDFLAGS="-lpthread" --with-system-ffi --enable-shared --with-pth
+     	 ./configure --prefix=%{INSTALL_DIR_COMP} CFLAGS="-pthread -fPIC -fno-strict-aliasing -g -DNDEBUG -O3 -fwrapv -Wall -Wstrict-prototypes -march=ivybridge -mtune=haswell" CPPFLAGS="-pthread -fPIC -fno-strict-aliasing -g -DNDEBUG -O3 -fwrapv -Wall -Wstrict-prototypes -march=ivybridge -mtune=haswell" LDFLAGS="-lpthread" --with-system-ffi --enable-shared --with-pth
      %endif
 
      make -j 16
@@ -159,8 +159,8 @@ library_dirs = ${MKLROOT}/lib/intel64
 include_dirs = ${MKLROOT}/include
 mkl_libs = mkl_rt
 lapack_libs = " > site.cfg
-    sed -i 's/-xSSE4.2/-xhost/' numpy/distutils/intelccompiler.py
-    sed -i 's/-xSSE4.2/-xhost -O1/' numpy/distutils/fcompiler/intel.py
+    sed -i 's/-xSSE4.2/-axCORE-AVX2,CORE-AVX-I -fma/' numpy/distutils/intelccompiler.py
+    sed -i 's/-xSSE4.2/-axCORE-AVX2,CORE-AVX-I -O1 -fma/' numpy/distutils/fcompiler/intel.py
     %{INSTALL_DIR_COMP}/bin/python setup.py config --compiler=intelem --fcompiler=intelem build_clib --compiler=intelem --fcompiler=intelem build_ext --compiler=intelem --fcompiler=intelem install --prefix=%{INSTALL_DIR_COMP}
     %endif
 
@@ -170,14 +170,15 @@ library_dirs = ${TACC_MKL_LIB}
 include_dirs = ${TACC_MKL_INC}
 mkl_libs = mkl_def, mkl_intel_lp64, mkl_core, mkl_gnu_thread, mkl_avx 
 lapack_libs = mkl_def, mkl_intel_lp64, mkl_core, mkl_gnu_thread, mkl_avx" > site.cfg
-    export LDFLAGS="-lm -lpthread -lgomp"	    
-    %{INSTALL_DIR_COMP}/bin/python setup.py config build_clib build_ext install --prefix=%{INSTALL_DIR_COMP}
+
+    export LDFLAGS="-lm -lpthread -lgomp -shared"	    
+    %{INSTALL_DIR_COMP}/bin/python setup.py config --fcompiler=gfortran build_clib --fcompiler=gfortran build_ext --fcompiler=gfortran install --prefix=%{INSTALL_DIR_COMP}
     %endif
 
 %endif
 
 %if "%{build_scipy}" == "1"
-    export LDFLAGS="-lm -lpthread -lgomp"	    
+    export LDFLAGS="-lm -lpthread -lgomp -shared"	    
     ### Scipy Libraries
     cd %{_topdir}/SOURCES	
     if [ ! -f "%{_topdir}/SOURCES/scipy-0.16.1.tar.gz" ]; then	
@@ -193,7 +194,8 @@ lapack_libs = mkl_def, mkl_intel_lp64, mkl_core, mkl_gnu_thread, mkl_avx" > site
     %endif
     
     %if "%{comp_fam_name}" == "GNU"	
-        %{INSTALL_DIR_COMP}/bin/python setup.py config build_clib build_ext install --prefix=%{INSTALL_DIR_COMP}
+    #export LD_LIBRARY_PATH=/home1/02561/rtevans/OpenBLAS:$LD_LIBRARY_PATH
+        %{INSTALL_DIR_COMP}/bin/python setup.py config --fcompiler=gfortran build_clib --fcompiler=gfortran build_ext --fcompiler=gfortran install --prefix=%{INSTALL_DIR_COMP}
     %endif
 
 %endif
@@ -201,8 +203,8 @@ lapack_libs = mkl_def, mkl_intel_lp64, mkl_core, mkl_gnu_thread, mkl_avx" > site
 %if "%{build_matplotlib}" == "1"
     ### Matplotlib
     cd %{_topdir}/SOURCES	
-    if [ ! -f "%{_topdir}/SOURCES/matplotlib-1.5.1.tar.gz" ]; then		
-       wget https://downloads.sourceforge.net/project/matplotlib/matplotlib/matplotlib-1.5.1/matplotlib-1.5.1.tar.gz
+    if [ ! -f "%{_topdir}/SOURCES/matplotlib-1.5.1.tar.gz" ]; then
+	wget https://pypi.python.org/packages/source/m/matplotlib/matplotlib-1.5.1.tar.gz
     fi
 
     rm -rf ${SRC_DIR}/matplotlib-1.5.1
@@ -244,11 +246,13 @@ lapack_libs = mkl_def, mkl_intel_lp64, mkl_core, mkl_gnu_thread, mkl_avx" > site
     pip install --no-use-wheel --install-option="--prefix=%{INSTALL_DIR_COMP}" yt==3.1
     pip install --no-use-wheel --install-option="--prefix=%{INSTALL_DIR_COMP}" theano
 
+    %if "%{comp_fam_name}" == "Intel"
     module load hdf5
     export HDF5_DIR=$TACC_HDF5_DIR	
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$TACC_HDF5_LIB
     pip install --no-use-wheel --install-option="--prefix=%{INSTALL_DIR_COMP}" h5py
     pip install --no-use-wheel --install-option="--prefix=%{INSTALL_DIR_COMP}" tables
+    %endif
     CFLAGS="-O2" pip install --no-use-wheel --install-option="--prefix=%{INSTALL_DIR_COMP}" scikit_learn
 %endif
 
@@ -263,7 +267,7 @@ lapack_libs = mkl_def, mkl_intel_lp64, mkl_core, mkl_gnu_thread, mkl_avx" > site
 	mkdir -p %{INSTALL_DIR_MPI}
 	mount -t tmpfs tmpfs %{INSTALL_DIR_MPI}
 	module load %{mpi_module}   
-	pip install --no-use-wheel --install-option="--prefix=%{INSTALL_DIR_MPI}" mpi4py
+	pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_MPI}" mpi4py
 
 	#"""
 	#TACC hack to detect if the user is running mpi4py with 'python' interpreter and mvapich2
@@ -328,8 +332,6 @@ You can install your own modules (choose one method):
         2. python setup.py install --home=<dir>
         3. pip install --user module-name
 
-Please note: tables and h5py are there but you need to load the
-hdf5 module to use these packages.
 Version %{version}
 ]]
 )
@@ -351,8 +353,7 @@ local python_inc   = "%{INSTALL_DIR_COMP}/include"
 local python_lib   = "%{INSTALL_DIR_COMP}/lib"
 local python_man   = "%{INSTALL_DIR_COMP}/share/man:%{INSTALL_DIR_COMP}/man"
 %if "%{comp_fam_name}" == "GNU"
-local mkl_lib      = "/opt/apps/intel/15/composer_xe_2015.2.164/mkl/lib/intel64"
-local omp_lib      = "/opt/apps/intel/15/composer_xe_2015.2.164/compiler/lib/intel64"
+always_load("mkl")
 %endif
 setenv("TACC_PYTHON_DIR", python_dir)
 setenv("TACC_PYTHON_BIN", python_bin)
@@ -364,8 +365,6 @@ prepend_path("PATH", python_bin)
 prepend_path("MANPATH", python_man)
 prepend_path("LD_LIBRARY_PATH", python_lib)
 %if "%{comp_fam_name}" == "GNU"
-prepend_path("LD_LIBRARY_PATH", mkl_lib)
-prepend_path("LD_LIBRARY_PATH", omp_lib)
 %endif
 prepend_path("PATH",       "%{INSTALL_DIR_COMP}/bin")
 EOF
@@ -394,9 +393,6 @@ You can install your own modules (choose one method):
 	2. python setup.py install --home=<dir>
 	3. pip install --user module-name
 
-Please note: tables and h5py are there but you need to load the
-hdf5 module to use these packages.
-
 Version %{version}
 ]]
 )
@@ -417,7 +413,9 @@ local python_bin   = "%{INSTALL_DIR_COMP}/bin"
 local python_inc   = "%{INSTALL_DIR_COMP}/include"
 local python_lib   = "%{INSTALL_DIR_COMP}/lib"
 local python_man   = "%{INSTALL_DIR_COMP}/share/man:%{INSTALL_DIR_COMP}/man"
-
+%if "%{comp_fam_name}" == "GNU"
+always_load("mkl")
+%endif
 setenv("TACC_PYTHON_DIR", python_dir)
 setenv("TACC_PYTHON_BIN", python_bin)
 setenv("TACC_PYTHON_INC", python_inc)
