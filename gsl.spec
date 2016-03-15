@@ -38,8 +38,8 @@ Summary: A Nice little relocatable skeleton spec file example.
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
-#%include name-defines-noreloc.inc
+#%include name-defines.inc
+%include name-defines-noreloc.inc
 #%include name-defines-hidden.inc
 #%include name-defines-hidden-noreloc.inc
 ########################################
@@ -73,7 +73,7 @@ Group: System Environment/Base
 
 The GNU Scientific Library (GSL) is a numerical library for C and C++ programmers. It is free software under the GNU General Public License.
 
-The library provides a wide range of mathematical routines such as random number generators, special functions and least-squares fitting. There are over 1000 functions in tota
+The library provides a wide range of mathematical routines such as random number generators, special functions and least-squares fitting. There are over 1000 functions in total
 
 The complete range of subject areas covered by the library includes,
 
@@ -164,7 +164,7 @@ module purge
 # Load Compiler
 %include compiler-load.inc
 # Load MPI Library
-%include mpi-load.inc
+#%include mpi-load.inc
 
 # Insert further module commands
 
@@ -176,6 +176,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  mkdir -p %{INSTALL_DIR}
+  mount -t tmpfs tmpfs %{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -191,16 +193,17 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   WD=`pwd`
 
   # Create some dummy directories and files for fun
-  export CFLAGS="-O3"
-  export CPPFLAGS="-O3"
+  export CFLAGS="-O3 -xAVX -axCORE-AVX2 -fp-model precise"
+  export CPPFLAGS="-O3 -xAVX -axCORE-AVX2 -fp-model precise"
   export CONFIG_FLAGS=""
-  ./configure $CONFIG_FLAGS --prefix=$WD/install
+  ./configure $CONFIG_FLAGS --prefix=%{INSTALL_DIR}
   make -j 12
   make install
+#  sed -i -- 's/tmprpm/opt\/apps/g' %{INSTALL_DIR}/bin/gsl-config 
+# Copy everything from tarball over to the installation directory
+  cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+  umount %{INSTALL_DIR}
 
-  # Copy everything from tarball over to the installation directory
-  cp -r $WD/install/* $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
