@@ -1,12 +1,13 @@
 #
 # W. Cyrus Proctor
-# 2015-08-26
+# 2016-03-14
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
 # NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
 #
 # Important Install-Time Environment Variables (see post-defines.inc)
+# VERBOSE=1       -> Print detailed information at install time
 # RPM_DBPATH      -> Path To Non-Standard RPM Database Location
 #
 # Typical Command-Line Example:
@@ -22,6 +23,9 @@ Summary: A Nice little relocatable skeleton spec file example.
 %define pkg_base_name rosetta
 %define MODULE_VAR    ROSETTA
 
+%define maintainer_email cproctor@tacc.utexas.edu, rtevans@tacc.utexas.edu
+%define rpm_group G-814534
+
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 5
@@ -36,7 +40,11 @@ Summary: A Nice little relocatable skeleton spec file example.
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+#%include name-defines.inc
+%include name-defines-noreloc-home1.inc
+#%include name-defines-noreloc.inc
+#%include name-defines-hidden.inc
+#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -49,23 +57,15 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
 Release:   1
 License:   http://depts.washington.edu/ventures/UW_Technology/Express_Licenses/rosetta.php
-Group:     Molecular Dynamics
+Group:     Development/Tools
 URL:       https://www.rosettacommons.org
-BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
-Packager:  TACC - cproctor@tacc.utexas.edu, rtevans@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tgz
+Packager:  TACC - %{maintainer_email}
+Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
-%define intel_major   %{nil}
 
-%if "%{is_intel15}" == "1"
-  %define intel_major 15.0
-%endif
-%if "%{is_intel14}" == "1"
-  %define intel_major 14.0
-%endif
 
 %package %{PACKAGE}
 Summary: The package RPM
@@ -80,9 +80,11 @@ Group: Lmod/Modulefiles
 This is the long description for the modulefile RPM...
 
 %description
-The Rosetta software suite includes algorithms for
-computational modeling and analysis of protein structures.
-
+The Rosetta software suite includes algorithms for computational modeling and
+analysis of protein structures. It has enabled notable scientific advances in
+computational biology, including de novo protein design, enzyme design, ligand
+docking, and structure prediction of biological macromolecules and
+macromolecular complexes.
 
 #---------------------------------------
 %prep
@@ -93,6 +95,9 @@ computational modeling and analysis of protein structures.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+###%setup -n %{pkg_base_name}-%{pkg_version}
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -107,6 +112,7 @@ computational modeling and analysis of protein structures.
 #--------------------------
 
 
+
 #---------------------------------------
 %build
 #---------------------------------------
@@ -118,15 +124,16 @@ computational modeling and analysis of protein structures.
 
 # Setup modules
 %include system-load.inc
-
-# Insert necessary module commands
 module purge
-module load TACC
-module load %{comp_module}
-module load mvapich2
-module load python
-module load scons
-module list
+# Load Compiler
+%include compiler-load.inc
+# Load MPI Library
+%include mpi-load.inc
+
+ml python
+ml scons
+
+# Insert further module commands
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -151,21 +158,41 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
 
-########################################  
+cd %{INSTALL_DIR}
+ 
 export rosetta=`pwd`
-export rosetta_install=%{INSTALL_DIR}
-export ncores=8
-########################################  
-
 export rosetta_major=%{major_version}
 export rosetta_minor=%{minor_version}
 export rosetta_version=${rosetta_major}.${rosetta_minor}
 
-cd ${rosetta}
-cp %{_sourcedir}/rosetta-${rosetta_version}.tgz ${rosetta}
-tar xvf rosetta-${rosetta_version}.tgz
-cd rosetta-${rosetta_version}/rosetta_source
+# Add dummy wrappers (sigh scons)
+# mpicc_wrapper and mpicxx_wrapper should pointt to local_bin
+##tar xvfz %{_sourcedir}/rosetta_local_bin.tar.gz
+export PATH=${rosetta}/rosetta_local_bin:${PATH}
+mkdir -p ${rosetta}/rosetta_local_bin
+export my_mpicc=`which mpicc`
+cat > ${rosetta}/rosetta_local_bin/mpicc_wrapper << EOF
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+${my_mpicc} "\$@"
+EOF
+chmod +x ${rosetta}/rosetta_local_bin/mpicc_wrapper
+export my_mpicxx=`which mpicxx`
+cat > ${rosetta}/rosetta_local_bin/mpicxx_wrapper << EOF
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+${my_mpicxx} "\$@"
+EOF
+chmod +x ${rosetta}/rosetta_local_bin/mpicxx_wrapper
+which mpicc_wrapper
+which mpicxx_wrapper
+more ${my_mpicc}
+more ${my_mpicxx}
 
+cd ${rosetta}
+# Untar
+tar xvf %{_sourcedir}/rosetta-${rosetta_version}.tgz
+cd ${rosetta}/rosetta-${rosetta_version}/rosetta_source
+
+# Create site-specific settings (intel versions)
 cd tools/build
 cat > options.settings.stampede << EOF
 # (c) Copyright Rosetta Commons Member Institutions.
@@ -179,7 +206,7 @@ options = {
 
     "cxx" : {
         "gcc"     : [ "3.3", "3.4", "4.0", "4.1", "4.2", "4.3","4.4","4.5", "4.6","4.7", "*" ],
-        "icc"     : [ "8.0", "8.1", "9.0", "9.1", "10.0", "10.1", "11.1", "*", "13.1", "14.0", "15.0" ], #PBHACK
+        "icc"     : [ "8.0", "8.1", "9.0", "9.1", "10.0", "10.1", "11.1", "*", "13.1", "14.0", "15.0", "16.0" ], #PBHACK
         "msvc"    : [ "7.0", "7.1", "8.0", "8.1", "*" ],
         "xlc"     : [ "7.0", "8.0", "9.0", "XL", "*" ],
         "clang"   : [ "1.7", "2.1", "2.0", "2.8", "2.9", "3.0", "3.3", "4.0", "3.0-6ubuntu3", "4.1", "4.2", "*" ],
@@ -315,9 +342,10 @@ options = {
 
 }
 EOF
-rm -f options.settings
+rm options.settings
 ln -s options.settings.stampede options.settings
 
+# Add in MKL plus some mpi wrappers (sigh scons)
 cat > site.settings.stampede <<EOF
 # -*- mode:python;indent-tabs-mode:nil;show-trailing-whitespace:t; -*-
 #
@@ -362,8 +390,8 @@ settings = {
             },
         },
         "overrides" : {
-            "cxx" : "mpicxx",
-            "cc"  : "mpicc",
+            "cxx" : "mpicxx_wrapper -g -xHOST",
+            "cc"  : "mpicc_wrapper -g -xHOST",
         },
         "removes" : {
         },
@@ -375,43 +403,26 @@ ln -s site.settings.stampede site.settings
 cd ../../
 
 
-COMPILER=icc
 
 echo -e "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}"
 echo -e "PATH=${PATH}"
 
-MODE=release
-EXTRAS=mpi,omp
+export COMPILER=icc
+export     MODE=release
+export   EXTRAS=mpi,omp
 
 ./scons.py -c
 rm -f .sconsign.dblite
-./scons.py -j ${ncores} mode=${MODE} extras=${EXTRAS} cxx=${COMPILER} bin 
+./scons.py -j16 mode=${MODE} extras=${EXTRAS} cxx=${COMPILER} bin 
 
-cd ${rosetta}
-mkdir -p ${rosetta_install}
-mv ${rosetta}/rosetta-${rosetta_version}/rosetta_source/bin   ${rosetta_install}
-mv ${rosetta}/rosetta-${rosetta_version}/rosetta_source/build ${rosetta_install}
-mv ${rosetta}/rosetta-${rosetta_version}/rosetta_database     ${rosetta_install}
-rm -rf ${rosetta}/rosetta-${rosetta_version}
-cd ${rosetta_install}/bin
 
-# Get rid of all rpaths set on the binaries
-# This is easier than modifying the nightmare
-# that is SCons Rosetta.
-for file in `ls -1`; do 
-  echo $file 
-  chrpath -d $file
-done
-  
-
-  if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-    mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  fi
-  
-  cp -r %{INSTALL_DIR} $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-  cd /
+  cd $RPM_BUILD_ROOT 
+  cp -rp %{INSTALL_DIR}/rosetta-3.5/rosetta_source/doc   $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  cp -rp %{INSTALL_DIR}/rosetta-3.5/rosetta_source/bin   $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  cp -rp %{INSTALL_DIR}/rosetta-3.5/rosetta_source/build $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  cp -rp %{INSTALL_DIR}/rosetta-3.5/rosetta_database     $RPM_BUILD_ROOT/%{INSTALL_DIR}
   umount %{INSTALL_DIR}
-
+  
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -433,15 +444,21 @@ done
   
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-help(
-[[
-The %{MODULE_VAR} module file defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_DATABASE, TACC_%{MODULE_VAR}_BIN, for the
-location of the %{MODULE_VAR} distribution,  databases, binaries, respectively.
+local help_msg=[[
+The Rosetta software suite includes algorithms for computational modeling and
+analysis of protein structures. It has enabled notable scientific advances in
+computational biology, including de novo protein design, enzyme design, ligand
+docking, and structure prediction of biological macromolecules and
+macromolecular complexes.
+
+The %{MODULE_VAR} module defines the following environment variables:
+TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_BIN, and TACC_%{MODULE_VAR}_DATABASE
+for the location of the %{MODULE_VAR} distribution, binaries, and database
+respectively.
 
 NOTE: %{MODULE_VAR} is hard-coded to attempt to write temporary files within
 the designated database location. This action will fail if the user sets
--database=TACC_%{MODULE_VAR}_DATABASE. Instead, copy the database from
+-database=$TACC_%{MODULE_VAR}_DATABASE. Instead, copy the database from
 TACC_%{MODULE_VAR}_DATABASE to a writable location via something like:
 
 cp -r $TACC_%{MODULE_VAR}_DATABASE $WORK/rosetta_database
@@ -450,50 +467,55 @@ Then, to run:
 
 $TACC_%{MODULE_VAR}_BIN/<rosetta-executable>.mpiomp.linuxiccrelease [options] -database=$WORK/rosetta_database
 
-Version %{version}
+Version %{pkg_version}
 ]]
-)
 
 local err_message = [[
-You do not have access to Rosetta 3.5!
+You do not have access to %{pkg_base_name} %{pkg_version}.
 
-Users have to show their licenses and be confirmed by the
-TACC team that they are registered users under that license.
-Please provide a copy of the license to rtevans@tacc.utexas.edu
-or to cproctor@tacc.utexas.edu
+
+Users have to show their licenses and be confirmed by the %{pkg_base_name} team
+that they are registered users under that license.  Send a copy of the license
+to https://portal.tacc.utexas.edu/tacc-consulting.
 ]]
 
-local group  = "G-814534"
+local group  = "%{rpm_group}"
 local grps   = capture("groups")
 local found  = false
 local isRoot = tonumber(capture("id -u")) == 0
-local isBuild = tonumber(capture("id -u")) == 500
 for g in grps:split("[ \n]") do
-  if (g == group or isRoot or isBuild)  then
-    found = true
-    break
-  end
+   if (g == group or isRoot)  then
+      found = true
+      break
+    end
 end
 
-whatis("Name: Rosetta")
-whatis("Version: %{version}")
+
+--help(help_msg)
+help(help_msg)
+
+whatis("Name: %{pkg_base_name}")
+whatis("Version: %{pkg_version}")
 whatis("Category: Scientific Application")
 whatis("Keywords: Molecular Dynamics, Folding, Biology")
 whatis("URL: http://www.rosettacommons.org/")
 whatis("Description: The premier software suite for macromolecular modeling")
 
 if (found) then
-  local base_dir                              ="%{INSTALL_DIR}"
-  prepend_path("PATH",                        pathJoin(base_dir, "bin"))
-  prepend_path("LD_LIBRARY_PATH",             pathJoin(base_dir, "build/src/release/linux/2.6/64/x86/icc/%{intel_major}/omp-mpi"))
-  prepend_path("LD_LIBRARY_PATH",             pathJoin(base_dir, "build/external/release/linux/2.6/64/x86/icc/%{intel_major}/omp-mpi"))
-  setenv (     "TACC_%{MODULE_VAR}_DIR",      base_dir)
-  setenv (     "TACC_%{MODULE_VAR}_DATABASE", pathJoin(base_dir, "rosetta_database"))
-  setenv (     "TACC_%{MODULE_VAR}_BIN",      pathJoin(base_dir, "bin"))
+  -- Create environment variables.
+  local base_dir           = "%{INSTALL_DIR}"
+  local rosetta_lib        = "build/src/release/linux/2.6/64/x86/icc/15.0/mpi-omp"
+  local ext_lib            = "build/external/release/linux/2.6/64/x86/icc/15.0/mpi-omp"
+
+  prepend_path( "PATH",                   pathJoin(base_dir, "bin"))
+  prepend_path( "LD_LIBRARY_PATH",        pathJoin(base_dir, ext_lib))
+  prepend_path( "LD_LIBRARY_PATH",        pathJoin(base_dir, rosetta_lib))
+  setenv( "TACC_%{MODULE_VAR}_DIR",                base_dir)
+  setenv( "TACC_%{MODULE_VAR}_DATABASE",  pathJoin(base_dir, "rosetta_database"))
+  setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(base_dir, "bin"))
 else
   LmodError(err_message,"\n")
 end
-
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
@@ -505,9 +527,10 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 set     ModulesVersion      "%{version}"
 EOF
   
-  # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %endif
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -518,7 +541,7 @@ EOF
 %files package
 #------------------------
 
-  %defattr(-,root,install,)
+  %defattr(750,root,%{rpm_group},)
   # RPM package contains files within these directories
   %{INSTALL_DIR}
 
@@ -538,7 +561,6 @@ EOF
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-
 ########################################
 ## Fix Modulefile During Post Install ##
 ########################################
@@ -547,6 +569,9 @@ export PACKAGE_POST=1
 %include post-defines.inc
 %post %{MODULEFILE}
 export MODULEFILE_POST=1
+%include post-defines.inc
+%preun %{PACKAGE}
+export PACKAGE_PREUN=1
 %include post-defines.inc
 ########################################
 ############ Do Not Remove #############
