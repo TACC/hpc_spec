@@ -378,6 +378,7 @@ setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(base_dir, "include"))
 setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(base_dir, "lib"))
 setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(base_dir, "bin"))
 set_alias("cp", "cp --stripe-count=1s")
+set_alias("rsync", "rsync --rsync-path=%{INSTALL_DIR}/bin/rsync")
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
