@@ -441,6 +441,19 @@ rm -f .sconsign.dblite
   #######################################
   ########### Do Not Remove #############
   #######################################
+
+%if "%{is_intel14}" == "1"
+  %define comp_ver 14.0
+%endif
+%if "%{is_intel15}" == "1"
+  %define comp_ver 15.0
+%endif
+%if "%{is_intel16}" == "1"
+  %define comp_ver 16.0
+%endif
+
+%define kern_ver() %(uname -r | cut -d . -f -2)
+
   
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
@@ -504,8 +517,9 @@ whatis("Description: The premier software suite for macromolecular modeling")
 if (found) then
   -- Create environment variables.
   local base_dir           = "%{INSTALL_DIR}"
-  local rosetta_lib        = "build/src/release/linux/2.6/64/x86/icc/15.0/mpi-omp"
-  local ext_lib            = "build/external/release/linux/2.6/64/x86/icc/15.0/mpi-omp"
+  local rosetta_lib        = "build/src/release/linux/%{kern_ver}/64/x86/icc/%{comp_ver}/mpi-omp"
+  local ext_lib            = "build/external/release/linux/%{kern_ver}/64/x86/icc/%{comp_ver}/mpi-omp"
+
 
   prepend_path( "PATH",                   pathJoin(base_dir, "bin"))
   prepend_path( "LD_LIBRARY_PATH",        pathJoin(base_dir, ext_lib))
