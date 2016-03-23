@@ -1,7 +1,7 @@
 Summary: This is a C-language AMQP client library for use with v2.0+ of the RabbitMQ broker.
-Group:   Utilities
+Group:      Utilities
 Name:       tacc-rabbitmq-c
-Version:    0.7.1
+Version:    0.8.0
 Release:    1 
 License:    MIT
 Packager:   TACC - rtevans@tacc.utexas.edu
@@ -14,32 +14,29 @@ Source:     rabbitmq-c-%{version}.tar.gz
 %include rpm-dir.inc
 %include system-defines.inc
 
-%define INSTALL_DIR /opt/apps/rabbitmq-c/%{version}
-%define PACKAGE_NAME %{name}-%{version}
+%define INSTALL_DIR /usr
+%define PACKAGE_NAME %{name}
 
-%package -n %{PACKAGE_NAME}
+%package -n %{PACKAGE_NAME}-%{version}
 Summary: This is a C-language AMQP client library for use with v2.0+ of the RabbitMQ broker.
 Group:   Utilities
 
 %description
-%description -n %{PACKAGE_NAME}
+%description -n %{PACKAGE_NAME}-%{version}
 This is a C-language AMQP client library for use with v2.0+ of the RabbitMQ broker.
 
 %prep
 rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%setup -n rabbitmq-c-%{version}
+%setup -n rabbitmq-c
 
 %build
 
 %install
-rm -rf build
-mkdir -p build
-cd build
-ls
-ml cmake
-cmake -DCMAKE_C_FLAGS="-fPIC" -DCMAKE_INSTALL_PREFIX:PATH=$RPM_BUILD_ROOT/%{INSTALL_DIR} .. 
+%include system-load.inc
+module load cmake
+cmake -DCMAKE_INSTALL_PREFIX=$RPM_BUILD_ROOT/%{INSTALL_DIR} .
 make install
 
 #------------------------------------------------
