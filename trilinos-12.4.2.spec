@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2
+Release:   4
 License:   GPL
 Group:     Development/Tools
 URL:       https://trilinos.org/
@@ -230,6 +230,7 @@ export TRILINOS_PACKAGES=" \
   -D Trilinos_ENABLE_STK:BOOL=ON \
   -D Trilinos_ENABLE_Stokhos:BOOL=ON \
   -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
+  -D Trilinos_ENABLE_Sundance:BOOL=ON \
   -D Trilinos_ENABLE_Teko:BOOL=ON \
   -D Trilinos_ENABLE_Teuchos:BOOL=ON \
   -D Trilinos_ENABLE_TriKota:BOOL=ON \
@@ -242,19 +243,14 @@ export TRILINOS_PACKAGES=" \
 export NO_TRILINOS_PACKAGES=" \
   -D Trilinos_ENABLE_MueLu:BOOL=ON \
   "
+export packageslisting="Amesos,Anasazi,AztecOO,Belos,Epetra,EpetraExt,Ifpack,Intrepid,ML,MOOCHO,NOX,Pamgen,Phalanx,Rythmos,Sacado,SEACAS(+Ioss,+Blot),Shards,ShyLU,STK,Stokhos,Stratimikos,Sundance,Teko,Teuchos,TriIota,Zoltan"
 
 which icc
 export GCC_VERSION=4.9.3
 export CPP_PATHS="-I/opt/apps/gcc/${GCC_VERSION}/include/c++/${GCC_VERSION} -I/opt/apps/gcc/${GCC_VERSION}/include/c++/${GCC_VERSION}/x86_64-unknown-linux-gnu "
 # leads to: /opt/apps/gcc/4.9.3/include/c++/4.9.3/ext/atomicity.h(49): error: identifier "__ATOMIC_ACQ_REL" is undefined
 
-
-#   module load --export gcc
-#   -D CMAKE_C_COMPILER:FILEPATH="/opt/apps/intel/16/compilers_and_libraries_2016.0.109/linux/bin/intel64/icc" \
-#   -D CMAKE_CXX_COMPILER:FILEPATH="/opt/apps/intel/16/compilers_and_libraries_2016.0.109/linux/bin/intel64/icpc"
-
-#export CPP_PATHS="-I/usr/include/c++/4.7 -I/usr/include/c++/4.7/x86_64-suse-linux"
-# leads to: /usr/include/c++/4.7/bits/move.h(47): error: expected a ";" __addressof(_Tp& __r) _GLIBCXX_NOEXCEPT
+# see: http://trilinos.sandia.gov/Trilinos10CMakeQuickstart.txt
 cmake -VV \
   -D BUILD_SHARED_LIBS:BOOL=ON \
   -D Trilinos_VERBOSE_CONFIGURE=OFF \
@@ -267,6 +263,8 @@ cmake -VV \
   \
   -D CMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION} \
   -D CMAKE_BUILD_TYPE:STRING=RELEASE \
+  -D CMAKE_Fortran_FLAGS:STRING="-mkl ${CPP_PATHS} -lifcore" \
+  -D Trilinos_EXTRA_LINK_FLAGS:STRING="-lifcore" \
   -D CMAKE_C_FLAGS:STRING="-mkl ${CPP_PATHS}" \
   -D CMAKE_CXX_FLAGS:STRING="-mkl ${CPP_PATHS}" \
   -D Trilinos_CXX11_FLAGS="-std=c++11" \
@@ -301,16 +299,17 @@ cmake -VV \
   \
   ${TRILINOS_PACKAGES} \
   \
+  -D CMAKE_PYTHON_INCLUDE_DIR:PATH="${TACC_PYTHON_INC}" \
+  -D CMAKE_PYTHON_LIBRARIES:STRING="${TACC_PYTHON_LIB}" \
+  -D Trilinos_ENABLE_PyTrilinos:Bool=ON \
+  \
+  -D SWIG_EXECUTABLE:FILEPATH=${TACC_SWIG_DIR}/bin/swig \
+  \
   ${TRILINOS_LOCATION}/trilinos-${VERSION} \
   | tee /admin/rpms/SPECS/trilinos-${VERSION}-cmake.log 2>&1
 
 # /bin/true \
 #   \
-#   -D CMAKE_PYTHON_INCLUDE_DIR:PATH="${TACC_PYTHON_INC}" \
-#   -D CMAKE_PYTHON_LIBRARIES:STRING="${TACC_PYTHON_LIB}" \
-#   -D Trilinos_ENABLE_PyTrilinos:Bool=ON \
-#   \
-#   -D SWIG_EXECUTABLE:FILEPATH=${TACC_SWIG_DIR}/bin/swig \
 #   notrue
 
 ####
@@ -451,8 +450,10 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 #
-* Tue Jan 26 2016 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: adding python bindings now that we have swig
+* Mon Mar 21 2016 eijkhout <eijkhout@tacc.utexas.edu>
+- release 4:  adding python bindings now that we have swig
+* Fri Mar 18 2016 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: adding Sundance
 * Tue Dec 08 2015 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: no longer relocatable
 * Mon Dec 07 2015 eijkhout <eijkhout@tacc.utexas.edu>
