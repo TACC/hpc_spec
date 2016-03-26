@@ -189,10 +189,11 @@ ${openmpi}/openmpi-${openmpi_version}/configure  \
 --enable-orterun-prefix-by-default               \
 --with-verbs                                     \
 --disable-dlopen                                 \
+--disable-oshmem                                 \
 --without-slurm                                  \
 --without-pmi                                    \
---enable-static=yes                              \
---enable-shared=yes
+--enable-static                                  \
+--disable-shared
 
 make -j ${ncores}
 make -j ${ncores} install
