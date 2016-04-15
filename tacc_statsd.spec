@@ -37,6 +37,8 @@ install -m 0755 taccstats %{buildroot}/%{_sysconfdir}/init.d/taccstats
 
 %post
 chkconfig --add taccstats
+sed -i -e 's/localhost/tacc-stats02.tacc.utexas.edu/' \
+    -e 's/default/ls5/' %{_sysconfdir}/tacc_stats.conf
 /sbin/service taccstats restart
 
 %preun
