@@ -58,7 +58,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2
+Release:   3
 License:   http://depts.washington.edu/ventures/UW_Technology/Express_Licenses/rosetta.php
 Group:     Development/Tools
 URL:       https://www.rosettacommons.org
@@ -81,6 +81,12 @@ Summary: The package database RPM
 Group: Development/Tools
 %description package-database
 This is the long description for the package database RPM...
+
+%package %{PACKAGE}-tools
+Summary: The package tools RPM
+Group: Development/Tools
+%description package-tools
+This is the long description for the package tools RPM...
 
 %package %{PACKAGE}-protocols-a
 Summary: The package protocols part a RPM
@@ -450,6 +456,7 @@ rm -f .sconsign.dblite
   cp -rp %{INSTALL_DIR}/rosetta-3.5/rosetta_source/bin   $RPM_BUILD_ROOT%{INSTALL_DIR}
   cp -rp %{INSTALL_DIR}/rosetta-3.5/rosetta_source/build $RPM_BUILD_ROOT%{INSTALL_DIR}
   cp -rp %{INSTALL_DIR}/rosetta-3.5/rosetta_database     $RPM_BUILD_ROOT%{INSTALL_DIR}
+  cp -rp %{INSTALL_DIR}/rosetta-3.5/rosetta_tools        $RPM_BUILD_ROOT%{INSTALL_DIR}
   umount %{INSTALL_DIR}
   
 #-----------------------  
@@ -493,9 +500,9 @@ docking, and structure prediction of biological macromolecules and
 macromolecular complexes.
 
 The %{MODULE_VAR} module defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_BIN, and TACC_%{MODULE_VAR}_DATABASE
-for the location of the %{MODULE_VAR} distribution, binaries, and database
-respectively.
+TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_BIN, TACC_%{MODULE_VAR}_DATABASE,
+TACC_%{MODULE_VAR}_TOOLS for the location of the %{MODULE_VAR} distribution,
+binaries, database, and tools respectively.
 
 NOTE: %{MODULE_VAR} is hard-coded to attempt to write temporary files within
 the designated database location. This action will fail if the user sets
@@ -559,6 +566,7 @@ if (found) then
   prepend_path( "LD_LIBRARY_PATH",        pathJoin(base_dir, rosetta_lib))
   setenv( "TACC_%{MODULE_VAR}_DIR",                base_dir)
   setenv( "TACC_%{MODULE_VAR}_DATABASE",  pathJoin(base_dir, "rosetta_database"))
+  setenv( "TACC_%{MODULE_VAR}_TOOLS",     pathJoin(base_dir, "rosetta_tools"))
   setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(base_dir, "bin"))
 else
   LmodError(err_message,"\n")
@@ -592,6 +600,7 @@ EOF
 # RPM package contains files within these directories
 %{INSTALL_DIR}
 %exclude %{INSTALL_DIR}/rosetta_database
+%exclude %{INSTALL_DIR}/rosetta_tools
 %exclude %{INSTALL_DIR}/build/src/release/linux/%{kern_ver}/64/x86/icc/%{comp_ver}/mpi-omp/apps
 %exclude %{INSTALL_DIR}/build/src/release/linux/%{kern_ver}/64/x86/icc/%{comp_ver}/mpi-omp/core
 %exclude %{INSTALL_DIR}/build/src/release/linux/%{kern_ver}/64/x86/icc/%{comp_ver}/mpi-omp/protocols/[a-mA-M]*
@@ -602,6 +611,9 @@ EOF
 %defattr(750,root,%{rpm_group},)
 %{INSTALL_DIR}/rosetta_database
 
+%files %{PACKAGE}-tools
+%defattr(750,root,%{rpm_group},)
+%{INSTALL_DIR}/rosetta_tools
 
 %files %{PACKAGE}-protocols-a
 %defattr(750,root,%{rpm_group},)
