@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   GPL
 Group:     Development/Tools
 URL:       https://hpx.crest.iu.edu/
@@ -227,7 +227,15 @@ make install
 # Version %{version}
 # ]] )
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua << EOF
-local help_msg=[[ foo ]]
+local help_msg=[[ 
+This module sets the environment variables
+TACC_HPX_DIR, TACC_HPX_BIN, TACC_HPX_INC, TACC_HPX_LIB.
+
+HPX examples can be found in TACC_HPX_DIR/hpx_apps.
+To build an example do first
+  ./configure CC=mpicc CXX=mpicxx CFLAGS="-O3" CXXFLAGS="-O3"
+in the example directory.
+ ]]
 help( help_msg )
 
 whatis( "Name: Hpx" )
@@ -324,5 +332,6 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 #
+* Mon Mar 28 2016 eijkhout <eijkhout@tacc.utexas.edu>
 * Wed Mar 02 2016 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release
