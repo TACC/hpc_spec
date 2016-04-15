@@ -159,19 +159,19 @@ if [ "%{comp_fam}" == "gcc" ]; then
   export CC=gcc
   export CXX=g++
   export FC=gfortran
-  export CFLAGS="-march=core-avx-i -mtune=core-avx2"
-  export CXXFLAGS="-march=core-avx-i -mtune=core-avx2"
-  export FCFLAGS="-march=core-avx-i -mtune=core-avx2"
-  export LDFLAGS="-march=core-avx-i -mtune=core-avx2"
+  export CFLAGS="-march=core-avx2 -mtune=core-avx2"
+  export CXXFLAGS="-march=core-avx2 -mtune=core-avx2"
+  export FCFLAGS="-march=core-avx2 -mtune=core-avx2"
+  export LDFLAGS="-march=core-avx2 -mtune=core-avx2"
 elif [ "%{comp_fam}" == "intel" ]; then
   echo "Intel Build"
   export CC=icc
   export CXX=icpc
   export FC=ifort
-  export CFLAGS="-xCORE-AVX-I -axCORE-AVX2"
-  export CXXFLAGS="-xCORE-AVX-I -axCORE-AVX2"
-  export FCFLAGS="-xCORE-AVX-I -axCORE-AVX2"
-  export LDFLAGS="-xCORE-AVX-I -axCORE-AVX2"
+  export CFLAGS="-xCORE-AVX2"
+  export CXXFLAGS="-xCORE-AVX2"
+  export FCFLAGS="-xCORE-AVX2"
+  export LDFLAGS="-xCORE-AVX2"
 else
   echo "Unrecognized compiler! Exiting!"
   exit -1
@@ -179,17 +179,21 @@ fi
 
 
 cd ${openmpi}
-wget https://www.open-mpi.org/nightly/v${openmpi_major}.${openmpi_minor}/openmpi-v${openmpi_version}.tar.gz --no-check-certificate
+wget https://www.open-mpi.org/software/ompi/v${openmpi_major}.${openmpi_minor}/downloads/openmpi-${openmpi_version}.tar.gz --no-check-certificate
 
-tar xvfz openmpi-v${openmpi_version}.tar.gz
-cd openmpi-v${openmpi_version}
+tar xvfz openmpi-${openmpi_version}.tar.gz
+cd openmpi-${openmpi_version}
 
-${openmpi}/openmpi-v${openmpi_version}/configure                    \
---prefix=${openmpi_install}                                         \
---enable-orterun-prefix-by-default                                  \
---disable-dlopen                                                    \
---enable-shared                                                     \
---with-slurm
+${openmpi}/openmpi-${openmpi_version}/configure  \
+--prefix=${openmpi_install}                      \
+--enable-orterun-prefix-by-default               \
+--with-verbs                                     \
+--disable-dlopen                                 \
+--disable-oshmem                                 \
+--without-slurm                                  \
+--without-pmi                                    \
+--enable-static                                  \
+--disable-shared
 
 make -j ${ncores}
 make -j ${ncores} install
@@ -290,7 +294,7 @@ EOF
   
   # Check the syntax of the generated lua modulefile only if a visible module
   %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+#    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
   %endif
 
 #--------------------------
