@@ -193,8 +193,10 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   WD=`pwd`
 
   # Create some dummy directories and files for fun
-  export CFLAGS="-O3 -xAVX -axCORE-AVX2 -fp-model precise"
-  export CPPFLAGS="-O3 -xAVX -axCORE-AVX2 -fp-model precise"
+#  export CFLAGS="-O3 -xAVX -axCORE-AVX2 -fp-model precise"
+#  export CPPFLAGS="-O3 -xAVX -axCORE-AVX2 -fp-model precise"
+  export CFLAGS="-O3"
+  export CPPFLAGS="-O3"
   export CONFIG_FLAGS=""
   ./configure $CONFIG_FLAGS --prefix=%{INSTALL_DIR}
   make -j 12
