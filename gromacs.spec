@@ -192,9 +192,8 @@ env CC=icc CXX=icpc cmake .. \
 -DGMX_MPI=OFF -DGMX_OPENMP=OFF \
 -DGMX_XML=OFF \
 -DCMAKE_EXE_LINKER_FLAGS=" -mkl=sequential" \
--DCMAKE_C_FLAGS="-xhost -O3" \
--DCMAKE_CXX_FLAGS="-xhost -O3" \
--DGMX_SIMD=AVX2_256 \
+-DCMAKE_C_FLAGS="-std=gnu99 -O3 -xAVX -axCORE-AVX2 " \
+-DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xAVX -axCORE-AVX2 " \
 -DGMX_DEFAULT_SUFFIX=ON \
 -DGMX_BUILD_SHARED_EXE=OFF \
 -DGMX_EXTERNAL_BOOST=OFF
@@ -217,12 +216,11 @@ env CC=mpicc CXX=mpicxx cmake .. \
 -DGMX_BUILD_MDRUN_ONLY=ON \
 -DGMX_MPI=ON \
 -DGMX_OPENMP=ON \
--DGMX_SIMD=AVX2_256 \
 -DGMX_XML=OFF \
 -DGMX_SKIP_DEFAULT_CFLAGS=ON \
 -DCMAKE_EXE_LINKER_FLAGS=" -mkl=sequential" \
--DCMAKE_C_FLAGS="-xhost -O3" \
--DCMAKE_CXX_FLAGS="-xhost -O3" \
+-DCMAKE_C_FLAGS="-std=gnu99 -O3 -xAVX -axCORE-AVX2 " \
+-DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xAVX -axCORE-AVX2 " \
 -DGMX_DEFAULT_SUFFIX=ON \
 -DGMX_EXTERNAL_BOOST=OFF \
 -DGMX_BUILD_SHARED_EXE=OFF \
@@ -253,9 +251,8 @@ env CC=mpicc CXX=mpicxx cmake .. \
 -DGMX_SOFTWARE_INVSQRT=OFF \
 -DGMX_SKIP_DEFAULT_CFLAGS=ON \
 -DCMAKE_EXE_LINKER_FLAGS=" -mkl=sequential" \
--DCMAKE_C_FLAGS="-xhost -O3" \
--DCMAKE_CXX_FLAGS="-xhost -O3" \
--DGMX_SIMD=AVX2_256 \
+-DCMAKE_C_FLAGS="-std=gnu99 -O3 -xAVX -axCORE-AVX2 " \
+-DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xAVX -axCORE-AVX2" \
 -DGMX_DEFAULT_SUFFIX=OFF \
 -DGMX_EXTERNAL_BOOST=OFF \
 -DGMX_BUILD_SHARED_EXE=OFF \
@@ -269,7 +266,7 @@ make install
 
 ###############################################################################
 
-export TACC_CUDA_DIR=/root/cuda/7.5
+export TACC_CUDA_DIR=/work/00770/build/lonestar/cuda/6.5/
 export TACC_CUDA_BIN=$TACC_CUDA_DIR/bin/
 export TACC_CUDA_LIB=$TACC_CUDA_DIR/lib64/
 export TACC_CUDA_INC=$TACC_CUDA_DIR/include/
@@ -283,8 +280,8 @@ env CC=mpicc CXX=mpicxx cmake .. \
 -DCMAKE_EXE_LINKER_FLAGS="-mkl=sequential" \
 -DGMX_EXTERNAL_BOOST=OFF \
 -DGMX_X11=OFF \
--DCMAKE_C_FLAGS="-O3" \
--DCMAKE_CXX_FLAGS="-O3" \
+-DCMAKE_C_FLAGS="-std=gnu99 -O3 -xAVX -axCORE-AVX2" \
+-DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xAVX -axCORE-AVX2" \
 -DBUILD_SHARED_LIBS=ON \
 -DGMX_BUILD_MDRUN_ONLY=ON \
 -DGMX_MPI=ON \
@@ -306,7 +303,7 @@ make install
 
   # Copy everything from tarball over to the installation directory
   cp -r ../install/* $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
+#  rm -rf /admin/rpms/BUILD/gromacs*
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
