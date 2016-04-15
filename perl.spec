@@ -52,7 +52,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   GPL
 Group:     Programming Language
 URL:       https://www.perl.org/
@@ -159,7 +159,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-  ./Configure -Dcc=gcc -Doptimize='-fPIC -O3' -des -Dprefix=%{INSTALL_DIR} -d
+  ./Configure -Dcc=gcc -Dusethreads -Doptimize='-fPIC -O3' -des -Dprefix=%{INSTALL_DIR} -d
   sed -i 's/dbmclose();/dbmclose(db);/' ext/ODBM_File/ODBM_File.xs
   make -j 16
   make test
