@@ -55,7 +55,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2
+Release:   3
 License:   GPL
 Group:     Applications/Chemistry
 URL:       https://www.vasp.at/
@@ -117,7 +117,7 @@ The Vienna Ab initio Simulation Package (VASP)
 
 module load cuda
 
-cd wannier90-2.0.1/
+cd wannier90-1.2/
 make lib
 
 cd ../beef
