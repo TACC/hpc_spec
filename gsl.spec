@@ -195,8 +195,23 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Create some dummy directories and files for fun
 #  export CFLAGS="-O3 -xAVX -axCORE-AVX2 -fp-model precise"
 #  export CPPFLAGS="-O3 -xAVX -axCORE-AVX2 -fp-model precise"
-  export CFLAGS="-O3"
-  export CPPFLAGS="-O3"
+ %if "%is_intel" == "1" 
+  export CC=`which icc`
+  export CXX=`which icpc`
+  export CFLAGS="-O3 -xAVX -axCORE-AVX2"
+  export CPPFLAGS="-O3 -xAVX -axCORE-AVX2" 
+  export LDFLAGS="-xAVX -axCORE-AVX2"
+%endif
+
+%if "%is_gcc" == "1" 
+  export CC=`which gcc`
+  export CXX=`which g++`
+  export CFLAGS="-O3 -march=sandybridge -mtune=haswell"
+  export CPPFLAGS="-O3 -march=sandybridge -mtune=haswell"
+  export LDFLAGS="-march=sandybridge -mtune=haswell"
+%endif
+ 
+
   export CONFIG_FLAGS=""
   ./configure $CONFIG_FLAGS --prefix=%{INSTALL_DIR}
   make -j 12
