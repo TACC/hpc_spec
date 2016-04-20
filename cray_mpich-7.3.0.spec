@@ -42,7 +42,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   12
+Release:   13
 License:   GPL
 Group:     Development/Tools
 Packager:  TACC - carlos@tacc.utexas.edu
@@ -130,10 +130,22 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 %if "%{comp_fam}" == "intel"
 cp ./intel/mpi* $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
 chmod ugo+rx $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpi*
+# Enable traditional TACC MPICH_HOME
+ln -s /opt/cray/mpt/7.3.0/gni/mpich-intel/14.0/lib     $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+ln -s /opt/cray/mpt/7.3.0/gni/mpich-intel/14.0/include $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
 %endif
 %if "%{comp_fam}" == "gcc"
 cp ./%{comp_fam_ver}/mpi* $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
 chmod ugo+rx $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpi*
+# Enable traditional TACC MPICH_HOME
+%if "%{comp_fam_ver}" != "gcc4_9"
+ln -s /opt/cray/mpt/7.3.0/gni/mpich-gnu/5.1/lib     $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+ln -s /opt/cray/mpt/7.3.0/gni/mpich-gnu/5.1/include $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
+%endif
+%if "%{comp_fam_ver}" == "gcc4_9"
+ln -s /opt/cray/mpt/7.3.0/gni/mpich-gnu/4.9/lib     $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+ln -s /opt/cray/mpt/7.3.0/gni/mpich-gnu/4.9/include $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
+%endif
 %endif
 
 
@@ -186,8 +198,10 @@ whatis("Version: %{pkg_version}%{dbg}")
 
 -- Create environment variables.
 local mpt_base    = "/opt/cray/mpt/"
-local mpt_version = "default"
+local mpt_version = "7.3.0"
 local mpt_path    = pathJoin( mpt_base, mpt_version, "gni" ) 
+setenv( "MPICH_HOME", "%{INSTALL_DIR}" )
+setenv( "TACC_MPI_GETMODE", "cray_slurm" )
 
 -- Paths specific to GCC
 -- These seem to be valid for both 5.1 and 5.2
