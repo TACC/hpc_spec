@@ -2,7 +2,7 @@ Prefix:    /opt/apps
 Summary:   Boost spec file 
 Name:      boost
 %define    major_version 1
-%define    minor_version 59
+%define    minor_version 61 
 %define    micro_version 0
 %define    pkg_version %{major_version}.%{minor_version}.%{micro_version}
 Version:   %{pkg_version}
@@ -11,7 +11,7 @@ Group:     Utility
 License:   GPL
 URL:       http://www.boost.org
 Source0:   boost_%{major_version}_%{minor_version}_%{micro_version}.tar.gz
-Source1:   icu4c-56_1-src.tgz
+Source1:   icu4c-57_1-src.tgz
 Packager:  TACC - agomez@tacc.utexas.edu
 Buildroot: /var/tmp/%{name}-%{version}-buildroot
 
@@ -21,11 +21,10 @@ Buildroot: /var/tmp/%{name}-%{version}-buildroot
 %define APPS           /opt/apps
 %define PKG_BASE       /opt/apps/%{name}
 %define INSTALL_DIR    %{PKG_BASE}/%{version}
-%define GENERIC_IDIR   %{PKG_BASE}/lmod
+%define GENERIC_IDIR   %{PKG_BASE}/boost
 %define MODULES        modulefiles
-%define MODULE_DIR     %{APPS}/%{MODULES}/lmod
-%define MODULE_DIR_ST  %{APPS}/%{MODULES}/settarg
-%define ZSH_SITE_FUNC  /usr/share/zsh/site-functions
+%define MODULE_DIR     %{APPS}/%{MODULES}/boost
+%define MODULE_VAR      BOOST
 
 %description
 Boost emphasizes libraries that work well with the C++ Standard
@@ -44,7 +43,8 @@ proposed for the upcoming TR2.
 %prep
 
 
-%setup
+%setup -n boost_%{major_version}_%{minor_version}_%{micro_version}  %{name}-%{version}
+%setup -n boost_%{major_version}_%{minor_version}_%{micro_version}  -T -D -a 1
 
 %build
 
@@ -52,10 +52,12 @@ proposed for the upcoming TR2.
 %install
 
 %include system-load.inc
-%include compiler-defines.inc
-module purge
-%include compiler-load.inc
+#%include compiler-defines.inc
+#module purge
+#%include compiler-load.inc
 
+
+%define    comp_fam gcc
 
 ICU_MODE=Linux
 %if "%{comp_fam}" == "intel"
@@ -76,9 +78,10 @@ make install
 rm -f ~/user-config.jam
 
 cd $WD
-cd boost_1_59_0
-EXTRA="-sICU_PATH=%{INSTALL_DIR}"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all --without-libraries=mpi"
+#cd boost_%{major_version}_%{minor_version}_%{micro_version}
+
+EXTRA="-sICU_PATH=%{INSTALL_DIR} -s NO_BZIP2=1"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all --without-libraries=python,mpi"
 
 ./bootstrap.sh --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
 ./b2 -j 10 --prefix=%{INSTALL_DIR} $EXTRA install
@@ -94,7 +97,7 @@ if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
 fi
 
 cp -r %{INSTALL_DIR} $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-umount %{INSTALL_DIR}
+#umount %{INSTALL_DIR}
 
 
 
@@ -149,7 +152,7 @@ set     ModulesVersion      "%{version}"
 EOF
   
 # Check the syntax of the generated lua modulefile
-%{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+#%{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 
 
