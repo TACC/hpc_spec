@@ -56,7 +56,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2
+Release:   3
 License:   GNU
 Group:     Development/Tools
 URL:       http://gmt.soest.hawaii.edu/
@@ -182,17 +182,22 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 # config/make
 #
 
-mkdir -p %{INSTALL_DIR}
+mkdir -p %{INSTALL_DIR}/share
 
 # edit path for gshhg-gmt
 #     target line: '# set (GSHHG_ROOT "gshhg_path")'
 # we do this in the build directory; pushd after this
-sed -i \
-    -e '/GSHHG_ROOT/s/^#//' -e 's!gshhg_path!%{INSTALL_DIR}/share/gshhg-gmt-%{gshhg_version}!' \
-    cmake/ConfigUserTemplate.cmake
-grep -i gshhg cmake/ConfigUserTemplate.cmake
+sed \
+    -e '/GSHHG_ROOT/s/^#//' \
+    -e '/COPY_GSHHG/s/^#//' \
+    -e 's!gshhg_path!%{INSTALL_DIR}/share/gshhg-gmt-%{gshhg_version}!' \
+    cmake/ConfigUserTemplate.cmake > cmake/ConfigUser.cmake
+grep -i gshhg cmake/ConfigUser*.cmake
 
 pushd %{INSTALL_DIR}
+
+# unpack extra datasets
+( cd share ; tar fxz %{_topdir}/SOURCES/gshhg-gmt-%{gshhg_version}.tar.gz )
 
 # use icc not gcc
  export CC=`which icc`
@@ -205,9 +210,6 @@ make
 
 mkdir -p                 $RPM_BUILD_ROOT/%{INSTALL_DIR}
 make install
-
-# unpack extra datasets
-( cd share ; tar fxz %{_topdir}/SOURCES/gshhg-gmt-%{gshhg_version}.tar.gz )
 
 # Also need to unpack the supplemental tarballs containing maps and such
 # I made a single tarball named GMT_suppl_share.tar.bz2 containing the following archives:
@@ -352,6 +354,8 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 #---------------------------------------
 #
+* Tue May 10 2016 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: fixed the gshhg dataset
 * Wed Mar 09 2016 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: adding gshhg-gmt dataset
 * Wed Feb 22 2016 eijkhout <eijkhout@tacc.utexas.edu>
