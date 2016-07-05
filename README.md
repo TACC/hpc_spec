@@ -9,6 +9,7 @@ Directory                 | Content
 
 Current Branches                                           | Description
 :--------------------------------------------------------: | :----------------
+[knl15](https://github.com/TACC/hpc_spec/tree/knl15/) | Stampede-KNL-1.5 spec files
 [hk1](https://github.com/TACC/hpc_spec/tree/hk1/) | Hikari   1 spec files
 [ls5](https://github.com/TACC/hpc_spec/tree/ls5/) | Lonestar 5 spec files
 [wr1](https://github.com/TACC/hpc_spec/tree/wr1/) | Wrangler 1 spec files
