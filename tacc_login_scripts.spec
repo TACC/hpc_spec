@@ -4,7 +4,7 @@
 Summary:   Standard TACC Login scripts for our friendly Linux Clusters.
 Name:      tacc_login_scripts
 Version:   2.1
-Release:   29
+Release:   43%{?dist}
 License:   Proprietary
 Group:     System Environment/Base
 Source0:   %{name}-%{version}.tar.gz
@@ -43,16 +43,16 @@ mkdir -p $RPM_BUILD_ROOT%{PROFILE_D_PATH}  $RPM_BUILD_ROOT/etc/tacc/zsh
 PROFILE_D_FILES="
                profile.d/00_shell_startup.CSH
                profile.d/00_shell_startup.SH
-               profile.d/tacc_modules.csh
-               profile.d/tacc_modules.sh
                profile.d/work_archive.csh
                profile.d/work_archive.sh
+               profile.d/z00_tacc_login.csh
+               profile.d/z00_tacc_login.sh
+               profile.d/z01_lmod.csh
+               profile.d/z01_lmod.sh
                profile.d/z84_tacc_system_vars.csh
                profile.d/z84_tacc_system_vars.sh
                profile.d/z85_idev.sh
                profile.d/z85_idev.csh
-               profile.d/z87_tacc_login.csh
-               profile.d/z87_tacc_login.sh
                profile.d/z88_taccinfo.sh
                profile.d/z88_taccinfo.csh
                profile.d/z89_tacctips.sh
@@ -148,7 +148,7 @@ done
 
 
 
-for i in $RPM_BUILD_ROOT/etc/profile.d/tacc_modules.{sh,csh}; do
+for i in $RPM_BUILD_ROOT/etc/profile.d/z01_lmod.{sh,csh}; do
   mv ${i} ${i}.tmp
   sed -e "s|@modulepath@|$MODULEPATH|g" ${i}.tmp > ${i}
   rm ${i}.tmp
@@ -160,16 +160,16 @@ done
 %defattr(755,root,root,)
 %{PROFILE_D_PATH}/00_shell_startup.CSH
 %{PROFILE_D_PATH}/00_shell_startup.SH
-%{PROFILE_D_PATH}/tacc_modules.csh
-%{PROFILE_D_PATH}/tacc_modules.sh
 %{PROFILE_D_PATH}/work_archive.csh
 %{PROFILE_D_PATH}/work_archive.sh
+%{PROFILE_D_PATH}/z00_tacc_login.csh
+%{PROFILE_D_PATH}/z00_tacc_login.sh
+%{PROFILE_D_PATH}/z01_lmod.csh
+%{PROFILE_D_PATH}/z01_lmod.sh
 %{PROFILE_D_PATH}/z84_tacc_system_vars.csh
 %{PROFILE_D_PATH}/z84_tacc_system_vars.sh
 %{PROFILE_D_PATH}/z85_idev.csh
 %{PROFILE_D_PATH}/z85_idev.sh
-%{PROFILE_D_PATH}/z87_tacc_login.csh
-%{PROFILE_D_PATH}/z87_tacc_login.sh
 %{PROFILE_D_PATH}/z90_compute_modules.csh
 %{PROFILE_D_PATH}/z90_compute_modules.sh
 /etc/tacc/bash_logout
@@ -192,14 +192,14 @@ done
 %defattr(755,root,root,)
 %{PROFILE_D_PATH}/00_shell_startup.CSH
 %{PROFILE_D_PATH}/00_shell_startup.SH
-%{PROFILE_D_PATH}/tacc_modules.csh
-%{PROFILE_D_PATH}/tacc_modules.sh
 %{PROFILE_D_PATH}/work_archive.csh
 %{PROFILE_D_PATH}/work_archive.sh
+%{PROFILE_D_PATH}/z00_tacc_login.csh
+%{PROFILE_D_PATH}/z00_tacc_login.sh
+%{PROFILE_D_PATH}/z01_lmod.csh
+%{PROFILE_D_PATH}/z01_lmod.sh
 %{PROFILE_D_PATH}/z84_tacc_system_vars.csh
 %{PROFILE_D_PATH}/z84_tacc_system_vars.sh
-%{PROFILE_D_PATH}/z87_tacc_login.csh
-%{PROFILE_D_PATH}/z87_tacc_login.sh
 %{PROFILE_D_PATH}/z88_taccinfo.sh
 %{PROFILE_D_PATH}/z88_taccinfo.csh
 %{PROFILE_D_PATH}/z89_tacctips.sh
