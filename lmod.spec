@@ -1,8 +1,8 @@
 Prefix:    /opt/apps
 Summary:   lmod: Lua based Modules
 Name:      lmod
-Version:   6.0.24
-Release:   1
+Version:   6.4.3
+Release:   3%{?dist}
 License:   MIT
 Vendor:    Robert McLay
 Group:     System Environment/Base
@@ -13,8 +13,13 @@ Buildroot: /var/tmp/%{name}-%{version}-buildroot
 %define debug_package %{nil}
 %include rpm-dir.inc
 
+%define pkg_base_name lmod
+%define name_prefix   tacc
+%define pkg_name      %{name_prefix}-%{pkg_base_name}
+
+
 %define APPS           /opt/apps
-%define PKG_BASE       /opt/apps/%{name}
+%define PKG_BASE       /opt/apps/%{pkg_base_name}
 %define INSTALL_DIR    %{PKG_BASE}/%{version}
 %define GENERIC_IDIR   %{PKG_BASE}/lmod
 %define MODULES        modulefiles
@@ -22,7 +27,11 @@ Buildroot: /var/tmp/%{name}-%{version}-buildroot
 %define MODULE_DIR_ST  %{APPS}/%{MODULES}/settarg
 %define ZSH_SITE_FUNC  /usr/share/zsh/site-functions
 
+%package -n %{pkg_name}
+Summary: lmod: Lua based Modules
+Group: System
 %description
+%description -n %{pkg_name}
 
 Lua Based Modules
 
@@ -118,7 +127,7 @@ EOF
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
-## version file for %{name}-%{version}
+## version file for %{pkg_base_name}-%{version}
 ##
 
 set     ModulesVersion      "%{version}"
@@ -232,32 +241,32 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR_ST}/.version.%{version} << 'EOF'
 set     ModulesVersion      "%{version}"
 EOF
 
-%files
+%files -n %{pkg_name}
 %defattr(-,root,root,)
 %{INSTALL_DIR}
 %{MODULE_DIR}
 %{MODULE_DIR_ST}
 
 
-%post
+%post -n %{pkg_name}
 
 cd %{PKG_BASE}
 
-if [ -d %{name} ]; then
-  rm -f %{name}
+if [ -d %{pkg_base_name} ]; then
+  rm -f %{pkg_base_name}
 fi
-ln -s %{version} %{name}
+ln -s %{version} %{pkg_base_name}
 
-%postun
+%postun -n %{pkg_name}
 
 cd %{PKG_BASE}
 
-if [ -h %{name} ]; then
-  lv=`readlink %{name}`
+if [ -h %{pkg_base_name} ]; then
+  lv=`readlink %{pkg_base_name}`
   if [ ! -d $lv ]; then
-    rm %{name}
+    rm %{pkg_base_name}
   fi
 fi
 
-%clean
+%clean -n %{pkg_name}
 rm -rf $RPM_BUILD_ROOT
