@@ -39,6 +39,9 @@ Summary: A Nice little relocatable skeleton spec file example.
 ### Construct name based on includes ###
 ########################################
 %include name-defines.inc
+#%include name-defines-noreloc.inc
+#%include name-defines-hidden.inc
+#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -88,6 +91,9 @@ rpm -qi <rpm-name>
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+%setup -n %{pkg_base_name}-%{pkg_version}
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -101,7 +107,6 @@ rpm -qi <rpm-name>
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n %{pkg_base_name}-%{pkg_version}
 
 
 #---------------------------------------
@@ -115,9 +120,13 @@ rpm -qi <rpm-name>
 
 # Setup modules
 %include system-load.inc
-
-# Insert necessary module commands
 module purge
+# Load Compiler
+#%include compiler-load.inc
+# Load MPI Library
+#%include mpi-load.inc
+
+# Insert further module commands
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -146,7 +155,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
   
   # Copy everything from tarball over to the installation directory
-  cp * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
   
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -207,9 +216,10 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 set     ModulesVersion      "%{version}"
 EOF
   
-  # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %endif
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -239,7 +249,6 @@ EOF
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
 
 ########################################
 ## Fix Modulefile During Post Install ##
