@@ -33,7 +33,7 @@ Summary: Latest Perl
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-%include compiler-defines.inc
+#%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
@@ -131,7 +131,7 @@ scripts.
 %include system-load.inc
 module purge
 # Load Compiler
-%include compiler-load.inc
+#%include compiler-load.inc
 # Load MPI Library
 #%include mpi-load.inc
 
