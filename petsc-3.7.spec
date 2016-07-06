@@ -24,8 +24,8 @@ Summary: PETSc rpm build script
 
 # Create some macros (spec file variables)
 %define major_version 3
-%define minor_version 6
-%define micro_version 3
+%define minor_version 7
+%define micro_version 2
 
 %define pkg_version %{major_version}.%{minor_version}
 %define pkg_full_version %{major_version}.%{minor_version}.%{micro_version}
@@ -49,7 +49,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4
+Release:   1
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.mcs.anl.gov/petsc/
@@ -614,11 +614,5 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Tue Dec 22 2015 eijkhout <eijkhout@tacc.utexas.edu>
-- release 4: new cray mpich version
-* Thu Dec 10 2015 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: all packages
-* Tue Dec 08 2015 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: no longer relocatable
-* Mon Dec 07 2015 eijkhout <eijkhout@tacc.utexas.edu>
+* Tue Jun 14 2016 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: no packages
