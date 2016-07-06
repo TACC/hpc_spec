@@ -38,8 +38,8 @@ Summary: SLEPc rpm build scxript
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
-#%include name-defines-noreloc.inc
+#%include name-defines.inc
+%include name-defines-noreloc.inc
 #%include name-defines-hidden.inc
 #%include name-defines-hidden-noreloc.inc
 ########################################
@@ -52,7 +52,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.gnu.org/software/bar
@@ -325,5 +325,7 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Tue Jul 05 2016 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: made non-relocatable
 * Thu Dec 10 2015 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: first attempt
