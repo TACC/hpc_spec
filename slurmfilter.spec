@@ -1,6 +1,6 @@
 #
 # Si Liu and W. Cyrus Proctor
-# 2016-01-15
+# 2016-05-15
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -25,7 +25,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 # Create some macros (spec file variables)
 %define major_version 1
-%define minor_version 1
+%define minor_version 3
 
 %define pkg_version %{major_version}.%{minor_version}
 
