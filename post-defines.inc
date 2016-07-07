@@ -34,9 +34,8 @@ function vcat() {
 }
 
 arraytest[0]='test' || (echo 'Failure: arrays not supported in this version of bash.' && exit 2)
-#sharefs=(home1 work scratch share)
-sharefs=(home)
-sharerpm=/admin/build/rpms/hikari/RPMS/x86_64/sharerpm_config
+sharefs=(home1 work scratch share)
+sharerpm=/home1/build/rpms/knl15/RPMS/x86_64/sharerpm_config
 default_rpmdb_path=%{_dbpath} ### Changed in /usr/lib/rpm/macros to /opt/apps/rpmdb
 
 R='\033[1;31m' # Red
