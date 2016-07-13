@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   proprietary
 Group:     MPI
 URL:       https://software.intel.com/en-us/intel-mpi-library
@@ -197,21 +197,24 @@ whatis("Version: %{version}"                                                    
 whatis("Category: library, Runtime Support"                                 )
 whatis("Description: Intel MPI Library (C/C++/Fortran for x86_64) "         )
 whatis("URL: http://software.intel.com/en-us/articles/intel-mpi-library/ "  )
-prepend_path( "PATH"              , pathJoin( base_dir , "intel64/bin"      ) )
-prepend_path( "LD_LIBRARY_PATH"   , pathJoin( base_dir , "lib"              ) )
-prepend_path( "MANPATH"           , pathJoin( base_dir , "man"              ) )
-prepend_path( "MODULEPATH"        ,"/opt/apps/intel16/impi_5_1/modulefiles" )
-prepend_path( "I_MPI_ROOT"        , base_dir                                )
-setenv(       "MPICH_HOME"        , base_dir                                )
-setenv(       "TACC_MPI_GETMODE"  , "impi_hydra"                            )
-setenv(       "TACC_IMPI_DIR"     , base_dir                                )
-setenv(       "TACC_IMPI_BIN"     , pathJoin( base_dir , "intel64/bin"      ) )
-setenv(       "TACC_IMPI_LIB"     , pathJoin( base_dir , "intel64/lib"      ) )
-setenv(       "TACC_IMPI_INC"     , pathJoin( base_dir , "intel64/include"  ) )
-setenv(       "I_MPI_CC"          , "icc"                                   )
-setenv(       "I_MPI_CXX"         , "icpc"                                  )
-setenv(       "I_MPI_F90"         , "ifort"                                 )
-family(       "MPI"                                                         )
+prepend_path( "PATH"                   , pathJoin( base_dir , "intel64/bin"      ) )
+prepend_path( "LD_LIBRARY_PATH"        , pathJoin( base_dir , "intel64/lib"      ) )
+prepend_path( "MANPATH"                , pathJoin( base_dir , "man"              ) )
+prepend_path( "MODULEPATH"             ,"/opt/apps/intel16/impi_5_1/modulefiles" )
+prepend_path( "I_MPI_ROOT"             , base_dir                                )
+setenv(       "MPICH_HOME"             , base_dir                                )
+setenv(       "TACC_MPI_GETMODE"       , "impi_hydra"                            )
+setenv(       "TACC_IMPI_DIR"          , base_dir                                )
+setenv(       "TACC_IMPI_BIN"          , pathJoin( base_dir , "intel64/bin"      ) )
+setenv(       "TACC_IMPI_LIB"          , pathJoin( base_dir , "intel64/lib"      ) )
+setenv(       "TACC_IMPI_INC"          , pathJoin( base_dir , "intel64/include"  ) )
+setenv(       "I_MPI_CC"               , "icc"                                   )
+setenv(       "I_MPI_CXX"              , "icpc"                                  )
+setenv(       "I_MPI_F90"              , "ifort"                                 )
+setenv(       "I_MPI_FABRICS"          , "shm:tmi"                               )
+setenv(       "I_MPI_TMI_PROVIDER"     , "psm2"                                  )
+setenv(       "I_MPI_HYDRA_PMI_CONNECT", "alltoall"                              )
+family(       "MPI"                                                              )
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
