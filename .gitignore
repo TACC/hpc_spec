@@ -7,7 +7,7 @@ nohup.out
 .kent
 .cyrus
 stampede-rpms
-CHROOT_ONLY*
+tacctmpfs*
 *.bak
 *.cmake-cache
 *.orig
