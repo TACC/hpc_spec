@@ -34,7 +34,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
 %include compiler-defines.inc
-%include mpi-defines.inc
+#%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
@@ -52,7 +52,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.gnu.org/software/bar
@@ -236,12 +236,22 @@ The %{MODULE_VAR} module defines the following environment variables:
 TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
 TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
 include files, and tools respectively.
+
+To use the GSL library, compile the source code with the option:
+
+-I\$TACC_GSL_INC -I\$TACC_GSL_INC/gsl
+
+and add the following commands to the link step:
+
+-L\$TACC_GSL_LIB -lgsl -lgslcblas
+
+
 ]]
 
 --help(help_msg)
 help(help_msg)
 
-whatis("Name: bar")
+whatis("Name: GSL")
 whatis("Version: %{pkg_version}%{dbg}")
 %if "%{is_debug}" == "1"
 setenv("TACC_%{MODULE_VAR}_DEBUG","1")
@@ -250,7 +260,6 @@ setenv("TACC_%{MODULE_VAR}_DEBUG","1")
 -- Create environment variables.
 local bar_dir           = "%{INSTALL_DIR}"
 
-family("bar")
 prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
 prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "lib"))
 prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/bar1_1/modulefiles")
