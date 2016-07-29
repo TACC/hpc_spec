@@ -1,6 +1,6 @@
 Summary: TACC system statistics collector
 Name: tacc_statsd
-Version: 2.3.0
+Version: 2.3.1
 Release: 1
 License: GPL
 Vendor: Texas Advanced Computing Center
@@ -22,7 +22,7 @@ script to provide control.
 %setup -n tacc_stats-%{version}
 
 %build
-./configure --bindir=%{_bindir} --sysconfdir=%{_sysconfdir} --enable-rabbitmq --disable-infiniband
+./configure --bindir=%{_bindir} --sysconfdir=%{_sysconfdir} --disable-infiniband --enable-rabbitmq LDFLAGS="-L/home1/02561/rtevans/rabbitmq-c/librabbitmq -lrt" CPPFLAGS=-I/home1/02561/rtevans/rabbitmq-c/librabbitmq
 make
 
 %install
