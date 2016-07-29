@@ -49,7 +49,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4
+Release:   5
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.mcs.anl.gov/petsc/
@@ -174,7 +174,7 @@ echo "contents of install-dir before installation"
 ls
 export PETSC_DIR=`pwd`
 
-module load cmake
+module load cmake metis pmetis
 %if "%{comp_fam}" == "gcc"
   module load mkl
 %endif
@@ -337,12 +337,15 @@ export versionextra="${versionextra}${clanguageversionextra}"
 # Mumps & Superlu depend on parmetis which depends on metis
 export PARMETIS_OPTIONS="--with-parmetis=1 --download-parmetis --with-metis=1 --download-metis"
 export MUMPS_OPTIONS="--with-mumps=1 --download-mumps ${PARMETIS_OPTIONS}"
+export mumpsstring="mumps"
 export SUPERLU_OPTIONS="--with-superlu_dist=1 --download-superlu_dist \
    --with-superlu=1 --download-superlu ${PARMETIS_OPTIONS}"
+export superlustring="superlu (distributed/sequential)"
 export SCALAPACK_OPTIONS="--with-scalapack=1 --download-scalapack --with-blacs=1 --download-blacs"
+export scalapackstring="scalapack/blacs"
 # disabled
 export SUPERLU_OPTIONS= 
-export SUPERLU_STRING=
+export superlustring=
 
 #
 # Spai
@@ -354,7 +357,7 @@ export SPAI_STRING=spai
 # Spooles
 #
 export SPOOLES_OPTIONS="--with-spooles=1 --download-spooles"
-export SPOOLES_STRING=spooles
+export spoolesstring=spooles
 
 ##
 ## 64-bit indices
@@ -363,11 +366,11 @@ INDEX_OPTIONS=
 case "${ext}" in
 *i64* ) INDEX_OPTIONS=--with-64-bit-indices ;
         CHACO_OPTIONS= ;   CHACOSTRING= ;
-        MUMPS_OPTIONS= ;   MUMPSTRING= ;
+        MUMPS_OPTIONS= ;   mumpsstring= ;
 	ML_OPTIONS= ;      ML_STRING= ;
 	PLAPACK_OPTIONS= ; PLAPACK_STRING= ;
         SPAI_OPTIONS= ;    SPAITRING= ;
-	SPOOLES_OPTIONS= ; SPOOLES_STRING= ;
+	SPOOLES_OPTIONS= ; spoolesstring= ;
 	SUPERLU_OPTIONS= ; SUPERLU_STRING= ;
                 ;;
 esac
@@ -375,14 +378,13 @@ esac
 ##
 ## define packages; some are real & complex, others real only.
 ##
-%define complexpackages mumps scalapack spooles superlu (sequential/distributed)
+export complexpackages="${mumpsstring} ${scalapackstring} ${spoolesstring} ${superlustring}"
 export PETSC_COMPLEX_PACKAGES="\
   ${MUMPS_OPTIONS}\
   ${SCALAPACK_OPTIONS} ${SPOOLES_OPTIONS} \
   ${hdf5download} \
   "
-%define realonlypackages ${CHACOSTRING} ${hdf5string} ${HYPRESTRING} ${MLSTRING} parmetis spai ${PLAPACKSTRING} 
-# ml
+export realonlypackages="${CHACOSTRING} ${hdf5string} ${HYPRESTRING} ${MLSTRING} parmetis spai ${PLAPACKSTRING}"
 export PETSC_REALONLY_PACKAGES="\
   ${CHACO_OPTIONS} \
   ${HYPRE_OPTIONS} ${ML_OPTIONS} \
@@ -391,9 +393,12 @@ export PETSC_REALONLY_PACKAGES="\
   "
 
 export packages="${PETSC_REALONLY_PACKAGES} ${PETSC_COMPLEX_PACKAGES}"
+export packageslisting="${complexpackages} ${realonlypackages}"
 export scalar="--with-scalar-type=real"
+
 case "${ext}" in
 *complex* ) export packages="${PETSC_COMPLEX_PACKAGES}"
+           export packageslisting="${complexpackages}"
            export scalar="--with-scalar-type=complex --with-fortran-kernels=1"
            ;;
 esac
@@ -614,6 +619,8 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Thu Jul 07 2016 eijkhout <eijkhout@tacc.utexas.edu>
+- release 5: update packages listing in modulefile
 * Tue Dec 22 2015 eijkhout <eijkhout@tacc.utexas.edu>
 - release 4: new cray mpich version
 * Thu Dec 10 2015 eijkhout <eijkhout@tacc.utexas.edu>
