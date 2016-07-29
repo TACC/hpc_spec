@@ -52,7 +52,8 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+#Release:   1
+Release: 1%{?dist}
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.gnu.org/software/bar
