@@ -42,7 +42,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   13
+Release:   14
 License:   GPL
 Group:     Development/Tools
 Packager:  TACC - carlos@tacc.utexas.edu
@@ -274,6 +274,7 @@ setenv( "TACC_CRAY_DMAPP_LIB", "/opt/cray/dmapp/default/lib64" )
 prepend_path( "PE_PKGCONFIG_LIBS",     "mpich" )
 prepend_path( "PE_PKGCONFIG_PRODUCTS", "PE_MPICH" )
 
+family( "MPI" )
 
 -- Update LD_LIBRARY_PATH with Cray Libs - CRF 2015.12.17
 prepend_path( 'LD_LIBRARY_PATH', "/opt/cray/xpmem/default/lib64" )
