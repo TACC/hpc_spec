@@ -29,6 +29,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 %define micro_version 3
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define underscore_version %{major_version}_%{minor_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -48,7 +49,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
+Release:   3%{?dist}
 License:   proprietary
 Group:     MPI
 URL:       https://software.intel.com/en-us/intel-mpi-library
@@ -159,7 +160,19 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
+
+# Default Intel
+%define myCC  icc
+%define myCXX icpc
+%define myFC  ifort
+
+# GCC module
+%if "%{comp_fam_name}" == "GNU"
+%define myCC  gcc
+%define myCXX g++
+%define myFC  gfortran
+%endif
+
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_msg=[[
@@ -200,7 +213,7 @@ whatis("URL: http://software.intel.com/en-us/articles/intel-mpi-library/ "  )
 prepend_path( "PATH"                   , pathJoin( base_dir , "intel64/bin"      ) )
 prepend_path( "LD_LIBRARY_PATH"        , pathJoin( base_dir , "intel64/lib"      ) )
 prepend_path( "MANPATH"                , pathJoin( base_dir , "man"              ) )
-prepend_path( "MODULEPATH"             ,"/opt/apps/intel16/impi_5_1/modulefiles" )
+prepend_path( "MODULEPATH"             ,"/opt/apps/%{comp_fam_ver}/impi%{underscore_version}/modulefiles" )
 prepend_path( "I_MPI_ROOT"             , base_dir                                )
 setenv(       "MPICH_HOME"             , base_dir                                )
 setenv(       "TACC_MPI_GETMODE"       , "impi_hydra"                            )
@@ -208,15 +221,16 @@ setenv(       "TACC_IMPI_DIR"          , base_dir                               
 setenv(       "TACC_IMPI_BIN"          , pathJoin( base_dir , "intel64/bin"      ) )
 setenv(       "TACC_IMPI_LIB"          , pathJoin( base_dir , "intel64/lib"      ) )
 setenv(       "TACC_IMPI_INC"          , pathJoin( base_dir , "intel64/include"  ) )
-setenv(       "I_MPI_CC"               , "icc"                                   )
-setenv(       "I_MPI_CXX"              , "icpc"                                  )
-setenv(       "I_MPI_F90"              , "ifort"                                 )
+setenv(       "I_MPI_CC"               , "%{myCC}"                               )
+setenv(       "I_MPI_CXX"              , "%{myCXX}"                              )
+setenv(       "I_MPI_F90"              , "%{myFC}"                               )
 setenv(       "I_MPI_FABRICS"          , "shm:tmi"                               )
 setenv(       "I_MPI_TMI_PROVIDER"     , "psm2"                                  )
 setenv(       "I_MPI_HYDRA_PMI_CONNECT", "alltoall"                              )
 family(       "MPI"                                                              )
 EOF
-  
+
+ 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
