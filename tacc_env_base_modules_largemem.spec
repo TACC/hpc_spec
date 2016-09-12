@@ -1,4 +1,4 @@
-#
+
 # W. Cyrus Proctor
 # 2015-11-20
 #
@@ -20,8 +20,8 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name TACC
-%define MODULE_VAR    TACC
+%define pkg_base_name TACC-largemem
+%define MODULE_VAR    TACC-largemem
 
 # Create some macros (spec file variables)
 %define major_version 1
@@ -43,7 +43,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 ############ Do Not Change #############
 # hacked for reasonable name WCP 2015-12-01
-Name:      tacc-tacc_env_base_modules
+Name:      tacc-tacc_env_base_modules-largemem
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
@@ -171,8 +171,7 @@ help(helpMsg)
 --------------------------------------------------------------------------
 -- Define TACC_SYSTEM and TACC_DOMAIN
 
-local host    = posix.uname("%n")
-local syshost = host:gsub("%.tacc%.utexas%.edu",""):gsub("^[^.]*%.","")
+local syshost = posix.uname("%n"):gsub("%.tacc%.utexas%.edu",""):gsub("^[^.]*%.","")
 local domain  = syshost
 
 if (domain:find("^ls%d$") or domain:find("^nid"))then
@@ -181,21 +180,21 @@ end
 
 if (mode() == "load") then
   -- Extract nid number if it exists
-  local i,j, num = host:find("^nid(%d+)")
+  local i,j, num = syshost:find("^nid(%d+)")
   if (i) then
      num = tonumber(num)
      -- Aries network (cray) computes are all nid numbers less than 2000 on LS5 
-     if (num >= 2000) then
+     if (num < 2000) then
         LmodMessage("\n=================================================================================")
         LmodMessage("WARNING:                                                                 :WARNING")
-        LmodMessage("WARNING:              You have loaded the \"TACC\" module.                 :WARNING")
+        LmodMessage("WARNING:        You have loaded the \"TACC-largemem\" module.              :WARNING")
         LmodMessage("WARNING:                                                                 :WARNING")
         LmodMessage("WARNING: This module is intended for compiling and running on Lonestar 5 :WARNING")
-        LmodMessage("WARNING:             NON-large memory compute nodes only.                :WARNING")
+        LmodMessage("WARNING:               large memory compute nodes only.                  :WARNING")
         LmodMessage("WARNING:                                                                 :WARNING")
-        LmodMessage("WARNING:       You are currently on a large memory compute node.         :WARNING")
+        LmodMessage("WARNING:     You are currently not on a large memory compute node.       :WARNING")
         LmodMessage("WARNING:                                                                 :WARNING")
-        LmodMessage("WARNING:       Please use \"module load TACC-largemem\" instead.           :WARNING")
+        LmodMessage("WARNING:           Please use \"module load TACC\" instead.                :WARNING")
         LmodMessage("WARNING:                                                                 :WARNING")
         LmodMessage("WARNING:                         Navigate to:                            :WARNING")
         LmodMessage("WARNING:     https://portal.tacc.utexas.edu/user-guides/lonestar5        :WARNING")
@@ -205,6 +204,15 @@ if (mode() == "load") then
         LmodMessage("WARNING:                                                                 :WARNING")
         LmodMessage("=================================================================================\n")
      end
+  -- else
+  --   LmodMessage("\n========================================================================")
+  --   LmodMessage("                                                                        ")
+  --   LmodMessage("            You have loaded the \"TACC-largemem\" module.                 ")
+  --   LmodMessage("                                                                        ")
+  --   LmodMessage("     This module is intended for compiling and running on Lonestar 5    ")
+  --   LmodMessage("                   large memory compute nodes only.                     ")
+  --   LmodMessage("                                                                        ")
+  --   LmodMessage("========================================================================\n")
   end
 end
 
@@ -216,7 +224,7 @@ if (os.getenv("USER") ~= "root") then
 end
 
 load("intel")
-load("cray_mpich")
+load("mvapich2-largemem")
 
 setenv("APPS","/opt/apps")
 prepend_path("MANPATH","/usr/local/man:/usr/share/man:/usr/X11R6/man:/usr/kerberos/man:/usr/man")
@@ -236,20 +244,21 @@ prepend_path("MANPATH"         , pathJoin(base_dir, "share/man") )
 prepend_path("MANPATH"         , "/usr/share/man"                )
 prepend_path("PERL5LIB"        , pathJoin(base_dir,"lib/perl5/site_perl/5.10.0/x86_64-linux-thread-multi"))
 
-setenv( "TACC_SLURM_DIR",                base_dir)
-setenv( "TACC_SLURM_INC",       pathJoin(base_dir, "include"))
-setenv( "TACC_SLURM_LIB",       pathJoin(base_dir, "lib"))
-setenv( "TACC_SLURM_BIN",       pathJoin(base_dir, "bin"))
-setenv( "TACC_SLURM_CONF",      "/etc/opt/slurm/slurm.conf")
-setenv( "TACC_SHOWQ_CONF",      "/opt/apps/tacc/bin/showq.conf")
-setenv( "SLURM_CONF"     ,      "/etc/opt/slurm/slurm.conf")
-setenv( "SQUEUE_FORMAT"  ,      "%.18i %.15P %.8j %.8u %.2t %.10M %.6D %R")
+setenv( "TACC_SLURM_DIR" ,                base_dir)
+setenv( "TACC_SLURM_INC" ,       pathJoin(base_dir, "include"))
+setenv( "TACC_SLURM_LIB" ,       pathJoin(base_dir, "lib"))
+setenv( "TACC_SLURM_BIN" ,       pathJoin(base_dir, "bin"))
+setenv( "TACC_SLURM_CONF",       "/etc/opt/slurm/slurm_LG.conf")
+setenv( "TACC_SHOWQ_CONF",      "/opt/apps/tacc/bin/showq_LG.conf")
+setenv( "SLURM_CONF"     ,       "/etc/opt/slurm/slurm_LG.conf")
+setenv( "SQUEUE_FORMAT"  ,       "%.18i %.15P %.8j %.8u %.2t %.10M %.6D %R")
 
 -- "Wimmy Wham Wham Wozzle!" -- Slurms MacKenzie
 
 -- prepend_path{ "PATH", "/opt/apps/tacc/bin", priority=10 }
 
 family("TACC")
+
 
 EOF
   
