@@ -20,7 +20,7 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name mvapich2
+%define pkg_base_name mvapich2-largemem
 %define MODULE_VAR    MVAPICH2
 
 # Create some macros (spec file variables)
@@ -50,12 +50,14 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   6
+Release:   7
 License:   Freely Distributable
 Group:     MPI
 URL:       http://mvapich.cse.ohio-state.edu
 Packager:  TACC - carlos@tacc.utexas.edu, cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Source:    mvapich2-%{pkg_version}.tar.gz 
+
+#%{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -205,6 +207,10 @@ fi
 export   ncores=1
 
 cd ${mv2}
+if [ -d mvapich2-${mv2_version} ]; then
+  echo "Deleting mvapich2-${mv2_version}"
+  rm -rf ./mvapich2-${mv2_version}
+fi
 wget http://mvapich.cse.ohio-state.edu/download/mvapich/mv2/mvapich2-${mv2_version}.tar.gz
 tar xvfz mvapich2-${mv2_version}.tar.gz
 cd mvapich2-${mv2_version}
@@ -213,12 +219,13 @@ ${mv2}/mvapich2-${mv2_version}/configure \
 --prefix=${mv2_install}                  \
 --with-ibverbs-include=/usr/include      \
 --with-ibverbs-lib=/usr/lib64            \
+--enable-sharedlibs=gcc --enable-shared  \
 --enable-romio                           \
 --with-file-system=lustre+nfs            \
 --disable-mcast                          
 
-make VERBOSE=1 -j ${ncores}
-make VERBOSE=1 -j ${ncores} install
+make VERBOSE=1 -j 4 #${ncores}
+make VERBOSE=1 -j 4 install #${ncores} install
 # make V=1
 # make V=1 install
 
@@ -254,6 +261,10 @@ cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_msg=[[
+WARNING: This MPI stack is intended for use in the large memory nodes of the Lonestar 5 
+cluster. Code compiled with this MPI stack will not function on regular compute
+nodes.
+
 This module loads the MVAPICH2 MPI environment built with %{comp_fam_name} compilers. 
 By loading this module, the following commands will be automatically available
 for compiling MPI applications:
@@ -274,8 +285,6 @@ Version %{pkg_version}
 --help(help_msg)
 help(help_msg)
 
--- This should only be loaded for largemem nodes
-prereq("lgmem")
 
 -- Create environment variables.
 local base           = "%{INSTALL_DIR}"
