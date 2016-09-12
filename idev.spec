@@ -5,8 +5,8 @@
 %define base_name idev
 Summary:   %{base_name}: interactive access to production nodes
 Name:      %{name_prefix}-%{base_name}
-Version:   1.0
-Release:   17
+Version:   1.3.0
+Release:   2
 License:   TACC
 Vendor:    tacc.utexas.edu
 Group:     System Environment/Base
