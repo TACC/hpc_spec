@@ -13,15 +13,15 @@ Packager:   TACC - rtevans@tacc.utexas.edu
 # CONFIGURATION DEFINITIONS
 #------------------------------------------------
 
-%define build_interpreter 1
-%define build_numpy       1
-%define build_scipy       1
-%define build_stack       1
+%define build_interpreter 0
+%define build_numpy       0
+%define build_scipy       0
+%define build_stack       0
 #------------------------------------------------
 # Either Python package or mpi4py will be built 
 # based on this switch
 #------------------------------------------------
-%define build_mpi4py      0
+%define build_mpi4py      1
 
 %global _python_bytecompile_errors_terminate_build 0
 #------------------------------------------------
@@ -40,11 +40,9 @@ Packager:   TACC - rtevans@tacc.utexas.edu
 %define PNAME python
 %define MODULE_VAR TACC_PYTHON
 
-%if "%{build_mpi4py}" == "0"
-    %define INSTALL_DIR_COMP %{APPS}/%{comp_fam_ver}/%{PNAME}/%{version}
-    %define MODULE_DIR_COMP %{APPS}/%{comp_fam_ver}/%{MODULES}/%{PNAME}
-    %define PACKAGE_NAME %{name}-%{comp_fam_ver}
-%endif
+%define INSTALL_DIR_COMP %{APPS}/%{comp_fam_ver}/%{PNAME}/%{version}
+%define MODULE_DIR_COMP %{APPS}/%{comp_fam_ver}/%{MODULES}/%{PNAME}
+%define PACKAGE_NAME %{name}-%{comp_fam_ver}
 
 %if "%{build_mpi4py}" == "1"
     %define INSTALL_DIR_MPI %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{PNAME}/%{version}
@@ -179,8 +177,8 @@ library_dirs = ${MKLROOT}/lib/intel64
 include_dirs = ${MKLROOT}/include
 mkl_libs = mkl_rt
 lapack_libs = " > site.cfg
-	sed -i 's/-xSSE4.2/-xhost -fma/' numpy/distutils/intelccompiler.py
-	sed -i 's/-xSSE4.2/-xhost -fma/' numpy/distutils/fcompiler/intel.py
+	sed -i 's/-xSSE4.2/-xCORE-AVX2 -axMIC-AVX512 -fma/' numpy/distutils/intelccompiler.py
+	sed -i 's/-xSSE4.2/-xCORE-AVX2 -axMIC-AVX512 -fma/' numpy/distutils/fcompiler/intel.py
 	%{INSTALL_DIR_COMP}/bin/python setup.py config --compiler=intelem --fcompiler=intelem build_clib --compiler=intelem --fcompiler=intelem build_ext --compiler=intelem --fcompiler=intelem install --prefix=%{INSTALL_DIR_COMP}
 	%endif
 
@@ -268,7 +266,7 @@ lapack_libs = mkl_def, mkl_intel_lp64, mkl_core, mkl_gnu_thread, mkl_avx" > site
 	   mkdir -p %{INSTALL_DIR_MPI}
 	   mount -t tmpfs tmpfs %{INSTALL_DIR_MPI}
         fi
-	
+	module load %{PNAME}/%{version}	
 	module load %{mpi_module}   
 	pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_MPI}" mpi4py
 %endif
@@ -413,7 +411,7 @@ local omp_lib      = "/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.
 setenv("TACC_PYTHON_DIR", python_dir)
 setenv("TACC_PYTHON_BIN", python_bin)
 setenv("TACC_PYTHON_INC", python_inc)
-setEnv("TACC_PYTHON_LIB", python_lib)
+setenv("TACC_PYTHON_LIB", python_lib)
 setenv("TACC_PYTHON_MAN", python_man)
 
 prepend_path("MANPATH", python_man)
