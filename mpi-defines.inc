@@ -29,7 +29,7 @@
     %define mpi_module_version 5.1.3
   %endif
   %define mpi_fam     impi
-  %define mpi_fam_ver impi_%{mpi_label}
+  %define mpi_fam_ver impi%{mpi_label}
   %define mpi_module  %{mpi_fam}/%{mpi_module_version}
 %endif
 
