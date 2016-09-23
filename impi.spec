@@ -24,9 +24,9 @@ Summary: A Nice little relocatable skeleton spec file example.
 %define MODULE_VAR    IMPI
 
 # Create some macros (spec file variables)
-%define major_version 5
-%define minor_version 1
-%define micro_version 3
+%define major_version 17
+%define minor_version 0
+%define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 %define underscore_version %{major_version}_%{minor_version}
@@ -49,7 +49,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3%{?dist}
+Release:   1%{?dist}
 License:   proprietary
 Group:     MPI
 URL:       https://software.intel.com/en-us/intel-mpi-library
@@ -203,7 +203,7 @@ Version %{version}
 help(help_msg)
 
 -- Create environment variables.
-local base_dir           = "/opt/intel/impi/5.1.3.223"
+local base_dir           = "/opt/intel/impi/2017.0.098"
 
 whatis("Name: Intel MPI"                                                    )
 whatis("Version: %{version}"                                                     )
