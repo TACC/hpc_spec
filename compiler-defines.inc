@@ -36,6 +36,13 @@
   %define is_intel 1
   %define comp_module intel/16.0.3
 %endif
+%if "%{is_intel17}" == "1"
+  %define comp_fam intel
+  %define comp_fam_ver intel17
+  %define comp_fam_name Intel
+  %define is_intel 1
+  %define comp_module intel/17.0.0
+%endif
 
 %if "%{comp_fam}" == "error"
   %{error: You must define which compiler you are using!}
