@@ -1,7 +1,6 @@
 #
-# W. Cyrus Proctor
-# Antonio Gomez
-# 2015-08-25
+# Kevin Chen, chenk@tacc.utexas.edu
+# 2016-09-30
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -26,7 +25,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 # Create some macros (spec file variables)
 %define major_version 1
-%define minor_version 16
+%define minor_version 6
 %define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}
@@ -34,7 +33,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
 %include compiler-defines.inc
-%include mpi-defines.inc
+#%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
@@ -52,7 +51,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   1%{?dist}
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.gnu.org/software/bar
@@ -95,8 +94,6 @@ Physical Constants  IEEE Floating-Point
 Discrete Wavelet Transforms Basis splines
 
 Unlike the licenses of proprietary numerical libraries the license of GSL does not restrict scientific cooperation. It allows you to share your programs freely with others.
-
-The current version is GSL-1.16. It was released on 19 July 2013. Details of recent changes can be found in the NEWS file. This is a stable release.
 
 GSL can be found in the gsl subdirectory on your nearest GNU mirror http://ftpmirror.gnu.org/gsl/.
 
@@ -198,17 +195,17 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
  %if "%is_intel" == "1" 
   export CC=`which icc`
   export CXX=`which icpc`
-  export CFLAGS="-O3 -xAVX -axCORE-AVX2"
-  export CPPFLAGS="-O3 -xAVX -axCORE-AVX2" 
-  export LDFLAGS="-xAVX -axCORE-AVX2"
+  export CFLAGS="-O3 -xAVX -axCORE-AVX2, -xMIC-AVX512"
+  export CPPFLAGS="-O3 -xAVX -axCORE-AVX2, -xMIC-AVX512" 
+  export LDFLAGS="-xAVX -axCORE-AVX2, -xMIC-AVX512"
 %endif
 
 %if "%is_gcc" == "1" 
   export CC=`which gcc`
   export CXX=`which g++`
-  export CFLAGS="-O3 -march=sandybridge -mtune=haswell"
-  export CPPFLAGS="-O3 -march=sandybridge -mtune=haswell"
-  export LDFLAGS="-march=sandybridge -mtune=haswell"
+  export CFLAGS="-O3 -march=haswell -mtune=knl"
+  export CPPFLAGS="-O3 -march=haswell -mtune=knl"
+  export LDFLAGS="-march=haswell -mtune=knl"
 %endif
  
 
