@@ -174,9 +174,15 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   WD=`pwd`
 
+
 #  if [ "$CXX" != mpicxx ]; then
     	cd icu/source
+	%if "%{comp_fam}" == "gcc"
+    	CXXFLAGS="-march=haswell -mtune=knl" CFLAGS="-march=haswell -mtune=knl" ./runConfigureICU  $ICU_MODE --prefix=%{INSTALL_DIR}
+	%endif
+	%if "%{comp_fam}" == "intel"
     	CXXFLAGS="-xCORE-AVX2 -axMIC-AVX512" CFLAGS="-xCORE-AVX2 -axMIC-AVX512" ./runConfigureICU  $ICU_MODE --prefix=%{INSTALL_DIR}
+	%endif
     	make -j 68 
     	make install
     	rm -f ~/user-config.jam
@@ -198,7 +204,13 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #  fi
 
   ./bootstrap.sh --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
-  ./b2 -j 68 --prefix=%{INSTALL_DIR} $EXTRA cxxflags="-xCORE-AVX2 -axMIC-AVX512" cflags="-xCORE-AVX2 -axMIC-AVX512" linkflags="-xCORE-AVX2 -axMIC-AVX512" install
+
+  %if "%{comp_fam}" == "intel"
+    ./b2 -j 68 --prefix=%{INSTALL_DIR} $EXTRA cxxflags="-xCORE-AVX2 -axMIC-AVX512" cflags="-xCORE-AVX2 -axMIC-AVX512" linkflags="-xCORE-AVX2 -axMIC-AVX512" install
+  %endif
+  %if "%{comp_fam}" == "gcc"
+    ./b2 -j 68 --prefix=%{INSTALL_DIR} $EXTRA cxxflags="-march=haswell -mtune=knl" cflags="-march=haswell -mtune=knl" linkflags="-march=haswell -mtune=knl" install
+  %endif
 
   mkdir -p              $RPM_BUILD_ROOT/%{INSTALL_DIR}
   cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
