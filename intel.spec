@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   proprietary
 Group:     Compiler
 URL:       https://software.intel.com/en-us/intel-compilers
@@ -344,10 +344,10 @@ setenv( "ICC_BIN" ,           pathJoin(installDir , "bin" , arch ) )
 setenv( "IFC_BIN" ,           pathJoin(installDir , "bin" , arch ) )
 setenv( "ICC_LIB" ,           pathJoin(installDir , "compiler/lib" , arch ) )
 setenv( "IFC_LIB" ,           pathJoin(installDir , "compiler/lib" , arch ) )
-setenv( "TACC_ICC_DIR" ,      installDir )
-setenv( "TACC_ICC_BIN" ,      pathJoin(installDir , "bin/intel64" ) )
-setenv( "TACC_ICC_LIB" ,      pathJoin(installDir , "compiler/lib/intel64" ) )
-setenv( "TACC_ICC_INC" ,      pathJoin(installDir , "compiler/include/intel64" ) )
+setenv( "TACC_INTEL_DIR" ,      installDir )
+setenv( "TACC_INTEL_BIN" ,      pathJoin(installDir , "bin/intel64" ) )
+setenv( "TACC_INTEL_LIB" ,      pathJoin(installDir , "compiler/lib/intel64" ) )
+setenv( "TACC_INTEL_INC" ,      pathJoin(installDir , "compiler/include/intel64" ) )
 
 prepend_path( "MODULEPATH" , "/opt/apps/intel17/modulefiles" )
 family("compiler")
