@@ -22,11 +22,11 @@ Summary: A Nice little relocatable skeleton spec file for Gromacs.
 %define MODULE_VAR    GROMACS
 %define name_prefix tacc
 # Create some macros (spec file variables)
-%define major_version 5
-%define minor_version 1
-%define micro_version 2
+%define major_version 2016
+%define minor_version 
+%define micro_version 
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{major_version}
 %define dbg %{nil}
 
 ### Toggle On/Off ###
@@ -50,7 +50,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_base_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3%{?dist}
+Release:   1%{?dist}
 License:   GPL
 Group:     Development/Tools
 Group: Applications/Biology
@@ -137,7 +137,7 @@ libs in gromacs-dev.
 #---------------------------------------
 
 # Setup modules
-module purge
+#module purge
 module load cmake
 %include system-load.inc
 %include compiler-load.inc
@@ -189,8 +189,9 @@ env CC=icc CXX=icpc cmake .. \
 -DGMX_MPI=OFF -DGMX_OPENMP=OFF \
 -DGMX_XML=OFF \
 -DCMAKE_EXE_LINKER_FLAGS=" -mkl=sequential" \
--DCMAKE_C_FLAGS="-std=gnu99 -O3 -xAVX -axCORE-AVX2,MIC-AVX512 " \
--DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xAVX -axCORE-AVX2,MIC-AVX512 " \
+-DGMX_SIMD=AVX_512_KNL \
+-DCMAKE_C_FLAGS="-std=gnu99 -O3 -xAVX -axCORE-AVX2,MIC-AVX512 -mkl=sequential -g " \
+-DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xAVX -axCORE-AVX2,MIC-AVX512 -mkl=sequential -g " \
 -DGMX_DEFAULT_SUFFIX=ON \
 -DGMX_BUILD_SHARED_EXE=OFF \
 -DGMX_EXTERNAL_BOOST=OFF
@@ -216,8 +217,9 @@ env CC=mpicc CXX=mpicxx cmake .. \
 -DGMX_XML=OFF \
 -DGMX_SKIP_DEFAULT_CFLAGS=ON \
 -DCMAKE_EXE_LINKER_FLAGS=" -mkl=sequential" \
--DCMAKE_C_FLAGS="-std=gnu99 -O3 -xAVX -axCORE-AVX2,MIC-AVX512 " \
--DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xAVX -axCORE-AVX2,MIC-AVX512 " \
+-DGMX_SIMD=AVX_512_KNL \
+-DCMAKE_C_FLAGS="-std=gnu99 -O3 -xAVX -axCORE-AVX2,MIC-AVX512 -mkl=sequential -g " \
+-DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xAVX -axCORE-AVX2,MIC-AVX512 -mkl=sequential -g " \
 -DGMX_DEFAULT_SUFFIX=ON \
 -DGMX_EXTERNAL_BOOST=OFF \
 -DGMX_BUILD_SHARED_EXE=OFF \
@@ -248,8 +250,9 @@ env CC=mpicc CXX=mpicxx cmake .. \
 -DGMX_SOFTWARE_INVSQRT=OFF \
 -DGMX_SKIP_DEFAULT_CFLAGS=ON \
 -DCMAKE_EXE_LINKER_FLAGS=" -mkl=sequential" \
--DCMAKE_C_FLAGS="-std=gnu99 -O3 -xAVX -axCORE-AVX2,MIC-AVX512 " \
--DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xAVX -axCORE-AVX2,MIC-AVX512" \
+-DGMX_SIMD=AVX_512_KNL \
+-DCMAKE_C_FLAGS="-std=gnu99 -O3 -xAVX -axCORE-AVX2,MIC-AVX512 -mkl=sequential -g " \
+-DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xAVX -axCORE-AVX2,MIC-AVX512 -mkl=sequential -g " \
 -DGMX_DEFAULT_SUFFIX=OFF \
 -DGMX_EXTERNAL_BOOST=OFF \
 -DGMX_BUILD_SHARED_EXE=OFF \
