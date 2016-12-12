@@ -7,7 +7,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 # Create some macros (spec file variables)
 %define major_version 1
 %define minor_version 3
-%define micro_version 1
+%define micro_version 2
 
 %define pkg_version %{major_version}.%{minor_version}
 
@@ -18,7 +18,7 @@ Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GPL
 Group:     Development/Tools
 URL:       https:/github.com/tacc/idev
@@ -66,10 +66,12 @@ and cuda programs.
 [ -n "$RPM_BUILD_ROOT" -a "$RPM_BUILD_ROOT" != / ] && rm -rf ${RPM_BUILD_ROOT}
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%setup -c -n idev-1.3
+#setup -c -n idev-1.3
+%setup -c 
+echo `pwd` > /tmp/whereami1_a
 
 %install
-
+echo `pwd` > /tmp/whereami2_a
 mkdir -p      $RPM_BUILD_ROOT/%{INSTALL_DIR}
 cp idev       $RPM_BUILD_ROOT/%{INSTALL_DIR}
 cp idev_utils $RPM_BUILD_ROOT/%{INSTALL_DIR}
