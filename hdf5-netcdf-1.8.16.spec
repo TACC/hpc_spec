@@ -27,7 +27,7 @@ Summary: HDF5 Library
 
 Name: hdf5-netcdf
 Version: %{hdf5_version}
-Release: 2
+Release: 3%{?dist}
 License: see included Copyright
 Vendor: NCSA
 Group: Development/Libraries
@@ -51,17 +51,19 @@ URL: http://hdf.ncsa.uiuc.edu/HDF5/
 
 # This is a hack to prevent mpi-defines.inc to complain if mpi is not set.
 %define  mpi_fam   none
+%define  mpi_label none
 %include mpi-defines.inc
 
-
+%define name_prefix   tacc
 
 %if "%{mpi_fam}" == "none"
    # build non-parallel version of package
-   %define HDF5_BASE_DIR         %{APPS}/%{comp_fam_ver}/hdf5/%{hdf5_version}
+   %define pkg_base_name         hdf5
+   %define HDF5_BASE_DIR         %{APPS}/%{comp_fam_ver}/%{pkg_base_name}/%{hdf5_version}
 
    %define HDF5_INSTALL_DIR      %{HDF5_BASE_DIR}/x86_64
    %define MIC_HDF5_INSTALL_DIR  %{HDF5_BASE_DIR}/k1om
-   %define HDF5_MODULE_DIR       %{APPS}/%{comp_fam_ver}/%{MODULES}/hdf5
+   %define HDF5_MODULE_DIR       %{APPS}/%{comp_fam_ver}/%{MODULES}/%{pkg_base_name}
 
    %define NCDF_BASE_DIR         %{APPS}/%{comp_fam_ver}/netcdf/%{ncdf_version}
 
@@ -69,18 +71,19 @@ URL: http://hdf.ncsa.uiuc.edu/HDF5/
    %define MIC_NCDF_INSTALL_DIR  %{NCDF_BASE_DIR}/k1om
    %define NCDF_MODULE_DIR       %{APPS}/%{comp_fam_ver}/%{MODULES}/netcdf
 
-   %define RPM_NAME              %{name}-%{comp_fam_ver}%{dbg}
+   %define RPM_NAME              %{name_prefix}-%{pkg_base_name}-%{comp_fam_ver}%{dbg}
    %define MY_VERSION            (Serial Version)
    %define  mpi_label none
 
    %{echo: NO MPI\n}
 %else
    # build parallel version of package
-   %define HDF5_BASE_DIR         %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/phdf5/%{hdf5_version}
+   %define pkg_base_name         phdf5
+   %define HDF5_BASE_DIR         %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{pkg_base_name}/%{hdf5_version}
 
    %define HDF5_INSTALL_DIR      %{HDF5_BASE_DIR}/x86_64
    %define MIC_HDF5_INSTALL_DIR  %{HDF5_BASE_DIR}/k1om
-   %define HDF5_MODULE_DIR       %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{MODULES}/phdf5
+   %define HDF5_MODULE_DIR       %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{MODULES}/%{pkg_base_name}
 
    %define NCDF_BASE_DIR         %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/parallel-netcdf/%{ncdf_version}
 
@@ -88,10 +91,10 @@ URL: http://hdf.ncsa.uiuc.edu/HDF5/
    %define MIC_NCDF_INSTALL_DIR  %{NCDF_BASE_DIR}/k1om
    %define NCDF_MODULE_DIR       %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{MODULES}/parallel-netcdf
 
-   %define RPM_NAME              p%{name}-%{comp_fam_ver}-%{mpi_fam_ver}%{dbg}
+   %define RPM_NAME              %{name_prefix}-%{pkg_base_name}-%{comp_fam_ver}-%{mpi_fam_ver}%{dbg}
    %define MY_VERSION            (Parallel Version)
 
-   %{echo: WITH MPI p%{name}-%{comp_fam_ver}-%{mpi_fam_ver}\n}
+   %{echo: WITH MPI %{pkg_base_name}-%{comp_fam_ver}-%{mpi_fam_ver}\n}
    %{echo: WITH MPI %{RPM_NAME}\n}
 %endif
 
@@ -172,7 +175,12 @@ pwd
   export LDFLAGS="-Mconcur=nonuma -nomp=nonuma"
 %endif
 
+%if "%{comp_fam}" == "gcc"
+  export OPENMP=-fopenmp
+%endif
+
 %if "%{comp_fam}" == "intel"
+  export OPENMP=-qopenmp
   export CFLAGS="-diag-disable 10201,10120"
   export CXXFLAGS="-diag-disable 10201,10120"
   LDFLAGS="$LDFLAGS -limf -lm"
@@ -228,10 +236,10 @@ for ARCH in "${archA[@]}"; do
   INSTALL_DIR="%{HDF5_BASE_DIR}/$ARCH"
 
   FC=$FC_ORIG
-  FFLAGS="-qopenmp"
-  FCLAGS="-qopenmp"
-  CFLAGS="-qopenmp"
-  CXXFLAGS="-qopenmp"
+  FFLAGS="$OPENMP"
+  FCLAGS="$OPENMP"
+  CFLAGS="$OPENMP"
+  CXXFLAGS="$OPENMP"
   LDFLAGS=""
   HOST=""
   ZLIB_LIB=$TACC_ZLIB_LIB
@@ -436,10 +444,10 @@ for ARCH in "${archA[@]}"; do
 
   FC=$FC_ORIG
   LDFLAGS=""
-  export FFLAGS="-qopenmp -O3 -fPIC"
-  export FCFLAGS="-qopenmp -O3 -fPIC"
-  export CFLAGS="-qopenmp -O3 -fPIC"
-  export CXXFLAGS="-qopenmp -O3 -fPIC"
+  export FFLAGS="$OPENMP -O3 -fPIC"
+  export FCFLAGS="$OPENMP -O3 -fPIC"
+  export CFLAGS="$OPENMP -O3 -fPIC"
+  export CXXFLAGS="$OPENMP -O3 -fPIC"
 
   HOST=""
   ZLIB_LIB=$TACC_ZLIB_LIB
