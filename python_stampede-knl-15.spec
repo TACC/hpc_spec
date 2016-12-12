@@ -239,6 +239,7 @@ lapack_libs = mkl_def, mkl_intel_lp64, mkl_core, mkl_gnu_thread, mkl_avx" > site
     pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_COMP}" rpyc	
     pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_COMP}" ipython
 #    pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_COMP}" jupyter
+    pip install --install-option="--prefix=%{INSTALL_DIR_COMP}" jupyter
     pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_COMP}" pystuck
     pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_COMP}" fortran-magic
 
