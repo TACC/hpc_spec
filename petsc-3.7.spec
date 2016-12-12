@@ -7,8 +7,8 @@ Summary: PETSc install
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 7
-%define micro_version 3
-%define versionpatch 3.7.3
+%define micro_version 4
+%define versionpatch 3.7.4
 
 %define pkg_version %{major_version}.%{minor_version}
 
@@ -31,7 +31,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 1%{?dist}
+Release: 3%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -189,9 +189,9 @@ echo "configure install for ${ext}"
 export versionextra=
 
 if [ -z "${ext}" ] ; then
-  export architecture=sandybridge
+  export architecture=knightslanding
 else
-  export architecture=sandybridge-${ext}
+  export architecture=knightslanding-${ext}
 fi
 
 ##
@@ -349,20 +349,8 @@ export noblas="\
   "
 
 #
-# cuda
+# cuda makes no sense on a KL
 #
-export CUDA_OPTIONS=
-%if "%{comp_fam}" == "gcc"
-module load cuda/6.0 cusp/0.3
-export CUDA_OPTIONS="--with-cuda=1 --with-cuda-dir=${TACC_CUDA_DIR} \
-	--with-cudac=${TACC_CUDA_BIN}/nvcc \
-	--with-cusp-dir=${TACC_CUSP_DIR} --with-thrust-dir=${TACC_CUDA_DIR}/include/ \
-	"
-%endif
-case "${ext}" in
-*complex* ) export CUDA_OPTIONS= 
-            ;;
-esac
 export CUDA_OPTIONS=
 
 export FPIC_OPTIONS=
@@ -511,7 +499,7 @@ done
 rm -rf ${architecture}/obj
 cp -r bin config externalpackages include lib makefile src    \
                                      $RPM_BUILD_ROOT/%{INSTALL_DIR}
-cp -r sandybridge*                   $RPM_BUILD_ROOT/%{INSTALL_DIR}
+cp -r knightslanding*                   $RPM_BUILD_ROOT/%{INSTALL_DIR}
 #cp -r %{MODULE_DIR}/                $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 #find $RPM_BUILD_ROOT/%{INSTALL_DIR} -name CMakeFiles -exec rm -rf {} \;
@@ -521,7 +509,7 @@ umount tmpfs # $INSTALL_DIR
 
 %files %{PACKAGE}
   %defattr(-,root,install,)
-  %{INSTALL_DIR}/sandybridge*
+  %{INSTALL_DIR}/knightslanding*
 
 %files %{PACKAGE}-sources
   %defattr(-,root,install,)
@@ -540,5 +528,9 @@ umount tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Fri Nov 18 2016 eijkhout <eijkhout@tacc.utexas.edu>
+- changed sandybridge -> knightslanding
+* Fri Oct 14 2016 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: update to 3.7.4 and compile Intel 17
 * Sun Aug 14 2016 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release
