@@ -1,4 +1,4 @@
-Summary: Elemental install
+Summary: Elemental install for KNL
 
 # Give the package a base name
 %define pkg_base_name elemental
@@ -21,6 +21,8 @@ Summary: Elemental install
 ########################################
 #%include name-defines.inc
 %include name-defines-noreloc.inc
+%define INSTALL_PREFIX  /home1/apps/el7/
+
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -31,7 +33,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD-2, see http://opensource.org/licenses/BSD-2-Clause
 Vendor: Jack Poulson
 Group: Development/Numerical-Libraries
@@ -110,8 +112,8 @@ export ELEMENTAL_DIR=`pwd`
 export CC=mpicc
 export CXX=mpicxx
 %if "%{comp_fam}" == "intel"
-  export XOPTFLAGS="-xAVX -axCORE-AVX2,CORE-AVX-I -g"
-#### "-xCORE-AVX2 -xMIC-AVX512 -g"
+#  export XOPTFLAGS="-xAVX -axCORE-AVX2,CORE-AVX-I -g"
+  export XOPTFLAGS="-xCORE-AVX2 -axMIC-AVX512 -g"
 %endif
 %if "%{comp_fam}" == "gcc"
   module load mkl
@@ -122,8 +124,10 @@ export COPTFLAGS=${XOPTFLAGS}
 mkdir -p %{INSTALL_DIR}
 mount -t tmpfs tmpfs %{INSTALL_DIR} 
 
-for ext in Release ; do
+for ext in Release Debug ; do
 #for ext in PureDebug PureRelease HybridDebug HybridRelease ; do
+
+source /scratch/projects/compilers/sourceme17.sh
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -147,6 +151,7 @@ for ext in Release ; do
       cd build/${ext} ; \
       cmake -D CMAKE_BUILD_TYPE=${ext} \
       	    -D CMAKE_INSTALL_PREFIX=%{INSTALL_DIR}/${ext} \
+            -D CXX_FLAGS="${COPTFLAGS}" \
 	    -D MATH_LIBS="-mkl" \
 	    ../.. ; \
       make -j 2 VERBOSE=1 2>&1 | tee make.log ; \
