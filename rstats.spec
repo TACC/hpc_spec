@@ -1,0 +1,1 @@
+Rstats-3.2.1_intel17_impi17_el7_v1.spec
