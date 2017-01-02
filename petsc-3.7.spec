@@ -21,6 +21,8 @@ Summary: PETSc install
 ########################################
 #%include name-defines.inc
 %include name-defines-noreloc.inc
+%define INSTALL_PREFIX  /home1/apps/el7/
+
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -85,6 +87,9 @@ module purge
 %include compiler-load.inc
 %include mpi-load.inc
 
+## courtesy of Carlos
+source /scratch/projects/compilers/sourceme17.sh
+
 #
 # Set Up Installation Directory and tmp file system
 #
@@ -94,7 +99,7 @@ rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 mkdir -p %{INSTALL_DIR}
-mount -t tmpfs tmpfs %{INSTALL_DIR} 
+mount -t tmpfs tmpfs %{INSTALL_DIR}
 cp -r * %{INSTALL_DIR}
 pushd %{INSTALL_DIR}
 echo "contents of install-dir before installation"
@@ -130,7 +135,7 @@ export HYPRESTRING=hypre
 %if "%{is_intel}" == "1"
 export LOCALCC=icc
 export LOCALFC=ifort
-export XOPTFLAGS="-xAVX -axCORE-AVX2,CORE-AVX-I -g"
+export XOPTFLAGS="-xCORE-AVX2 -axMIC-AVX512 -g"
 #### "-xCORE-AVX2 -xMIC-AVX512 -g"
 export COPTFLAGS=${XOPTFLAGS}
 #"-xhost -O2"
@@ -505,7 +510,7 @@ cp -r knightslanding*                   $RPM_BUILD_ROOT/%{INSTALL_DIR}
 #find $RPM_BUILD_ROOT/%{INSTALL_DIR} -name CMakeFiles -exec rm -rf {} \;
 
 popd
-umount tmpfs # $INSTALL_DIR
+umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 
 %files %{PACKAGE}
   %defattr(-,root,install,)
@@ -528,8 +533,11 @@ umount tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Tue Dec 20 2016 eijkhout <eijkhout@tacc.utexas.edu>
+- release 4: moved to el7, also fixed compiler options
 * Fri Nov 18 2016 eijkhout <eijkhout@tacc.utexas.edu>
-- changed sandybridge -> knightslanding
+- release 3: changed sandybridge -> knightslanding
+  NEVER INSTALLED
 * Fri Oct 14 2016 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: update to 3.7.4 and compile Intel 17
 * Sun Aug 14 2016 eijkhout <eijkhout@tacc.utexas.edu>
