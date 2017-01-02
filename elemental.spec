@@ -230,7 +230,7 @@ EOF
 done
 
 cp -r src %{INSTALL_DIR}/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/
-umount tmpfs
+umount %{INSTALL_DIR} 
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -258,15 +258,15 @@ umount tmpfs
 ########################################
 ## Fix Modulefile During Post Install ##
 ########################################
-%post %{PACKAGE}
-export PACKAGE_POST=1
-%include post-defines.inc
-%post %{MODULEFILE}
-export MODULEFILE_POST=1
-%include post-defines.inc
-%preun %{PACKAGE}
-export PACKAGE_PREUN=1
-%include post-defines.inc
+# %post %{PACKAGE}
+# export PACKAGE_POST=1
+# %include post-defines.inc
+# %post %{MODULEFILE}
+# export MODULEFILE_POST=1
+# %include post-defines.inc
+# %preun %{PACKAGE}
+# export PACKAGE_PREUN=1
+# %include post-defines.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
