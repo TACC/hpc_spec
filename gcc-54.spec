@@ -27,12 +27,12 @@ Summary: A Nice little non-relocatable skeleton spec file example.
 %define MODULE_VAR    GCC
 
 # Create some macros (spec file variables)
-%define major_version 6
-%define minor_version 3
+%define major_version 5
+%define minor_version 4
 %define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
-%define gcc_ver gcc6_3
+%define gcc_ver gcc5_4
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -168,34 +168,29 @@ export LD_LIBRARY_PATH=${gcc_install}/x86_64-unknown-linux-gnu/lib:${LD_LIBRARY_
 
 export gmp_major=6
 export gmp_minor=1
-#export gmp_patch=0
-export gmp_patch=2
+export gmp_patch=0
 
 export isl_major=0
-#export isl_minor=16
-#export isl_patch=1
-export isl_minor=18
+export isl_minor=16
+export isl_patch=1
 
 export mpfr_major=3
 export mpfr_minor=1
-#export mpfr_patch=4
-export mpfr_patch=5
+export mpfr_patch=4
 
 export mpc_major=1
 export mpc_minor=0
 export mpc_patch=3
 
 export binutils_major=2
-#export binutils_minor=26
-export binutils_minor=27
+export binutils_minor=26
 
-export gcc_major=6
-export gcc_minor=3
+export gcc_major=5
+export gcc_minor=4
 export gcc_patch=0
 
 export gmp_version=${gmp_major}.${gmp_minor}.${gmp_patch}
-#export isl_version=${isl_major}.${isl_minor}.${isl_patch}
-export isl_version=${isl_major}.${isl_minor}
+export isl_version=${isl_major}.${isl_minor}.${isl_patch}
 export mpfr_version=${mpfr_major}.${mpfr_minor}.${mpfr_patch}
 export mpc_version=${mpc_major}.${mpc_minor}.${mpc_patch}
 export binutils_version=${binutils_major}.${binutils_minor}
@@ -414,7 +409,7 @@ family("compiler")
 EOF
 
  
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version << 'EOF'
 #%Module3.1.1#################################################
 ##
 ## version file for %{BASENAME}%{version}
