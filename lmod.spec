@@ -7,8 +7,8 @@
 Prefix:    /opt/apps
 Summary:   lmod: Lua based Modules
 Name:      %{name_prefix}-%{base_name}
-Version:   6.0.24
-Release:   3
+Version:   7.3.11
+Release:   1
 License:   MIT
 Vendor:    Robert McLay
 Group:     System Environment/Base
@@ -26,7 +26,7 @@ Buildroot: /var/tmp/%{base_name}-%{version}-buildroot
 %define MODULES        tools/modulefiles
 %define MODULE_DIR     %{APPS}/%{MODULES}/lmod
 %define MODULE_DIR_ST  %{APPS}/%{MODULES}/settarg
-%define ZSH_SITE_FUNC  /usr/share/zsh/site-functions
+%define ZSH_SITE_FUNC  /opt/apps/zsh/site-functions
 
 %description
 
@@ -55,7 +55,7 @@ first=${myhost%%.*}
 SYSHOST=${myhost#*.}
 
 if [ "$SYSHOST" = "stampede" ]; then
-  CACHE_DIR="--with-spiderCacheDescript=cacheDescript.txt"
+CACHE_DIR="--with-spiderCacheDescript=cacheDescript.txt"
 
 cat > cacheDescript.txt << EOF
 /tmp/moduleData/cacheDir:/tmp/losf_last_update
@@ -64,8 +64,8 @@ EOF
 fi
 
 if [ "$SYSHOST" = "ls5" ]; then
-  EXTRA="--with-tmodPathRule=yes"
-  CACHE_DIR="--with-spiderCacheDescript=cacheDescript.txt"
+EXTRA="--with-tmodPathRule=yes --with-syshost=ls5 --with-siteName=TACC"
+CACHE_DIR="--with-spiderCacheDescript=cacheDescript.txt"
 
 cat > cacheDescript.txt << EOF
 /home1/moduleData/cacheDir/tacc:/home1/moduleData/cacheDir/tacc_cache_timestamp.txt
@@ -79,10 +79,10 @@ fi
 # the old fashion way
 
 for i in /usr/bin /opt/apps/lua/lua/bin /usr/local/bin /opt/local/bin ; do
-  if [ -x $i/lua ]; then
-    luaPath=$i
-    break
-  fi
+if [ -x $i/lua ]; then
+luaPath=$i
+break
+fi
 done
 PATH=$luaPath:$PATH
 
@@ -149,39 +149,39 @@ encapsulate the state of the modules loaded.
 For example, if you have the settarg module and gcc/4.7.1 module loaded
 then the following variables are defined in your environment:
 
-   TARG=OBJ/_x86_64_06_2d_gcc-4.7.1
-   TARG_COMPILER=gcc-4.7.1
-   TARG_COMPILER_FAMILY=gcc
-   TARG_MACH=x86_64_06_2d
-   TARG_SUMMARY=x86_64_06_2d_gcc-4.7.1
+TARG=OBJ/_x86_64_06_2d_gcc-4.7.1
+TARG_COMPILER=gcc-4.7.1
+TARG_COMPILER_FAMILY=gcc
+TARG_MACH=x86_64_06_2d
+TARG_SUMMARY=x86_64_06_2d_gcc-4.7.1
 
 If you change your compiler to intel/13.1.0, these variables change to:
 
-   TARG=OBJ/_x86_64_06_2d_intel-13.1.0
-   TARG_COMPILER=intel-13.1.0
-   TARG_COMPILER_FAMILY=intel
-   TARG_MACH=x86_64_06_2d
-   TARG_SUMMARY=x86_64_06_2d_intel-13.1.0
+TARG=OBJ/_x86_64_06_2d_intel-13.1.0
+TARG_COMPILER=intel-13.1.0
+TARG_COMPILER_FAMILY=intel
+TARG_MACH=x86_64_06_2d
+TARG_SUMMARY=x86_64_06_2d_intel-13.1.0
 
 If you then load mvapich2/1.9a2 module the following variables automatically
 change to:
 
-   TARG=OBJ/_x86_64_06_2d_intel-13.1.0_mvapich2-1.9a2
-   TARG_COMPILER=intel-13.1.0
-   TARG_COMPILER_FAMILY=intel
-   TARG_MACH=x86_64_06_2d
-   TARG_MPI=mvapich2-1.9a2
-   TARG_MPI_FAMILY=mvapich2
-   TARG_SUMMARY=x86_64_06_2d_intel-13.1.0_mvapich2-1.9a2
+TARG=OBJ/_x86_64_06_2d_intel-13.1.0_mvapich2-1.9a2
+TARG_COMPILER=intel-13.1.0
+TARG_COMPILER_FAMILY=intel
+TARG_MACH=x86_64_06_2d
+TARG_MPI=mvapich2-1.9a2
+TARG_MPI_FAMILY=mvapich2
+TARG_SUMMARY=x86_64_06_2d_intel-13.1.0_mvapich2-1.9a2
 
 You also get some TARG_* variables that always available, independent
 of what modules you have loaded:
 
-   TARG_MACH=x86_64_06_2d
-   TARG_MACH_DESCRIPT=Intel(R) Xeon(R) CPU E5-2680 0 @ 2.70GHz
-   TARG_HOST=stampede
-   TARG_OS=Linux-2.6.32-358.el6.x86_64
-   TARG_OS_FAMILY=Linux
+TARG_MACH=x86_64_06_2d
+TARG_MACH_DESCRIPT=Intel(R) Xeon(R) CPU E5-2680 0 @ 2.70GHz
+TARG_HOST=stampede
+TARG_OS=Linux-2.6.32-358.el6.x86_64
+TARG_OS_FAMILY=Linux
 
 One way that these variables can be used is part of a build system where
 the executables and object files are placed in $TARG.  You can also use
@@ -209,7 +209,7 @@ local settarg_cmd = pathJoin(base, "settarg_cmd")
 prepend_path("PATH",base)
 pushenv("LMOD_SETTARG_CMD", settarg_cmd)
 set_shell_function("settarg", 'eval $($LMOD_SETTARG_CMD -s sh "$@")',
-                              'eval `$LMOD_SETTARG_CMD  -s csh $*`' )
+		      'eval `$LMOD_SETTARG_CMD  -s csh $*`' )
 
 set_shell_function("gettargdir",  'builtin echo $TARG', 'echo $TARG')
 
@@ -218,12 +218,12 @@ setenv("SETTARG_TAG1", "OBJ", respect )
 setenv("SETTARG_TAG2", "_"  , respect )
 
 if ((os.getenv("LMOD_FULL_SETTARG_SUPPORT") or "no"):lower() ~= "no") then
-   set_alias("cdt", "cd $TARG")
-   set_shell_function("targ",  'builtin echo $TARG', 'echo $TARG')
-   set_shell_function("dbg",   'settarg "$@" dbg',   'settarg $* dbg')
-   set_shell_function("empty", 'settarg "$@" empty', 'settarg $* empty')
-   set_shell_function("opt",   'settarg "$@" opt',   'settarg $* opt')
-   set_shell_function("mdbg",  'settarg "$@" mdbg',  'settarg $* mdbg')
+set_alias("cdt", "cd $TARG")
+set_shell_function("targ",  'builtin echo $TARG', 'echo $TARG')
+set_shell_function("dbg",   'settarg "$@" dbg',   'settarg $* dbg')
+set_shell_function("empty", 'settarg "$@" empty', 'settarg $* empty')
+set_shell_function("opt",   'settarg "$@" opt',   'settarg $* opt')
+set_shell_function("mdbg",  'settarg "$@" mdbg',  'settarg $* mdbg')
 end
 
 local myShell = myShellName()
@@ -249,14 +249,14 @@ EOF
 %{INSTALL_DIR}
 %{MODULE_DIR}
 %{MODULE_DIR_ST}
-
+%{ZSH_SITE_FUNC}
 
 %post
 
 cd %{PKG_BASE}
 
 if [ -d %{base_name} ]; then
-  rm -f %{base_name}
+rm -f %{base_name}
 fi
 ln -s %{version} %{base_name}
 
