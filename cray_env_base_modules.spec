@@ -50,7 +50,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4
+Release:   5%{?dist}
 License:   GPL
 Group:     Module Magic
 Packager:  TACC - cproctor@tacc.utexas.edu
@@ -160,6 +160,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 # Write out the modulefile associated with the application
 #### Note modulefile name is only version number with no .lua for tmod
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version} << 'EOF'
+#%Module
 proc ModulesHelp { } {
 puts stderr "The TACC modulefile defines the default paths and environment"
 puts stderr "variables needed to use the local Cray software and utilities"
@@ -220,7 +221,7 @@ if [ module-info mode remove ] {
 
 ### WCP 2015-12-01 Add tacc slurm information instead.
 set base_dir "/opt/slurm/default"
-append-path PATH             "$base_dir/bin"
+prepend-path PATH             "$base_dir/bin"
 ## append-path LD_LIBRARY_PATH  "$base_dir/lib"
 prepend-path MANPATH         "$base_dir/share/man"
 prepend-path MANPATH         "/usr/share/man"
@@ -236,8 +237,10 @@ setenv TACC_SLURM_BIN        "$base_dir/bin"
 
 # "Wimmy Wham Wham Wozzle!" -- Slurms MacKenzie
 
+setenv TACC_SYSTEM "ls5"
+setenv TACC_DOMAIN "ls5"
 
-prepend-path PATH /opt/apps/tacc/bin 10
+#prepend-path PATH /opt/apps/tacc/bin 10
 
 
 EOF
