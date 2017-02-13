@@ -1,7 +1,7 @@
 Summary:    RstatsPackages provides pre-installed versions of CRAN packages compatible with the Rstats module.
 Name:       RstatsPackages
 Version:    3.2.1
-Release:    2%{?dist} 
+Release:    3%{?dist} 
 License:    GPLv2
 Vendor:     R Foundation for Statistical Computing
 Group:      Applications/Statistics
@@ -297,12 +297,13 @@ install_version("plm");
 install_version("lubridate");
 install_version("proto");
 install_version("munsell");
-install_version("foreign");
 install_version("lmtest");
 install_version("coda");
 install_version("data.table");
 install_version("inline");
 install_version("R2jags"); ' > optional.R
+
+Rscript optional.R
 
 #################
 # RStan - depends on some of the above

@@ -1,7 +1,7 @@
 Summary:    R is a free software environment for statistical computing and graphics.
 Name:       Rstats
 Version:    3.2.1
-Release:    2%{?dist}
+Release:    3%{?dist}
 License:    GPLv2
 Vendor:     R Foundation for Statistical Computing
 Group:      Applications/Statistics
@@ -83,13 +83,14 @@ mkdir -p ${SRC_DIR}
 echo ${SRC_DIR}
 cd ${SRC_DIR}
 
-wget -q -N 'http://cran.r-project.org/src/base/R-3/R-3.2.1.tar.gz'
+#wget -q -N 'http://cran.r-project.org/src/base/R-3/R-3.2.1.tar.gz'
+cp /home1/build/rpms/knl15/SOURCES/R-3.2.1-custom.tar.gz R-3.2.1.tar.gz
 tar zxf R-3.2.1.tar.gz
 cd R-3.2.1
 
 ./configure --prefix=%{INSTALL_DIR} \
   --enable-R-shlib --enable-shared \
-  --with-blas --with-lapack --with-x=no \
+  --with-blas --with-lapack --with-x=yes \
   CC=mpicc CXX=mpicxx F77=ifort FC=ifort \
   LD=xild AR=xiar \
   SHLIB_CFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  "\
