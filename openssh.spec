@@ -2,7 +2,10 @@
 # 2016-03-06
 
 %define ver 7.1p2
-%define rel 1
+%define rel 3
+
+# TACC tag version
+%define tacc_tag v3.19.1-tacc-2
 
 # OpenSSH privilege separation requires a user & group ID
 %define sshd_uid    74
@@ -43,7 +46,7 @@
 %{?no_gtk2:%define gtk2 0}
 
 # Is this a build for RHL 6.x or earlier?
-%{?build_6x:%define build6x 1}
+%{?build_6x:%define build6x 0}
 
 # If this is RHL 6.x, the default configuration has sysconfdir in /usr/etc.
 %if %{build6x}
@@ -78,16 +81,10 @@ Release: %{rel}rescue
 Release: %{rel}
 %endif
 URL: http://www.openssh.com/portable.html
-###Source0: ftp://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-%{version}.tar.gz
-Source0:openssh-hpn-isshd-3.19.1.tar.gz
-#Source0:openssh-hpn-isshd-isshd.tar.gz
-#Source0:openssh-7.2p1.tar.gz
-#Source0:openssh-hpn-isshd-V_6_8.tar.gz
+Source0:tacc-openssh-hpn-isshd-%{tacc_tag}.tar.gz
 %if ! %{no_x11_askpass}
-#Source1: http://www.jmknoble.net/software/x11-ssh-askpass/x11-ssh-askpass-%{aversion}.tar.gz
 Source1: x11-ssh-askpass-%{aversion}.tar.gz
 %endif
-Patch100:taccpass.auth_c.patch
 License: BSD
 Group: Applications/Internet
 BuildRoot: %{_tmppath}/%{name}-%{version}-buildroot
@@ -185,16 +182,10 @@ environment.
 %prep
 
 %if ! %{no_x11_askpass}
-%setup -q -a 1 -n openssh-hpn-isshd-3.19.1
-#%setup -q -a 1 -n openssh-hpn-isshd-isshd
-#%setup -q -a 1 -n openssh-hpn-isshd-V_6_8
+%setup -q -a 1 -n tacc-openssh-hpn-isshd-%{tacc_tag}
 %else
-%setup -q -n openssh-hpn-isshd-3.19.1
-#%setup -q -n openssh-hpn-isshd-isshd
-#%setup -q -n openssh-hpn-isshd-V_6_8
+%setup -q -n tacc-openssh-hpn-isshd-%{tacc_tag}
 %endif
-
-%patch100 -p0
 
 %build
 %if %{rescue}
@@ -208,6 +199,7 @@ echo K5DIR=$K5DIR
 %endif
 
 autoreconf
+
 %configure \
 	--sysconfdir=%{_sysconfdir}/ssh \
 	--libexecdir=%{_libexecdir}/openssh \
