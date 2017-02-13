@@ -1,28 +1,17 @@
 Summary:    Python is a high-level general-purpose programming language.
 Name:       tacc-python 
-Version:    2.7.12
-Release:    2%{?dist}
+Version:    2.7.13
+Release:    1%{?dist}
 License:    GPLv2
 Vendor:     Python Software Foundation
 Group:      Applications
 Packager:   TACC - rtevans@tacc.utexas.edu
-#Source:     %{name}-%{version}.tar.gz
 
-
-#------------------------------------------------
-# CONFIGURATION DEFINITIONS
-#------------------------------------------------
-
-%define build_interpreter 0
-%define build_numpy       0
-%define build_scipy       0
-%define build_stack       0
 #------------------------------------------------
 # Either Python package or mpi4py will be built 
 # based on this switch
 #------------------------------------------------
-%define build_mpi4py      1
-
+%define build_mpi4py      0
 %global _python_bytecompile_errors_terminate_build 0
 #------------------------------------------------
 # BASIC DEFINITIONS
@@ -66,7 +55,6 @@ rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR_MPI}
 rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR_COMP}
 rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}
 
-
 %if "%{build_mpi4py}" == "0"
     mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR_COMP}
 %endif
@@ -80,7 +68,6 @@ rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}
 export BASH_ENV=/etc/tacc/tacc_functions
 %include system-load.inc
 %include compiler-load.inc
-
 
 # Set up src directory
 export SRC_DIR=`pwd`/src
@@ -97,13 +84,26 @@ export PYTHONPATH=%{INSTALL_DIR_COMP}/lib:$PYTHONPATH
         mount -t tmpfs tmpfs %{INSTALL_DIR_COMP}
     fi
 %endif
+
+############################################################
+# System Specific
+############################################################
+%if "%{comp_fam_name}" == "Intel"
+    export ISAFLAGS="-xCORE-AVX2 -axMIC-AVX512"
+%endif
+%if "%{comp_fam_name}" == "GNU"
+    export ISAFLAGS="-march=haswell -mtune=knl"
+%endif
+export MKL_INC=/opt/intel/compilers_and_libraries_2017.0.098/linux/mkl/include
+export MKL_LIB=/opt/intel/compilers_and_libraries_2017.0.098/linux/mkl/lib/intel64
+export OMP_LIB=/opt/intel/compilers_and_libraries_2017.0.098/linux/compiler/lib/intel64
+export LD_LIBRARY_PATH=$MKL_LIB:$OMP_LIB:$LD_LIBRARY_PATH
+
 ############################################################
 # Build core python here
 ############################################################
-%if "%{build_interpreter}" == "1"
 
 if [ ! -f "%{INSTALL_DIR_COMP}/bin/python" ]; then
-
     if [ ! -f "%{_topdir}/SOURCES/Python-%{version}.tgz" ]; then
      	wget http://www.python.org/ftp/python/%{version}/Python-%{version}.tgz
     fi	
@@ -112,164 +112,135 @@ if [ ! -f "%{INSTALL_DIR_COMP}/bin/python" ]; then
     cd ${SRC_DIR}/Python-%{version}
 
     %if "%{comp_fam_name}" == "Intel"
-    ./configure --prefix=%{INSTALL_DIR_COMP} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc' CFLAGS="-O3 -fp-model strict -fp-model source -xCORE-AVX2 -axMIC-AVX512 -fma -ipo -prec-div -prec-sqrt" LDFLAGS="-ipo -Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth --without-gcc --with-libm=-limf --with-threads
+    ./configure --prefix=%{INSTALL_DIR_COMP} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc' CFLAGS="-O3 -fp-model strict -fp-model source -ipo -prec-div -prec-sqrt $ISAFLAGS" LDFLAGS="-ipo -Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth --without-gcc --with-libm=-limf --with-threads
     %endif
     %if "%{comp_fam_name}" == "GNU"
-    ./configure --prefix=%{INSTALL_DIR_COMP} CFLAGS="-march=haswell -mtune=knl -mfma -flto -ffat-lto-objects" LDFLAGS="-rdynamic" --with-system-ffi --enable-shared --with-pth --with-threads
+    ./configure --prefix=%{INSTALL_DIR_COMP} CFLAGS="-flto -ffat-lto-objects $ISAFLAGS" LDFLAGS="-rdynamic" --with-system-ffi --enable-shared --with-pth --with-threads
     %endif
 
     make -j 16
     make sharedinstall
     make -i install
-    #############################################################
-    # setuptools and pip
-    ############################################################
-    cd ${SRC_DIR}
-
-    ############################################################
-    # core python modules
-    ############################################################
-    wget https://bootstrap.pypa.io/get-pip.py
-    python get-pip.py
-    pip install --trusted-host pypi.python.org certifi
-    pip install nose
-    pip install virtualenv
-    pip install virtualenvwrapper    
-    
-    pip install sympy
-    pip install brewer2mpl
-    pip install futures
-    pip install simpy
-    
-    pip install jsonpickle
-    pip install meld3
-    pip install supervisor
-    pip install paramiko
-    pip install egenix-mx-base
-
 fi
-%endif
+############################################################
+# core python modules
+############################################################
+if [ ! -f "%{INSTALL_DIR_COMP}/bin/pip" ]; then
+    wget https://bootstrap.pypa.io/get-pip.py
+    %{INSTALL_DIR_COMP}/bin/python get-pip.py
+fi
+%{INSTALL_DIR_COMP}/bin/pip install --trusted-host pypi.python.org certifi
+%{INSTALL_DIR_COMP}/bin/pip install nose
+%{INSTALL_DIR_COMP}/bin/pip install virtualenv
+%{INSTALL_DIR_COMP}/bin/pip install virtualenvwrapper    
+%{INSTALL_DIR_COMP}/bin/pip install sympy
+%{INSTALL_DIR_COMP}/bin/pip install brewer2mpl
+%{INSTALL_DIR_COMP}/bin/pip install futures
+%{INSTALL_DIR_COMP}/bin/pip install simpy    
+%{INSTALL_DIR_COMP}/bin/pip install jsonpickle
+%{INSTALL_DIR_COMP}/bin/pip install meld3
+%{INSTALL_DIR_COMP}/bin/pip install supervisor
+%{INSTALL_DIR_COMP}/bin/pip install paramiko
+%{INSTALL_DIR_COMP}/bin/pip install egenix-mx-base
+
 
 #############################################################
 # scipy stack: use INSTALL_DIR_COMP . 
 # We need to know which pip modules are compiler specific.  
 # numpy scipy matplotlib jupyter pandas sympy nose
 ############################################################
-%if "%{comp_fam_name}" == "GNU"	
-    export LD_LIBRARY_PATH=/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/mkl/lib/intel64:/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/compiler/lib/intel64_lin:$LD_LIBRARY_PATH
-%endif
 
 ### Numpy
-%if "%{build_numpy}" == "1"
-    if ! $(python -c "import numpy"); then
-	cd %{_topdir}/SOURCES	
-	if [ ! -f "%{_topdir}/SOURCES/numpy-1.11.0.tar.gz" ]; then	
-	    wget https://sourceforge.net/projects/numpy/files/NumPy/1.11.0/numpy-1.11.0.tar.gz
-	fi	   
-	
-	rm -rf ${SRC_DIR}/numpy-1.11.0 	   
-	tar -xzvf %{_topdir}/SOURCES/numpy-1.11.0.tar.gz -C ${SRC_DIR}	
-	cd ${SRC_DIR}/numpy-1.11.0
+if ! $(%{INSTALL_DIR_COMP}/bin/python -c "import numpy"); then
+    cd %{_topdir}/SOURCES	
+    if [ ! -f "%{_topdir}/SOURCES/numpy-1.11.2.tar.gz" ]; then	
+	wget https://sourceforge.net/projects/numpy/files/NumPy/1.11.2/numpy-1.11.2.tar.gz
+    fi	   
+    
+    rm -rf ${SRC_DIR}/numpy-1.11.2 	   
+    tar -xzvf %{_topdir}/SOURCES/numpy-1.11.2.tar.gz -C ${SRC_DIR}	
+    cd ${SRC_DIR}/numpy-1.11.2
 
-	%if "%{comp_fam_name}" == "Intel"
-	echo "[mkl]
-library_dirs = ${MKLROOT}/lib/intel64
-include_dirs = ${MKLROOT}/include
+    sed -i 's/-openmp/-qopenmp '"$ISAFLAGS"'/' numpy/distutils/intelccompiler.py
+    sed -i 's/-openmp/-qopenmp '"$ISAFLAGS"'/' numpy/distutils/fcompiler/intel.py
+
+    %if "%{comp_fam_name}" == "Intel"
+    echo "[mkl]
+library_dirs = $MKL_LIB:$OMP_LIB
+include_dirs = $MKL_INC
 mkl_libs = mkl_rt
 lapack_libs = " > site.cfg
-	sed -i 's/-xSSE4.2/-xCORE-AVX2 -axMIC-AVX512 -fma/' numpy/distutils/intelccompiler.py
-	sed -i 's/-xSSE4.2/-xCORE-AVX2 -axMIC-AVX512 -fma/' numpy/distutils/fcompiler/intel.py
-	%{INSTALL_DIR_COMP}/bin/python setup.py config --compiler=intelem --fcompiler=intelem build_clib --compiler=intelem --fcompiler=intelem build_ext --compiler=intelem --fcompiler=intelem install --prefix=%{INSTALL_DIR_COMP}
-	%endif
+    %{INSTALL_DIR_COMP}/bin/python setup.py config --compiler=intelem --fcompiler=intelem build_clib --compiler=intelem --fcompiler=intelem build_ext --compiler=intelem --fcompiler=intelem install
+    %endif
 
-	%if "%{comp_fam_name}" == "GNU"	
-	echo "[mkl]
-library_dirs = /opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/mkl/lib/intel64
-include_dirs = /opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/mkl/include
+    %if "%{comp_fam_name}" == "GNU"	
+    echo "[mkl]
+library_dirs = $MKL_LIB:$OMP_LIB
+include_dirs = $MKL_INC
 mkl_libs = mkl_def, mkl_intel_lp64, mkl_core, mkl_gnu_thread, mkl_avx 
 lapack_libs = mkl_def, mkl_intel_lp64, mkl_core, mkl_gnu_thread, mkl_avx" > site.cfg
-	sed -i 's/-xSSE4.2/-march=sandybridge -mfma/' numpy/distutils/intelccompiler.py
-	sed -i 's/-xSSE4.2/-march=sandybridge -mfma/' numpy/distutils/fcompiler/intel.py
-	export LDFLAGS="-lm -lpthread -shared -L/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/compiler/lib/intel64_lin -liomp5"
-	%{INSTALL_DIR_COMP}/bin/python setup.py config --fcompiler=gfortran build_clib --fcompiler=gfortran build_ext --fcompiler=gfortran install --prefix=%{INSTALL_DIR_COMP}
-	%endif
-    fi
-%endif
+    %{INSTALL_DIR_COMP}/bin/python setup.py config --fcompiler=gfortran build_clib --fcompiler=gfortran build_ext --fcompiler=gfortran install
+    %endif
+fi
 
-### Scipy Module
-%if "%{build_scipy}" == "1"
-    if ! $(python -c "import scipy"); then
-	cd %{_topdir}/SOURCES	
-	if [ ! -f "%{_topdir}/SOURCES/scipy-0.17.0.tar.gz" ]; then	
-	    wget -O scipy-0.17.0.tar.gz https://github.com/scipy/scipy/releases/download/v0.17.0/scipy-0.17.0.tar.gz
-	fi	   
+### Scipy
+if ! $(%{INSTALL_DIR_COMP}/bin/python -c "import scipy"); then
+    cd %{_topdir}/SOURCES	
+    if [ ! -f "%{_topdir}/SOURCES/scipy-0.18.1.tar.gz" ]; then	
+	wget -O scipy-0.18.1.tar.gz https://github.com/scipy/scipy/releases/download/v0.18.1/scipy-0.18.1.tar.gz
+    fi	   
 
-	rm -rf ${SRC_DIR}/scipy-0.17.0
-	tar -xzvf scipy-0.17.0.tar.gz -C ${SRC_DIR} 
-	cd ${SRC_DIR}/scipy-0.17.0
+    rm -rf ${SRC_DIR}/scipy-0.18.1
+    tar -xzvf scipy-0.18.1.tar.gz -C ${SRC_DIR} 
+    cd ${SRC_DIR}/scipy-0.18.1
 
-	%if "%{comp_fam_name}" == "Intel"
-    	%{INSTALL_DIR_COMP}/bin/python setup.py config --compiler=intelem --fcompiler=intelem build_clib --compiler=intelem --fcompiler=intelem build_ext --compiler=intelem --fcompiler=intelem install --prefix=%{INSTALL_DIR_COMP}
-	%endif
-	
-	%if "%{comp_fam_name}" == "GNU"	
-        %{INSTALL_DIR_COMP}/bin/python setup.py config --fcompiler=gfortran build_clib --fcompiler=gfortran build_ext --fcompiler=gfortran install --prefix=%{INSTALL_DIR_COMP}
-	%endif
-    fi
-%endif
+    %if "%{comp_fam_name}" == "Intel"
+    %{INSTALL_DIR_COMP}/bin/python setup.py config --compiler=intelem --fcompiler=intelem build_clib --compiler=intelem --fcompiler=intelem build_ext --compiler=intelem --fcompiler=intelem install
+    %endif
+    
+    %if "%{comp_fam_name}" == "GNU"	
+    %{INSTALL_DIR_COMP}/bin/python setup.py config --fcompiler=gfortran build_clib --fcompiler=gfortran build_ext --fcompiler=gfortran install
+    %endif
+fi
 
-%if "%{build_stack}" == "1"
-    ### Matplotlib
-    if ! $(python -c "import matplotlib"); then
-	cd %{_topdir}/SOURCES	
-	if [ ! -f "%{_topdir}/SOURCES/matplotlib-1.5.1.tar.gz" ]; then
-	    wget https://pypi.python.org/packages/source/m/matplotlib/matplotlib-1.5.1.tar.gz
-	fi
+%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: matplotlib	
+CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: cython	
+%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: cffi	
+%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: pandas
+%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: psutil
+%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: numexpr
+%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: rpyc	
+%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: ipython
+%{INSTALL_DIR_COMP}/bin/pip install jupyter	
+%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: mako
+CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: lxml
+%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: pystuck
+%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: fortran-magic
+%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: MySQL
+%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: psycopg2
+%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: mercurial
+CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: yt
+%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: theano
+%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: scikit_learn
 
-	rm -rf ${SRC_DIR}/matplotlib-1.5.1
-	tar -xzvf matplotlib-1.5.1.tar.gz -C ${SRC_DIR}
-	cd ${SRC_DIR}/matplotlib-1.5.1
-	python setup.py install --prefix=%{INSTALL_DIR_COMP}
-    fi
-
-    pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_COMP}" cython	
-    pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_COMP}" pandas
-    pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_COMP}" psutil
-    pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_COMP}" numexpr
-    pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_COMP}" rpyc	
-    pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_COMP}" ipython
-#    pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_COMP}" jupyter
-    pip install --install-option="--prefix=%{INSTALL_DIR_COMP}" jupyter
-    pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_COMP}" pystuck
-    pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_COMP}" fortran-magic
-
-    pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_COMP}" MySQL
-    pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_COMP}" psycopg2
-    pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_COMP}" mercurial
-    pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_COMP}" yt==3.1
-    pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_COMP}" theano
-    CFLAGS="-O2" pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_COMP}" scikit_learn
-
-    if $(module load hdf5); then
-     	export HDF5_DIR=$TACC_HDF5_DIR	
-    	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$TACC_HDF5_LIB
-    	pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_COMP}" h5py
-    	pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_COMP}" tables
-    fi
-%endif
-
+if module load hdf5; then
+    export HDF5_DIR=$TACC_HDF5_DIR	
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$TACC_HDF5_LIB
+    %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: h5py
+    #%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: tables
+    %{INSTALL_DIR_COMP}/bin/pip install tables
+fi
 #############################################################
 # mpi4py: use INSTALL_DIR_MPI
 ############################################################
 %if "%{build_mpi4py}" == "1"
-
-        if ! mountpoint -q %{INSTALL_DIR_MPI} ; then	
-	   mkdir -p %{INSTALL_DIR_MPI}
-	   mount -t tmpfs tmpfs %{INSTALL_DIR_MPI}
-        fi
-	module load %{PNAME}/%{version}	
-	module load %{mpi_module}   
-	pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_MPI}" mpi4py
+  if ! mountpoint -q %{INSTALL_DIR_MPI} ; then	
+    mkdir -p %{INSTALL_DIR_MPI}
+    mount -t tmpfs tmpfs %{INSTALL_DIR_MPI}
+  fi
+  module load %{PNAME}/%{version}	
+  module load %{mpi_module}   
+  %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_MPI}" mpi4py
 %endif
 
 #----------------------------------------------------------
@@ -338,8 +309,8 @@ local python_lib   = "%{INSTALL_DIR_COMP}/lib"
 local python_man   = "%{INSTALL_DIR_COMP}/share/man:%{INSTALL_DIR_COMP}/man"
 
 %if "%{comp_fam_name}" == "GNU"
-local mkl_lib      = "/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/mkl/lib/intel64"
-local omp_lib      = "/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/compiler/lib/intel64"
+local mkl_lib      = "$MKL_LIB"
+local omp_lib      = "$OMP_LIB"
 %endif
 
 setenv("TACC_PYTHON_DIR", python_dir)
@@ -370,61 +341,10 @@ EOF
 %endif
 
 %if "%{build_mpi4py}" == "1"
-#####------- MPI version
-
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}
 cat >    $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}/%{version}.lua << 'EOF'
-help(
-[[
-This is the Python package built on %(date +'%B %d, %Y').
-
-You can install your own modules (choose one method):
-	1. python setup.py install --user
-	2. python setup.py install --home=<dir>
-	3. pip install --user module-name
-
-Version %{version}
-]]
-)
-
-whatis("Name: Python")
-whatis("Version: %{version}")
+inherit()
 whatis("Version-notes: Compiler:%{comp_fam_ver}. MPI:%{mpi_fam_ver}")
-whatis("Category: Applications, Scientific, Graphics")
-whatis("Keywords: Applications, Scientific, Graphics, Scripting Language")
-whatis("URL: http://www.python.org/")
-whatis("Description: scientific scripting package")
-
---
--- Create environment variables.
---
-local python_dir   = "%{INSTALL_DIR_COMP}"
-local python_bin   = "%{INSTALL_DIR_COMP}/bin"
-local python_inc   = "%{INSTALL_DIR_COMP}/include"
-local python_lib   = "%{INSTALL_DIR_COMP}/lib"
-local python_man   = "%{INSTALL_DIR_COMP}/share/man:%{INSTALL_DIR_COMP}/man"
-
-%if "%{comp_fam_name}" == "GNU"
-local mkl_lib      = "/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/mkl/lib/intel64"
-local omp_lib      = "/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/compiler/lib/intel64"
-%endif
-
-setenv("TACC_PYTHON_DIR", python_dir)
-setenv("TACC_PYTHON_BIN", python_bin)
-setenv("TACC_PYTHON_INC", python_inc)
-setenv("TACC_PYTHON_LIB", python_lib)
-setenv("TACC_PYTHON_MAN", python_man)
-
-prepend_path("MANPATH", python_man)
-prepend_path("LD_LIBRARY_PATH", python_lib)
-
-%if "%{comp_fam_name}" == "GNU"
-prepend_path("LD_LIBRARY_PATH", mkl_lib)
-prepend_path("LD_LIBRARY_PATH", omp_lib)
-%endif
-
-
-prepend_path("PATH",       "%{INSTALL_DIR_COMP}/bin")
 prepend_path("PATH",       "%{INSTALL_DIR_MPI}/lib/python2.7/site-packages/mpi4py/bin")
 prepend_path("PYTHONPATH", "%{INSTALL_DIR_MPI}/lib/python2.7/site-packages")
 EOF
