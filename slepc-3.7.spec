@@ -25,7 +25,7 @@ Summary: SLEPc rpm build scxript
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 7
-%define micro_version 1
+%define micro_version 3
 
 %define pkg_version %{major_version}.%{minor_version}
 %define pkg_full_version %{major_version}.%{minor_version}.%{micro_version}
@@ -52,7 +52,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2
+Release:   4
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.gnu.org/software/bar
@@ -164,15 +164,12 @@ module spider petsc
 module spider petsc/3.7
 
 for ext in \
-  single "" \
+  "" \
   ${dynamiccc} ${dynamiccxx} ; do
 
 #------------------------
 %if %{?BUILD_PACKAGE}
 #------------------------
-
-echo "What do we currently have loaded"
-module list
 
 export architecture=haswell
 if [ -z "${ext}" ] ; then
@@ -182,8 +179,12 @@ else
   export architecture=${architecture}-${ext}
 fi
 
+echo "What do we currently have loaded"
+module list
+
 pwd
-python config/configure.py ${arpackline}
+# export SLEPC_DIR=`pwd`
+./configure # ${arpackline}
 make SLEPC_DIR=$PWD || /bin/true
 
 module unload petsc
@@ -219,14 +220,14 @@ help( [[
 The SLEPC modulefile defines the following environment variables:
 TACC_SLEPC_DIR, TACC_SLEPC_LIB, and TACC_SLEPC_INC 
 for the location of the SLEPC %{version} distribution, 
-libraries, and include files, respectively.\n
+libraries, and include files, respectively.
 
 Usage:
     include \$(SLEPC_DIR)/conf/slepc_common
-(Alternatively:
+Alternatively:
     include \$(SLEPC_DIR)/conf/slepc_variables
     include \$(SLEPC_DIR)/conf/slepc_rules
-) in your makefile, then compile
+in your makefile, then compile
     \$(CC) -c yourfile.c \$(PETSC_INCLUDE)
 and link with
     \$(CLINKER) -o yourprog yourfile.o \$(SLEPC_LIB)
@@ -234,12 +235,12 @@ and link with
 Version ${moduleversion}
 ]] )
 
-whatis( "Name: Scalable Library for Eigen Problem Computations (SLEPc)" )
+whatis( "Name: SLEPc" )
 whatis( "Version: %{version}-${ext}" )
 whatis( "Version-notes: ${moduleversion}" )
 whatis( "Category: library, mathematics" )
 whatis( "URL: http://www.grycap.upv.es/slepc/" )
-whatis( "Description: Library of eigensolvers" )
+whatis( "Description: Scalable Library for Eigen Problem Computations: Library of eigensolvers" )
 
 local             petsc_arch =    "${architecture}"
 local             slepc_dir =     "%{INSTALL_DIR}"
@@ -253,7 +254,7 @@ setenv(          "TACC_SLEPC_INC",        pathJoin(slepc_dir,petsc_arch,"include
 setenv(          "SLEPC_VERSION",         "${moduleversion}")
 setenv(          "TACC_SLEPC_VERSION",    "${moduleversion}")
 
-prereq("petsc/${moduleversion}")
+always_load("petsc/${moduleversion}")
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${moduleversion} << EOF
@@ -332,6 +333,10 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Wed Jan 25 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 4 UNRELEASED : change petsc prereq to always_load
+* Tue Jan 17 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: modulefile fix, update to 3.7.3
 * Tue Jul 05 2016 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: made non-relocatable
 * Thu Dec 10 2015 eijkhout <eijkhout@tacc.utexas.edu>
