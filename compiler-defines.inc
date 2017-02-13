@@ -29,6 +29,12 @@
   %define comp_fam_name GNU
   %define comp_module gcc/5.4.0
 %endif
+%if "%{is_gcc63}" == "1"
+  %define comp_fam gcc
+  %define comp_fam_ver gcc6_3
+  %define comp_fam_name GNU
+  %define comp_module gcc/6.3.0
+%endif
 %if "%{is_intel16}" == "1"
   %define comp_fam intel
   %define comp_fam_ver intel16
