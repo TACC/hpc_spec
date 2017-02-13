@@ -223,6 +223,8 @@ setenv(       "TACC_IMPI_LIB"          , pathJoin( base_dir , "intel64/lib"     
 setenv(       "TACC_IMPI_INC"          , pathJoin( base_dir , "intel64/include"  ) )
 setenv(       "I_MPI_CC"               , "%{myCC}"                               )
 setenv(       "I_MPI_CXX"              , "%{myCXX}"                              )
+setenv(       "I_MPI_FC"               , "%{myFC}"                               )
+setenv(       "I_MPI_F77"              , "%{myFC}"                               )
 setenv(       "I_MPI_F90"              , "%{myFC}"                               )
 setenv(       "I_MPI_FABRICS"          , "shm:tmi"                               )
 setenv(       "I_MPI_TMI_PROVIDER"     , "psm2"                                  )
