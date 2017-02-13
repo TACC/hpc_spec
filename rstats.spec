@@ -1,0 +1,1 @@
+Rstats-3.2.1_intel16_craympich730_v2.spec
