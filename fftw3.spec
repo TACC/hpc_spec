@@ -16,7 +16,7 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: A Nice little relocatable skeleton spec file example.
+Summary: FFTW is a C subroutine library for computing the discrete Fourier transform
 
 # Give the package a base name
 %define pkg_base_name fftw3
@@ -25,7 +25,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 3
-%define micro_version 4
+%define micro_version 6
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -231,6 +231,24 @@ make clean
             --prefix=%{INSTALL_DIR}
 make -j 16
 make DESTDIR=$RPM_BUILD_ROOT install
+
+## Make double-long version w/ mpi support (added in v. 3.3.6 at user request - antia)
+#This addition is not finishing properly (the installation). Needs further work.
+#make clean
+#./configure --with-pic \
+#            --enable-long-double \
+#            --enable-shared \
+#            --enable-openmp \
+#            --enable-threads \
+#            --disable-dependency-tracking \
+#            --enable-mpi \
+#            --enable-sse2 \
+#            --enable-avx \           
+#            --prefix=%{INSTALL_DIR}
+#make -j 16
+#make DESTDIR=$RPM_BUILD_ROOT install
+
+
 
   # Copy everything from tarball over to the installation directory
   
