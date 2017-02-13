@@ -1,7 +1,7 @@
 Summary:    Python is a high-level general-purpose programming language.
 Name:       tacc-python3 
 Version:    3.5.1
-Release:    2
+Release:    2%{?dist}
 License:    GPLv2
 Vendor:     Python Software Foundation
 Group:      Applications
@@ -13,20 +13,25 @@ Packager:   TACC - rtevans@tacc.utexas.edu
 # CONFIGURATION DEFINITIONS
 #------------------------------------------------
 
-%define build_new        0
-%define build_numpy      0
-%define build_scipy      0
-%define build_matplotlib 0
-%define build_mpi4py     1
+%define build_new        1
+%define build_numpy      1
+%define build_scipy      1
+%define build_matplotlib 1
+%define build_mpi4py     0
 
-%include mpi-defines.inc
-
+%global _python_bytecompile_errors_terminate_build 0
 #------------------------------------------------
 # BASIC DEFINITIONS
 #------------------------------------------------
+%if "%{build_mpi4py}" == "0"
+    %define mpi_fam     none
+    %define mpi_label   none
+%endif
+
 %include rpm-dir.inc
 %include system-defines.inc
 %include compiler-defines.inc
+%include mpi-defines.inc	
 
 %define PNAME python3
 %define MODULE_VAR TACC_PYTHON
@@ -38,7 +43,7 @@ Packager:   TACC - rtevans@tacc.utexas.edu
 %if "%{build_mpi4py}" == "1"
     %define INSTALL_DIR_MPI %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{PNAME}/%{version}
     %define MODULE_DIR_MPI %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{MODULES}/%{PNAME}
-    %define PACKAGE_NAME %{name}-%{comp_fam_ver}-%{mpi_fam_ver}
+    %define PACKAGE_NAME tacc-mpi4py-%{PNAME}-%{version}-%{comp_fam_ver}-%{mpi_fam_ver}
 %endif
 
 %package -n %{PACKAGE_NAME}
@@ -51,26 +56,26 @@ This is intended to be a core Python
 interpreter for TACC systems.
 
 %prep
+rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR_COMP}
+rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR_MPI}
+rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR_COMP}
+rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}
+
 
 %if "%{build_mpi4py}" == "0"
-    rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR_COMP}
     mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR_COMP}
 %endif
-
 %if "%{build_mpi4py}" == "1"
-    rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR_MPI}
     mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR_MPI}
 %endif
 
 %build
 
 %install
+export BASH_ENV=/etc/tacc/tacc_functions
 %include system-load.inc
 %include compiler-load.inc
 
-module purge
-module load TACC
-module load %{comp_module}
 
 # Set up src directory
 export SRC_DIR=`pwd`/src
@@ -79,7 +84,7 @@ cd %{_topdir}/SOURCES
 
 export PATH=%{INSTALL_DIR_COMP}/bin:$PATH
 export LD_LIBRARY_PATH=%{INSTALL_DIR_COMP}/lib64:%{INSTALL_DIR_COMP}/lib:$LD_LIBRARY_PATH
-export PYTHONPATH=%{INSTALL_DIR_COMP}/lib/python3.5/site-packages:$PYTHONPATH
+export PYTHONPATH=%{INSTALL_DIR_COMP}/lib:$PYTHONPATH
 
 
 %if "%{build_mpi4py}" == "0"
