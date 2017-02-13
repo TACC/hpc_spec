@@ -23,10 +23,10 @@ Summary: A Nice little relocatable skeleton spec file for Gromacs.
 %define name_prefix tacc
 # Create some macros (spec file variables)
 %define major_version 2016
-%define minor_version 
+%define minor_version 1 
 %define micro_version 
 
-%define pkg_version %{major_version}
+%define pkg_version %{major_version}.%{minor_version}
 %define dbg %{nil}
 
 ### Toggle On/Off ###
@@ -61,10 +61,10 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
-%define APPS /opt/apps
-%define MODULES modulefiles
-%define INSTALL_DIR %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{pkg_base_name}/%{pkg_version}
-%define MODULE_DIR  %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{MODULES}/%{pkg_base_name}
+#%define APPS /opt/apps
+#%define MODULES modulefiles
+#%define INSTALL_DIR %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{pkg_base_name}/%{pkg_version}
+#%define MODULE_DIR  %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{MODULES}/%{pkg_base_name}
 
 %package %{PACKAGE} 
 Summary: Gromacs local binary install
@@ -175,7 +175,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 # Single precision MPI-enabled mdrun
 module load cmake
 
-
+rm -rf g_single_serial
 mkdir g_single_serial
 cd g_single_serial
 
@@ -196,12 +196,13 @@ env CC=icc CXX=icpc cmake .. \
 -DGMX_BUILD_SHARED_EXE=OFF \
 -DGMX_EXTERNAL_BOOST=OFF
 
-make -j 12
+make -j 24
 make install
 #################################################################################
 
 
 cd ..
+rm -rf g_single_parallel
 mkdir g_single_parallel
 cd g_single_parallel
 
@@ -226,7 +227,7 @@ env CC=mpicc CXX=mpicxx cmake .. \
 -DGMX_BINARY_SUFFIX=_mpi
 
 
-make -j 12
+make -j 24
 make install
 
 #################################################################################
@@ -235,6 +236,7 @@ make install
 
 # Double precision MPI-enabled mdrun
 cd ..
+rm -rf g_double_parallel
 mkdir g_double_parallel
 cd g_double_parallel
 
@@ -261,7 +263,7 @@ env CC=mpicc CXX=mpicxx cmake .. \
 -DGMX_LIBS_SUFFIX=_mpi_d
 
 
-make -j 12
+make -j 24
 make install
 
 ###############################################################################

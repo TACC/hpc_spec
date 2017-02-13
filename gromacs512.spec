@@ -50,7 +50,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_base_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GPL
 Group:     Development/Tools
 Group: Applications/Biology
@@ -175,7 +175,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 # Single precision MPI-enabled mdrun
 module load cmake
 
-
+rm -rf g_single_serial
 mkdir g_single_serial
 cd g_single_serial
 
@@ -202,6 +202,8 @@ make install
 
 
 cd ..
+
+rm -rf g_single_parallel
 mkdir g_single_parallel
 cd g_single_parallel
 
@@ -235,6 +237,7 @@ make install
 
 # Double precision MPI-enabled mdrun
 cd ..
+rm -rf g_double_parallel
 mkdir g_double_parallel
 cd g_double_parallel
 
