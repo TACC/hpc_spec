@@ -42,7 +42,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   14
+Release:   15
 License:   GPL
 Group:     Development/Tools
 Packager:  TACC - carlos@tacc.utexas.edu
@@ -207,6 +207,16 @@ setenv( "TACC_MPI_GETMODE", "cray_slurm" )
 -- These seem to be valid for both 5.1 and 5.2
 %if "%{comp_fam}" == "gcc"
 local comp_dir  = "/mpich-gnu/5.1"
+local full_path = pathJoin( mpt_path, comp_dir )
+setenv( "CRAY_MPICH2_DIR", full_path )
+setenv( "MPICH_DIR", full_path )
+setenv( "TACC_CRAY_MPT_INC", pathJoin( full_path, "include" ) )
+setenv( "TACC_CRAY_MPT_LIB", pathJoin( full_path, "lib" ) )
+prepend_path("LD_LIBRARY_PATH", pathJoin( full_path, "lib" ) )
+%endif
+
+%if "%{comp_fam_ver}" == "gcc4_9"
+local comp_dir  = "/mpich-gnu/4.9"
 local full_path = pathJoin( mpt_path, comp_dir )
 setenv( "CRAY_MPICH2_DIR", full_path )
 setenv( "MPICH_DIR", full_path )
