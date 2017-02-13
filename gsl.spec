@@ -25,11 +25,11 @@ Summary: A Nice little relocatable skeleton spec file example.
 %define MODULE_VAR    GSL
 
 # Create some macros (spec file variables)
-%define major_version 1
-%define minor_version 16
-%define micro_version 0
+%define major_version 2
+%define minor_version 2
+%define micro_version 1
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -95,8 +95,6 @@ Physical Constants  IEEE Floating-Point
 Discrete Wavelet Transforms Basis splines
 
 Unlike the licenses of proprietary numerical libraries the license of GSL does not restrict scientific cooperation. It allows you to share your programs freely with others.
-
-The current version is GSL-1.16. It was released on 19 July 2013. Details of recent changes can be found in the NEWS file. This is a stable release.
 
 GSL can be found in the gsl subdirectory on your nearest GNU mirror http://ftpmirror.gnu.org/gsl/.
 
