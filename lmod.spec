@@ -86,7 +86,7 @@ PATH=$luaPath:$PATH
 
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR} $RPM_BUILD_ROOT/%{ZSH_SITE_FUNC}
 
-./configure --prefix=%{APPS} $CACHE_DIR --with-settarg=FULL $EXTRA
+./configure --prefix=%{APPS} $CACHE_DIR --with-settarg=FULL $EXTRA --with-siteName=TACC
 make DESTDIR=$RPM_BUILD_ROOT install
 cp contrib/TACC/*.lua $RPM_BUILD_ROOT/%{INSTALL_DIR}/libexec
 
