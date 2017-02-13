@@ -22,11 +22,12 @@ Summary: A Nice little relocatable skeleton spec file for Gromacs.
 %define MODULE_VAR    GROMACS
 %define name_prefix tacc
 # Create some macros (spec file variables)
-%define major_version 5
-%define minor_version 0
-%define micro_version 6
+%define major_version 2016
+%define minor_version 1
+%define micro_version 2
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+#%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{major_version}
 %define dbg %{nil}
 
 ### Toggle On/Off ###
@@ -179,6 +180,7 @@ module load cmake
   module load mkl
 %endif
 
+rm -rf g_single_serial
 mkdir g_single_serial
 cd g_single_serial
 
@@ -192,8 +194,9 @@ env CC=icc CXX=icpc cmake .. \
 -DGMX_MPI=OFF -DGMX_OPENMP=OFF \
 -DGMX_XML=OFF \
 -DCMAKE_EXE_LINKER_FLAGS=" -mkl=sequential" \
--DCMAKE_C_FLAGS="-std=gnu99 -O3 -xAVX -axCORE-AVX2 " \
--DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xAVX -axCORE-AVX2 " \
+-DGMX_SIMD=AVX_256 \
+-DCMAKE_C_FLAGS="-std=gnu99 -O3 -xAVX -axCORE-AVX2 -g " \
+-DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xAVX -axCORE-AVX2 -g " \
 -DGMX_DEFAULT_SUFFIX=ON \
 -DGMX_BUILD_SHARED_EXE=OFF \
 -DGMX_EXTERNAL_BOOST=OFF
@@ -204,6 +207,7 @@ make install
 
 
 cd ..
+rm -rf g_single_parallel
 mkdir g_single_parallel
 cd g_single_parallel
 
@@ -219,8 +223,9 @@ env CC=mpicc CXX=mpicxx cmake .. \
 -DGMX_XML=OFF \
 -DGMX_SKIP_DEFAULT_CFLAGS=ON \
 -DCMAKE_EXE_LINKER_FLAGS=" -mkl=sequential" \
--DCMAKE_C_FLAGS="-std=gnu99 -O3 -xAVX -axCORE-AVX2 " \
--DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xAVX -axCORE-AVX2 " \
+-DGMX_SIMD=AVX_256 \
+-DCMAKE_C_FLAGS="-std=gnu99 -O3 -xAVX -axCORE-AVX2 -g " \
+-DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xAVX -axCORE-AVX2 -g " \
 -DGMX_DEFAULT_SUFFIX=ON \
 -DGMX_EXTERNAL_BOOST=OFF \
 -DGMX_BUILD_SHARED_EXE=OFF \
@@ -236,6 +241,7 @@ make install
 
 # Double precision MPI-enabled mdrun
 cd ..
+rm -rf g_double_parallel
 mkdir g_double_parallel
 cd g_double_parallel
 
@@ -251,8 +257,9 @@ env CC=mpicc CXX=mpicxx cmake .. \
 -DGMX_SOFTWARE_INVSQRT=OFF \
 -DGMX_SKIP_DEFAULT_CFLAGS=ON \
 -DCMAKE_EXE_LINKER_FLAGS=" -mkl=sequential" \
--DCMAKE_C_FLAGS="-std=gnu99 -O3 -xAVX -axCORE-AVX2 " \
--DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xAVX -axCORE-AVX2" \
+-DGMX_SIMD=AVX_256 \
+-DCMAKE_C_FLAGS="-std=gnu99 -O3 -xAVX -axCORE-AVX2 -g " \
+-DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xAVX -axCORE-AVX2 -g "  \
 -DGMX_DEFAULT_SUFFIX=OFF \
 -DGMX_EXTERNAL_BOOST=OFF \
 -DGMX_BUILD_SHARED_EXE=OFF \
@@ -272,6 +279,7 @@ export TACC_CUDA_LIB=$TACC_CUDA_DIR/lib64/
 export TACC_CUDA_INC=$TACC_CUDA_DIR/include/
 #module load boost
 cd ..
+rm -rf g_gpu_parallel
 mkdir g_gpu_parallel
 cd g_gpu_parallel
 env CC=mpicc CXX=mpicxx cmake .. \
@@ -280,6 +288,7 @@ env CC=mpicc CXX=mpicxx cmake .. \
 -DCMAKE_EXE_LINKER_FLAGS="-mkl=sequential" \
 -DGMX_EXTERNAL_BOOST=OFF \
 -DGMX_X11=OFF \
+-DGMX_SIMD=AVX_256 \
 -DCMAKE_C_FLAGS="-std=gnu99 -O3 -xAVX -axCORE-AVX2" \
 -DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xAVX -axCORE-AVX2" \
 -DBUILD_SHARED_LIBS=ON \
