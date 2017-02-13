@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   proprietary
 Group:     MPI
 URL:       https://software.intel.com/en-us/intel-mpi-library
@@ -194,7 +194,7 @@ whatis("Category: library, Runtime Support"                                 )
 whatis("Description: Intel MPI Library (C/C++/Fortran for x86_64) "         )
 whatis("URL: http://software.intel.com/en-us/articles/intel-mpi-library/ "  )
 prepend_path( "PATH"              , pathJoin( base_dir , "intel64/bin"      ) )
-prepend_path( "LD_LIBRARY_PATH"   , pathJoin( base_dir , "lib"              ) )
+prepend_path( "LD_LIBRARY_PATH"   , pathJoin( base_dir , "intel64/lib"      ) )
 prepend_path( "MANPATH"           , pathJoin( base_dir , "man"              ) )
 prepend_path( "MODULEPATH"        ,"/opt/apps/intel16/impi_5_1/modulefiles" )
 prepend_path( "I_MPI_ROOT"        , base_dir                                )
