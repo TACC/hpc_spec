@@ -1,6 +1,6 @@
 # Antia Lamas-Linares
-# 2016-09-28
-# Modified for KNL deployment.
+# 2017-01-30
+# Modified for KNL deployment and avx512
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -26,7 +26,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 3
-%define micro_version 5
+%define micro_version 6
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -195,8 +195,10 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 %endif
 
 %if "%is_intel" == "1"
-  export CFLAGS="-O3 -xAVX -axCORE-AVX2"
-  export LDFLAGS="-xAVX -axCORE-AVX2"
+  #export CFLAGS="-O3 -xAVX -axCORE-AVX2"
+  #export LDFLAGS="-xAVX -axCORE-AVX2"
+  export CFLAGS="-O3 -xCORE-AVX2 -axMIC-AVX512"
+  export LDFLAGS="-xCORE-AVX2 -axMIC-AVX512"
   echo "I'm intelling"
 %endif
 
@@ -218,8 +220,9 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
             --enable-sse2 \
             --enable-avx \
             --enable-avx2 \
+            --enable-avx512 \
             --prefix=%{INSTALL_DIR}
-make -j 8
+make -j 16
 make DESTDIR=$RPM_BUILD_ROOT install
 
 ## Make single-precision version w/ mpi support
@@ -236,8 +239,9 @@ make clean
             --enable-sse2 \
             --enable-avx \
             --enable-avx2 \
+	    --enable-avx512 \
             --prefix=%{INSTALL_DIR}
-make -j 8
+make -j 16
 make DESTDIR=$RPM_BUILD_ROOT install
 
   # Copy everything from tarball over to the installation directory
