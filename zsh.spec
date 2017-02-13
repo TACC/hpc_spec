@@ -1,7 +1,7 @@
 Summary: Zsh: The one shell to rule them all
 Name: zsh
 Version: 5.1.1
-Release: 1
+Release: 2
 License: Zsh Development Group
 Group: System Environment/Shells
 Source: zsh-%{version}.tar.gz
@@ -39,7 +39,7 @@ from tcsh (another "custom" shell).
 
 CC=gcc ./configure --prefix=/usr --mandir=/usr/share/man --bindir=/bin/     \
                    --enable-etcdir=/etc/tacc/zsh --infodir=/usr/share/info  \
-		   --enable-cflags=-O2
+		   --enable-cflags=-O2 --enable-site-fndir=/opt/apps/zsh/site-functions
 make
 
 make DESTDIR=$RPM_BUILD_ROOT install
@@ -76,6 +76,7 @@ rm -f $RPM_BUILD_ROOT%{_bindir}/zsh-*
 /usr/lib/zsh
 /usr/share/man/man1
 /usr/share/zsh
+/opt/apps/zsh/site-functions
 
 %post
 if [ ! -f /etc/shells ]; then
