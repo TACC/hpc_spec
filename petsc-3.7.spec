@@ -33,7 +33,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -88,7 +88,9 @@ module purge
 %include mpi-load.inc
 
 ## courtesy of Carlos
-source /scratch/projects/compilers/sourceme17.sh
+%if "%{comp_fam}" == "intel"
+  source /scratch/projects/compilers/sourceme17.sh
+%endif
 
 #
 # Set Up Installation Directory and tmp file system
@@ -275,6 +277,7 @@ export CHACO_OPTIONS="--with-chaco=1 --download-chaco"
 #
 # Mumps & Superlu depend on parmetis which depends on metis
 export PARMETIS_OPTIONS="--with-parmetis=1 --download-parmetis --with-metis=1 --download-metis"
+export PARMETISSTRING="parmetis"
 export MUMPS_OPTIONS="--with-mumps=1 --download-mumps ${PARMETIS_OPTIONS}"
 export SUPERLU_OPTIONS="--with-superlu_dist=1 --download-superlu_dist \
    --with-superlu=1 --download-superlu ${PARMETIS_OPTIONS}"
@@ -293,6 +296,12 @@ export SPAI_STRING=spai
 export SPOOLES_OPTIONS="--with-spooles=1 --download-spooles"
 export SPOOLES_STRING=spooles
 
+#
+# Sundials
+#
+export SUNDIALS_OPTIONS="--with-sundials=1 --download-sundials"
+export SUNDIALSSTRING="sundials"
+
 ##
 ## 64-bit indices
 ##
@@ -305,6 +314,7 @@ case "${ext}" in
 	PLAPACK_OPTIONS= ; PLAPACK_STRING= ;
         SPAI_OPTIONS= ;    SPAITRING= ;
 	SPOOLES_OPTIONS= ; SPOOLES_STRING= ;
+	SUNDIALS_OPTIONS= ; SUNDIALSSTRING= ;
 	SUPERLU_OPTIONS= ; SUPERLU_STRING= ;
                 ;;
 esac
@@ -312,19 +322,20 @@ esac
 ##
 ## define packages; some are real & complex, others real only.
 ##
-export complexpackages="mumps scalapack spooles ${superlustring}"
+export complexpackages="mumps scalapack ${SPOOLES_STRING} ${superlustring}"
 export PETSC_COMPLEX_PACKAGES="\
   ${MUMPS_OPTIONS}\
   ${SCALAPACK_OPTIONS} ${SPOOLES_OPTIONS} \
   ${hdf5download} \
   "
-export realonlypackages="${CHACOSTRING} ${hdf5string} ${HYPRESTRING} ${MLSTRING} parmetis spai ${PLAPACKSTRING}"
+export realonlypackages="${CHACOSTRING} ${hdf5string} ${HYPRESTRING} ${MLSTRING} ${PARMETISSTRING} spai ${PLAPACKSTRING} ${SUNDIALSSTRING}"
 
 export PETSC_REALONLY_PACKAGES="\
   ${CHACO_OPTIONS} \
   ${HYPRE_OPTIONS} ${ML_OPTIONS} \
   ${MATLABOPTIONS} ${ML_OPTIONS} \
-  ${PLAPACKOPTIONS} ${SPAI_OPTIONS} ${SUPERLU_OPTIONS} \
+  ${PARMETIS_OPTIONS} \
+  ${PLAPACKOPTIONS} ${SPAI_OPTIONS} ${SUNDIALS_OPTIONS} ${SUPERLU_OPTIONS} \
   "
 
 export packages="${PETSC_REALONLY_PACKAGES} ${PETSC_COMPLEX_PACKAGES}"
@@ -470,7 +481,7 @@ whatis( "Version: %{version}${versionextra}${dynamicextra}" )
 whatis( "Version-notes: external packages installed: ${packages}" )
 whatis( "Category: library, mathematics" )
 whatis( "URL: http://www-unix.mcs.anl.gov/petsc/petsc-as/" )
-whatis( "Description: Numerical library for sparse linear algebra" )
+whatis( "Description: Portable Extendible Toolkit for Scientific Computing, Numerical library for sparse linear algebra" )
 
 local             petsc_arch =    "${architecture}"
 local             petsc_dir =     "%{INSTALL_DIR}/"
@@ -507,8 +518,6 @@ cp -r bin config externalpackages include lib makefile src    \
 cp -r knightslanding*                   $RPM_BUILD_ROOT/%{INSTALL_DIR}
 #cp -r %{MODULE_DIR}/                $RPM_BUILD_ROOT/%{MODULE_DIR}
 
-#find $RPM_BUILD_ROOT/%{INSTALL_DIR} -name CMakeFiles -exec rm -rf {} \;
-
 popd
 umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 
@@ -533,8 +542,8 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
-* Tue Dec 20 2016 eijkhout <eijkhout@tacc.utexas.edu>
-- release 4: moved to el7, also fixed compiler options
+* Thu Jan 26 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 4: moved to el7, also fixed compiler options, adding sundials
 * Fri Nov 18 2016 eijkhout <eijkhout@tacc.utexas.edu>
 - release 3: changed sandybridge -> knightslanding
   NEVER INSTALLED

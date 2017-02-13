@@ -1,98 +1,119 @@
 #
 # Spec file for SLEPc
 #
-%define slepcversion 3.7
-%define patchlevel .2
 
-Summary: Slepc local binary install
-Name: slepc
-Version: %{slepcversion}
-Release: 1
-License: GPL
-Vendor: http://www.grycap.upv.es/slepc/
-Group: Universitat Politecnica De Valencia
-Source: slepc-%{version}%{patchlevel}.tar.gz
-Packager: eijkhout@tacc.utexas.edu 
+Summary: Slepc install
 
-%define debug_package %{nil}
-%global _python_bytecompile_errors_terminate_build 0
+# Give the package a base name
+%define pkg_base_name slepc
+%define MODULE_VAR    SLEPC
 
-%define APPS /opt/apps
-%define HOMEAPPS /home1/apps
-%define MODULES modulefiles
+# Create some macros (spec file variables)
+%define major_version 3
+%define minor_version 7
+%define micro_version 3
+%define versionpatch 3.7.3
+
+%define pkg_version %{major_version}.%{minor_version}
 
 %include rpm-dir.inc
 %include compiler-defines.inc
 %include mpi-defines.inc
 
-%define slepc_install_dir %{HOMEAPPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{name}/%{version}
-%define modulefileroot  %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{MODULES}/%{name}
+########################################
+### Construct name based on includes ###
+########################################
+#%include name-defines.inc
+%include name-defines-noreloc.inc
+%define INSTALL_PREFIX  /home1/apps/el7/
 
+########################################
+############ Do Not Remove #############
+########################################
 
-%package -n %{name}-%{version}-%{comp_fam_ver}-%{mpi_fam_ver}-modulefiles
-Summary: SLEPc local binary install
-Group: Numerical library
+############ Do Not Change #############
+Name:      %{pkg_name}
+Version:   %{pkg_version}
+BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
+########################################
 
-%package -n %{name}-%{version}-%{comp_fam_ver}-%{mpi_fam_ver}-software
-Summary: SLEPc local binary install
-Group: Numerical library
+Release: 1%{?dist}
+License: GPL
+Vendor: Universitat Politecnica De Valencia http://www.grycap.upv.es/slepc/
+Group: Development/Numerical-Libraries
+Packager: TACC -- eijkhout@tacc.utexas.edu
+Source0: %{pkg_base_name}-%{major_version}.%{minor_version}.%{micro_version}.tar.gz
+
+%define debug_package %{nil}
+## %global _missing_build_ids_terminate_build 0
+%global _python_bytecompile_errors_terminate_build 0
+
+%package %{PACKAGE}
+Summary: Slepc local binary install
+Group: System Environment/Base
+%package %{MODULEFILE}
+Summary: Slepc local binary install
+Group: System Environment/Base
 
 %description
-%description -n %{name}-%{version}-%{comp_fam_ver}-%{mpi_fam_ver}-modulefiles
-SLEPC is a package of eigensolvers, built on top of petsc
-%description -n %{name}-%{version}-%{comp_fam_ver}-%{mpi_fam_ver}-software
-SLEPC is a package of eigensolvers, built on top of petsc
+%description %{PACKAGE}
+SLEPC is the Portable Extendible Toolkit for Scientific Computing.
+It contains solvers and tools mostly for PDE solving.
+%description %{MODULEFILE}
+SLEPC is the Portable Extendible Toolkit for Scientific Computing.
+It contains solvers and tools mostly for PDE solving.
 
 %prep 
-rm -rf $RPM_BUILD_ROOT/%{slepc_install_dir}
-mkdir -p $RPM_BUILD_ROOT/%{slepc_install_dir}
 
-%setup -n slepc-%{version}%{patchlevel}
+%setup -n slepc-%{versionpatch}
 
+#---------------------------------------
 %build
+#---------------------------------------
 
+
+#---------------------------------------
 %install
+#---------------------------------------
+
+# Setup modules
+%include system-load.inc
+
+%include compiler-defines.inc
+%include mpi-defines.inc
 
 %include compiler-load.inc
 %include mpi-load.inc
 
-#module load python cmake
-module unload python
-module load cmake
+## courtesy of Carlos
+%if "%{comp_fam}" == "intel"
+##  source /scratch/projects/compilers/sourceme17.sh
+  export TACC_MPI_GETMODE=impi_hydra
+  export MPICH_HOME=/scratch/projects/compilers/intel/17/compilers_and_libraries_2017.1.132/linux/mpi
+  source /scratch/projects/compilers/intel/17/bin/compilervars.sh intel64
+  source /scratch/projects/compilers/intel/17/impi/2017.1.132/bin64/mpivars.sh
+%endif
 
-#
-# configure/install loop; also modulefiles
-#
+## echo ${MODULEPATH}
+## ls /opt/apps/intel17/impi17_0/modulefiles
+## module list
+module avail petsc
+
 export SLEPC_DIR=`pwd`
-mkdir -p $RPM_BUILD_ROOT/%{slepc_install_dir}
-mkdir -p $RPM_BUILD_ROOT/%{modulefileroot}
-
-# # we no longer provide static versions. 
-# # leaving these definitions just in case
-# export static="cxxstatic cxxstaticdebug static staticdebug "
-# export nostatic="complexstatic complexstaticdebug cxxcomplexstatic cxxcomplexstaticdebug"
-
-# export dynamic="debug cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug"
-# export nodynamic="complex complexdebug cxxcomplexshared cxxcomplexshareddebug"
+rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
+mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 # same as in petsc
 export dynamiccc="debug uni unidebug i64 i64debug"
 export dynamiccxx="cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug cxxi64 cxxi64debug"
 
-%if "%{is_intel12}" == "1"
-# not yet built for pgi
-module load mkl/10.3 arpack
-export arpackline="--with-arpack=1 --with-arpack-dir=${TACC_ARPACK_LIB} \
-    --with-arpack-flags=\"-lparpack,-larpack\""
-%else
-export arpackline=
-%endif
-
 for ext in \
   single "" \
   ${dynamiccc} ${dynamiccxx} ; do
 
-export architecture=sandybridge
+export architecture=knightslanding
 if [ -z "${ext}" ] ; then
   module load petsc/%{version}
 else
@@ -108,7 +129,7 @@ module unload petsc
 
 ## Module files for slepc
 
-mkdir -p $RPM_BUILD_ROOT/%{modulefileroot}
+mkdir -p %{MODULE_DIR}
 
 if [ -z "${ext}" ] ; then
   export moduleversion=%{version}
@@ -116,7 +137,7 @@ else
   export moduleversion=%{version}-${ext}
 fi
 
-cat > $RPM_BUILD_ROOT/%{modulefileroot}/${moduleversion}.lua << EOF
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/${moduleversion}.lua << EOF
 help( [[
 The SLEPC modulefile defines the following environment variables:
 TACC_SLEPC_DIR, TACC_SLEPC_LIB, and TACC_SLEPC_INC 
@@ -136,15 +157,15 @@ and link with
 Version ${moduleversion}
 ]] )
 
-whatis( "Name: Scalable Library for Eigen Problem Computations (SLEPc)" )
+whatis( "Name: SLEPc" )
 whatis( "Version: %{version}-${ext}" )
 whatis( "Version-notes: ${moduleversion}" )
 whatis( "Category: library, mathematics" )
 whatis( "URL: http://www.grycap.upv.es/slepc/" )
-whatis( "Description: Library of eigensolvers" )
+whatis( "Description: Scalable Library for Eigen Problem Computations, Library of eigensolvers" )
 
 local             petsc_arch =    "${architecture}"
-local             slepc_dir =     "%{slepc_install_dir}"
+local             slepc_dir =     "%{INSTALL_DIR}"
 
 prepend_path("LD_LIBRARY_PATH", pathJoin(slepc_dir,petsc_arch,"lib") )
 
@@ -158,7 +179,7 @@ setenv(          "TACC_SLEPC_VERSION",    "${moduleversion}")
 prereq("petsc/${moduleversion}")
 EOF
 
-cat > $RPM_BUILD_ROOT/%{modulefileroot}/.version.${moduleversion} << EOF
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${moduleversion} << EOF
 #%Module1.0##################################################
 ##
 ## version file for slepc
@@ -172,23 +193,23 @@ EOF
 done
 
 
-mkdir -p $RPM_BUILD_ROOT/%{slepc_install_dir}
+## mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-cp -r sandybridge*          $RPM_BUILD_ROOT/%{slepc_install_dir}/
-cp -r docs include lib src $RPM_BUILD_ROOT/%{slepc_install_dir}/
+cp -r knightslanding*          $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+cp -r docs include lib src $RPM_BUILD_ROOT/%{INSTALL_DIR}/
 
-%files -n %{name}-%{version}-%{comp_fam_ver}-%{mpi_fam_ver}-software
-%defattr(755,root,install)
-%{slepc_install_dir}
+%files %{PACKAGE}
+  %defattr(755,root,install)
+  %{INSTALL_DIR}
 
-%files -n %{name}-%{version}-%{comp_fam_ver}-%{mpi_fam_ver}-modulefiles
-%defattr(755,root,install)
-%{modulefileroot}
+%files %{MODULEFILE}
+  %defattr(755,root,install)
+  %{MODULE_DIR}
 
 %post
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Wed Jul 20 2016 eijkhout <eijkhout@tacc.utexas.edu>
+* Mon Jan 09 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial build
