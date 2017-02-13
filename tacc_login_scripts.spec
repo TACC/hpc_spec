@@ -4,7 +4,7 @@
 Summary:   Standard TACC Login scripts for our friendly Linux Clusters.
 Name:      tacc_login_scripts
 Version:   2.1
-Release:   43%{?dist}
+Release:   44%{?dist}
 License:   Proprietary
 Group:     System Environment/Base
 Source0:   %{name}-%{version}.tar.gz
@@ -80,7 +80,6 @@ find archive | cpio -pduv --owner=build:                 $RPM_BUILD_ROOT/usr/loc
 find $OLD_TACC_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/usr/local
 
 find ./profile.d $PROFILE_D_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT%{PROFILE_D_PATH}/..
-rm $RPM_BUILD_ROOT%{PROFILE_D_PATH}/record_module_use.*.fini
 
 #
 #  The new shells all look in /etc/tacc/ for their startup scripts
