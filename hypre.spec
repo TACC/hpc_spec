@@ -81,7 +81,7 @@ Group: System Environment/Base
 This is the long description for the modulefile RPM...
 
 %description
-Hypre is a direct solver for distributed sparse linear system.
+Hypre is a solver library for distributed sparse linear system.
 
 #---------------------------------------
 %prep
@@ -174,7 +174,7 @@ whatis( "Name: Hypre" )
 whatis( "Version: %{version}" )
 whatis( "Category: library, mathematics" )
 whatis( "URL: http://llnl.gov/hypre/" )
-whatis( "Description: Numerical library for sparse direct solvers" )
+whatis( "Description: Numerical library for sparse solvers" )
 
 local             hypre_arch =    "${architecture}"
 local             hypre_dir  =     "${TACC_PETSC_DIR}"
