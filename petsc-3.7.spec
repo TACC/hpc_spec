@@ -1,5 +1,8 @@
 #
-# Adapted from Bar.spec by Victor Eijkhout 2015/11/30
+# Portable Extendible Toolkit for Scientific Computing
+# spec file by Victor Eijkhout
+#
+# Adapted from Bar.spec, Cyrus Proctor & Antonio Gomez
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -25,7 +28,7 @@ Summary: PETSc rpm build script
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 7
-%define micro_version 2
+%define micro_version 4
 
 %define pkg_version %{major_version}.%{minor_version}
 %define pkg_full_version %{major_version}.%{minor_version}.%{micro_version}
@@ -49,7 +52,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   3
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.mcs.anl.gov/petsc/
@@ -254,6 +257,7 @@ export noext="\
 ## start of for ext loop, installation only
 ##
 for ext in "" ${EXTENSIONS} ; do
+#for ext in "" ; do
 
 echo "configure install for ${ext}"
 export versionextra=
@@ -296,20 +300,12 @@ export hdf5string=
 export hdf5download=
 export hdf5versionextra=
 
-# %if "%{comp_fam}" == "intel" && "%{comp_fam_ver}" != "intel15"
-    export hdf5string="hdf5"
-# %endif
-
-if [ ! -z "${hdf5string}" ] ; then
+%if "%{comp_fam}" == "intel"
     module load phdf5
     export hdf5download="--with-hdf5=1 --with-hdf5-dir=${TACC_HDF5_DIR}"
     export hdf5versionextra="; hdf5 support"
-fi
-
-# ## totally disabled for now
-# export hdf5string=
-# export hdf5download=
-# export hdf5versionextra=
+    export hdf5string="hdf5"
+%endif
 
 export versionextra="${versionextra}${hdf5versionextra}"
 
@@ -339,16 +335,24 @@ export PARMETIS_OPTIONS="--with-parmetis=1 --download-parmetis --with-metis=1 --
 export MUMPS_OPTIONS="--with-mumps=1 --download-mumps ${PARMETIS_OPTIONS}"
 export SUPERLU_OPTIONS="--with-superlu_dist=1 --download-superlu_dist \
    --with-superlu=1 --download-superlu ${PARMETIS_OPTIONS}"
+export SUPERLUSTRING="superlu and superlu_dist"
 export SCALAPACK_OPTIONS="--with-scalapack=1 --download-scalapack --with-blacs=1 --download-blacs"
+
 # disabled
-export SUPERLU_OPTIONS= 
-export SUPERLU_STRING=
+#export SUPERLU_OPTIONS= 
+#export SUPERLUSTRING=
 
 #
 # Spai
 #
 export SPAI_OPTIONS="--with-spai=1 --download-spai"
 export SPAI_STRING=spai
+
+#
+# Sundials
+#
+export SUNDIALS_OPTIONS="--with-sundials=1 --download-sundials"
+export SUNDIALSSTRING="sundials"
 
 #
 # Spooles
@@ -368,29 +372,32 @@ case "${ext}" in
 	PLAPACK_OPTIONS= ; PLAPACK_STRING= ;
         SPAI_OPTIONS= ;    SPAITRING= ;
 	SPOOLES_OPTIONS= ; SPOOLES_STRING= ;
-	SUPERLU_OPTIONS= ; SUPERLU_STRING= ;
+	SUNDIALS_OPTIONS= ; SUNDIALS_STRING= ;
+	SUPERLU_OPTIONS= ; SUPERLUSTRING= ;
                 ;;
 esac
 
 ##
 ## define packages; some are real & complex, others real only.
 ##
-%define complexpackages mumps scalapack spooles superlu (sequential/distributed)
+%define complexpackages mumps scalapack spooles (sequential/distributed)
 export PETSC_COMPLEX_PACKAGES="\
   ${MUMPS_OPTIONS}\
   ${SCALAPACK_OPTIONS} ${SPOOLES_OPTIONS} \
   ${hdf5download} \
   "
-%define realonlypackages ${CHACOSTRING} ${hdf5string} ${HYPRESTRING} ${MLSTRING} parmetis spai ${PLAPACKSTRING} 
+%define realonlypackages ${CHACOSTRING} ${hdf5string} ${HYPRESTRING} ${MLSTRING} parmetis spai ${SUNDIALSSTRING} ${SUPERLUSTRING} ${PLAPACKSTRING} 
 # ml
 export PETSC_REALONLY_PACKAGES="\
   ${CHACO_OPTIONS} \
   ${HYPRE_OPTIONS} ${ML_OPTIONS} \
   ${MATLABOPTIONS} ${ML_OPTIONS} \
-  ${PLAPACKOPTIONS} ${SPAI_OPTIONS} ${SUPERLU_OPTIONS} \
+  ${PLAPACKOPTIONS} ${SPAI_OPTIONS} ${SUNDIALS_OPTIONS} ${SUPERLU_OPTIONS} \
   "
 
 export packages="${PETSC_REALONLY_PACKAGES} ${PETSC_COMPLEX_PACKAGES}"
+## VLE let's see if this causes the problem
+export packages=
 export scalar="--with-scalar-type=real"
 case "${ext}" in
 *complex* ) export packages="${PETSC_COMPLEX_PACKAGES}"
@@ -409,10 +416,10 @@ export BLAS_LAPACK_OPTIONS="\
 #
 export CUDA_OPTIONS=
 %if "%{comp_fam}" == "gcc"
-module load cuda/6.0 cusp/0.3
+module load cuda
 export CUDA_OPTIONS="--with-cuda=1 --with-cuda-dir=${TACC_CUDA_DIR} \
 	--with-cudac=${TACC_CUDA_BIN}/nvcc \
-	--with-cusp-dir=${TACC_CUSP_DIR} --with-thrust-dir=${TACC_CUDA_DIR}/include/ \
+	--with-cusp-dir=${TACC_CUDA_DIR} --with-thrust-dir=${TACC_CUDA_DIR}/include/ \
 	"
 %endif
 case "${ext}" in
@@ -464,7 +471,6 @@ esac
 
 export PETSC_ARCH=${architecture}
 noprefix=--prefix=%{INSTALL_DIR}/${architecture}
-#export packages=
 if [ "${ext}" = "tau" ] ; then
   module load papi/5.3.0 tau
   export TAU_MAKEFILE=$TACC_TAU_DIR/x86_64/lib/Makefile.tau-phase-icpc-papi-mpi-pdt
@@ -553,11 +559,15 @@ EOF
 #--------------------------
 
 rm -rf ${architecture}/obj
+rm -rf externalpackages/${architecture}/git.hypre
 
 ##
 ## end of for ext loop
 ##
 done 
+
+# this contains binary crap that messes up the packaging
+find . -name git.hypre -exec pwd \; -exec ls -ld {} \;
 
 cp -r bin config externalpackages include lib makefile src    \
                     $RPM_BUILD_ROOT/%{INSTALL_DIR}
@@ -614,5 +624,9 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Tue Feb 07 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: adding superlu
+* Fri Jan 06 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: update to 3.7.4, include sundials, gcc still missing pdf5
 * Tue Jun 14 2016 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: no packages
