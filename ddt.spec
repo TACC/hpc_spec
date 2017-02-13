@@ -4,7 +4,7 @@
 Summary: DDT is a parallel, symbolic debugger.
 Name: ddt
 Version: 6.0.1
-Release: 1
+Release: 2
 License: Commercial
 Group: tools/debugging
 Source0: ddt_6.0.1.tar.gz
@@ -112,11 +112,13 @@ whatis("Keywords: System, Utility")
 whatis("URL: http://content.allinea.com/downloads/userguide.pdf")
 whatis("Description: Parallel, graphical, symbolic debugger")
 
+local home = os.getenv("HOME")
+
 setenv("DDTROOT","%{INSTALL_DIR}")
 setenv("DDTPATH","%{INSTALL_DIR}/bin")
 setenv("TACC_DDT_DIR","%{INSTALL_DIR}")
 setenv("TACC_DDT_BIN","%{INSTALL_DIR}/bin")
-setenv("ALLINEA_TOOLS_CONFIG_DIR","${HOME}/.allinea_6.0.1")
+setenv("ALLINEA_TOOLS_CONFIG_DIR",pathJoin(home,".allinea_6.0.1"))
 prepend_path("PATH","%{INSTALL_DIR}/bin")
 prepend_path("LD_LIBRARY_PATH","%{INSTALL_DIR}/lib")
 
