@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2%{?dist}
 License:   proprietary
 Group:     Compiler
 URL:       https://software.intel.com/en-us/intel-compilers
@@ -240,7 +240,8 @@ prepend_path( "MANPATH" ,             pathJoin( mklRoot ,    "benchmarks/mp_linp
 prepend_path( "INTEL_LICENSE_FILE" ,  pathJoin( installDir , "licenses" ) )
 prepend_path( "INTEL_LICENSE_FILE" ,  "/opt/intel/licenses" )
 prepend_path( "INTEL_LICENSE_FILE" ,  pathJoin( base , ".." ) )
-prepend_path( "INTEL_LICENSE_FILE" ,  "${HOME}/intel/licenses" )
+local home = os.getenv("HOME")
+prepend_path( "INTEL_LICENSE_FILE" ,  pathJoin(home,"intel/licenses") )
 
 --INTEL_LICENSE_FILE=
 --/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/licenses
