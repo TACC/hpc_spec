@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   9%{?dist}
+Release:   10%{?dist}
 License:   GPL
 Group:     Module Magic
 Packager:  TACC - cproctor@tacc.utexas.edu
@@ -171,7 +171,8 @@ help(helpMsg)
 --------------------------------------------------------------------------
 -- Define TACC_SYSTEM and TACC_DOMAIN
 
-local syshost = posix.uname("%n"):gsub("%.tacc%.utexas%.edu",""):gsub("^[^.]*%.","")
+local host    = capture("hostname -f"):gsub("\n","")
+local syshost = host:gsub("%.tacc%.utexas%.edu",""):gsub("^[^.]*%.","")
 local domain  = syshost
 
 if (domain:find("^ls%d$") or domain:find("^nid"))then
