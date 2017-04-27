@@ -125,11 +125,13 @@ serial and parallel platforms.
 %include mpi-load.inc
 
 # Insert necessary module commands
-module load petsc
-module load trilinos
-module load boost
+#module load autotools
+#module load python
+#module load petsc
+#module load trilinos
+#module load boost
 module load hdf5
-module load slepc
+#module load slepc
 
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
@@ -155,19 +157,29 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
  
 export ncores=16
 
-export PETSC_DIR=${TACC_PETSC_DIR} 
-export PETSC_ARCH=haswell 
-export TRILINOS_DIR=${TACC_TRILINOS_DIR} 
+#export PETSC_DIR=${TACC_PETSC_DIR} 
+#export PETSC_ARCH=haswell 
+#export TRILINOS_DIR=${TACC_TRILINOS_DIR}
+export HDF5_DIR=${TACC_HDF5_DIR}
+#export SLEPC_DIR=${TACC_SLEPC_DIR}
+export METHODS=opt
 export CC=mpicc 
 export CXX=mpicxx 
 export FC=mpif90 
 export F77=mpif90 
+
+# Help MPI recognition in newer petsc
+#sed -i 's:PETSC_MPI=`grep MPIEXEC $PETSC_DIR/conf/petscvariables | grep -v mpiexec.uni`:PETSC_MPI=`grep MPIEXEC $PETSC_DIR/conf/petscvariables | grep -v mpiexec.uni`\n        elif (test -r $PETSC_DIR/$PETSC_ARCH/lib/petsc/conf/petscvariables) ; then # 3.7.x\n                 PETSC_MPI=`grep MPIEXEC $PETSC_DIR/$PETSC_ARCH/lib/petsc/conf/petscvariables | grep -v mpiexec.uni`:g' ./m4/petsc.m4
+
+#autoreconf --install --verbose
+
 ./configure \
---prefix=%{INSTALL_DIR} \
---with-trilinos=${TACC_TRILINOS_DIR} \
---with-boost=${TACC_BOOST_DIR}
+--prefix=%{INSTALL_DIR}
+#--with-trilinos=${TACC_TRILINOS_DIR} \
+#--with-boost=${TACC_BOOST_DIR}
 
-
+make -j ${ncores}
+make -j ${ncores} install
 
   
 #-----------------------  

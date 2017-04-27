@@ -55,13 +55,17 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 #Name: ncl_ncarg
-Release:   1
+Release:   2
 License: http://www.ncl.ucar.edu/Download/NCL_binary_license.shtml
 Group:     applications/io
 Source:    %{SOURCE_NAME}.tar.gz
 URL: http://www.ncl.ucar.edu/Download/
 Distribution: RedHat Linux 6.4 x86_64 nodap intel 12
 Vendor: Computational & Information Systems Laboratory, National Center for Atmospheric Research
+
+Source1: pixman-0.34.0.tar.gz
+Source2: cairo-1.14.8.tar.xz
+
 Packager:  TACC - cazes@tacc.utexas.edu
 
 # Turn off debug package mode
@@ -106,6 +110,7 @@ http://www.ncl.ucar.edu/index.shtml
 %prep
 #---------------------------------------
 
+
 #------------------------
 %if %{?BUILD_PACKAGE}
 #------------------------
@@ -126,6 +131,12 @@ http://www.ncl.ucar.edu/index.shtml
 # This binary package unpacks to '.' by default.  We'll unpack to
 # a subdirectory that we'll also create using the -c option
 %setup -c -n %{name}-%{version}
+
+#This untars pixman-0.34.0
+%setup -T -D -a 1
+#This untars libcairo-1.14.8
+%setup -T -D -a 2
+
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -151,6 +162,9 @@ http://www.ncl.ucar.edu/index.shtml
 %install
 #---------------------------------------
 
+
+
+
 # Setup modules
 %include system-load.inc
 module purge
@@ -162,6 +176,45 @@ module purge
 # Insert further module commands
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
+
+# # Create temporary directory for the install. 
+# rm -rf %{INSTALL_DIR}
+# mkdir -p             %{INSTALL_DIR}
+# #clean up old
+# mount -t tmpfs tmpfs %{INSTALL_DIR}
+# #tacctmpfs -m %{INSTALL_DIR}
+
+
+
+#Build pixman
+cd pixman-0.34.0
+export PIXMAN_DIR=%{INSTALL_DIR}/pixman_0.34.0
+./configure --prefix=$PIXMAN_DIR
+make 
+make install
+cd ../
+
+#Build libcairo
+cd cairo-1.14.8
+export pixman_LIBS=" -L${PIXMAN_DIR}/lib -lpixman-1 "
+export pixman_CFLAGS=" -I${PIXMAN_DIR}/include/pixman-1 "
+export CFLAGS=" -I${PIXMAN_DIR}/include/pixman-1 "
+export CAIRO_DIR=%{INSTALL_DIR}/cairo_1.14.8
+./configure --prefix=$CAIRO_DIR
+make 
+make install
+cd ../
+
+# # Copy from tmpfs to RPM_BUILD_ROOT so that everything is in the right
+# # place for the rest of the RPM.  Then, unmount the tmpfs.
+# ls -ld $RPM_BUILD_ROOT/%{INSTALL_DIR}
+# cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+# umount %{INSTALL_DIR}/
+# #tacctmpfs -u  %{INSTALL_DIR}/
+
+
+
+
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
 #------------------------
@@ -188,6 +241,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   cp -r bin $RPM_BUILD_ROOT/%{INSTALL_DIR}
   cp -r include $RPM_BUILD_ROOT/%{INSTALL_DIR}
   cp -r lib $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  cp -r $PIXMAN_DIR $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  cp -r $CAIRO_DIR $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -245,11 +300,14 @@ whatis("URL: http://ngwww.ucar.edu/")
 prepend_path("PATH","%{INSTALL_DIR}/bin")
 prepend_path("MANPATH","%{INSTALL_DIR}/man")
 
+local librarypath = os.getenv("LIBRARY_PATH")
+
 setenv("NCARG_ROOT","%{INSTALL_DIR}")
 setenv("TACC_NCARG_ROOT","%{INSTALL_DIR}")
 setenv("TACC_NCARG_INC","%{INSTALL_DIR}/include")
 setenv("TACC_NCARG_LIB","%{INSTALL_DIR}/lib")
 setenv("TACC_NCARG_BIN","%{INSTALL_DIR}/bin")
+prepend_path("LIBRARY_PATH","%{INSTALL_DIR}/cairo_1.14.8/lib")
 
 EOF
   

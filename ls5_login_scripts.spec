@@ -1,11 +1,10 @@
-
 %define name_prefix tacc
 %define base_name ls5_login_scripts
 
 Summary:   Standard LS5 TACC Login scripts
 Name:      %{name_prefix}-%{base_name}
 Version:   1.0
-Release:   24
+Release:   26
 License:   Proprietary
 Group:     System Environment/Base
 Source0:   %{base_name}-%{version}.tar.gz
@@ -51,6 +50,8 @@ PROFILE_D_FILES="
                profile.d/work_archive.csh
                profile.d/zzz00_lmod.csh
                profile.d/zzz00_lmod.sh
+               profile.d/zzz85_idev.sh
+               profile.d/zzz85_idev.csh
                profile.d/zzz87_tacc_login.csh
                profile.d/zzz87_tacc_login.sh
                profile.d/zzz88_taccinfo.csh
@@ -67,22 +68,6 @@ find taccinfo fsMounted workdir archive | cpio -pduv --owner=build: $RPM_BUILD_R
 
 
 find ./profile.d $PROFILE_D_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT%{PROFILE_D_PATH}/..
-#rm $RPM_BUILD_ROOT%{PROFILE_D_PATH}/record_module_use.*.fini
-
-#
-#  The new shells all look in /etc/tacc/ for their startup scripts
-#
-
-#SHELL_STARTUP_FILES="
-#         bash_logout
-#         bashrc
-#         profile
-#         csh.login
-#         csh.cshrc
-#         csh.logout
-#         tacc_functions
-#         ksh.kshrc
-#"
 
 SHELL_STARTUP_FILES="
          bash.bashrc
@@ -141,6 +126,8 @@ done
 %{PROFILE_D_PATH}/work_archive.sh
 %{PROFILE_D_PATH}/zzz00_lmod.csh
 %{PROFILE_D_PATH}/zzz00_lmod.sh
+%{PROFILE_D_PATH}/zzz85_idev.csh
+%{PROFILE_D_PATH}/zzz85_idev.sh
 %{PROFILE_D_PATH}/zzz87_tacc_login.csh
 %{PROFILE_D_PATH}/zzz87_tacc_login.sh
 %{PROFILE_D_PATH}/zzz90_compute_modules.csh

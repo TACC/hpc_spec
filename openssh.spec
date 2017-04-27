@@ -1,4 +1,7 @@
-# Default values for additional components
+# TACC tag version
+%define tacc_tag v3.19.1-tacc-2
+
+# Default values for additional componentsi
 %define build_x11_askpass	0
 
 # Define the UID/GID to use for privilege separation
@@ -18,12 +21,11 @@
 Summary:	OpenSSH, a free Secure Shell (SSH) protocol implementation
 Name:		openssh
 Version:	7.1p2
-URL:		http://www.openssh.com/
-Release:	1
-#Source0:	openssh-%{version}.tar.gz
-Source0:        openssh-hpn-isshd-3.19.1.tar.gz
+URL:		http://www.openssh.com
+Release:	3%{?dist}
+Source0:        tacc-openssh-hpn-isshd-%{tacc_tag}.tar.gz
 Source1:	x11-ssh-askpass-%{xversion}.tar.gz
-Patch100:       taccpass.auth_c.patch
+#Patch100:       taccpass.auth_c.patch
 License:	BSD
 Group:		Productivity/Networking/SSH
 Packager:       TACC - cproctor@tacc.utexas.edu
@@ -133,11 +135,11 @@ This package contains an X Window System passphrase dialog for OpenSSH.
 %prep
 
 %if %{build_x11_askpass}
-%setup -q -a 1 -n openssh-hpn-isshd-3.19.1
+%setup -q -a 1 -n tacc-openssh-hpn-isshd-%{tacc_tag}
 %else
-%setup -q -n openssh-hpn-isshd-3.19.1
+%setup -q -n tacc-openssh-hpn-isshd-%{tacc_tag}
 %endif
-%patch100 -p0
+###%#patch100 -p0
 
 %build
 autoreconf

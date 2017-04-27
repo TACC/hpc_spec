@@ -28,7 +28,7 @@ Summary: PETSc rpm build script
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 7
-%define micro_version 4
+%define micro_version 5
 
 %define pkg_version %{major_version}.%{minor_version}
 %define pkg_full_version %{major_version}.%{minor_version}.%{micro_version}
@@ -52,7 +52,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3
+Release:   5
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.mcs.anl.gov/petsc/
@@ -122,9 +122,6 @@ rpm -qi <rpm-name>
 %include compiler-load.inc
 %include mpi-load.inc
 
-# Insert necessary module commands
-#module purge
-
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
@@ -187,29 +184,30 @@ export BLAS_LAPACK_LOAD=--with-blas-lapack-dir=${MKLROOT}
 ## ML
 ##
 export ML_OPTIONS="--with-ml=1 --download-ml"
-export MLSTRING=ml
+export ML_STRING=ml
 %if "%{is_impi}" == "1"
 export ML_OPTIONS=
-export MLSTRING=
+export ML_STRING=
 %endif
 # %if "%{is_mvapich2}" == "1"
 # export ML_OPTIONS=
-# export MLSTRING=
+# export ML_STRING=
 # %endif
 
 ##
 ## Hypre
 ##
 export HYPRE_OPTIONS="--with-hypre=1 --download-hypre"
-export HYPRESTRING=hypre
+export HYPRE_STRING=hypre
 
 %if "%{is_intel}" == "1"
 export LOCALCC=icc
 export LOCALFC=ifort
-export COPTFLAGS="-xhost -O2" ; export CXXOPTFLAGS="-xhost -O2" ; export FOPTFLAGS="-xhost -O2"
+export COPTFLAGS="-xhost -O2 -g" ; export CXXOPTFLAGS="-xhost -O2 -g" ; export FOPTFLAGS="-xhost -O2 -g"
 export CNOOPTFLAGS="-O0 -g" ; export CXXNOOPTFLAGS="-O0 -g" ; export FNOOPTFLAGS="-O0 -g"
-export CHACOSTRING=chaco
-export CHACO_OPTIONS="--with-chaco=1 --download-chaco"
+%else
+export COPTFLAGS=" -O2 -g" ; export CXXOPTFLAGS="-O2 -g" ; export FOPTFLAGS="-O2 -g"
+export CNOOPTFLAGS="-O0 -g" ; export CXXNOOPTFLAGS="-O0 -g" ; export FNOOPTFLAGS="-O0 -g"
 %endif
 
 %if "%{is_mvapich2}" == "1"
@@ -227,10 +225,10 @@ export PETSC_CONFIGURE_OPTIONS="\
 mkdir -p %{INSTALL_DIR}/externalpackages
 mkdir -p %{MODULE_DIR}
 
-export PLAPACKSTRING=plapack
+export PLAPACK_STRING=plapack
 export PLAPACKOPTIONS="--with-plapack=1 --download-plapack"
 %if "%{is_mvapich2}" == "1"
-export PLAPACKSTRING=
+export PLAPACK_STRING=
 export PLAPACKOPTIONS=
 %endif
 
@@ -293,8 +291,16 @@ case "${ext}" in
 	   export versionextra="${versionextra}; no shared library support"
 esac
 
-##
-## hdf5
+#
+# Chaco
+#
+%if "%{comp_fam}" == "intel"
+export CHACO_STRING=chaco
+export CHACO_OPTIONS="--with-chaco=1 --download-chaco"
+%endif
+
+#
+# hdf5
 # not available with gcc right now
 export hdf5string=
 export hdf5download=
@@ -333,14 +339,8 @@ export versionextra="${versionextra}${clanguageversionextra}"
 # Mumps & Superlu depend on parmetis which depends on metis
 export PARMETIS_OPTIONS="--with-parmetis=1 --download-parmetis --with-metis=1 --download-metis"
 export MUMPS_OPTIONS="--with-mumps=1 --download-mumps ${PARMETIS_OPTIONS}"
-export SUPERLU_OPTIONS="--with-superlu_dist=1 --download-superlu_dist \
-   --with-superlu=1 --download-superlu ${PARMETIS_OPTIONS}"
-export SUPERLUSTRING="superlu and superlu_dist"
+export MUMPS_STRING=mumps
 export SCALAPACK_OPTIONS="--with-scalapack=1 --download-scalapack --with-blacs=1 --download-blacs"
-
-# disabled
-#export SUPERLU_OPTIONS= 
-#export SUPERLUSTRING=
 
 #
 # Spai
@@ -349,16 +349,23 @@ export SPAI_OPTIONS="--with-spai=1 --download-spai"
 export SPAI_STRING=spai
 
 #
-# Sundials
-#
-export SUNDIALS_OPTIONS="--with-sundials=1 --download-sundials"
-export SUNDIALSSTRING="sundials"
-
-#
 # Spooles
 #
 export SPOOLES_OPTIONS="--with-spooles=1 --download-spooles"
 export SPOOLES_STRING=spooles
+
+#
+# Sundials
+#
+export SUNDIALS_OPTIONS="--with-sundials=1 --download-sundials"
+export SUNDIALS_STRING="sundials"
+
+#
+# SuperLU
+#
+export SUPERLU_OPTIONS="--with-superlu_dist=1 --download-superlu_dist \
+   --with-superlu=1 --download-superlu ${PARMETIS_OPTIONS}"
+export SUPERLU_STRING="superlu and superlu_dist"
 
 ##
 ## 64-bit indices
@@ -366,38 +373,57 @@ export SPOOLES_STRING=spooles
 INDEX_OPTIONS=
 case "${ext}" in
 *i64* ) INDEX_OPTIONS=--with-64-bit-indices ;
-        CHACO_OPTIONS= ;   CHACOSTRING= ;
-        MUMPS_OPTIONS= ;   MUMPSTRING= ;
+        CHACO_OPTIONS= ;   CHACO_STRING= ;
+        MUMPS_OPTIONS= ;   MUMP_STRING= ;
 	ML_OPTIONS= ;      ML_STRING= ;
 	PLAPACK_OPTIONS= ; PLAPACK_STRING= ;
         SPAI_OPTIONS= ;    SPAITRING= ;
 	SPOOLES_OPTIONS= ; SPOOLES_STRING= ;
 	SUNDIALS_OPTIONS= ; SUNDIALS_STRING= ;
-	SUPERLU_OPTIONS= ; SUPERLUSTRING= ;
+	SUPERLU_OPTIONS= ; SUPERLU_STRING= ;
                 ;;
 esac
+
+# disabled
+%if "%{comp_fam}" == "gcc"
+  export CHACO_OPTIONS=
+  export CHACO_STRING=
+#  export ML_OPTIONS=
+#  export ML_STRING=
+  export PLAPACK_OPTIONS=
+  export PLAPACK_STRING=
+  export SUNDIALS_OPTIONS=
+  export SUNDIALS_STRING=
+  export SUPERLU_OPTIONS= 
+  export SUPERLU_STRING=
+%endif
 
 ##
 ## define packages; some are real & complex, others real only.
 ##
-%define complexpackages mumps scalapack spooles (sequential/distributed)
+%define complexpackages ${hdf5string} ${MUMPS_STRING} scalapack ${SPOOLES_STRING} ${SUPERLU_STRING}
 export PETSC_COMPLEX_PACKAGES="\
+  ${hdf5download} \
   ${MUMPS_OPTIONS}\
   ${SCALAPACK_OPTIONS} ${SPOOLES_OPTIONS} \
-  ${hdf5download} \
+  ${SUPERLU_OPTIONS} \
   "
-%define realonlypackages ${CHACOSTRING} ${hdf5string} ${HYPRESTRING} ${MLSTRING} parmetis spai ${SUNDIALSSTRING} ${SUPERLUSTRING} ${PLAPACKSTRING} 
+%define realonlypackages \
+${CHACO_STRING} ${HYPRE_STRING} ${ML_STRING} parmetis spai \
+${PLAPACK_STRING} ${SUNDIALS_STRING} 
 # ml
+
 export PETSC_REALONLY_PACKAGES="\
   ${CHACO_OPTIONS} \
   ${HYPRE_OPTIONS} ${ML_OPTIONS} \
   ${MATLABOPTIONS} ${ML_OPTIONS} \
-  ${PLAPACKOPTIONS} ${SPAI_OPTIONS} ${SUNDIALS_OPTIONS} ${SUPERLU_OPTIONS} \
+  ${PLAPACKOPTIONS} ${SPAI_OPTIONS} ${SUNDIALS_OPTIONS} \
   "
 
 export packages="${PETSC_REALONLY_PACKAGES} ${PETSC_COMPLEX_PACKAGES}"
+
 ## VLE let's see if this causes the problem
-export packages=
+## export packages=
 export scalar="--with-scalar-type=real"
 case "${ext}" in
 *complex* ) export packages="${PETSC_COMPLEX_PACKAGES}"
@@ -482,7 +508,6 @@ if [ "${ext}" = "tau" ] ; then
     --with-batch --known-mpi-shared-libraries=1
 else
   # python config/configure.py
-module list
 echo $TACC_CRAY_MPT_INC
   RPM_BUILD_ROOT=tmpfs PETSC_DIR=`pwd` ./configure \
     ${PETSC_CONFIGURE_OPTIONS} \
@@ -574,7 +599,8 @@ cp -r bin config externalpackages include lib makefile src    \
 cp -r haswell*      $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 popd
-  
+
+umount %{INSTALL_DIR}  
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -624,6 +650,10 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Tue Apr 18 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 5: superlu is actually complex
+* Fri Apr 07 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 4: restoring "-g" option
 * Tue Feb 07 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 3: adding superlu
 * Fri Jan 06 2017 eijkhout <eijkhout@tacc.utexas.edu>

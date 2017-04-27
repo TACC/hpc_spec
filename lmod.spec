@@ -7,7 +7,7 @@
 Prefix:    /opt/apps
 Summary:   lmod: Lua based Modules
 Name:      %{name_prefix}-%{base_name}
-Version:   7.3.11
+Version:   7.4.5
 Release:   1
 License:   MIT
 Vendor:    Robert McLay
@@ -54,15 +54,6 @@ myhost=${myhost%.tacc.utexas.edu}
 first=${myhost%%.*}
 SYSHOST=${myhost#*.}
 
-if [ "$SYSHOST" = "stampede" ]; then
-CACHE_DIR="--with-spiderCacheDescript=cacheDescript.txt"
-
-cat > cacheDescript.txt << EOF
-/tmp/moduleData/cacheDir:/tmp/losf_last_update
-/home1/moduleData/XSEDE/cacheDir:/home1/moduleData/XSEDE/last_update
-EOF
-fi
-
 if [ "$SYSHOST" = "ls5" ]; then
 EXTRA="--with-tmodPathRule=yes --with-syshost=ls5 --with-siteName=TACC"
 CACHE_DIR="--with-spiderCacheDescript=cacheDescript.txt"
@@ -79,10 +70,10 @@ fi
 # the old fashion way
 
 for i in /usr/bin /opt/apps/lua/lua/bin /usr/local/bin /opt/local/bin ; do
-if [ -x $i/lua ]; then
-luaPath=$i
-break
-fi
+  if [ -x $i/lua ]; then
+    luaPath=$i
+    break
+  fi
 done
 PATH=$luaPath:$PATH
 

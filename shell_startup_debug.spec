@@ -4,8 +4,8 @@
 
 Summary: Shell Startup tracing tool 
 Name: %{name_prefix}-%{base_name}
-Version: 1.6
-Release: 2
+Version: 1.9
+Release: 1
 License:   LGPL
 Group: System Environment/Base
 URL: www.tacc.utexas.edu

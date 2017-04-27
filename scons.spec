@@ -26,7 +26,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 # Create some macros (spec file variables)
 %define major_version 2
 %define minor_version 5
-%define micro_version 0
+%define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -152,6 +152,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
  
   python setup.py install --prefix=%{INSTALL_DIR}
 
+  cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+  
   
 #-----------------------  
 %endif # BUILD_PACKAGE |

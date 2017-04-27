@@ -25,7 +25,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 # Create some macros (spec file variables)
 %define major_version 2
-%define minor_version 2
+%define minor_version 1
 %define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
@@ -151,6 +151,9 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  mkdir -p %{INSTALL_DIR}
+  mount -t tmpfs tmpfs %{INSTALL_DIR}
+
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -167,8 +170,14 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 export ncores=16
 
 CC=icc CXX=icc F90=ifort FC=ifort F77=ifort scons build -j${ncores} env_vars=all CC=icc CXX=icpc F77=ifort blas_lapack_libs=mkl_rt blas_lapack_dir=${MKLROOT}/lib/intel64 prefix=%{INSTALL_DIR}
-scons test -j${ncores}
+#scons test -j${ncores}
 scons install
+
+
+  # Copy everything over to the installation directory
+  cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+  umount %{INSTALL_DIR}/
+
   
 #-----------------------  
 %endif # BUILD_PACKAGE |

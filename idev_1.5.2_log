@@ -1,0 +1,19 @@
+Executing(%prep): /bin/sh -e /var/tmp/rpm-tmp.17579
+drwxr-xr-x build/G-25072     0 2017-04-19 07:14 idev-1.5.2/
+-rwxrwxr-x build/G-25072 81403 2017-04-19 07:13 idev-1.5.2/idev
+-rwxrwxr-x build/G-25072 25336 2017-04-19 07:13 idev-1.5.2/idev_utils
+Executing(%install): /bin/sh -e /var/tmp/rpm-tmp.17579
+sf@suse.de: if you find problems with this script, drop me a note
+I call /usr/sbin/Check...
+Processing files: tacc-idev-1.5.2-1
+Finding  Provides: /usr/lib/rpm/find-provides tacc-idev
+Finding  Requires: /usr/lib/rpm/find-requires tacc-idev
+Finding  Supplements: /usr/lib/rpm/find-supplements tacc-idev
+Requires(interp): /bin/sh
+Requires(rpmlib): rpmlib(PayloadFilesHavePrefix) <= 4.0-1 rpmlib(CompressedFileNames) <= 3.0.4-1
+Requires(post): /bin/sh
+Requires: /bin/bash /usr/bin/perl
+Checking for unpackaged file(s): /usr/lib/rpm/check-files /var/tmp/idev-1.5.2-buildroot
+Checking for unpackaged file(s): /usr/lib/rpm/check-files /var/tmp/idev-1.5.2-buildroot
+Wrote: /admin/rpms/RPMS/x86_64/tacc-idev-1.5.2-1.x86_64.rpm
+Executing(%clean): /bin/sh -e /var/tmp/rpm-tmp.64777

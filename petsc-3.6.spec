@@ -49,7 +49,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   5
+Release:   6
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.mcs.anl.gov/petsc/
@@ -570,6 +570,7 @@ cp -r haswell*      $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 popd
   
+umount %{INSTALL_DIR}
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -619,6 +620,8 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Thu Mar 30 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 6: recompile with apparently moved intel compiler
 * Thu Jul 07 2016 eijkhout <eijkhout@tacc.utexas.edu>
 - release 5: update packages listing in modulefile
 * Tue Dec 22 2015 eijkhout <eijkhout@tacc.utexas.edu>
