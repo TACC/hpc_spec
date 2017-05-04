@@ -1,3 +1,5 @@
+# HYPRE specfile
+# Victor Eijkhout 2017
 #
 # based on Bar.spec
 # W. Cyrus Proctor

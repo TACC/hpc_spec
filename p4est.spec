@@ -31,7 +31,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPL
 Vendor: https://github.com/cburstedde/p4est
 #Source1: p4est-setup.sh
@@ -80,9 +80,15 @@ module purge
 %include compiler-load.inc
 %include mpi-load.inc
 
-## courtesy of Carlos
+## courtesy of Carlos & Dough
 %if "%{comp_fam}" == "intel"
-  source /scratch/projects/compilers/sourceme17.sh
+  #source /scratch/projects/compilers/sourceme17.2.sh
+# here's what's in that source:
+  ver="2017.2.050"
+  topdir="/scratch/projects/compilers/intel/17"
+  source $topdir/parallel_studio_xe_$ver/bin/psxevars.sh
+  export TACC_MPI_GETMODE=impi_hydra
+  export MPICH_HOME=$I_MPI_ROOT
 %endif
 
 export P4EST_DIR=`pwd`
@@ -121,7 +127,7 @@ whatis( "Category: library, mathematics" )
 whatis( "URL: https://github.com/cburstedde/p4est" )
 whatis( "Description: octree support for dealii" )
 
-local             p4est_dir =     "%{p4est_install_dir}"
+local             p4est_dir =     "%{INSTALL_DIR}"
 
 prepend_path("LD_LIBRARY_PATH", pathJoin(p4est_dir,petsc_arch,"lib") )
 
@@ -155,5 +161,7 @@ EOF
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Mon Apr 10 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: fixed modulefile error
 * Mon Feb 06 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

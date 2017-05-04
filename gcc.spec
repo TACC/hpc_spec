@@ -52,7 +52,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   4%{?dist}
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.gnu.org/software
@@ -187,7 +187,8 @@ export mpc_patch=3
 
 export binutils_major=2
 #export binutils_minor=26
-export binutils_minor=27
+#export binutils_minor=27
+export binutils_minor=28
 
 export gcc_major=6
 export gcc_minor=3
@@ -295,6 +296,10 @@ cd binutils-${binutils_version}
 
 ${gcc}/binutils-${binutils_version}/configure \
 --prefix=${gcc_install}                       \
+--enable-gold=yes                             \
+--enable-ld=default                           \
+--enable-plugins                              \
+--enable-lto                                  \
 --with-gmp=${gcc_install}                     \
 --with-mpfr=${gcc_install}                    \
 --with-mpc=${gcc_install}                     \
@@ -318,9 +323,11 @@ tar xvfj gcc-${gcc_version}.tar.bz2
 cd gcc-${gcc_version}
 
 ${gcc}/gcc-${gcc_version}/configure \
---enable-lto                        \
 --enable-libssp                     \
---enable-gold                       \
+--enable-gold=yes                   \
+--enable-ld=default                 \
+--enable-plugins                    \
+--enable-lto                        \
 --with-tune=generic                 \
 --enable-languages='c,c++,fortran'  \
 --disable-multilib                  \

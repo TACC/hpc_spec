@@ -25,7 +25,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 # Create some macros (spec file variables)
 %define major_version 1
-%define minor_version 1
+%define minor_version 2
 
 %define pkg_version %{major_version}.%{minor_version}
 
@@ -195,11 +195,14 @@ cd coreutils-${tc_version}
 
 # Apply Lustre Patch
 sed -i "s/${default_stripe_size}/${stripe_size}/g" ${base}/coreutils-${tc_version}.patch
+# Change default number of threads
+sed -i "s/define DEFAULT_THREADS 4/define DEFAULT_THREADS 64/g" ${base}/coreutils-${tc_version}.patch
 patch -p1 < ${base}/coreutils-${tc_version}.patch
 
 autoreconf
 ${tc}/coreutils-${tc_version}/configure \
---prefix=${tc_install}
+--prefix=${tc_install}                  \
+--enable-threads=pth
 automake
 
 make -j ${ncores}
@@ -216,38 +219,10 @@ cp src/md5sum ${tc_install}/bin/md5sum
 cp man/cp.1 ${tc_install}/man/man1/cp.1
 cp man/md5sum.1 ${tc_install}/man/man1/md5sum.1
 
-#############################################
-####### tar #################################
-#############################################
-
-type -a gcc
-
-export tt=${base}
-export tt_install=%{INSTALL_DIR}
-export tt_major=1
-export tt_minor=27
-export tt_micro=1
-export tt_version=${tt_major}.${tt_minor}.${tt_micro}
-
-export CC=gcc
-export CFLAGS="-g -O2 -DHAVE_LIBLUSTREAPI"
-export LIBS="-llustreapi"
-export ncores=64
-
-cd ${tt}
-wget http://ftp.gnu.org/gnu/tar/tar-${tt_version}.tar.xz
-tar xvfJ tar-${tt_version}.tar.xz
-cd tar-${tt_version}
-
-# Apply Lustre Patch
-sed -i "s/${default_stripe_size}/${stripe_size}/g" ${base}/tar-${tt_version}.patch
-patch -p1 < ${base}/tar-${tt_version}.patch
-
-${tt}/tar-${tt_version}/configure \
---prefix=${tt_install}
-
-make -j ${ncores}
-make -j ${ncores} install
+cd ${tc_install}
+ln -s cp pcp
+ln -s md5sum pmd5sum
+cd -
 
 #############################################
 ####### rsync ###############################
@@ -343,6 +318,123 @@ sed -i "s/${default_stripe_size}/${stripe_size}/g" ${base}/bzip2-${tb_version}.p
 patch -p1 < ${base}/bzip2-${tb_version}.patch
 
 make install PREFIX=${tb_install}
+
+#############################################
+####### pigz ################################
+#############################################
+
+type -a gcc
+
+export pigz=${base}
+export pigz_install=%{INSTALL_DIR}
+export pigz_major=2
+export pigz_minor=3
+export pigz_patch=4
+export pigz_version=${pigz_major}.${pigz_minor}.${pigz_patch}
+
+cd ${pigz}
+wget http://zlib.net/pigz/pigz-${pigz_version}.tar.gz
+tar xvfz pigz-${pigz_version}.tar.gz
+cd pigz-${pigz_version}
+patch -p1 < ${base}/pigz-${pigz_version}.patch
+
+make -j ${ncores}
+
+cp pigz unpigz ${pigz_install}/bin
+gzip -c pigz.1 > pigz.1.gz
+cp pigz.1.gz ${pigz_install}/man/man1
+
+#############################################
+####### pbzip2 ##############################
+#############################################
+
+type -a gcc
+
+export pbz=${base}
+export pbz_install=%{INSTALL_DIR}
+export pbz_major=1
+export pbz_minor=1
+export pbz_patch=13
+export pbz_version=${pbz_major}.${pbz_minor}.${pbz_patch}
+
+cd ${pbz}
+wget https://launchpad.net/pbzip2/${pbz_major}.${pbz_minor}/${pbz_version}/+download/pbzip2-${pbz_version}.tar.gz
+tar xvfz pbzip2-${pbz_version}.tar.gz
+cd pbzip2-${pbz_version}
+patch -p1 < ${base}/pbzip2-${pbz_version}.patch
+
+make -j ${ncores}
+
+cp pbzip2 ${pbz_install}/bin
+gzip -c pbzip2.1 > pbzip2.1.gz
+cp pbzip2.1.gz ${pbz_install}/man/man1
+
+#############################################
+####### xz ##################################
+#############################################
+
+type -a gcc
+
+export xz=${base}
+export xz_install=%{INSTALL_DIR}
+export xz_major=5
+export xz_minor=2
+export xz_patch=3
+export xz_version=${xz_major}.${xz_minor}.${xz_patch}
+export LIBS=-llustreapi
+
+cd ${xz}
+wget https://tukaani.org/xz/xz-${xz_version}.tar.gz
+tar xvfz xz-${xz_version}.tar.gz
+cd xz-${xz_version}
+patch -p1 < ${xz}/xz-${xz_version}.patch
+
+./configure \
+--prefix=${xz_install}
+
+
+make -j ${ncores}
+make -j ${ncores} install
+
+cd %{INSTALL_DIR}/bin
+ln -s xz pxz
+cd -
+
+#############################################
+####### tar #################################
+#############################################
+
+type -a gcc
+
+export tt=${base}
+export tt_install=%{INSTALL_DIR}
+export tt_major=1
+export tt_minor=27
+export tt_micro=1
+export tt_version=${tt_major}.${tt_minor}.${tt_micro}
+
+export CC=gcc
+export CFLAGS="-g -O2 -DHAVE_LIBLUSTREAPI"
+export LIBS="-llustreapi"
+export ncores=64
+
+cd ${tt}
+wget http://ftp.gnu.org/gnu/tar/tar-${tt_version}.tar.xz
+tar xvfJ tar-${tt_version}.tar.xz
+cd tar-${tt_version}
+
+# Apply Lustre Patch
+sed -i "s/${default_stripe_size}/${stripe_size}/g" ${base}/tar-${tt_version}.patch
+patch -p1 < ${base}/tar-${tt_version}.patch
+
+${tt}/tar-${tt_version}/configure \
+--prefix=${tt_install}            \
+--with-gzip=pigz                  \
+--with-bzip2=pbzip2               \
+--with-xz=xz
+
+make -j ${ncores}
+make -j ${ncores} install
 
 #############################################
 #############################################

@@ -6,9 +6,9 @@ Summary: PETSc install
 
 # Create some macros (spec file variables)
 %define major_version 3
-%define minor_version 7
-%define micro_version 5
-%define versionpatch 3.7.5
+%define minor_version 5
+%define micro_version 4
+%define versionpatch 3.5.4
 
 %define pkg_version %{major_version}.%{minor_version}
 
@@ -33,7 +33,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 6%{?dist}
+Release: 1%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -185,14 +185,15 @@ export dynamiccxx="cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug 
 #module load python
 
 for ext in \
-  single "" \
-  ${dynamiccc} ${dynamiccxx} \
+  complex \
   ; do
 
 export noext="\
   reinstate: \
   \
-  ${dynamiccxx} \
+  single "" \
+  ${dynamiccc} ${dynamiccxx} \
+  \
   tau \
   ${static} we don't do static anymore \
   nono"
@@ -327,14 +328,15 @@ esac
 ##
 ## define packages; some are real & complex, others real only.
 ##
-export complexpackages="mumps scalapack ${SPOOLES_STRING} ${superlustring}"
+export complexpackages="mumps ${SPOOLES_STRING}"
 export PETSC_COMPLEX_PACKAGES="\
   ${hdf5download} \
   ${MUMPS_OPTIONS}\
-  ${SCALAPACK_OPTIONS} ${SPOOLES_OPTIONS} \
+  ${SCALAPACK_OPTIONS} \
+  ${SPOOLES_OPTIONS} \
   ${SUPERLU_OPTIONS} \
   "
-export realonlypackages="${CHACOSTRING} ${hdf5string} ${HYPRESTRING} ${MLSTRING} ${PARMETISSTRING} spai ${PLAPACKSTRING} ${SUNDIALSSTRING}"
+export realonlypackages="${CHACOSTRING} ${hdf5string} ${HYPRESTRING} ${MLSTRING} ${PARMETISSTRING} spai ${PLAPACKSTRING} ${SUNDIALSSTRING} ${superlustring}"
 
 export PETSC_REALONLY_PACKAGES="\
   ${CHACO_OPTIONS} \
@@ -342,6 +344,7 @@ export PETSC_REALONLY_PACKAGES="\
   ${MATLABOPTIONS} ${ML_OPTIONS} \
   ${PARMETIS_OPTIONS} \
   ${PLAPACKOPTIONS} ${SPAI_OPTIONS} ${SUNDIALS_OPTIONS} \
+  ${SUPERLU_OPTIONS} \
   "
 
 export packages="${PETSC_REALONLY_PACKAGES} ${PETSC_COMPLEX_PACKAGES}"
@@ -534,16 +537,5 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
-* Tue Apr 18 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 6: superlu is actually complex
-* Tue Mar 14 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 5: point update to 3.7.5, also clean up compiler options
-* Thu Jan 26 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 4: moved to el7, also fixed compiler options, adding sundials
-* Fri Nov 18 2016 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: changed sandybridge -> knightslanding
-  NEVER INSTALLED
-* Fri Oct 14 2016 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: update to 3.7.4 and compile Intel 17
-* Sun Aug 14 2016 eijkhout <eijkhout@tacc.utexas.edu>
+* Mon Apr 17 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

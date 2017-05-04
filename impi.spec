@@ -26,7 +26,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 # Create some macros (spec file variables)
 %define major_version 17
 %define minor_version 0
-%define micro_version 0
+%define micro_version 2
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 %define underscore_version %{major_version}_%{minor_version}
@@ -203,7 +203,7 @@ Version %{version}
 help(help_msg)
 
 -- Create environment variables.
-local base_dir           = "/opt/intel/impi/2017.0.098"
+local base_dir           = "/opt/intel/impi/2017.2.174"
 
 whatis("Name: Intel MPI"                                                    )
 whatis("Version: %{version}"                                                     )

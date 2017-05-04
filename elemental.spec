@@ -7,8 +7,8 @@ Summary: Elemental install for KNL
 # Create some macros (spec file variables)
 %define major_version 0
 %define minor_version 87
-%define micro_version 3
-%define versionpatch 0.87.3
+%define micro_version 7
+%define versionpatch 0.87.7
 
 %define pkg_version %{major_version}.%{minor_version}
 
@@ -33,7 +33,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: BSD-2, see http://opensource.org/licenses/BSD-2-Clause
 Vendor: Jack Poulson
 Group: Development/Numerical-Libraries
@@ -150,9 +150,12 @@ source /scratch/projects/compilers/sourceme17.sh
   ( mkdir -p build/${ext} ; \
       cd build/${ext} ; \
       cmake -D CMAKE_BUILD_TYPE=${ext} \
-      	    -D CMAKE_INSTALL_PREFIX=%{INSTALL_DIR}/${ext} \
-            -D CXX_FLAGS="${COPTFLAGS}" \
-	    -D MATH_LIBS="-mkl" \
+      	  -D CMAKE_INSTALL_PREFIX=%{INSTALL_DIR}/${ext} \
+          -D CXX_FLAGS="${COPTFLAGS}" \
+	  -D MATH_LIBS="-mkl" \
+          -D EL_BUILD_PARMETIS=TRUE \
+          -D EL_BUILD_METIS=TRUE \
+          -D EL_BUILD_SCALAPACK=TRUE \
 	    ../.. ; \
       make -j 2 VERBOSE=1 2>&1 | tee make.log ; \
       make install ; \
@@ -275,6 +278,8 @@ umount %{INSTALL_DIR}
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Thu Mar 23 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: update to 87.7, adding bunch of cmake options
 * Fri Dec 09 2016 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: modulefile fix, using Carlos secret compiler
 * Mon Nov 21 2016 eijkhout <eijkhout@tacc.utexas.edu>

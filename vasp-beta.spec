@@ -1,6 +1,6 @@
-#
-# Kevin Chen, chenk@tacc.utexas.edu
-# 2016-09-30
+# VASP beta Hang Liu
+# 2016-04-17
+# Modified for KNL deployment.
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -20,25 +20,26 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name gsl
-%define MODULE_VAR    GSL
+%define pkg_base_name vasp 
+%define MODULE_VAR    VASP
 
 # Create some macros (spec file variables)
-%define major_version 2
-%define minor_version 2
-%define micro_version 0
+%define major_version 6b
+%define minor_version 
+%define micro_version 
 
-%define pkg_version %{major_version}.%{minor_version}
+#%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{major_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
 %include compiler-defines.inc
-#%include mpi-defines.inc
+%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-#%include name-defines.inc
-%include name-defines-noreloc.inc
+%include name-defines.inc
+#%include name-defines-noreloc.inc
 #%include name-defines-hidden.inc
 #%include name-defines-hidden-noreloc.inc
 ########################################
@@ -52,11 +53,13 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1%{?dist}
-License:   GPL
-Group:     Development/Tools
-URL:       http://www.gnu.org/software/bar
-Packager:  TACC - Kevin Chen chenk@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+License:   VASP
+Group:     Applications/Chemistry
+URL:       https://www.vasp.at/
+Packager:  TACC - hliu@tacc.utexas.edu
+#Source:    %{pkg_base_name}-%{pkg_version}_05Feb16_all_TACC.tar.gz
+#Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Source:    vasp-beta.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -64,61 +67,18 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 
 %package %{PACKAGE}
-
-Summary: The GNU Scientific Library (GSL) is a numerical library for C and C++ programmers.
-Group: System Environment/Base
-
+Summary: The Vienna Ab initio Simulation Package (VASP)
+Group: Applications/Chemistry
 %description package
-
-The GNU Scientific Library (GSL) is a numerical library for C and C++ programmers. It is free software under the GNU General Public License.
-
-The library provides a wide range of mathematical routines such as random number generators, special functions and least-squares fitting. There are over 1000 functions in total
-
-The complete range of subject areas covered by the library includes,
-
-Complex Numbers Roots of Polynomials
-Special Functions Vectors and Matrices
-Permutations  Sorting
-BLAS Support  Linear Algebra
-Eigensystems  Fast Fourier Transforms
-Quadrature  Random Numbers
-Quasi-Random Sequences  Random Distributions
-Statistics  Histograms
-N-Tuples  Monte Carlo Integration
-Simulated Annealing Differential Equations
-Interpolation Numerical Differentiation
-Chebyshev Approximation Series Acceleration
-Discrete Hankel Transforms  Root-Finding
-Minimization  Least-Squares Fitting
-Physical Constants  IEEE Floating-Point
-Discrete Wavelet Transforms Basis splines
-
-Unlike the licenses of proprietary numerical libraries the license of GSL does not restrict scientific cooperation. It allows you to share your programs freely with others.
-
-GSL can be found in the gsl subdirectory on your nearest GNU mirror http://ftpmirror.gnu.org/gsl/.
-
-Main GNU ftp site: ftp://ftp.gnu.org/gnu/gsl/
-For other ways to obtain GSL, please read How to get GNU Software
-
-Installation instructions can be found in the included README and INSTALL files.
-
-Precompiled binary packages are included in most GNU/Linux distributions.
-
-A compiled version of GSL is available as part of Cygwin on Windows (but we recommend using GSL on a free operating system, such as GNU/Linux).
-
+The Vienna Ab initio Simulation Package (VASP)
 
 %package %{MODULEFILE}
-Summary: The GNU Scientific Library (GSL) is a numerical library for C and C++ programmers.
-Group: System Environment/Base
+Summary: The modulefile RPM
+Group: Lmod/Modulefiles
 %description modulefile
+The Vienna Ab initio Simulation Package (VASP)
 %description
-
-The GNU Scientific Library (GSL) is a numerical library for C and C++ programmers. It is free software under the GNU General Public License.
-
-The library provides a wide range of mathematical routines such as random number generators, special functions and least-squares fitting. There are ove
-
-
-
+The Vienna Ab initio Simulation Package (VASP)
 #---------------------------------------
 %prep
 #---------------------------------------
@@ -129,8 +89,9 @@ The library provides a wide range of mathematical routines such as random number
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%setup -n %{pkg_base_name}-%{pkg_version}
-
+#%setup -n %{pkg_base_name}.%{pkg_version}_all_TACC
+#%setup -n %{pkg_base_name}-%{pkg_version}
+%setup -n vasp-beta
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -161,7 +122,7 @@ module purge
 # Load Compiler
 %include compiler-load.inc
 # Load MPI Library
-#%include mpi-load.inc
+%include mpi-load.inc
 
 # Insert further module commands
 
@@ -173,8 +134,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -187,43 +146,57 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-  WD=`pwd`
 
-  # Create some dummy directories and files for fun
-#  export CFLAGS="-O3 -xAVX -axCORE-AVX2 -fp-model precise"
-#  export CPPFLAGS="-O3 -xAVX -axCORE-AVX2 -fp-model precise"
- %if "%is_intel" == "1" 
-  export CC=`which icc`
-  export CXX=`which icpc`
-  export CFLAGS="-O3 -xAVX -axCORE-AVX2, -xMIC-AVX512"
-  export CPPFLAGS="-O3 -xAVX -axCORE-AVX2, -xMIC-AVX512" 
-  export LDFLAGS="-xAVX -axCORE-AVX2, -xMIC-AVX512"
-%endif
+#cd wannier90-1.2/
+#make lib
 
-%if "%is_gcc" == "1" 
-  export CC=`which gcc`
-  export CXX=`which g++`
-  export CFLAGS="-O3 -march=haswell -mtune=knl"
-  export CPPFLAGS="-O3 -march=haswell -mtune=knl"
-  export LDFLAGS="-march=haswell -mtune=knl"
-%endif
- 
+#cd ../beef
+#./configure CC=icc --prefix=$PWD
+#make
+#make install
 
-  export CONFIG_FLAGS=""
-  ./configure $CONFIG_FLAGS --prefix=%{INSTALL_DIR}
-  make -j 12
-  make install
-#  sed -i -- 's/tmprpm/opt\/apps/g' %{INSTALL_DIR}/bin/gsl-config 
-# Copy everything from tarball over to the installation directory
-  cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-  umount %{INSTALL_DIR}
+#cd ../vasp.5.4.1
+#make all
+
+#cd ../vasp.5.4.1.vtst
+#make all
+
+#cd ./bin
+#mv vasp_std vasp_std_vtst
+#mv vasp_gam vasp_gam_vtst
+#mv vasp_ncl vasp_ncl_vtst
+
+#cd ../../
+
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+rm   -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}/*
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/elpa-2016.05.004
+
+#cd vasp.5.4.1/bin/
+cd psxe17.2/vasp.v6.elpa/bin
+cp vasp_std $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_gam $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_ncl $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+
+cd ../../elpa-2016.05.004
+cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}/elpa-2016.05.004/.
+
+#cd ../../vasp.5.4.1.vtst/bin
+#cp vasp_std_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+#cp vasp_gam_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+#cp vasp_ncl_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+#cd ../../beef/bin
+#cp bee $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+#cd ../../
+#cp -r vtstscripts-914 $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
 
 
-#---------------------------
+#--------------------------e
 %if %{?BUILD_MODULEFILE}
 #---------------------------
 
@@ -239,36 +212,90 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
-The %{MODULE_VAR} module defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
-TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
-include files, and tools respectively.
+local help_message=[[
+
+Users have to show their licenses and be confirmed by
+VASP team that they are registered users under that licenses
+Scan a copy the license and send to hliu@tacc.utexas.edu
+
+The VASP executables are
+vasp_std: compiled with pre processing flag: -DNGZhalf
+vasp_gam: compiled with pre processing flag: -DNGZhalf -DwNGZhalf
+vasp_ncl: compiled without above pre processing flags
+
+This is the VASP Beta release built by non standard software stack 
+!!! DO NOT LOAD THIS MODULE !!!
+
+To use this beta version which is built by using Intel_17.0.2 suite,
+you CANNOT load this module but MUST add following
+command in your job script
+
+source /scratch/projects/compilers/sourceme17.2.sh
+export LD_LIBRARY_PATH=/opt/apps/intel17/impi17_0/vasp/6b/elpa-2016.05.004/lib:$LD_LIBRARY_PATH
+
+to setup the proper runtime environment. Here is a sample job script
+
+=============================
+#!/bin/bash
+#SBATCH -J vasp
+#SBATCH -o vasp.%j.out
+#SBATCH -e vasp.%j.err
+#SBATCH -n 128
+#SBATCH -N 2
+#SBATCH -p normal
+#SBATCH -t 1:30:00
+
+source /scratch/projects/compilers/sourceme17.2.sh
+export LD_LIBRARY_PATH=/opt/apps/intel17/impi17_0/vasp/6b/elpa-2016.05.004/lib:$LD_LIBRARY_PATH
+
+ibrun /opt/apps/intel17/impi17_0/vasp/6b/bin/vasp_std > vasp_test.out
+================================
+
+You are encouraged to try this version, especailly if your cases have issues with vasp.5.4.1
+
+Let us know if you have questions/issues through the ticket system on TACC user portal.
+
+Version %{version}
 ]]
 
---help(help_msg)
-help(help_msg)
 
-whatis("Name: GSL")
-whatis("Version: %{pkg_version}%{dbg}")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
+whatis("Version: %{pkg_version}")
+whatis("Category: application, chemistry")
+whatis("Keywords: Chemistry, Density Functional Theory, Molecular Dynamics")
+whatis("URL:https://www.vasp.at/")
+whatis("Description: Vienna Ab-Initio Simulation Package")
 
--- Create environment variables.
-local bar_dir           = "%{INSTALL_DIR}"
 
-family("GSL")
-prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "lib"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/bar1_1/modulefiles")
-setenv( "TACC_%{MODULE_VAR}_DIR",                bar_dir)
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(bar_dir, "include"))
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(bar_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(bar_dir, "bin"))
-setenv( "PKG_CONFIG_PATH",       pathJoin(bar_dir, "lib/pkgconfig"))
+help(help_message,"\n")
+
+
+local group = "G-802400"
+found = userInGroup(group)
+
+
+local err_message = [[
+You do not have access to this VASP beta
+
+
+Users have to show their licenses and be confirmed by the
+VASP team that they are registered users under that license.
+Scan a copy of the license and send it to hliu@tacc.utexas.edu
+]]
+
+
+if (found) then
+local vasp_dir="%{INSTALL_DIR}"
+
+prepend_path(    "PATH",                pathJoin(vasp_dir, "bin"))
+setenv( "TACC_%{MODULE_VAR}_DIR",                vasp_dir)
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(vasp_dir, "bin"))
+
+else
+  LmodError(err_message,"\n")
+end
+
 EOF
-  
+
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -292,7 +319,8 @@ EOF
 %files package
 #------------------------
 
-  %defattr(-,root,install,)
+#  %defattr(-,root,install,)
+%defattr(750,root,G-802400)
   # RPM package contains files within these directories
   %{INSTALL_DIR}
 

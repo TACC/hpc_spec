@@ -1,7 +1,7 @@
 Prefix:    /opt/apps
 Summary:   lmod: Lua based Modules
 Name:      lmod
-Version:   6.5.15
+Version:   7.4.1
 Release:   1%{?dist}
 License:   MIT
 Vendor:    Robert McLay
@@ -57,20 +57,15 @@ myhost=${myhost%.tacc.utexas.edu}
 first=${myhost%%.*}
 SYSHOST=${myhost#*.}
 
-if [ "$SYSHOST" = "stampede" ]; then
-  CACHE_DIR="--with-spiderCacheDescript=cacheDescript.txt"
+CACHE_DIR="--with-spiderCacheDescript=cacheDescript.txt"
 
 cat > cacheDescript.txt << EOF
 /tmp/moduleData/cacheDir:/tmp/losf_last_update
-/home1/moduleData/XSEDE/cacheDir:/home1/moduleData/XSEDE/last_update
 EOF
-fi
-
+  
 if [ "$SYSHOST" = "ls5" ]; then
    EXTRA="--with-tmodPathRule=yes"
 fi
-
-
 
 # Lmod needs lua but should not require that a working module
 # system be in place to install lmod.  So we search for lua
@@ -86,7 +81,7 @@ PATH=$luaPath:$PATH
 
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR} $RPM_BUILD_ROOT/%{ZSH_SITE_FUNC}
 
-./configure --prefix=%{APPS} $CACHE_DIR --with-settarg=FULL $EXTRA --with-siteName=TACC
+./configure --prefix=%{APPS} $CACHE_DIR --with-settarg=FULL $EXTRA --with-siteName=TACC 
 make DESTDIR=$RPM_BUILD_ROOT install
 cp contrib/TACC/*.lua $RPM_BUILD_ROOT/%{INSTALL_DIR}/libexec
 
@@ -141,7 +136,9 @@ help(
 [[
 The settarg module dynamically and automatically updates "$TARG" and a
 host of other environment variables. These new environment variables
-encapsulate the state of the modules loaded.
+encapsulate the state of the modules loaded. If you load the settarg
+module, then any changes in the currently loaded modules will change
+the "$TARG" variables.
 
 For example, if you have the settarg module and gcc/4.7.1 module loaded
 then the following variables are defined in your environment:
@@ -246,7 +243,7 @@ EOF
 %{INSTALL_DIR}
 %{MODULE_DIR}
 %{MODULE_DIR_ST}
-
+%{ZSH_SITE_FUNC}
 
 %post -n %{pkg_name}
 

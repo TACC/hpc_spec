@@ -1,6 +1,15 @@
 #
+# Spec file for SWIG:
+# interface generator utility 
+# which is always too old for trilinos
+#
+# Victor Eijkhout, 2017
+# based on:
+#
+# Bar.spec, 
+# W. Cyrus Proctor
 # Antonio Gomez
-# 2015-02-02
+# 2015-08-25
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -10,31 +19,42 @@
 # VERBOSE=1       -> Print detailed information at install time
 # RPM_DBPATH      -> Path To Non-Standard RPM Database Location
 #
+# Typical Command-Line Example:
+# ./build_rpm.sh Bar.spec
+# cd ../RPMS/x86_64
+# rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+# rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+# rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: PAPI/Perfctr Library - Local TACC Build
+Summary:    Set of tools for manipulating geographic and Cartesian data sets
 
 # Give the package a base name
-%define pkg_base_name papi
-%define MODULE_VAR    PAPI
+%define pkg_base_name swig
+%define MODULE_VAR    SWIG
 
 # Create some macros (spec file variables)
-%define major_version 5
-%define minor_version 5
-%define micro_version 0
+%define major_version 3
+%define minor_version 0
+%define micro_version 12
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
+%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+#%include name-defines.inc
+%include name-defines-noreloc.inc
+#%include name-defines-hidden.inc
+#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
+
+%define INSTALL_PREFIX  /home1/apps/el7/
 
 ############ Do Not Change #############
 Name:      %{pkg_name}
@@ -42,36 +62,42 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
-License:   LGPL
+Release:   1%{?dist}
+License:   GNU
 Group:     Development/Tools
-URL:       http://icl.cs.utk.edu/papi/
-Packager:  TACC - agomez@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Vendor:     SOEST - hawaii
+Group:      Libraries/maps
+Source:	    swig-%{version}.tar.gz
+URL:	    http://swig.soest.hawaii.edu/ 
+Packager:   eijkhout@tacc.utexas.edu
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
-
+%global _python_bytecompile_errors_terminate_build 0
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: SWIG install
+Group: System Environment/Base
 %description package
-This package provides the perfctr hardware counter and PAPI
-library support.  It must be built against a kernel with the
-appropriate perfctr patches.
+This is the long description for the package RPM...
 
 %package %{MODULEFILE}
-Summary: The modulefile RPM
-Group: Lmod/Modulefiles
+Summary: SWIG install
+Group: System Environment/Base
 %description modulefile
 This is the long description for the modulefile RPM...
 
 %description
-This package provides the perfctr hardware counter and PAPI
-library support.  It must be built against a kernel with the
-appropriate perfctr patches.
+SWIG is a software development tool that connects programs written in C and C++
+with a variety of high-level programming languages. SWIG is primarily used with
+common scripting languages such as Perl, Python, Tcl/Tk, and Ruby, however the
+list of supported languages also includes non-scripting languages such as Java,
+OCAML and C#. Also several interpreted and compiled Scheme implementations
+(Guile, MzScheme, Chicken) are supported. SWIG is most commonly used to create
+high-level interpreted or compiled programming environments, user interfaces,
+and as a tool for testing and prototyping C/C++ software. SWIG can also export
+its parse tree in the form of XML and Lisp s-expressions. 
 
 
 #---------------------------------------
@@ -83,6 +109,9 @@ appropriate perfctr patches.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+%setup -n %{pkg_base_name}-%{pkg_version}
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -96,7 +125,6 @@ appropriate perfctr patches.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n %{pkg_base_name}-%{pkg_version}
 
 
 #---------------------------------------
@@ -110,12 +138,10 @@ appropriate perfctr patches.
 
 # Setup modules
 %include system-load.inc
-
-# Insert necessary module commands
-module purge
-
-echo "Building the package?:    %{BUILD_PACKAGE}"
-echo "Building the modulefile?: %{BUILD_MODULEFILE}"
+# Load Compiler
+%include compiler-load.inc
+# Load MPI Library
+#%include mpi-load.inc
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -131,12 +157,23 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   ########### Do Not Remove #############
   #######################################
 
+  #========================================
+  # Insert Build/Install Instructions Here
+  #========================================
   
-  cd src
-  export ARCH=x86_64
-  ./configure --prefix=%{INSTALL_DIR} --with-perf_events
-  make -j 68
-  make DESTDIR=$RPM_BUILD_ROOT install
+#
+# Use mount temp trick
+#
+mkdir -p             %{INSTALL_DIR}
+mount -t tmpfs tmpfs %{INSTALL_DIR}
+
+./configure --prefix=%{INSTALL_DIR} \
+ && make \
+ && make install
+
+cp -r %{INSTALL_DIR}/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+
+umount %{INSTALL_DIR}
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -158,64 +195,49 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
-The %{MODULE_VAR} module file defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC for
-the location of the %{name} distribution, libraries,
-and include files, respectively.
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version} << 'EOF'
+#%Module1.0#####################################################################
+##
+## Swig tool to connect different programming languages
+##
+proc ModulesHelp { } {
+        puts stderr "\tSimplified Wrapper and Interface Generator\n"
+        puts stderr "\tThis module loads swig.\n"
+        puts stderr "\t{ The command directory is added to PATH.             } \n"
+	puts stderr "\t{ The include directory is added to INCLUDE.          } \n"
+        puts stderr "\t{ The lib     directory is added to LD_LIBRARY_PATH.  } \n"
+        puts stderr "\n\tVersion %{version}\n"
 
-To use the %{MODULE_VAR} library, compile the source code with the option:
--I\$TACC_%{MODULE_VAR}_INC
-add the following options to the link step:
--Wl,-rpath,\$TACC_%{MODULE_VAR}_LIB -L\$TACC_%{MODULE_VAR}_LIB -lpapi
+}
 
-The -Wl,-rpath,\$TACC_%{MODULE_VAR}_LIB option is not required, however,
-if it is used, then this module will not have to be loaded
-to run the program during future login sessions.
+module-whatis   "Simplified Wrapper and Interface Generator"
+module-whatis   "Version: %{version}"
+module-whatis   "Category: Development/Tools"
+module-whatis   "Description: SWIG is a software development tool that connects programs written in C and C++ with a variety of high-level programming languages."
+module-whatis   "URL: http://www.swig.org"
 
-Version %{pkg_version}
-]]
+# load only one version of qt at a time
+conflict swig
 
---help(help_msg)
-help(help_msg)
-
-whatis("PAPI: Performance Application Programming Interface")
-whatis("Version: %{pkg_version}%{dbg}")
-whatis("Category: library, performance measurement")
-whatis("Keywords: Profiling, Library, Performance Measurement")
-whatis("Description: Interface to monitor performance counter hardware for quantifying application behavior")
-whatis("URL: http://icl.cs.utk.edu/papi/")
-
-
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
-
--- Create environment variables.
-local papi_dir           = "%{INSTALL_DIR}"
-
-family("papi")
-prepend_path(    "PATH",                pathJoin(papi_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(papi_dir, "lib"))
-prepend_path(    "MANPATH",             pathJoin(papi_dir, "share/man"))
-setenv( "TACC_%{MODULE_VAR}_DIR",                papi_dir)
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(papi_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(papi_dir, "bin"))
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(papi_dir, "include"))
+prepend-path    PATH            %{INSTALL_DIR}/bin
+prepend-path    LD_LIBRARY_PATH %{INSTALL_DIR}/lib
+setenv TACC_SWIG_DIR  %{INSTALL_DIR}
+setenv TACC_SWIG_INC  %{INSTALL_DIR}/include
+setenv TACC_SWIG_LIB  %{INSTALL_DIR}/lib
 EOF
-  
+
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module3.1.1#################################################
+#%Module1.0####################################################################
 ##
-## version file for %{BASENAME}%{version}
+## Version file for %{name} version %{version}
 ##
-
-set     ModulesVersion      "%{version}"
+set ModulesVersion "%version"
 EOF
-  
-  # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %endif
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
@@ -247,7 +269,6 @@ EOF
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-
 ########################################
 ## Fix Modulefile During Post Install ##
 ########################################
@@ -269,3 +290,6 @@ export PACKAGE_PREUN=1
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
 
+%changelog
+* Fri Feb 24 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial release

@@ -1,6 +1,6 @@
 Summary: Shell Startup tracing tool 
 Name: shell_startup_debug
-Version: 1.6
+Version: 1.9
 Release: 1%{?dist}
 License:   LGPL
 Group: System Environment/Base

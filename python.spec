@@ -1,7 +1,7 @@
 Summary:    Python is a high-level general-purpose programming language.
 Name:       tacc-python 
 Version:    2.7.13
-Release:    1%{?dist}
+Release:    2%{?dist}
 License:    GPLv2
 Vendor:     Python Software Foundation
 Group:      Applications
@@ -11,7 +11,7 @@ Packager:   TACC - rtevans@tacc.utexas.edu
 # Either Python package or mpi4py will be built 
 # based on this switch
 #------------------------------------------------
-%define build_mpi4py      0
+%define build_mpi4py      1
 %global _python_bytecompile_errors_terminate_build 0
 #------------------------------------------------
 # BASIC DEFINITIONS
@@ -36,7 +36,7 @@ Packager:   TACC - rtevans@tacc.utexas.edu
 %if "%{build_mpi4py}" == "1"
     %define INSTALL_DIR_MPI %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{PNAME}/%{version}
     %define MODULE_DIR_MPI %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{MODULES}/%{PNAME}
-    %define PACKAGE_NAME tacc-mpi4py-%{version}-%{comp_fam_ver}-%{mpi_fam_ver}
+    %define PACKAGE_NAME tacc-mpi4py-%{comp_fam_ver}-%{mpi_fam_ver}-%{PNAME}
 %endif
 
 %package -n %{PACKAGE_NAME}
@@ -90,16 +90,22 @@ export PYTHONPATH=%{INSTALL_DIR_COMP}/lib:$PYTHONPATH
 # System Specific
 ############################################################
 %if "%{comp_fam_name}" == "Intel"
-    export ISAFLAGS="-xcore-avx2 -axmic-avx512"
+    export ISAFLAGS="-xCORE-AVX2 -axCOMMON-AVX512"
+    export MKL_INC=$TACC_MKL_INC
+    export MKL_LIB=$TACC_MKL_LIB
+    export OMP_LIB=$ICC_LIB
 %endif
 %if "%{comp_fam_name}" == "GNU"
-    export ISAFLAGS="-march=haswell -mtune=knl"
+    export ISAFLAGS="-march=native"
+    ml intel
+    export MKL_INC=$TACC_MKL_INC
+    export MKL_LIB=$TACC_MKL_LIB
+    export OMP_LIB=$ICC_LIB
+    ml gcc
+    export LD_LIBRARY_PATH=$MKL_LIB:$OMP_LIB:$LD_LIBRARY_PATH
 %endif
-export MKL_INC=/opt/intel/compilers_and_libraries_2017.0.098/linux/mkl/include
-export MKL_LIB=/opt/intel/compilers_and_libraries_2017.0.098/linux/mkl/lib/intel64
-export OMP_LIB=/opt/intel/compilers_and_libraries_2017.0.098/linux/compiler/lib/intel64
-export LD_LIBRARY_PATH=$MKL_LIB:$OMP_LIB:$LD_LIBRARY_PATH
 
+echo $LD_LIBRARY_PATH | sed -e "s/:/\n/g" 
 ############################################################
 # Build core python here
 ############################################################
@@ -114,14 +120,13 @@ if [ ! -f "%{INSTALL_DIR_COMP}/bin/python" ]; then
     export LD_LIBRARY_PATH=`pwd`:$LD_LIBRARY_PATH
     ls
     %if "%{comp_fam_name}" == "Intel"
-    #./configure --prefix=%{INSTALL_DIR_COMP} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc' CFLAGS="-O3 -fp-model strict -fp-model source -ipo -prec-div -prec-sqrt $ISAFLAGS" LDFLAGS="-ipo -Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth --without-gcc --with-libm=-limf --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip
-    ./configure --prefix=%{INSTALL_DIR_COMP} CFLAGS="-O3 -fp-model strict -fp-model source -ipo -prec-div -prec-sqrt $ISAFLAGS" LDFLAGS=-ipo --with-icc --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip
+    ./configure --prefix=%{INSTALL_DIR_COMP} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc' CFLAGS="-O3 -fp-model strict -fp-model source -ipo -prec-div -prec-sqrt $ISAFLAGS" LDFLAGS="-ipo -Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth --without-gcc --with-libm=-limf --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip    
     %endif
     %if "%{comp_fam_name}" == "GNU"
-    ./configure --prefix=%{INSTALL_DIR_COMP} CFLAGS="-flto -ffat-lto-objects $ISAFLAGS" LDFLAGS="-rdynamic" --with-system-ffi --enable-shared --with-pth --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip    
+    ./configure --prefix=%{INSTALL_DIR_COMP} CFLAGS="-flto -ffat-lto-objects -fuse-linker-plugin $ISAFLAGS" LDFLAGS="-flto -ffat-lto-objects -fuse-linker-plugin -rdynamic" --with-system-ffi --enable-shared --with-pth --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip    
     %endif
 
-    make -j 16
+    make -j 68
     make sharedinstall
     make -i install
 fi
@@ -220,8 +225,8 @@ CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: lxml
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: pystuck
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: fortran-magic
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: MySQL
-%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: psycopg2
-%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: mercurial
+#%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: psycopg2
+#%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: mercurial
 CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: yt
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: theano
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: scikit_learn

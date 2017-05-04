@@ -1,7 +1,5 @@
-#
-# Parmetis spec file
-# pointing into the petsc distribution
-# Victor Eijkhout
+# SUPERLU specfile
+# Victor Eijkhout 2017
 #
 # based on Bar.spec
 # W. Cyrus Proctor
@@ -23,18 +21,17 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: Parmetis, piggybacking on the PETSc install
+Summary: Superlu, piggybacking on the PETSc install
 
 # Give the package a base name
-%define pkg_base_name parmetis
-%define MODULE_VAR    PARMETIS
+%define pkg_base_name superlu
+%define MODULE_VAR    SUPERLU
 
 # Create some macros (spec file variables)
-%define major_version 4
-%define minor_version 0
-%define micro_version 3
+%define major_version 3
+%define minor_version 3
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{major_version}
 %define petscversion 3.7
 ###%define NO_PACKAGE 0
 
@@ -46,10 +43,8 @@ Summary: Parmetis, piggybacking on the PETSc install
 ### Construct name based on includes ###
 ########################################
 #%include name-defines.inc
-#%include name-defines-noreloc.inc
-%include name-defines-hidden.inc
-#### VLE this doesn't actually do much
-#### because we do not use the MODULE_FILENAME variable
+%include name-defines-noreloc.inc
+#%include name-defines-hidden.inc
 #%include name-defines-hidden-noreloc.inc
 
 ########################################
@@ -63,9 +58,9 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1%{?dist}
-License:   LGPL
+License:   BSD-like
 Group:     Development/Numerical-Libraries
-URL:       llnl.gov
+URL:       http://crd-legacy.lbl.gov/~xiaoye/SuperLU/
 Packager:  TACC - eijkhout@tacc.utexas.edu
 #Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
@@ -81,13 +76,13 @@ Group: Development/Tools
 This is the long description for the package RPM...
 
 %package %{MODULEFILE}
-Summary: Parmetis local binary install
+Summary: Superlu local binary install
 Group: System Environment/Base
 %description modulefile
 This is the long description for the modulefile RPM...
 
 %description
-Parmetis is a solver library for distributed sparse linear system.
+Superlu is a solver library for distributed sparse linear system.
 
 #---------------------------------------
 %prep
@@ -166,37 +161,37 @@ else
   export modulefilename=%{version}-${ext}
 fi
 
-#### hidden module files: start with period
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.${modulefilename}.lua << EOF
+echo 
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua << EOF
 help( [[
-The Parmetis module defines the following environment variables:
-TACC_PARMETIS_INC and TACC_PARMETIS_LIB for the location
-of the Parmetis include files and libraries.
+The Superlu module defines the following environment variables:
+TACC_SUPERLU_INC and TACC_SUPERLU_LIB for the location
+of the Superlu include files and libraries.
 
 Version %{version}
 ]] )
 
-whatis( "Name: Parmetis" )
+whatis( "Name: Superlu" )
 whatis( "Version: %{version}" )
 whatis( "Category: library, mathematics" )
-whatis( "URL: http://llnl.gov/parmetis/" )
+whatis( "URL: http://crd-legacy.lbl.gov/~xiaoye/SuperLU/" )
 whatis( "Description: Numerical library for sparse solvers" )
 
-local             parmetis_arch =    "${architecture}"
-local             parmetis_dir  =     "${TACC_PETSC_DIR}"
-local             parmetis_inc  = pathJoin(parmetis_dir,parmetis_arch,"include")
-local             parmetis_lib  = pathJoin(parmetis_dir,parmetis_arch,"lib")
+local             superlu_arch =    "${architecture}"
+local             superlu_dir  =     "${TACC_PETSC_DIR}"
+local             superlu_inc  = pathJoin(superlu_dir,superlu_arch,"include")
+local             superlu_lib  = pathJoin(superlu_dir,superlu_arch,"lib")
 
-prepend_path("LD_LIBRARY_PATH", parmetis_lib)
+prepend_path("LD_LIBRARY_PATH", superlu_lib)
 
-setenv("TACC_PARMETIS_INC",        parmetis_inc )
-setenv("TACC_PARMETIS_LIB",        parmetis_lib)
+setenv("TACC_SUPERLU_INC",        superlu_inc )
+setenv("TACC_SUPERLU_LIB",        superlu_lib)
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
 #%Module1.0#################################################
 ##
-## version file for Parmetis %version
+## version file for Superlu %version
 ##
 
 set     ModulesVersion      "${modulefilename}"
@@ -254,5 +249,5 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Fri Feb 16 2017 eijkhout <eijkhout@tacc.utexas.edu>
+* Fri Apr 28 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

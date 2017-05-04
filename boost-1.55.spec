@@ -1,6 +1,6 @@
 #
-# Kevin Chen, chenk@tacc.utexas.edu
-# 2016-09-30
+# Antonio Gomez-Iglesias
+# 2016-10-08
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -11,24 +11,25 @@
 # RPM_DBPATH      -> Path To Non-Standard RPM Database Location
 #
 # Typical Command-Line Example:
-# ./build_rpm.sh Bar.spec
 # cd ../RPMS/x86_64
 # rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: A Nice little relocatable skeleton spec file example.
+Summary: Boost spec file (www.boost.org)
 
 # Give the package a base name
-%define pkg_base_name gsl
-%define MODULE_VAR    GSL
+%define pkg_base_name boost
+%define MODULE_VAR    BOOST
 
 # Create some macros (spec file variables)
-%define major_version 2
-%define minor_version 2
+%define major_version 1
+%define minor_version 55
 %define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}
+
+%define mpi_fam none
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -39,8 +40,6 @@ Summary: A Nice little relocatable skeleton spec file example.
 ########################################
 #%include name-defines.inc
 %include name-defines-noreloc.inc
-#%include name-defines-hidden.inc
-#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -53,10 +52,11 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
 Release:   1%{?dist}
 License:   GPL
-Group:     Development/Tools
-URL:       http://www.gnu.org/software/bar
-Packager:  TACC - Kevin Chen chenk@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Group:     Utility
+URL:       http://www.boost.org
+Packager:  TACC - agomez@tacc.utexas.edu
+Source0:   boost_1_55_0.tar.gz
+Source1:   icu4c-57_1-src.tgz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -64,60 +64,30 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 
 %package %{PACKAGE}
-
-Summary: The GNU Scientific Library (GSL) is a numerical library for C and C++ programmers.
-Group: System Environment/Base
-
+Summary: Boost RPM
+Group: Development/System Environment
 %description package
-
-The GNU Scientific Library (GSL) is a numerical library for C and C++ programmers. It is free software under the GNU General Public License.
-
-The library provides a wide range of mathematical routines such as random number generators, special functions and least-squares fitting. There are over 1000 functions in total
-
-The complete range of subject areas covered by the library includes,
-
-Complex Numbers Roots of Polynomials
-Special Functions Vectors and Matrices
-Permutations  Sorting
-BLAS Support  Linear Algebra
-Eigensystems  Fast Fourier Transforms
-Quadrature  Random Numbers
-Quasi-Random Sequences  Random Distributions
-Statistics  Histograms
-N-Tuples  Monte Carlo Integration
-Simulated Annealing Differential Equations
-Interpolation Numerical Differentiation
-Chebyshev Approximation Series Acceleration
-Discrete Hankel Transforms  Root-Finding
-Minimization  Least-Squares Fitting
-Physical Constants  IEEE Floating-Point
-Discrete Wavelet Transforms Basis splines
-
-Unlike the licenses of proprietary numerical libraries the license of GSL does not restrict scientific cooperation. It allows you to share your programs freely with others.
-
-GSL can be found in the gsl subdirectory on your nearest GNU mirror http://ftpmirror.gnu.org/gsl/.
-
-Main GNU ftp site: ftp://ftp.gnu.org/gnu/gsl/
-For other ways to obtain GSL, please read How to get GNU Software
-
-Installation instructions can be found in the included README and INSTALL files.
-
-Precompiled binary packages are included in most GNU/Linux distributions.
-
-A compiled version of GSL is available as part of Cygwin on Windows (but we recommend using GSL on a free operating system, such as GNU/Linux).
-
+Boost provides free peer-reviewed portable C++ source libraries.
 
 %package %{MODULEFILE}
-Summary: The GNU Scientific Library (GSL) is a numerical library for C and C++ programmers.
-Group: System Environment/Base
+Summary: The modulefile RPM
+Group: Lmod/Modulefiles
 %description modulefile
+Module RPM for Boost
+
 %description
 
-The GNU Scientific Library (GSL) is a numerical library for C and C++ programmers. It is free software under the GNU General Public License.
+Boost emphasizes libraries that work well with the C++ Standard
+Library. Boost libraries are intended to be widely useful, and usable
+across a broad spectrum of applications. The Boost license encourages
+both commercial and non-commercial use.
 
-The library provides a wide range of mathematical routines such as random number generators, special functions and least-squares fitting. There are ove
-
-
+Boost aims to establish "existing practice" and provide reference
+implementations so that Boost libraries are suitable for eventual
+standardization. Ten Boost libraries are already included in the C++
+Standards Committee Library Technical Report (TR1) as a step toward
+becoming part of a future C++ Standard. More Boost libraries are
+proposed for the upcoming TR2.
 
 #---------------------------------------
 %prep
@@ -129,7 +99,9 @@ The library provides a wide range of mathematical routines such as random number
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%setup -n %{pkg_base_name}-%{pkg_version}
+#%setup -n %{pkg_base_name}-%{pkg_version}
+%setup -n boost_%{major_version}_%{minor_version}_%{micro_version}  %{name}-%{version}
+%setup -n boost_%{major_version}_%{minor_version}_%{micro_version}  -T -D -a 1
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -145,7 +117,6 @@ The library provides a wide range of mathematical routines such as random number
 #--------------------------
 
 
-
 #---------------------------------------
 %build
 #---------------------------------------
@@ -157,13 +128,11 @@ The library provides a wide range of mathematical routines such as random number
 
 # Setup modules
 %include system-load.inc
+%include compiler-defines.inc
+#%include mpi-defines.inc
 module purge
-# Load Compiler
 %include compiler-load.inc
-# Load MPI Library
-#%include mpi-load.inc
-
-# Insert further module commands
+#module load intel
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -187,38 +156,76 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
+
+  ICU_MODE=Linux
+  %if "%{comp_fam}" == "intel"
+        export CONFIGURE_FLAGS=--with-toolset=intel-linux
+        ICU_MODE=Linux/ICC
+  %endif
+
+
+  %if "%{mpi_fam}" != "none"
+        CXX=mpicxx
+  %endif
+
+  %if "%{comp_fam}" == "gcc"
+        export CONFIGURE_FLAGS=--with-toolset=gcc
+  %endif
+
   WD=`pwd`
 
-  # Create some dummy directories and files for fun
-#  export CFLAGS="-O3 -xAVX -axCORE-AVX2 -fp-model precise"
-#  export CPPFLAGS="-O3 -xAVX -axCORE-AVX2 -fp-model precise"
- %if "%is_intel" == "1" 
-  export CC=`which icc`
-  export CXX=`which icpc`
-  export CFLAGS="-O3 -xAVX -axCORE-AVX2, -xMIC-AVX512"
-  export CPPFLAGS="-O3 -xAVX -axCORE-AVX2, -xMIC-AVX512" 
-  export LDFLAGS="-xAVX -axCORE-AVX2, -xMIC-AVX512"
-%endif
 
-%if "%is_gcc" == "1" 
-  export CC=`which gcc`
-  export CXX=`which g++`
-  export CFLAGS="-O3 -march=haswell -mtune=knl"
-  export CPPFLAGS="-O3 -march=haswell -mtune=knl"
-  export LDFLAGS="-march=haswell -mtune=knl"
-%endif
- 
+#  if [ "$CXX" != mpicxx ]; then
+    	cd icu/source
+	%if "%{comp_fam}" == "gcc"
+    	CXXFLAGS="-march=haswell -mtune=knl" CFLAGS="-march=haswell -mtune=knl" ./runConfigureICU  $ICU_MODE --prefix=%{INSTALL_DIR}
+	%endif
+	%if "%{comp_fam}" == "intel"
+    	CXXFLAGS="-xCORE-AVX2 -axMIC-AVX512" CFLAGS="-xCORE-AVX2 -axMIC-AVX512" ./runConfigureICU  $ICU_MODE --prefix=%{INSTALL_DIR}
+	%endif
+    	make -j 64 
+    	make install
+    	rm -f ~/user-config.jam
+#  fi
 
-  export CONFIG_FLAGS=""
-  ./configure $CONFIG_FLAGS --prefix=%{INSTALL_DIR}
-  make -j 12
-  make install
-#  sed -i -- 's/tmprpm/opt\/apps/g' %{INSTALL_DIR}/bin/gsl-config 
-# Copy everything from tarball over to the installation directory
+  cd $WD
+#  cd boost_1_61_0
+  EXTRA="-sICU_PATH=%{INSTALL_DIR}" 
+  #if [ "$CXX" = mpicxx ]; then
+ # 	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=mpi"
+ # 	EXTRA=""
+ # 	mpipath=`which mpicxx`
+#	cat > $WD/tools/build/v2/user-config.jam << EOF
+#	#using mpi $mpipath ;
+#	using mpi ;
+#	EOF
+#  else
+  	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all --without-libraries=mpi"
+#  fi
+
+  ./bootstrap.sh --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
+
+  %if "%{comp_fam}" == "intel"
+    ./b2 -j 64 --prefix=%{INSTALL_DIR} $EXTRA cxxflags="-xCORE-AVX2 -axMIC-AVX512" cflags="-xCORE-AVX2 -axMIC-AVX512" linkflags="-xCORE-AVX2 -axMIC-AVX512" install
+  %endif
+  %if "%{comp_fam}" == "gcc"
+    ./b2 -j 64 --prefix=%{INSTALL_DIR} $EXTRA cxxflags="-march=haswell -mtune=knl" cflags="-march=haswell -mtune=knl" linkflags="-march=haswell -mtune=knl" install
+  %endif
+
+  mkdir -p              $RPM_BUILD_ROOT/%{INSTALL_DIR}
   cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+
+
+  rm -f ~/tools/build/v2/user-config.jam
+
+  if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
+  	mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  fi
+
+  cp -r %{INSTALL_DIR} $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
   umount %{INSTALL_DIR}
 
-#-----------------------  
+#---------------------- - 
 %endif # BUILD_PACKAGE |
 #-----------------------
 
@@ -238,50 +245,50 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
-The %{MODULE_VAR} module defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
-TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
-include files, and tools respectively.
-]]
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
+help([[
+The boost module file defines the following environment variables:"
+TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC for"
+the location of the boost distribution."
 
---help(help_msg)
-help(help_msg)
+To load the mpi boost      do "module load boost-mpi"
+To load the rest of boost  do "module load boost"
 
-whatis("Name: GSL")
-whatis("Version: %{pkg_version}%{dbg}")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
+It is save to load both.
 
--- Create environment variables.
-local bar_dir           = "%{INSTALL_DIR}"
+Version %{version}"
+]])
 
-family("GSL")
-prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "lib"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/bar1_1/modulefiles")
-setenv( "TACC_%{MODULE_VAR}_DIR",                bar_dir)
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(bar_dir, "include"))
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(bar_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(bar_dir, "bin"))
-setenv( "PKG_CONFIG_PATH",       pathJoin(bar_dir, "lib/pkgconfig"))
+whatis("Name: boost")
+whatis("Version: %{version}")
+whatis("Category: %{group}")
+whatis("Keywords: System, Library, C++")
+whatis("URL: http://www.boost.org")
+whatis("Description: Boost provides free peer-reviewed portable C++ source libraries %{BOOST_TYPE}.")
+
+
+setenv("TACC_%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
+setenv("TACC_%{MODULE_VAR}_LIB","%{INSTALL_DIR}/lib")
+setenv("TACC_%{MODULE_VAR}_INC","%{INSTALL_DIR}/include")
+
+-- Add boost to the LD_LIBRARY_PATH
+prepend_path("LD_LIBRARY_PATH","%{INSTALL_DIR}/lib")
+
 EOF
+
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
-## version file for %{BASENAME}%{version}
+## version file for %{MODULE_VAR}%{version}
 ##
 
 set     ModulesVersion      "%{version}"
 EOF
   
-  # Check the syntax of the generated lua modulefile only if a visible module
-  %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-  %endif
+  # Check the syntax of the generated lua modulefile
+  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -311,6 +318,7 @@ EOF
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
+
 
 ########################################
 ## Fix Modulefile During Post Install ##
