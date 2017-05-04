@@ -5,7 +5,7 @@
 #-------------------------------------------------------------------
 
 Buildroot:       /var/tmp/%{name}-%{version}-buildroot
-%define _topdir  /home1/build/rpms/knl15
+%define _topdir  /admin/build/rpms
 %define APPS     /opt/apps
 %define MODULES  modulefiles
 %define SPEC_DIR %{_topdir}/SPECS

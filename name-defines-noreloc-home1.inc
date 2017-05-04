@@ -44,7 +44,7 @@
 %define MODULE_FILENAME %{version}.lua
 
 # Install macros
-%define INSTALL_PREFIX  /home1/apps/el7
+%define INSTALL_PREFIX  /home1/apps
 %define INSTALL_DIR     %{INSTALL_PREFIX}/%{INSTALL_SUFFIX}
 
 # Subpackage macros

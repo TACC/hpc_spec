@@ -1,6 +1,5 @@
-# Quantum Espresso Hang Liu
-# 2016-09-30
-# Modified for KNL deployment.
+# Quantum Espresso 6.1.SPEC
+# 05/2017
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -17,30 +16,33 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: A Nice little relocatable skeleton spec file example.
+Summary: Quantum Espresso
 
 # Give the package a base name
-%define pkg_base_name espresso 
-%define MODULE_VAR    ESPRESSO
+%define pkg_base_name qe
+%define MODULE_VAR    QE
 
 # Create some macros (spec file variables)
-%define major_version 5
-%define minor_version 4
-%define micro_version 0
+%define major_version 6
+%define minor_version 1
+%define micro_version  
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{major_version}.%{minor_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
+
 %include compiler-defines.inc
 %include mpi-defines.inc
+
+#%include name-defines-noreloc.inc
+
 ########################################
 ### Construct name based on includes ###
 ########################################
 %include name-defines.inc
-#%include name-defines-noreloc.inc
-#%include name-defines-hidden.inc
-#%include name-defines-hidden-noreloc.inc
+
+
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -51,12 +53,15 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
+Release:   1
 License:   GPL
 Group:     Applications/Chemistry
 URL:       http://www.quantum-espresso.org
 Packager:  TACC - hliu@tacc.utexas.edu
-Source:    espresso-%{pkg_version}.compiled.tar.gz
+Source:    %{pkg_base_name}-%{pkg_version}-TACC.tar.gz
+#Source0:   %{pkg_base_name}-%{pkg_version}.tar.bz2
+#Source1:   libint-1.1.5.tar.gz
+#Source2:   libxc-2.0.1.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -64,20 +69,20 @@ Source:    espresso-%{pkg_version}.compiled.tar.gz
 
 
 %package %{PACKAGE}
-Summary: The package RPM
+Summary: Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale.
 Group: Applications/Chemistry
 %description package
-Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. It is based on density-functional theory, plane waves, and pseudopotentials.
-
+Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
+It is based on density-functional theory, plane waves, and pseudopotentials.
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. It is based on density-functional theory, plane waves, and pseudopotentials.
-
+Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
+It is based on density-functional theory, plane waves, and pseudopotentials.
 %description
-Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. It is based on density-functional theory, plane waves, and pseudopotentials.
-
+Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
+It is based on density-functional theory, plane waves, and pseudopotentials.
 #---------------------------------------
 %prep
 #---------------------------------------
@@ -87,9 +92,6 @@ Quantum Espresso is an integrated suite of Open-Source computer codes for electr
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-#%setup -n espresso-%{pkg_version}
-%setup -n %{pkg_base_name}-%{pkg_version}
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -103,11 +105,40 @@ Quantum Espresso is an integrated suite of Open-Source computer codes for electr
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-
+%setup -n %{pkg_base_name}-%{pkg_version}-TACC
 
 #---------------------------------------
 %build
 #---------------------------------------
+%include compiler-load.inc
+%include mpi-load.inc
+
+export VERSION=6.1
+
+export ARCH=x86_64
+export F77=ifort
+export CC=icc
+export LD_LIBS="-Wl,--as-needed -liomp5 -Wl,--no-as-needed"
+export LDFLAGS="-Wl,--as-needed -liomp5 -Wl,--no-as-needed"
+export DFLAGS="-D__OPENMP -D__INTEL -D__DFTI -D__MPI -D__PARA -D__SCALAPACK -D__ELPA_2016 -D__USE_MANY_FFT -D__NON_BLOCKING_SCATTER -D__EXX_ACE"
+export FFLAGS="-O3 -xMIC-AVX512 -fp-model precise -assume byterecl -qopenmp"
+export IFLAGS="-I../include/ -I${MKLROOT}/include/fftw/"
+export ELPAPATH=$PWD
+export ELPAPATH=$ELPAPATH/elpa-2016.11.001.pre/ELPA_201611001pre
+export IFLAGS="-I../include/ -I${MKLROOT}/include -I${ELPAPATH}/include/elpa_openmp-2016.11.001.pre/modules/"
+
+export BLAS_LIBS=" -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl"
+export LAPACK_LIBS="${BLAS_LIBS}"
+export SCALAPACK_LIBS="${ELPAPATH}/lib/libelpa_openmp.a -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64"
+export FFT_LIBS="${BLAS_LIBS}"
+
+./build_hliu_201611001pre
+./configure
+make all
+
+# Remove non active symbolic links in packages
+rm S3DE/iotk/iotk
+rm -rf Doc
 
 
 #---------------------------------------
@@ -116,13 +147,9 @@ Quantum Espresso is an integrated suite of Open-Source computer codes for electr
 
 # Setup modules
 %include system-load.inc
-module purge
-# Load Compiler
-%include compiler-load.inc
-# Load MPI Library
-%include mpi-load.inc
 
-# Insert further module commands
+# Insert necessary module commands
+module purge
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -144,34 +171,13 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-
-#export ARCH=x86_64
-#export F77=ifort
-#export CC=icc
-#export DFLAGS="-D__INTEL -D__FFTW3 -D__MPI -D__PARA -D__SCALAPACK"
-#export FFLAGS="-O3 -xMIC-avx512 -fp-model precise -assume byterecl"
-#export IFLAGS="-I../include/ -I${MKLROOT}/include/fftw/"
- 
- 
-#export BLAS_LIBS="-L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm"
-#export LAPACK_LIBS="-L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm"
-#export SCALAPACK_LIBS="-L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lmkl_blacs_intelmpi_lp64 -lpthread -lm"
-#export FFT_LIBS="-L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm"
- 
-#./configure
-#make pw
-#make cp
-#make neb
-#make ld1 
-#make xspectra
-#make upf
- 
-# Remove non active symbolic links in packages
-#rm S3DE/iotk/iotk
-#rm -rf Doc
+  
+  # Create some dummy directories and files for fun
+#  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+#  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
 
 cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}/
-chmod -Rf u+rwX,g+rwX,o=rX  $RPM_BUILD_ROOT/%{INSTALL_DIR}  
+chmod -Rf u+rwX,g+rwX,o=rX  $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -194,17 +200,18 @@ chmod -Rf u+rwX,g+rwX,o=rX  $RPM_BUILD_ROOT/%{INSTALL_DIR}
   
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_message=[[
+local help_msg=[[
+
 
 To run codes in quantum espresso, e.g. pw.x, include the following lines in
 your job script, using the appropriate input file name:
-module load espresso/5.4.0
+module load qe/6.1
 ibrun pw.x -input input.scf
- 
+
 IMPORTANT NOTES:
- 
+
 1. Run your jobs on $SCRATCH rather than $WORK. The $SCRATCH file system is better able to handle these kinds of loads.
- 
+
 2. Especially when running pw.x, set the keyword disk_io to low or none in input so that wavefunction
 will not be written to file at each scf iteration step, but stored in memory.
 
@@ -214,28 +221,30 @@ Do not run multiple ph.x jobs at given time.
 Version %{version}
 ]]
 
-help(help_message,"\n")
+--help(help_msg)
+help(help_msg)
 
 whatis("Name: Quantum Espresso")
-whatis("Version: %{version}")
-whatis("Category: Application, Chemistry")
-whatis("Keywords: Chemistry, Density Functional Theory, PLance Wave, Peudo potentials")
-whatis("URL: http://www.quantum-espresso.org")
-whatis("Description: Integrated suite of computer codes for electronic structure calculations and material modeling at the nanoscale.")
+whatis("Version: %{pkg_version}%{dbg}")
+%if "%{is_debug}" == "1"
+setenv("TACC_%{MODULE_VAR}_DEBUG","1")
+%endif
+whatis "Category: application, chemistry"
+whatis "Keywords: Chemistry, Density Functional Theory, PLance Wave, Peudo potentials"
+whatis "URL: http://www.quantum-espresso.org"
+whatis "Description: Integrated suite of computer codes for electronic structure calculations and material modeling at the nanoscale."
 
-local espresso_dir="%{INSTALL_DIR}"
+-- Create environment variables.
+local qe_dir="%{INSTALL_DIR}"
 
- 
-prepend_path(    "PATH",                pathJoin(espresso_dir, "bin"))
+prepend_path(    "PATH",                pathJoin(qe_dir, "bin"))
 
-setenv( "I_MPI_COLL_INTRANODE",                  "pt2pt") 
-setenv( "TACC_%{MODULE_VAR}_DIR",                espresso_dir)
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(espresso_dir, "bin"))
-setenv("TACC_%{MODULE_VAR}_PSEUDO",pathJoin(espresso_dir,"pseudo"))
-
+setenv( "TACC_%{MODULE_VAR}_DIR",                qe_dir)
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(qe_dir, "bin"))
+setenv("TACC_%{MODULE_VAR}_PSEUDO",pathJoin(qe_dir,"pseudo"))
 
 EOF
-
+  
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -245,10 +254,9 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 set     ModulesVersion      "%{version}"
 EOF
   
-  # Check the syntax of the generated lua modulefile only if a visible module
-  %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-  %endif
+  # Check the syntax of the generated lua modulefile
+  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -278,6 +286,7 @@ EOF
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
+
 
 ########################################
 ## Fix Modulefile During Post Install ##

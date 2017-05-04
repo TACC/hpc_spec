@@ -47,7 +47,7 @@
   %define comp_fam_ver intel17
   %define comp_fam_name Intel
   %define is_intel 1
-  %define comp_module intel/17.0.0
+  %define comp_module intel/17.0.2
 %endif
 
 %if "%{comp_fam}" == "error"

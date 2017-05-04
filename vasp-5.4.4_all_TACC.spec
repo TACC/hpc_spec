@@ -1,6 +1,6 @@
-#
-# Antonio Gomez-Iglesias
-# 2016-10-08
+# VASP Hang Liu
+# 2017-05-03
+# Modified for KNL deployment.
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -11,35 +11,36 @@
 # RPM_DBPATH      -> Path To Non-Standard RPM Database Location
 #
 # Typical Command-Line Example:
+# ./build_rpm.sh Bar.spec
 # cd ../RPMS/x86_64
 # rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: Boost spec file (www.boost.org)
+Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name boost
-%define MODULE_VAR    BOOST
+%define pkg_base_name vasp
+%define MODULE_VAR    VASP
 
 # Create some macros (spec file variables)
-%define major_version 1
-%define minor_version 55
-%define micro_version 0
+%define major_version 5
+%define minor_version 4
+%define micro_version 4
 
-%define pkg_version %{major_version}.%{minor_version}
-
-%define mpi_fam none
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
-%include rpm-dir.inc                  
+%include rpm-dir.inc
 %include compiler-defines.inc
-#%include mpi-defines.inc
+%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-#%include name-defines.inc
-%include name-defines-noreloc.inc
+%include name-defines.inc
+#%include name-defines-noreloc.inc
+#%include name-defines-hidden.inc
+#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -51,12 +52,11 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1%{?dist}
-License:   GPL
-Group:     Utility
-URL:       http://www.boost.org
-Packager:  TACC - agomez@tacc.utexas.edu
-Source0:   boost_1_55_0.tar.gz
-Source1:   icu4c-57_1-src.tgz
+License:   VASP
+Group:     Applications/Chemistry
+URL:       https://www.vasp.at/
+Packager:  TACC - hliu@tacc.utexas.edu
+Source:    %{pkg_base_name}-%{pkg_version}_all_TACC.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -64,31 +64,18 @@ Source1:   icu4c-57_1-src.tgz
 
 
 %package %{PACKAGE}
-Summary: Boost RPM
-Group: Development/System Environment
+Summary: The Vienna Ab initio Simulation Package (VASP)
+Group: Applications/Chemistry
 %description package
-Boost provides free peer-reviewed portable C++ source libraries.
+The Vienna Ab initio Simulation Package (VASP)
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-Module RPM for Boost
-
+The Vienna Ab initio Simulation Package (VASP)
 %description
-
-Boost emphasizes libraries that work well with the C++ Standard
-Library. Boost libraries are intended to be widely useful, and usable
-across a broad spectrum of applications. The Boost license encourages
-both commercial and non-commercial use.
-
-Boost aims to establish "existing practice" and provide reference
-implementations so that Boost libraries are suitable for eventual
-standardization. Ten Boost libraries are already included in the C++
-Standards Committee Library Technical Report (TR1) as a step toward
-becoming part of a future C++ Standard. More Boost libraries are
-proposed for the upcoming TR2.
-
+The Vienna Ab initio Simulation Package (VASP)
 #---------------------------------------
 %prep
 #---------------------------------------
@@ -99,10 +86,7 @@ proposed for the upcoming TR2.
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-#%setup -n %{pkg_base_name}-%{pkg_version}
-%setup -n boost_%{major_version}_%{minor_version}_%{micro_version}  %{name}-%{version}
-%setup -n boost_%{major_version}_%{minor_version}_%{micro_version}  -T -D -a 1
-
+%setup -n %{pkg_base_name}-%{pkg_version}_all_TACC
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -117,6 +101,7 @@ proposed for the upcoming TR2.
 #--------------------------
 
 
+
 #---------------------------------------
 %build
 #---------------------------------------
@@ -128,11 +113,13 @@ proposed for the upcoming TR2.
 
 # Setup modules
 %include system-load.inc
-%include compiler-defines.inc
-#%include mpi-defines.inc
 module purge
+# Load Compiler
 %include compiler-load.inc
-#module load intel
+# Load MPI Library
+%include mpi-load.inc
+
+# Insert further module commands
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -142,9 +129,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -157,75 +142,46 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
 
-  ICU_MODE=Linux
-  %if "%{comp_fam}" == "intel"
-        export CONFIGURE_FLAGS=--with-toolset=intel-linux
-        ICU_MODE=Linux/ICC
-  %endif
+cd wannier90-1.2/
+make lib
 
+cd ../beef
+./configure CC=icc --prefix=$PWD
+make
+make install
 
-  %if "%{mpi_fam}" != "none"
-        CXX=mpicxx
-  %endif
+cd ../vasp.5.4.4
+make all
 
-  %if "%{comp_fam}" == "gcc"
-        export CONFIGURE_FLAGS=--with-toolset=gcc
-  %endif
+cd ../vasp.5.4.4.vtst
+make all
 
-  WD=`pwd`
+cd ./bin
+mv vasp_std vasp_std_vtst
+mv vasp_gam vasp_gam_vtst
+mv vasp_ncl vasp_ncl_vtst
 
+cd ../../
 
-#  if [ "$CXX" != mpicxx ]; then
-    	cd icu/source
-	%if "%{comp_fam}" == "gcc"
-    	CXXFLAGS="-march=haswell -mtune=knl" CFLAGS="-march=haswell -mtune=knl" ./runConfigureICU  $ICU_MODE --prefix=%{INSTALL_DIR}
-	%endif
-	%if "%{comp_fam}" == "intel"
-    	CXXFLAGS="-xCORE-AVX2 -axMIC-AVX512" CFLAGS="-xCORE-AVX2 -axMIC-AVX512" ./runConfigureICU  $ICU_MODE --prefix=%{INSTALL_DIR}
-	%endif
-    	make -j 64 
-    	make install
-    	rm -f ~/user-config.jam
-#  fi
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+rm   -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}/*
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
 
-  cd $WD
-#  cd boost_1_61_0
-  EXTRA="-sICU_PATH=%{INSTALL_DIR}" 
-  #if [ "$CXX" = mpicxx ]; then
- # 	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=mpi"
- # 	EXTRA=""
- # 	mpipath=`which mpicxx`
-#	cat > $WD/tools/build/v2/user-config.jam << EOF
-#	#using mpi $mpipath ;
-#	using mpi ;
-#	EOF
-#  else
-  	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all --without-libraries=mpi"
-#  fi
+cd vasp.5.4.4/bin/
+cp vasp_std $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_gam $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_ncl $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
 
-  ./bootstrap.sh --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
+cd ../../vasp.5.4.4.vtst/bin
+cp vasp_std_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_gam_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_ncl_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cd ../../beef/bin
+cp bee $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cd ../../
+cp -r vtstscripts-930 $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
 
-  %if "%{comp_fam}" == "intel"
-    ./b2 -j 64 --prefix=%{INSTALL_DIR} $EXTRA cxxflags="-xCORE-AVX2 -axMIC-AVX512" cflags="-xCORE-AVX2 -axMIC-AVX512" linkflags="-xCORE-AVX2 -axMIC-AVX512" install
-  %endif
-  %if "%{comp_fam}" == "gcc"
-    ./b2 -j 64 --prefix=%{INSTALL_DIR} $EXTRA cxxflags="-march=haswell -mtune=knl" cflags="-march=haswell -mtune=knl" linkflags="-march=haswell -mtune=knl" install
-  %endif
-
-  mkdir -p              $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-
-
-  rm -f ~/tools/build/v2/user-config.jam
-
-  if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-  	mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  fi
-
-  cp -r %{INSTALL_DIR} $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-  umount %{INSTALL_DIR}
-
-#---------------------- - 
+#-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
 
@@ -235,7 +191,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -243,52 +199,81 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
+
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
-help([[
-The boost module file defines the following environment variables:"
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC for"
-the location of the boost distribution."
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
+local help_message=[[
+The TACC VASP module appends the path to the vasp executables
+to the PATH environment variable.  Also TACC_VASP_DIR, and
+TACC_VASP_BIN are set to VASP home and bin directories.
 
-To load the mpi boost      do "module load boost-mpi"
-To load the rest of boost  do "module load boost"
+Users have to show their licenses and be confirmed by
+VASP team that they are registered users under that licenses
+Scan a copy the license and send to hliu@tacc.utexas.edu
 
-It is save to load both.
+The VASP executables are
+vasp_std: compiled with pre processing flag: -DNGZhalf
+vasp_gam: compiled with pre processing flag: -DNGZhalf -DwNGZhalf
+vasp_ncl: compiled without above pre processing flags
+vasp_std_vtst: vasp_std with VTST
+vasp_gam_vtst: vasp_gam with VTST
+vasp_ncl_vtst: vasp_ncl with VTST
+vtstscripts-914/: utility scripts of VTST
+bee: BEEF analysis code
 
-Version %{version}"
-]])
+This the VASP.5.4.4 release.
 
-whatis("Name: boost")
-whatis("Version: %{version}")
-whatis("Category: %{group}")
-whatis("Keywords: System, Library, C++")
-whatis("URL: http://www.boost.org")
-whatis("Description: Boost provides free peer-reviewed portable C++ source libraries %{BOOST_TYPE}.")
+Version %{version}
+]]
 
 
-setenv("TACC_%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
-setenv("TACC_%{MODULE_VAR}_LIB","%{INSTALL_DIR}/lib")
-setenv("TACC_%{MODULE_VAR}_INC","%{INSTALL_DIR}/include")
+whatis("Version: %{pkg_version}")
+whatis("Category: application, chemistry")
+whatis("Keywords: Chemistry, Density Functional Theory, Molecular Dynamics")
+whatis("URL:https://www.vasp.at/")
+whatis("Description: Vienna Ab-Initio Simulation Package")
+help(help_message,"\n")
 
--- Add boost to the LD_LIBRARY_PATH
-prepend_path("LD_LIBRARY_PATH","%{INSTALL_DIR}/lib")
+
+local group = "G-802400"
+found = userInGroup(group)
+
+
+local err_message = [[
+You do not have access to VASP.5.4.4!
+
+
+Users have to show their licenses and be confirmed by the
+VASP team that they are registered users under that license.
+Scan a copy of the license and send it to hliu@tacc.utexas.edu
+]]
+
+
+if (found) then
+local vasp_dir="%{INSTALL_DIR}"
+
+prepend_path(    "PATH",                pathJoin(vasp_dir, "bin"))
+setenv( "TACC_%{MODULE_VAR}_DIR",                vasp_dir)
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(vasp_dir, "bin"))
+
+else
+  LmodError(err_message,"\n")
+end
 
 EOF
 
-  
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
-## version file for %{MODULE_VAR}%{version}
+## version file for %{BASENAME}%{version}
 ##
 
 set     ModulesVersion      "%{version}"
 EOF
-  
-  # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %endif
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -299,7 +284,8 @@ EOF
 %files package
 #------------------------
 
-  %defattr(-,root,install,)
+#  %defattr(-,root,install,)
+%defattr(750,root,G-802400)
   # RPM package contains files within these directories
   %{INSTALL_DIR}
 
@@ -308,7 +294,7 @@ EOF
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile 
+%files modulefile
 #---------------------------
 
   %defattr(-,root,install,)
@@ -318,7 +304,6 @@ EOF
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
 
 ########################################
 ## Fix Modulefile During Post Install ##
