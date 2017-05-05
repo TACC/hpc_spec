@@ -56,8 +56,8 @@
 %endif
 
 %if "%{comp_fam}" == "gcc"
-  %define TACC_OPT -mavx2 -mavx512f -mavx512cd
+  %define TACC_OPT -march=broadwell -mtune=knl
 %endif
 %if "%{comp_fam}" == "intel"
-  %define TACC_OPT -xMIC-AVX512 -axCORE-AVX2 -axCORE-AVX512
+  %define TACC_OPT -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512
 %endif
