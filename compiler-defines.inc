@@ -55,4 +55,9 @@
   exit
 %endif
 
-
+%if "%{comp_fam}" == "gcc"
+  %define TACC_OPT -mavx512f -mavx512cd
+%endif
+%if "%{comp_fam}" == "intel"
+  %define TACC_OPT -xMIC-AVX512 -axCORE-AVX2 -axCORE-AVX512
+%endif
