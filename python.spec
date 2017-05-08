@@ -193,31 +193,31 @@ fi
 
 ### Scipy
 
-#if ! $(%{INSTALL_DIR_COMP}/bin/python -c "import scipy"); then
-#    cd %{_topdir}/SOURCES	
-#    if [ ! -f "%{_topdir}/SOURCES/scipy-0.18.1.tar.gz" ]; then	
-#	wget -O scipy-0.18.1.tar.gz https://github.com/scipy/scipy/releases/download/v0.18.1/scipy-0.18.1.tar.gz
-#    fi	   
+if ! $(%{INSTALL_DIR_COMP}/bin/python -c "import scipy"); then
+    cd %{_topdir}/SOURCES	
+    if [ ! -f "%{_topdir}/SOURCES/scipy-0.19.0.tar.gz" ]; then	
+	wget -O scipy-0.19.0.tar.gz https://github.com/scipy/scipy/releases/download/v0.19.0/scipy-0.19.0.tar.gz
+    fi	   
 
-#    rm -rf ${SRC_DIR}/scipy-0.18.1
-#    tar -xzvf scipy-0.18.1.tar.gz -C ${SRC_DIR} 
-#    cd ${SRC_DIR}/scipy-0.18.1
-
-#    %if "%{comp_fam_name}" == "Intel"
-#    %{INSTALL_DIR_COMP}/bin/python setup.py config --compiler=intelem --fcompiler=intelem build_clib --compiler=intelem --fcompiler=intelem build_ext --compiler=intelem --fcompiler=intelem install
-#    %endif
+    rm -rf ${SRC_DIR}/scipy-0.19.0
+    tar -xzvf scipy-0.19.0.tar.gz -C ${SRC_DIR} 
+    cd ${SRC_DIR}/scipy-0.19.0
+    %if "%{comp_fam_name}" == "Intel"
+    %{INSTALL_DIR_COMP}/bin/python setup.py config --compiler=intelem --fcompiler=intelem build_clib --compiler=intelem --fcompiler=intelem build_ext --compiler=intelem --fcompiler=intelem install
+    %endif
     
-#    %if "%{comp_fam_name}" == "GNU"	
-#    %{INSTALL_DIR_COMP}/bin/python setup.py config --fcompiler=gfortran build_clib --fcompiler=gfortran build_ext --fcompiler=gfortran install
-#    %endif
-#fi
+    %if "%{comp_fam_name}" == "GNU"	
+    %{INSTALL_DIR_COMP}/bin/python setup.py config --fcompiler=gfortran build_clib --fcompiler=gfortran build_ext --fcompiler=gfortran install
+    %endif
+fi
 
 
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: scipy
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: matplotlib	
 CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: cython	
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: cffi	
-%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: pandas
+#%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: pandas
+%{INSTALL_DIR_COMP}/bin/pip install pandas
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: psutil
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: numexpr
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: rpyc	
