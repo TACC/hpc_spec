@@ -218,7 +218,7 @@ vasp_ncl: compiled without above pre processing flags
 vasp_std_vtst: vasp_std with VTST
 vasp_gam_vtst: vasp_gam with VTST
 vasp_ncl_vtst: vasp_ncl with VTST
-vtstscripts-914/: utility scripts of VTST
+vtstscripts-930/: utility scripts of VTST
 bee: BEEF analysis code
 
 This the VASP.5.4.4 release.
