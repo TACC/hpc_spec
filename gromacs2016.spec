@@ -24,7 +24,6 @@ Summary: A Nice little relocatable skeleton spec file for Gromacs.
 # Create some macros (spec file variables)
 %define major_version 2016
 %define minor_version 3 
-%define micro_version 
 
 %define pkg_version %{major_version}.%{minor_version}
 %define dbg %{nil}
@@ -133,8 +132,6 @@ libs in gromacs-dev.
 #---------------------------------------
 
 # Setup modules
-#module purge
-module load cmake
 %include system-load.inc
 %include compiler-load.inc
 %include mpi-load.inc
@@ -185,10 +182,9 @@ env CC=icc CXX=icpc cmake .. \
 -DGMX_MPI=OFF -DGMX_OPENMP=OFF \
 -DGMX_XML=OFF \
 -DCMAKE_EXE_LINKER_FLAGS=" -mkl=sequential" \
--DGMX_SIMD=AVX_512_KNL \
 -DGMX_OPENMP_MAX_THREADS=256 \
--DCMAKE_C_FLAGS="-std=gnu99 -O3 -AVX2 -axMIC-AVX512,CORE-AVX512 -g " \
--DCMAKE_CXX_FLAGS="-std=c++11 -O3 -AVX2 -axMIC-AVX512,CORE-AVX512 -g " \
+-DCMAKE_C_FLAGS="-std=gnu99 -O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -g " \
+-DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -g " \
 -DGMX_DEFAULT_SUFFIX=ON \
 -DGMX_BUILD_SHARED_EXE=OFF \
 -DGMX_EXTERNAL_BOOST=OFF
@@ -215,10 +211,9 @@ env CC=mpicc CXX=mpicxx cmake .. \
 -DGMX_XML=OFF \
 -DGMX_SKIP_DEFAULT_CFLAGS=ON \
 -DCMAKE_EXE_LINKER_FLAGS=" -mkl=sequential" \
--DGMX_SIMD=AVX_512_KNL \
 -DGMX_OPENMP_MAX_THREADS=256 \
--DCMAKE_C_FLAGS="-std=gnu99 -O3 -xAVX -axCORE-AVX2,MIC-AVX512 -mkl=sequential -g " \
--DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xAVX -axCORE-AVX2,MIC-AVX512 -mkl=sequential -g " \
+-DCMAKE_C_FLAGS="-std=gnu99 -O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -mkl=sequential -g " \
+-DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -mkl=sequential -g " \
 -DGMX_DEFAULT_SUFFIX=ON \
 -DGMX_EXTERNAL_BOOST=OFF \
 -DGMX_BUILD_SHARED_EXE=OFF \
@@ -250,10 +245,9 @@ env CC=mpicc CXX=mpicxx cmake .. \
 -DGMX_SOFTWARE_INVSQRT=OFF \
 -DGMX_SKIP_DEFAULT_CFLAGS=ON \
 -DCMAKE_EXE_LINKER_FLAGS=" -mkl=sequential" \
--DGMX_SIMD=AVX_512_KNL \
 -DGMX_OPENMP_MAX_THREADS=256 \
--DCMAKE_C_FLAGS="-std=gnu99 -O3 -xAVX -axCORE-AVX2,MIC-AVX512 -mkl=sequential -g " \
--DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xAVX -axCORE-AVX2,MIC-AVX512 -mkl=sequential -g " \
+-DCMAKE_C_FLAGS="-std=gnu99 -O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -mkl=sequential -g " \
+-DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -mkl=sequential -g " \
 -DGMX_DEFAULT_SUFFIX=OFF \
 -DGMX_EXTERNAL_BOOST=OFF \
 -DGMX_BUILD_SHARED_EXE=OFF \
@@ -264,7 +258,10 @@ env CC=mpicc CXX=mpicxx cmake .. \
 
 make -j 24
 make install
-
+cd ..
+rm -rf g_double_parallel
+rm -rf g_single_serial
+rm -rf g_single_parallel
 ###############################################################################
 
 ##############################################################################
@@ -273,7 +270,8 @@ make install
 
 
   # Copy everything from tarball over to the installation directory
-  cp -r ../install/* $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  cp -r install/* $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  rm -rf install/*
 #  rm -rf /admin/rpms/BUILD/gromacs*
 #-----------------------  
 %endif # BUILD_PACKAGE |

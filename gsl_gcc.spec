@@ -1,12 +1,4 @@
 #
-# Spec file for GMT:
-# Generic Mapping Tools
-# See http://gmt.soest.hawaii.edu/
-#
-# Victor Eijkhout, 2017
-# based on:
-#
-# Bar.spec, 
 # W. Cyrus Proctor
 # Antonio Gomez
 # 2015-08-25
@@ -26,23 +18,23 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary:    Set of tools for manipulating geographic and Cartesian data sets
+Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name gmt
-%define MODULE_VAR    GMT
+%define pkg_base_name gsl
+%define MODULE_VAR    GSL
 
 # Create some macros (spec file variables)
-%define major_version 5
-%define minor_version 3
-%define micro_version 3
+%define major_version 1
+%define minor_version 16
+%define micro_version 0
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{major_version}.%{minor_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
 %include compiler-defines.inc
-#%include mpi-defines.inc
+%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
@@ -60,38 +52,74 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
-License:   GNU
+Release:   1
+License:   GPL
 Group:     Development/Tools
-Vendor:     SOEST - hawaii
-Group:      Libraries/maps
-Source:	    gmt-%{version}-src.tar.gz
-URL:	    http://gmt.soest.hawaii.edu/ 
-Packager:   eijkhout@tacc.utexas.edu
+URL:       http://www.gnu.org/software/bar
+Packager:  TACC - Kevin Chen chenk@tacc.utexas.edu
+Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
-%global _python_bytecompile_errors_terminate_build 0
 
-# coastlines database
-%define gshhg_version 2.3.6
 
 %package %{PACKAGE}
-Summary: GMT is an open source collection of tools for manipulating geographic and Cartesian data sets
-Group: Applications
+
+Summary: The GNU Scientific Library (GSL) is a numerical library for C and C++ programmers.
+Group: System Environment/Base
+
 %description package
-This is the long description for the package RPM...
+
+The GNU Scientific Library (GSL) is a numerical library for C and C++ programmers. It is free software under the GNU General Public License.
+
+The library provides a wide range of mathematical routines such as random number generators, special functions and least-squares fitting. There are over 1000 functions in total
+
+The complete range of subject areas covered by the library includes,
+
+Complex Numbers Roots of Polynomials
+Special Functions Vectors and Matrices
+Permutations  Sorting
+BLAS Support  Linear Algebra
+Eigensystems  Fast Fourier Transforms
+Quadrature  Random Numbers
+Quasi-Random Sequences  Random Distributions
+Statistics  Histograms
+N-Tuples  Monte Carlo Integration
+Simulated Annealing Differential Equations
+Interpolation Numerical Differentiation
+Chebyshev Approximation Series Acceleration
+Discrete Hankel Transforms  Root-Finding
+Minimization  Least-Squares Fitting
+Physical Constants  IEEE Floating-Point
+Discrete Wavelet Transforms Basis splines
+
+Unlike the licenses of proprietary numerical libraries the license of GSL does not restrict scientific cooperation. It allows you to share your programs freely with others.
+
+The current version is GSL-1.16. It was released on 19 July 2013. Details of recent changes can be found in the NEWS file. This is a stable release.
+
+GSL can be found in the gsl subdirectory on your nearest GNU mirror http://ftpmirror.gnu.org/gsl/.
+
+Main GNU ftp site: ftp://ftp.gnu.org/gnu/gsl/
+For other ways to obtain GSL, please read How to get GNU Software
+
+Installation instructions can be found in the included README and INSTALL files.
+
+Precompiled binary packages are included in most GNU/Linux distributions.
+
+A compiled version of GSL is available as part of Cygwin on Windows (but we recommend using GSL on a free operating system, such as GNU/Linux).
+
 
 %package %{MODULEFILE}
-Summary: GMT is an open source collection of tools for manipulating geographic and Cartesian data sets
-Group: Applications
+Summary: The GNU Scientific Library (GSL) is a numerical library for C and C++ programmers.
+Group: System Environment/Base
 %description modulefile
-This is the long description for the modulefile RPM...
-
 %description
-GMT is an open source collection of 60 
-tools for manipulating geographic and Cartesian data sets
+
+The GNU Scientific Library (GSL) is a numerical library for C and C++ programmers. It is free software under the GNU General Public License.
+
+The library provides a wide range of mathematical routines such as random number generators, special functions and least-squares fitting. There are ove
+
 
 
 #---------------------------------------
@@ -139,11 +167,6 @@ module purge
 #%include mpi-load.inc
 
 # Insert further module commands
-# need netcdf libs also
- module load netcdf
- export NETCDF_INC=${TACC_NETCDF_INC}
- export NETCDF_LIB=${TACC_NETCDF_LIB}
-
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -153,13 +176,9 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  mkdir -p %{INSTALL_DIR}
+  mount -t tmpfs tmpfs %{INSTALL_DIR}
   
-#
-# Use mount temp trick
-#
-mkdir -p             %{INSTALL_DIR}
-mount -t tmpfs tmpfs %{INSTALL_DIR}
-
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -171,58 +190,25 @@ mount -t tmpfs tmpfs %{INSTALL_DIR}
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-  
+  WD=`pwd`
+
   # Create some dummy directories and files for fun
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
+#  export CFLAGS="-O3 -xAVX -axCORE-AVX2 -fp-model precise"
+#  export CPPFLAGS="-O3 -xAVX -axCORE-AVX2 -fp-model precise"
   
-#
-# config/make
-#
+  export CC=`which gcc`
+  export CXX=`which g++`
 
-mkdir -p %{INSTALL_DIR}/share
-
-sed \
-    -e '/GSHHG_ROOT/s/^#//' \
-    -e '/COPY_GSHHG/s/^#//' \
-    -e 's!gshhg_path!%{INSTALL_DIR}/share/gshhg-gmt-%{gshhg_version}!' \
-    cmake/ConfigUserTemplate.cmake > cmake/ConfigUser.cmake
-grep -i gshhg cmake/ConfigUser*.cmake
-
-pushd %{INSTALL_DIR}
-
-# unpack extra datasets
-( cd share ; tar fxz %{_topdir}/SOURCES/gshhg-gmt-%{gshhg_version}.tar.gz )
-
-# recent versions use cmake instead of configure
-module load cmake
-
-# use icc not gcc
- export CC=`which icc`
-
-# VLE i can't find this file.....
-# tar jxvf /home1/0000/build/rpms/SOURCES/GMT4.5.5_triangle_repack_JL.tar.bz2
-
-cmake \
-  -D CMAKE_INSTALL_PREFIX:PATH=%{INSTALL_DIR} \
-  %{_topdir}/BUILD/gmt-%{version} \
-
-make 
-
-mkdir -p                 $RPM_BUILD_ROOT/%{INSTALL_DIR}
-make install
-
-#create gmt.conf to make GMT use SI units instead of US
-mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/share
-cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/share/gmt.conf << 'EOF'
-SI
-EOF
-
-popd
-  
-cp -r %{INSTALL_DIR}/* ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
-umount tmpfs
+  export CFLAGS="-O3"
+  export CPPFLAGS="-O3"
+  export CONFIG_FLAGS=""
+  ./configure $CONFIG_FLAGS --prefix=%{INSTALL_DIR}
+  make -j 12
+  make install
+#  sed -i -- 's/tmprpm/opt\/apps/g' %{INSTALL_DIR}/bin/gsl-config 
+# Copy everything from tarball over to the installation directory
+  cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+  umount %{INSTALL_DIR}
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -244,54 +230,49 @@ umount tmpfs
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version} << 'EOF'
-#%Module1.0####################################################################
-##
-## GMT - Generic Mapping Tools
-##
-proc ModulesHelp { } {
-        puts stderr "\n"
-	puts stderr "\tModule %{name} loads environmental variables defining"
-        puts stderr "\tthe location of GMT directory, libraries, and binaries: "
-        puts stderr "\tTACC_GMT_DIR TACC_GMT_LIB TACC_GMT_BIN\n"
-	puts stderr "\tVersion %{version}\n"
-}
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
+local help_msg=[[
+The %{MODULE_VAR} module defines the following environment variables:
+TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
+TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
+include files, and tools respectively.
+]]
 
-module-whatis "GMT"
-module-whatis "Version: %{version}"
-module-whatis "Category: system, development"
-module-whatis "Keywords: System, Cartesian Grids"
-module-whatis "Description: Generic Mapping Tools: Tools for manipulating geographic and Cartesian data sets"
-module-whatis "URL: http://gmt.soest.hawaii.edu/"
+--help(help_msg)
+help(help_msg)
 
-# Tcl script only
-set version %{version}
+whatis("Name: bar")
+whatis("Version: %{pkg_version}%{dbg}")
+%if "%{is_debug}" == "1"
+setenv("TACC_%{MODULE_VAR}_DEBUG","1")
+%endif
 
-# Export environmental variables
-setenv TACC_GMT_DIR %{INSTALL_DIR}
-setenv TACC_GMT_BIN %{INSTALL_DIR}/bin
-setenv TACC_GMT_LIB %{INSTALL_DIR}/lib
-setenv TACC_GMT_SHARE %{INSTALL_DIR}/share
+-- Create environment variables.
+local bar_dir           = "%{INSTALL_DIR}"
 
-# Prepend the GMT directories to the adequate PATH variables
-prepend-path PATH %{INSTALL_DIR}/share
-prepend-path PATH %{INSTALL_DIR}/bin
-prepend-path LD_LIBRARY_PATH %{INSTALL_DIR}/lib
+family("bar")
+prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "lib"))
+prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/bar1_1/modulefiles")
+setenv( "TACC_%{MODULE_VAR}_DIR",                bar_dir)
+setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(bar_dir, "include"))
+setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(bar_dir, "lib"))
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(bar_dir, "bin"))
 EOF
-
+  
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module1.0####################################################################
+#%Module3.1.1#################################################
 ##
-## Version file for %{name} version %{version}
+## version file for %{BASENAME}%{version}
 ##
-set ModulesVersion "%version"
-EOF
 
+set     ModulesVersion      "%{version}"
+EOF
+  
   # Check the syntax of the generated lua modulefile only if a visible module
   %if %{?VISIBLE}
     %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
   %endif
-
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -343,6 +324,3 @@ export PACKAGE_PREUN=1
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
 
-%changelog
-* Mon May 08 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 1: initial release

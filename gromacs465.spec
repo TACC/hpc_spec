@@ -134,8 +134,6 @@ libs in gromacs-dev.
 #---------------------------------------
 
 # Setup modules
-#module purge
-module load cmake
 %include system-load.inc
 %include compiler-load.inc
 %include mpi-load.inc
@@ -185,14 +183,15 @@ env CC=icc CXX=icpc cmake .. \
 -DGMX_BUILD_MDRUN_ONLY=OFF \
 -DGMX_MPI=OFF -DGMX_OPENMP=OFF \
 -DGMX_XML=OFF \
+-DGMX_OPENMP_MAX_THREADS=256 \
 -DCMAKE_EXE_LINKER_FLAGS=" -mkl=sequential" \
--DCMAKE_C_FLAGS="-std=gnu99 -O3 -xAVX -axCORE-AVX2,MIC-AVX512 -mkl=sequential -g " \
--DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xAVX -axCORE-AVX2,MIC-AVX512 -mkl=sequential -g " \
+-DCMAKE_C_FLAGS="-std=gnu99 -O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -mkl=sequential -g " \
+-DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -mkl=sequential -g " \
 -DGMX_DEFAULT_SUFFIX=ON \
 -DGMX_BUILD_SHARED_EXE=OFF \
 -DGMX_EXTERNAL_BOOST=OFF
 
-make -j 36
+make -j 12
 make install
 #################################################################################
 
@@ -213,16 +212,17 @@ env CC=mpicc CXX=mpicxx cmake .. \
 -DGMX_OPENMP=ON \
 -DGMX_XML=OFF \
 -DGMX_SKIP_DEFAULT_CFLAGS=ON \
+-DGMX_OPENMP_MAX_THREADS=256 \
 -DCMAKE_EXE_LINKER_FLAGS=" -mkl=sequential" \
--DCMAKE_C_FLAGS="-std=gnu99 -O3 -xAVX -axCORE-AVX2,MIC-AVX512 -mkl=sequential -g " \
--DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xAVX -axCORE-AVX2,MIC-AVX512 -mkl=sequential -g " \
+-DCMAKE_C_FLAGS="-std=gnu99 -O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -mkl=sequential -g " \
+-DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -mkl=sequential -g " \
 -DGMX_DEFAULT_SUFFIX=ON \
 -DGMX_EXTERNAL_BOOST=OFF \
 -DGMX_BUILD_SHARED_EXE=OFF \
 -DGMX_BINARY_SUFFIX=_mpi
 
 
-make -j 36
+make -j 12
 make install-mdrun
 
 #################################################################################
@@ -246,9 +246,10 @@ env CC=mpicc CXX=mpicxx cmake .. \
 -DGMX_XML=OFF \
 -DGMX_SOFTWARE_INVSQRT=OFF \
 -DGMX_SKIP_DEFAULT_CFLAGS=ON \
+-DGMX_OPENMP_MAX_THREADS=256 \
 -DCMAKE_EXE_LINKER_FLAGS=" -mkl=sequential" \
--DCMAKE_C_FLAGS="-std=gnu99 -O3 -xAVX -axCORE-AVX2,MIC-AVX512 -mkl=sequential -g " \
--DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xAVX -axCORE-AVX2,MIC-AVX512 -mkl=sequential -g " \
+-DCMAKE_C_FLAGS="-std=gnu99 -O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -mkl=sequential -g " \
+-DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -mkl=sequential -g " \
 -DGMX_DEFAULT_SUFFIX=OFF \
 -DGMX_EXTERNAL_BOOST=OFF \
 -DGMX_BUILD_SHARED_EXE=OFF \
@@ -256,8 +257,13 @@ env CC=mpicc CXX=mpicxx cmake .. \
 -DGMX_BINARY_SUFFIX=_mpi_d 
 
 
-make -j 36
+make -j 12
 make install-mdrun
+cd ..
+rm -rf g_double_parallel
+rm -rf g_single_serial
+rm -rf g_single_parallel
+
 
 ###############################################################################
 
@@ -267,7 +273,8 @@ make install-mdrun
 
 
   # Copy everything from tarball over to the installation directory
-  cp -r ../install/* $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  cp -r install/* $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  rm -rf install
 #  rm -rf /admin/rpms/BUILD/gromacs*
 #-----------------------  
 %endif # BUILD_PACKAGE |

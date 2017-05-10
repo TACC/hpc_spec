@@ -3,11 +3,14 @@
 %define baseversion 4.2
 %bcond_without tests
 
+%define pkg_base_name bash
+
 Version: %{baseversion}%{patchleveltag}
-Name: bash
+Name: tacc-%{pkg_base_name}
 Summary: The GNU Bourne Again shell
-Release: 19%{?dist}
+Release: 20%{?dist}
 Group: System Environment/Shells
+Packager: TACC - cproctor@tacc.utexas.edu
 License: GPLv3+
 Url: http://www.gnu.org/software/bash
 Source0: ftp://ftp.gnu.org/gnu/bash/bash-%{baseversion}.tar.gz
@@ -164,14 +167,18 @@ Patch141: bash-4.2-case-in-command-subst.patch
 #1237213 - export when fnname contains hyphens
 Patch142: bash-4.2-enable-hyphened-fn-export.patch
 
+#1355771
+Patch143: fix-shopt-lastpipe-mode-crash.patch
+
 # TACC WCP 2016-02-03 change paths from /etc to /etc/tacc
 Patch300:bash42_config.patch
-
 
 BuildRequires: texinfo bison
 BuildRequires: ncurses-devel
 BuildRequires: autoconf, gettext
 Conflicts: filesystem < 3
+Provides: %{pkg_base_name} = %{version}-%{release}
+Provides: %{name} = %{version}-%{release}
 Provides: /bin/sh
 Provides: /bin/bash
 
@@ -182,18 +189,18 @@ incorporates useful features from the Korn shell (ksh) and the C shell
 (csh). Most sh scripts can be run by bash without modification.
 
 %package doc
-Summary: Documentation files for %{name}
+Summary: Documentation files for %{pkg_base_name}
 Group: Development/Languages
 Requires: %{name} = %{version}-%{release}
 
 %description doc
-This package contains documentation files for %{name}.
+This package contains documentation files for %{pkg_base_name}.
 
-%define pkgdocdir %{_datadir}/doc/%{name}-%{version}
+%define pkgdocdir %{_datadir}/doc/%{pkg_base_name}-%{version}
 
 %prep
 #%setup -q -a 2
-%setup -q -n %{name}-%{baseversion}
+%setup -q -n %{pkg_base_name}-%{baseversion}
 
 # Official upstream patches
 %patch001 -p0 -b .001
@@ -288,6 +295,7 @@ This package contains documentation files for %{name}.
 %patch140 -p1 -b .check-debugger
 %patch141 -p1 -b .command-subst
 %patch142 -p0 -b .export
+%patch143 -p1 -b .fix-shopt-lastpipe-mode
 %patch300 -p0
 
 echo %{version} > _distribution
@@ -385,10 +393,10 @@ EOF
 chmod +x "$RPM_BUILD_ROOT"/%{_bindir}/"$ea"
 done
 
-%find_lang %{name}
+%find_lang %{pkg_base_name}
 
 # copy doc to /usr/share/doc
-cat /dev/null > %{name}-doc.files
+cat /dev/null > %{pkg_base_name}-doc.files
 mkdir -p $RPM_BUILD_ROOT/%{pkgdocdir}/doc
 cp -p COPYING $RPM_BUILD_ROOT/%{pkgdocdir}
 # loadables aren't buildable
@@ -397,9 +405,9 @@ for file in CHANGES COMPAT NEWS NOTES POSIX examples\
     doc/{FAQ,INTRO,rose94.pdf,article.{pdf,txt},bashref.{html,pdf}}
 do
   cp -rp "$file" $RPM_BUILD_ROOT/%{pkgdocdir}/"$file"
-  echo "%%doc %{pkgdocdir}/$file" >> %{name}-doc.files
+  echo "%%doc %{pkgdocdir}/$file" >> %{pkg_base_name}-doc.files
 done
-echo "%%doc %{pkgdocdir}/doc" >> %{name}-doc.files
+echo "%%doc %{pkgdocdir}/doc" >> %{pkg_base_name}-doc.files
 
 
 %if %{with tests}
@@ -450,7 +458,7 @@ then
   f:close()
 end
 
-%files -f %{name}.lang
+%files -f %{pkg_base_name}.lang
 %defattr(-,root,root)
 %config(noreplace) /etc/skel/.b*
 %{_bindir}/sh
@@ -474,13 +482,17 @@ end
 %{_mandir}/*/*
 %{_mandir}/*/..1*
 
-%files doc -f %{name}-doc.files
+%files doc -f %{pkg_base_name}-doc.files
 %defattr(-, root, root)
 
 # For now there isn't any doc
 #%doc doc/*.ps doc/*.0 doc/*.html doc/article.txt
 
 %changelog
+* Tue Jul 12 2016 Siteshwar Vashisht <svashisht@redhat.com> - 4.2.46-20
+- Fix a crash when lastpipe mode is enabled
+  Resolves: #1355771
+
 * Wed Jul 08 2015 Ondrej Oprala <ooprala@redhat.com> - 4.2.46-19
 - Add a necessary declaration to common.h
   Related: #1165793

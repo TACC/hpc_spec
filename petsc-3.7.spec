@@ -21,7 +21,6 @@ Summary: PETSc install
 ########################################
 #%include name-defines.inc
 %include name-defines-noreloc.inc
-#### %define INSTALL_PREFIX  /home1/apps/el7/
 
 ########################################
 ############ Do Not Remove #############
@@ -151,6 +150,7 @@ export MPI_EXTRA_OPTIONS="--with-mpiexec=mpirun_rsh"
 
 export PETSC_CONFIGURE_OPTIONS="\
   --with-x=0 -with-pic \
+  --with-make-np=8 \
   --with-external-packages-dir=%{INSTALL_DIR}/externalpackages \
   "
 mkdir -p %{INSTALL_DIR}/externalpackages
