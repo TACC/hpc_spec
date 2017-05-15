@@ -173,7 +173,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   ./bootstrap.sh --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
 
-  ./b2 -j 14 --prefix=%{INSTALL_DIR} $EXTRA cxxflags="%{TACC_OPT}" cflags="%{TACC_OPT}" linkflags="%{TACC_OPT}" install
+  ./b2 --prefix=%{INSTALL_DIR} $EXTRA cxxflags="%{TACC_OPT}" cflags="%{TACC_OPT}" linkflags="%{TACC_OPT}" install
+  #./b2 -j 14 --prefix=%{INSTALL_DIR} $EXTRA cxxflags="%{TACC_OPT}" cflags="%{TACC_OPT}" linkflags="%{TACC_OPT}" install
   
   mkdir -p              $RPM_BUILD_ROOT/%{INSTALL_DIR}
   cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..

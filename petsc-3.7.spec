@@ -20,7 +20,7 @@ Summary: PETSc install
 ### Construct name based on includes ###
 ########################################
 #%include name-defines.inc
-%include name-defines-noreloc.inc
+%include name-defines-noreloc-home1.inc
 
 ########################################
 ############ Do Not Remove #############
@@ -47,6 +47,9 @@ Source0: %{pkg_base_name}-%{major_version}.%{minor_version}.%{micro_version}.tar
 %package %{PACKAGE}
 Summary: Petsc local binary install
 Group: System Environment/Base
+%package %{PACKAGE}-xx
+Summary: Petsc local binary install
+Group: System Environment/Base
 %package %{PACKAGE}-sources
 Summary: Petsc local binary install
 Group: System Environment/Base
@@ -56,6 +59,9 @@ Group: System Environment/Base
 
 %description
 %description %{PACKAGE}
+PETSC is the Portable Extendible Toolkit for Scientific Computing.
+It contains solvers and tools mostly for PDE solving.
+%description %{PACKAGE}-xx
 PETSC is the Portable Extendible Toolkit for Scientific Computing.
 It contains solvers and tools mostly for PDE solving.
 %description %{PACKAGE}-sources
@@ -512,7 +518,24 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 %files %{PACKAGE}
   %defattr(-,root,install,)
-  %{INSTALL_DIR}/knightslanding*
+  %{INSTALL_DIR}/knightslanding
+  %{INSTALL_DIR}/knightslanding-single
+  %{INSTALL_DIR}/knightslanding-i64
+  %{INSTALL_DIR}/knightslanding-debug
+  %{INSTALL_DIR}/knightslanding-i64debug
+  %{INSTALL_DIR}/knightslanding-uni
+  %{INSTALL_DIR}/knightslanding-unidebug
+
+%files %{PACKAGE}-xx
+  %defattr(-,root,install,)
+  %{INSTALL_DIR}/knightslanding-cxx
+  %{INSTALL_DIR}/knightslanding-cxxdebug
+  %{INSTALL_DIR}/knightslanding-complex
+  %{INSTALL_DIR}/knightslanding-complexdebug
+  %{INSTALL_DIR}/knightslanding-cxxcomplex
+  %{INSTALL_DIR}/knightslanding-cxxcomplexdebug
+  %{INSTALL_DIR}/knightslanding-cxxi64
+  %{INSTALL_DIR}/knightslanding-cxxi64debug
 
 %files %{PACKAGE}-sources
   %defattr(-,root,install,)

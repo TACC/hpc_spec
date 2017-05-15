@@ -109,19 +109,22 @@ mount -t tmpfs tmpfs %{INSTALL_DIR}
   export BLASOPTIONS=
   export BLASFLAG=-mkl
 %endif
+mpicc -show
 ./configure \
     --prefix=%{INSTALL_DIR}/ \
     CC=mpicc CFLAGS="%{TACC_OPT} -g ${BLASFLAG}" \
     CXX=mpicxx CXXFLAGS="%{TACC_OPT} -g ${BLASFLAG}" \
-    FC=mpif90 FFLAGS="%{TACC_OPT} -g ${BLASFLAG}" \
-    ${BLASOPTIONS} \
+    FC=mpif90 FFLAGS="-O2 -g ${BLASFLAG}" \
+    F77=mpif77 \
+    LIBS="${BLASOPTIONS}" \
     --enable-mpi \
     && make && make install
+
 echo "after installation:"
 ls %{INSTALL_DIR}
 cp -r %{INSTALL_DIR}/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/
 cp -r doc example src test $RPM_BUILD_ROOT/%{INSTALL_DIR}/
-popd
+# popd
 
 umount %{INSTALL_DIR}
 
