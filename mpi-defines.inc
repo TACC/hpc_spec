@@ -22,7 +22,7 @@
 %if "%{is_impi}" == "1"
   %if %{undefined mpiV}
     %define mpi_label 17_0
-    %define mpi_module_version 17.0.2
+    %define mpi_module_version 17.0.3
   %endif
   %if "%{mpiV}" == "5_1"
     %define mpi_label 5_1
@@ -30,7 +30,7 @@
   %endif
   %if "%{mpiV}" == "17_0"
     %define mpi_label 17_0
-    %define mpi_module_version 17.0.2
+    %define mpi_module_version 17.0.3
   %endif
   %define mpi_fam     impi
   %define mpi_fam_ver impi%{mpi_label}
