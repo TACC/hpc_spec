@@ -1,7 +1,7 @@
 %define pkg_base_name zsh
 
 Summary: Zsh: The one shell to rule them all
-Name: tacc-%{pkg_base_name}
+Name: zsh
 Version: 5.3.1
 Release: 1%{?dist}
 License: Zsh Development Group

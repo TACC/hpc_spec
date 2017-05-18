@@ -1,6 +1,7 @@
 #
-# Kevin Chen, chenk@tacc.utexas.edu
-# 2016-09-30
+# W. Cyrus Proctor
+# Antonio Gomez
+# 2015-08-25
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -20,25 +21,25 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name gsl
-%define MODULE_VAR    GSL
+%define pkg_base_name swr
+%define MODULE_VAR    SWR
 
 # Create some macros (spec file variables)
-%define major_version 2
-%define minor_version 3
+%define major_version 17
+%define minor_version 0
 %define micro_version 0
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-%include compiler-defines.inc
+#%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-#%include name-defines.inc
-%include name-defines-noreloc.inc
+%include name-defines.inc
+#%include name-defines-noreloc.inc
 #%include name-defines-hidden.inc
 #%include name-defines-hidden-noreloc.inc
 ########################################
@@ -53,9 +54,9 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
 Release:   1%{?dist}
 License:   GPL
-Group:     Development/Tools
-URL:       http://www.gnu.org/software/bar
-Packager:  TACC - Kevin Chen chenk@tacc.utexas.edu
+Group:     X11/Driver
+URL:       http://openswr.org
+Packager:  TACC - jbarbosa@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -64,59 +65,21 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 
 %package %{PACKAGE}
-
-Summary: The GNU Scientific Library (GSL) is a numerical library for C and C++ programmers.
-Group: System Environment/Base
-
+Summary: The package RPM
+Group: X11/Driver
 %description package
-
-The GNU Scientific Library (GSL) is a numerical library for C and C++ programmers. It is free software under the GNU General Public License.
-
-The library provides a wide range of mathematical routines such as random number generators, special functions and least-squares fitting. There are over 1000 functions in total
-
-The complete range of subject areas covered by the library includes,
-
-Complex Numbers Roots of Polynomials
-Special Functions Vectors and Matrices
-Permutations  Sorting
-BLAS Support  Linear Algebra
-Eigensystems  Fast Fourier Transforms
-Quadrature  Random Numbers
-Quasi-Random Sequences  Random Distributions
-Statistics  Histograms
-N-Tuples  Monte Carlo Integration
-Simulated Annealing Differential Equations
-Interpolation Numerical Differentiation
-Chebyshev Approximation Series Acceleration
-Discrete Hankel Transforms  Root-Finding
-Minimization  Least-Squares Fitting
-Physical Constants  IEEE Floating-Point
-Discrete Wavelet Transforms Basis splines
-
-Unlike the licenses of proprietary numerical libraries the license of GSL does not restrict scientific cooperation. It allows you to share your programs freely with others.
-
-GSL can be found in the gsl subdirectory on your nearest GNU mirror http://ftpmirror.gnu.org/gsl/.
-
-Main GNU ftp site: ftp://ftp.gnu.org/gnu/gsl/
-For other ways to obtain GSL, please read How to get GNU Software
-
-Installation instructions can be found in the included README and INSTALL files.
-
-Precompiled binary packages are included in most GNU/Linux distributions.
-
-A compiled version of GSL is available as part of Cygwin on Windows (but we recommend using GSL on a free operating system, such as GNU/Linux).
-
+The purpose of OpenSWR is to provide a high performance, highly scalable OpenGL compatible software rasterizer that allows use of unmodified visualization software. This allows working with datasets where GPU hardware isn't available or is limiting. OpenSWR is completely CPU-based, and runs on anything from laptops, to workstations, to compute nodes in HPC systems.
 
 %package %{MODULEFILE}
-Summary: The GNU Scientific Library (GSL) is a numerical library for C and C++ programmers.
-Group: System Environment/Base
+Summary: The modulefile RPM
+Group: Lmod/Modulefiles
 %description modulefile
+This is the long description for the modulefile RPM...
+
 %description
-
-The GNU Scientific Library (GSL) is a numerical library for C and C++ programmers. It is free software under the GNU General Public License.
-
-The library provides a wide range of mathematical routines such as random number generators, special functions and least-squares fitting. There are ove
-
+The longer-winded description of the package that will 
+end in up inside the rpm and is queryable if installed via:
+rpm -qi <rpm-name>
 
 
 #---------------------------------------
@@ -129,7 +92,7 @@ The library provides a wide range of mathematical routines such as random number
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%setup -n %{pkg_base_name}-%{pkg_version}
+#%setup -n %{pkg_base_name}-%{pkg_version}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -159,7 +122,7 @@ The library provides a wide range of mathematical routines such as random number
 %include system-load.inc
 module purge
 # Load Compiler
-%include compiler-load.inc
+#%include compiler-load.inc
 # Load MPI Library
 #%include mpi-load.inc
 
@@ -172,9 +135,9 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 %if %{?BUILD_PACKAGE}
 #------------------------
 
+  export QA_SKIP_BUILD_ROOT=1
+
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -187,34 +150,133 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-  WD=`pwd`
-
+  
   # Create some dummy directories and files for fun
-#  export CFLAGS="-O3 -xAVX -axCORE-AVX2 -fp-model precise"
-#  export CPPFLAGS="-O3 -xAVX -axCORE-AVX2 -fp-model precise"
- %if "%is_intel" == "1" 
-  export CC=`which icc`
-  export CXX=`which icpc`
-%endif
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
+  
+  # Copy everything from tarball over to the installation directory
+  # cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  export WORK_DIR=`pwd`
+  export WORK_INSTALL_DIR=$RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%if "%is_gcc" == "1" 
-  export CC=`which gcc`
-  export CXX=`which g++`
-%endif
- 
 
-  export CFLAGS="%{TACC_OPT}"
-  export CPPFLAGS="%{TACC_OPT}"
-  export LDFLAGS="%{TACC_OPT}"
 
-  export CONFIG_FLAGS=""
-  ./configure $CONFIG_FLAGS --prefix=%{INSTALL_DIR}
-  make -j 12
+
+  # 2) Required modules
+  module load intel python cmake
+
+#  cd ${WORK_DIR}
+#  virtualenv python_ve
+#  source ${WORK_DIR}/python_ve/bin/activate
+#  pip install --upgrade pip
+#  pip install --upgrade mako
+#  pip install --upgrade lxml
+
+
+  # 3) Build LLVM
+  cd ${WORK_DIR}
+  export LLVM_BUILD_DIR=${WORK_DIR}/llvm-3.9
+  export PATH=/opt/apps/gcc/6.3.0/bin:$PATH
+  export CXX=/opt/apps/gcc/6.3.0/bin/g++
+  export CC=/opt/apps/gcc/6.3.0/bin/gcc
+  export LD_LIBRARY_PATH=/opt/apps/gcc/6.3.0/lib:/opt/apps/gcc/6.3.0/lib64:$LD_LIBRARY_PATH
+  export INCLUDE=/opt/apps/gcc/6.3.0/include:$INCLUDE
+  export LLVM_WORK_INSTALL_DIR=${WORK_INSTALL_DIR}
+  mkdir -p $LLVM_BUILD_DIR && cd $LLVM_BUILD_DIR
+  wget -c -N http://www.llvm.org/releases/3.9.1/llvm-3.9.1.src.tar.xz
+  tar xf llvm-3.9.1.src.tar.xz && mv llvm-3.9.1.src src
+  mkdir -p build && cd build
+  cmake ../src \
+   -DCMAKE_CXX_COMPILER=/opt/apps/gcc/6.3.0/bin/g++ \
+   -DCMAKE_C_COMPILER=/opt/apps/gcc/6.3.0/bin/gcc \
+   -DCMAKE_BUILD_TYPE=Release \
+   -DLLVM_ENABLE_RTTI=ON \
+   -DLLVM_ENABLE_TERMINFO=OFF \
+   -DLLVM_TARGETS_TO_BUILD=X86 \
+   -DLLVM_LINK_LLVM_DYLIB=ON \
+   -DCMAKE_INSTALL_PREFIX=${LLVM_WORK_INSTALL_DIR} 
+
+
+  make -j8 && make install
+  export PATH=${LLVM_WORK_INSTALL_DIR}/bin:$PATH
+
+
+
+  cd ${WORK_DIR}
+  export ACLOCAL="aclocal -I/usr/share/aclocal"
+# 4) Pull OpenSWR mesa source and build
+  mkdir -p ${WORK_DIR}/openswr-mesa && cd ${WORK_DIR}/openswr-mesa
+  #git clone git://anongit.freedesktop.org/git/mesa/mesa .
+  wget -c -N https://mesa.freedesktop.org/archive/17.0.0/mesa-17.0.0.tar.gz
+  tar xzf mesa-17.0.0.tar.gz
+  cd mesa-17.0.0
+  mkdir -p build && cd build
+  ../autogen.sh \
+   --disable-gbm \
+   --disable-dri \
+   --disable-egl \
+   --enable-xlib-glx \
+   --enable-shared-glapi \
+   --enable-gallium-osmesa \
+   --with-gallium-drivers=swrast,swr \
+   --prefix=${WORK_INSTALL_DIR} 
+   CPPFLAGS=-I/work/01206/jbarbosa/stampede/swr/GL.stampede
+  make -j8
   make install
-#  sed -i -- 's/tmprpm/opt\/apps/g' %{INSTALL_DIR}/bin/gsl-config 
-# Copy everything from tarball over to the installation directory
-  cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-  umount %{INSTALL_DIR}
+  
+cat > ${WORK_INSTALL_DIR}/bin/mesa << "EOF"
+#!/bin/bash
+export LD_LIBRARY_PATH=${TACC_SWR_PATH}/lib:$LD_LIBRARY_PATH 
+$*
+EOF
+chmod 755 ${WORK_INSTALL_DIR}/bin/mesa
+
+cat > ${WORK_INSTALL_DIR}/bin/swr << "EOF"
+#!/bin/bash
+if [ -z "$KNOB_MAX_WORKER_THREADS" ]; then
+	NUMBER_CORES_IN_NODE=`cat /proc/cpuinfo | grep processor | wc -l`
+	if [ -z "$SLURM_TASKS_PER_NODE" ]; then
+            echo "Unable to determine processes per node"
+	        KNOB_MAX_WORKER_THREADS=$NUMBER_CORES_IN_NODE
+	else
+            echo "Able to determine processes per node"
+	        regex='([0-9]+).*'
+	        [[ $SLURM_TASKS_PER_NODE =~ $regex ]]
+	        NUMBER_PROCESSES_PER_NODE=${BASH_REMATCH[1]}
+	        KNOB_MAX_WORKER_THREADS=$(($NUMBER_CORES_IN_NODE / $NUMBER_PROCESSES_PER_NODE))
+	fi
+fi
+#echo  $KNOB_MAX_WORKER_THREADS
+#echo "SWR using "$KNOB_MAX_WORKER_THREADS" per node"
+export LD_LIBRARY_PATH=${TACC_SWR_PATH}/lib:$LD_LIBRARY_PATH 
+GALLIUM_DRIVER=swr $*
+EOF
+chmod 755 ${WORK_INSTALL_DIR}/bin/swr
+
+
+cat > ${WORK_INSTALL_DIR}/bin/swr_nk << "EOF"
+export LD_LIBRARY_PATH=${TACC_SWR_PATH}/lib:$LD_LIBRARY_PATH 
+GALLIUM_DRIVER=swr $*
+EOF
+chmod 755 ${WORK_INSTALL_DIR}/bin/swr_nk
+
+
+# Remove buildroot
+
+#find $RPM_BUILD_ROOT%{INSTALL_DIR} -type f -print0 | 
+#    xargs -0 sed -i -e s,$RPM_BUILD_ROOT,,g
+
+find $RPM_BUILD_ROOT%{INSTALL_DIR} -name swr | 
+   xargs sed -i -e s,$RPM_BUILD_ROOT,,g
+
+find $RPM_BUILD_ROOT%{INSTALL_DIR} -name swr_nk | 
+   xargs sed -i -e s,$RPM_BUILD_ROOT,,g
+
+find $RPM_BUILD_ROOT%{INSTALL_DIR} -name mesa | 
+   xargs sed -i -e s,$RPM_BUILD_ROOT,,g
+
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -247,24 +309,29 @@ include files, and tools respectively.
 --help(help_msg)
 help(help_msg)
 
-whatis("Name: GSL")
+whatis("Name: swr")
 whatis("Version: %{pkg_version}%{dbg}")
 %if "%{is_debug}" == "1"
 setenv("TACC_%{MODULE_VAR}_DEBUG","1")
 %endif
 
 -- Create environment variables.
-local bar_dir           = "%{INSTALL_DIR}"
+local swr_dir           = "%{INSTALL_DIR}"
 
-family("GSL")
-prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "lib"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/bar1_1/modulefiles")
-setenv( "TACC_%{MODULE_VAR}_DIR",                bar_dir)
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(bar_dir, "include"))
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(bar_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(bar_dir, "bin"))
-setenv( "PKG_CONFIG_PATH",       pathJoin(bar_dir, "lib/pkgconfig"))
+family("swr")
+prepend_path(    "PATH",                pathJoin(swr_dir, "bin"))
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(swr_dir, "lib"))
+prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/swr%{pkg_version}/modulefiles")
+setenv( "TACC_%{MODULE_VAR}_DIR",                swr_dir)
+setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(swr_dir, "include"))
+setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(swr_dir, "lib"))
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(swr_dir, "bin"))
+
+local gcc_dir                              = "/opt/apps/gcc/6.3.0"
+prepend_path( "PATH"                     , pathJoin(gcc_dir,"bin"       )               )
+prepend_path( "LD_LIBRARY_PATH"          , pathJoin(gcc_dir,"lib"       )               )
+prepend_path( "LD_LIBRARY_PATH"          , pathJoin(gcc_dir,"lib64"     )               )
+prepend_path( "INCLUDE"                  , pathJoin(gcc_dir,"include"   )               )
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'

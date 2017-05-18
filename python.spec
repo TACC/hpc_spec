@@ -1,7 +1,7 @@
 Summary:    Python is a high-level general-purpose programming language.
 Name:       tacc-python 
 Version:    2.7.13
-Release:    2%{?dist}
+Release:    1%{?dist}
 License:    GPLv2
 Vendor:     Python Software Foundation
 Group:      Applications
@@ -11,7 +11,7 @@ Packager:   TACC - rtevans@tacc.utexas.edu
 # Either Python package or mpi4py will be built 
 # based on this switch
 #------------------------------------------------
-%define build_mpi4py      1
+%define build_mpi4py     0 
 %global _python_bytecompile_errors_terminate_build 0
 #------------------------------------------------
 # BASIC DEFINITIONS
@@ -126,7 +126,7 @@ if [ ! -f "%{INSTALL_DIR_COMP}/bin/python" ]; then
     ./configure --prefix=%{INSTALL_DIR_COMP} CFLAGS="-flto -ffat-lto-objects -fuse-linker-plugin %{TACC_OPT}" LDFLAGS="-flto -ffat-lto-objects -fuse-linker-plugin -rdynamic" --with-system-ffi --enable-shared --with-pth --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip    
     %endif
 
-    make -j 24
+    make -j 28
     make sharedinstall
     make -i install
 fi
@@ -138,6 +138,7 @@ if [ ! -f "%{INSTALL_DIR_COMP}/bin/pip" ]; then
     %{INSTALL_DIR_COMP}/bin/python get-pip.py
 fi
 %{INSTALL_DIR_COMP}/bin/pip install --trusted-host pypi.python.org certifi
+#%{INSTALL_DIR_COMP}/bin/pip install --index-url=http://pypi.python.org/simple/ --trusted-host pypi.python.org certifi
 %{INSTALL_DIR_COMP}/bin/pip install nose
 %{INSTALL_DIR_COMP}/bin/pip install virtualenv
 %{INSTALL_DIR_COMP}/bin/pip install virtualenvwrapper    
@@ -224,15 +225,20 @@ CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: cython
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: ipython
 %{INSTALL_DIR_COMP}/bin/pip install jupyter	
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: mako
-CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: lxml
+
+
+#Antonio: Removed this temporarily
+#CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: lxml
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: pystuck
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: fortran-magic
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: MySQL
 #%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: psycopg2
 #%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: mercurial
-CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: yt
-%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: theano
-%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: scikit_learn
+
+#Antonio: Removed the next three temporarily
+#CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: yt
+#%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: theano
+#%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: scikit_learn
 
 if module load hdf5; then
     export HDF5_DIR=$TACC_HDF5_DIR	

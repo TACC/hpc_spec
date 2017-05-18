@@ -1,6 +1,7 @@
 #
-# Kevin Chen, chenk@tacc.utexas.edu
-# 2016-09-30
+# W. Cyrus Proctor
+# Antonio Gomez
+# 2015-08-25
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -20,25 +21,26 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name gsl
-%define MODULE_VAR    GSL
+%define pkg_base_name ospray
+%define MODULE_VAR    OSPRAY
+%define MODULE_VAR2    EMBREE
 
 # Create some macros (spec file variables)
-%define major_version 2
-%define minor_version 3
-%define micro_version 0
+%define major_version 1
+%define minor_version 2
+%define micro_version 1
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-%include compiler-defines.inc
+#%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-#%include name-defines.inc
-%include name-defines-noreloc.inc
+%include name-defines.inc
+#%include name-defines-noreloc.inc
 #%include name-defines-hidden.inc
 #%include name-defines-hidden-noreloc.inc
 ########################################
@@ -53,70 +55,41 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
 Release:   1%{?dist}
 License:   GPL
-Group:     Development/Tools
-URL:       http://www.gnu.org/software/bar
-Packager:  TACC - Kevin Chen chenk@tacc.utexas.edu
+Group:     Software/Library
+URL:       http://ospray.org
+Packager:  TACC - jbarbosa@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
 
+%define ispc_version 1.9.1
+%define embree_version 2.15.0
+%define ospray_version %{version}
+%define intel_tbb_path /opt/intel/tbb
+
 
 %package %{PACKAGE}
-
-Summary: The GNU Scientific Library (GSL) is a numerical library for C and C++ programmers.
-Group: System Environment/Base
-
+Summary: The package RPM
+Group: Software/Library
 %description package
+OSPRay is an open source, scalable, and portable ray tracing engine for high-performance, high-fidelity visualization on Intel® Architecture CPUs. OSPRay is released under the permissive Apache 2.0 license.
 
-The GNU Scientific Library (GSL) is a numerical library for C and C++ programmers. It is free software under the GNU General Public License.
+The purpose of OSPRay is to provide an open, powerful, and easy-to-use rendering library that allows one to easily build applications that use ray tracing based rendering for interactive applications (including both surface- and volume-based visualizations). OSPRay is completely CPU-based, and runs on anything from laptops, to workstations, to compute nodes in HPC systems.
 
-The library provides a wide range of mathematical routines such as random number generators, special functions and least-squares fitting. There are over 1000 functions in total
-
-The complete range of subject areas covered by the library includes,
-
-Complex Numbers Roots of Polynomials
-Special Functions Vectors and Matrices
-Permutations  Sorting
-BLAS Support  Linear Algebra
-Eigensystems  Fast Fourier Transforms
-Quadrature  Random Numbers
-Quasi-Random Sequences  Random Distributions
-Statistics  Histograms
-N-Tuples  Monte Carlo Integration
-Simulated Annealing Differential Equations
-Interpolation Numerical Differentiation
-Chebyshev Approximation Series Acceleration
-Discrete Hankel Transforms  Root-Finding
-Minimization  Least-Squares Fitting
-Physical Constants  IEEE Floating-Point
-Discrete Wavelet Transforms Basis splines
-
-Unlike the licenses of proprietary numerical libraries the license of GSL does not restrict scientific cooperation. It allows you to share your programs freely with others.
-
-GSL can be found in the gsl subdirectory on your nearest GNU mirror http://ftpmirror.gnu.org/gsl/.
-
-Main GNU ftp site: ftp://ftp.gnu.org/gnu/gsl/
-For other ways to obtain GSL, please read How to get GNU Software
-
-Installation instructions can be found in the included README and INSTALL files.
-
-Precompiled binary packages are included in most GNU/Linux distributions.
-
-A compiled version of GSL is available as part of Cygwin on Windows (but we recommend using GSL on a free operating system, such as GNU/Linux).
-
+OSPRay internally builds on top of Embree and ISPC (Intel® SPMD Program Compiler), and fully utilizes modern instruction sets like Intel® SSE4, AVX, AVX2, and AVX-512 to achieve high rendering performance, thus a CPU with support for at least SSE4.1 is required to run OSPRay.
 
 %package %{MODULEFILE}
-Summary: The GNU Scientific Library (GSL) is a numerical library for C and C++ programmers.
-Group: System Environment/Base
+Summary: The modulefile RPM
+Group: Lmod/Modulefiles
 %description modulefile
+This is the long description for the modulefile RPM...
+
 %description
-
-The GNU Scientific Library (GSL) is a numerical library for C and C++ programmers. It is free software under the GNU General Public License.
-
-The library provides a wide range of mathematical routines such as random number generators, special functions and least-squares fitting. There are ove
-
+The longer-winded description of the package that will 
+end in up inside the rpm and is queryable if installed via:
+rpm -qi <rpm-name>
 
 
 #---------------------------------------
@@ -129,7 +102,7 @@ The library provides a wide range of mathematical routines such as random number
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%setup -n %{pkg_base_name}-%{pkg_version}
+#%setup -n %{pkg_base_name}-%{pkg_version}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -144,6 +117,23 @@ The library provides a wide range of mathematical routines such as random number
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
+rm -rf %{_sourcedir}/embree %{_sourcedir}/ispc %{_sourcedir}/ospray
+
+cd %{_sourcedir}
+wget -O ispc-linux.tar.gz http://sourceforge.net/projects/ispcmirror/files/v%{ispc_version}/ispc-v%{ispc_version}-linux.tar.gz
+
+
+tar xzf ispc-linux.tar.gz
+mv ispc-v%{ispc_version}-linux ispc
+rm ispc-linux.tar.gz
+
+cd %{_sourcedir}
+git clone https://github.com/embree/embree.git embree
+
+cd %{_sourcedir}
+git clone https://github.com/ospray/ospray.git ospray
+cd ospray
+git checkout v%{ospray_version}
 
 
 #---------------------------------------
@@ -159,7 +149,7 @@ The library provides a wide range of mathematical routines such as random number
 %include system-load.inc
 module purge
 # Load Compiler
-%include compiler-load.inc
+#%include compiler-load.inc
 # Load MPI Library
 #%include mpi-load.inc
 
@@ -172,9 +162,9 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 %if %{?BUILD_PACKAGE}
 #------------------------
 
+  export QA_SKIP_BUILD_ROOT=1
+
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -187,34 +177,37 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-  WD=`pwd`
-
+  
   # Create some dummy directories and files for fun
-#  export CFLAGS="-O3 -xAVX -axCORE-AVX2 -fp-model precise"
-#  export CPPFLAGS="-O3 -xAVX -axCORE-AVX2 -fp-model precise"
- %if "%is_intel" == "1" 
-  export CC=`which icc`
-  export CXX=`which icpc`
-%endif
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
+  
+  # Copy everything from tarball over to the installation directory
+  # cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  export WORK_DIR=`pwd`
+  export WORK_INSTALL_DIR=$RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%if "%is_gcc" == "1" 
-  export CC=`which gcc`
-  export CXX=`which g++`
-%endif
- 
+  mkdir -p $WORK_INSTALL_DIR/bin
+  cp %{_sourcedir}/ispc/ispc $WORK_INSTALL_DIR/bin
 
-  export CFLAGS="%{TACC_OPT}"
-  export CPPFLAGS="%{TACC_OPT}"
-  export LDFLAGS="%{TACC_OPT}"
-
-  export CONFIG_FLAGS=""
-  ./configure $CONFIG_FLAGS --prefix=%{INSTALL_DIR}
-  make -j 12
+  module load intel
+  cd $WORK_DIR
+  mkdir embree
+  cd embree
+  CC=icc CXX=icpc cmake %{_sourcedir}/embree -DCMAKE_INSTALL_PREFIX:PATH=$WORK_INSTALL_DIR -DEMBREE_ISPC_EXECUTABLE:FILE=$WORK_INSTALL_DIR/bin/ispc -DEMBREE_MAX_ISA=AVX512KNL -DEMBREE_TUTORIALS:BOOL=OFF -DEMBREE_TBB_ROOT:PATH=%{intel_tbb_path}
+  make -j4
   make install
-#  sed -i -- 's/tmprpm/opt\/apps/g' %{INSTALL_DIR}/bin/gsl-config 
-# Copy everything from tarball over to the installation directory
-  cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-  umount %{INSTALL_DIR}
+
+  export embree_DIR=$WORK_INSTALL_DIR
+
+  cd $WORK_DIR
+  mkdir ospray
+  cd ospray
+  CC=icc CXX=icpc cmake %{_sourcedir}/ospray -DCMAKE_INSTALL_PREFIX:PATH=$WORK_INSTALL_DIR -DOSPRAY_APPS_BENCHMARK:BOOL=OFF -DOSPRAY_APPS_GLUTVIEWER:BOOL=OFF -DOSPRAY_APPS_PARAVIEW_TFN_CVT:BOOL=OFF -DOSPRAY_APPS_QTVIEWER:BOOL=OFF -DOSPRAY_APPS_VOLUMEVIEWER:BOOL=OFF
+  make -j4
+  make install
+
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -247,24 +240,31 @@ include files, and tools respectively.
 --help(help_msg)
 help(help_msg)
 
-whatis("Name: GSL")
+whatis("Name: OSPray")
 whatis("Version: %{pkg_version}%{dbg}")
 %if "%{is_debug}" == "1"
 setenv("TACC_%{MODULE_VAR}_DEBUG","1")
 %endif
 
 -- Create environment variables.
-local bar_dir           = "%{INSTALL_DIR}"
+local opsray_dir           = "%{INSTALL_DIR}"
 
-family("GSL")
-prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "lib"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/bar1_1/modulefiles")
-setenv( "TACC_%{MODULE_VAR}_DIR",                bar_dir)
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(bar_dir, "include"))
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(bar_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(bar_dir, "bin"))
-setenv( "PKG_CONFIG_PATH",       pathJoin(bar_dir, "lib/pkgconfig"))
+family("ospray")
+prepend_path(    "PATH",                pathJoin(ospray_dir, "bin"))
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(ospray_dir, "lib"))
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(ospray_dir, "lib64"))
+prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/ospray%{pkg_version}/modulefiles")
+
+setenv( "TACC_%{MODULE_VAR}_DIR",                "%{INSTALL_DIR}")
+setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(ospray_dir, "include"))
+setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(ospray_dir, "lib64"))
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(ospray_dir, "bin"))
+
+setenv( "embree_DIR",	"%{INSTALL_DIR}")
+setenv( "TACC_%{MODULE_VAR2}_DIR",                "%{INSTALL_DIR}")
+setenv( "TACC_%{MODULE_VAR2}_INC",       pathJoin(ospray_dir, "include"))
+setenv( "TACC_%{MODULE_VAR2}_LIB",       pathJoin(ospray_dir, "lib64"))
+setenv( "TACC_%{MODULE_VAR2}_BIN",       pathJoin(ospray_dir, "bin"))
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
