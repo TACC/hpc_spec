@@ -1,5 +1,7 @@
 #
 # W. Cyrus Proctor
+# 2016-01-28 Rebuild on Wrangler
+# 2015-12-01 Build version 493 to support cray_mpich and fortran modules
 # 2015-12-01 Add name-defines-noreloc.inc
 # 2015-11-20 Need to investigate relocation -- use /opt/apps for now
 # 2015-11-10 Update for LS5 Chroot Jail
@@ -27,12 +29,12 @@ Summary: A Nice little non-relocatable skeleton spec file example.
 %define MODULE_VAR    GCC
 
 # Create some macros (spec file variables)
-%define major_version 6
-%define minor_version 3
-%define micro_version 0
+%define major_version 4
+%define minor_version 9
+%define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
-%define gcc_ver gcc6_3
+%define gcc_ver gcc4_9
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -52,7 +54,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4%{?dist}
+Release:   1
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.gnu.org/software
@@ -69,22 +71,12 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the package RPM...
-The GNU Compiler Collection includes front ends for C, C++, Objective-C,
-Fortran, Java, Ada, and Go, as well as libraries for these languages
-(libstdc++, libgcj,...). GCC was originally written as the compiler for the GNU
-operating system. The GNU system was developed to be 100% free software, free
-in the sense that it respects the user's freedom.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the modulefile RPM...
-The GNU Compiler Collection includes front ends for C, C++, Objective-C,
-Fortran, Java, Ada, and Go, as well as libraries for these languages
-(libstdc++, libgcj,...). GCC was originally written as the compiler for the GNU
-operating system. The GNU system was developed to be 100% free software, free
-in the sense that it respects the user's freedom.
 
 %description
 The GNU Compiler Collection includes front ends for C, C++, Objective-C,
@@ -130,8 +122,10 @@ in the sense that it respects the user's freedom.
 
 # Insert necessary module commands
 module purge
-#module load TACC
-#module load gcc/4.9.3
+# module load TACC
+# module load crayswitch
+# source crayswitch
+# module load gcc/4.9.3
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -166,38 +160,41 @@ export PATH=${gcc_install}/x86_64-unknown-linux-gnu/bin:${PATH}
 export LD_LIBRARY_PATH=${gcc_install}/lib:${LD_LIBRARY_PATH}
 export LD_LIBRARY_PATH=${gcc_install}/x86_64-unknown-linux-gnu/lib:${LD_LIBRARY_PATH}
 
-export gmp_major=6
+export gmp_major=5
 export gmp_minor=1
-#export gmp_patch=0
-export gmp_patch=2
+export gmp_patch=3
 
 export isl_major=0
-#export isl_minor=16
-#export isl_patch=1
-export isl_minor=18
+export isl_minor=12
+export isl_patch=2
 
 export mpfr_major=3
 export mpfr_minor=1
-#export mpfr_patch=4
-export mpfr_patch=5
+export mpfr_patch=2
+
+export ppl_major=1
+export ppl_minor=1
+
+export cloog_major=0
+export cloog_minor=18
+export cloog_patch=1
 
 export mpc_major=1
 export mpc_minor=0
-export mpc_patch=3
+export mpc_patch=2
 
 export binutils_major=2
-#export binutils_minor=26
-#export binutils_minor=27
-export binutils_minor=28
+export binutils_minor=25
 
-export gcc_major=6
-export gcc_minor=3
-export gcc_patch=0
+export gcc_major=4
+export gcc_minor=9
+export gcc_patch=1
 
 export gmp_version=${gmp_major}.${gmp_minor}.${gmp_patch}
-#export isl_version=${isl_major}.${isl_minor}.${isl_patch}
-export isl_version=${isl_major}.${isl_minor}
+export isl_version=${isl_major}.${isl_minor}.${isl_patch}
 export mpfr_version=${mpfr_major}.${mpfr_minor}.${mpfr_patch}
+export ppl_version=${ppl_major}.${ppl_minor}
+export cloog_version=${cloog_major}.${cloog_minor}.${cloog_patch}
 export mpc_version=${mpc_major}.${mpc_minor}.${mpc_patch}
 export binutils_version=${binutils_major}.${binutils_minor}
 export gcc_version=${gcc_major}.${gcc_minor}.${gcc_patch}
@@ -208,16 +205,14 @@ export CC=gcc
 export CFLAGS=-fPIC 
 export CPPFLAGS=-I${gcc_install}/include
 
-
 cd ${gcc}
 
 printf "\n\n************************************************************\n"
 printf "gmp\n"
 printf "************************************************************\n\n"
 
-
-wget https://gmplib.org/download/gmp/gmp-${gmp_version}.tar.bz2
-tar xvfj gmp-${gmp_version}.tar.bz2
+wget ftp://mirror.vexxhost.com/gnu/gmp/gmp-${gmp_version}.tar.gz
+tar xvfz gmp-${gmp_version}.tar.gz
 
 cd gmp-${gmp_version}
 
@@ -252,7 +247,7 @@ printf "\n\n************************************************************\n"
 printf "mpfr\n"
 printf "************************************************************\n\n"
 
-wget ftp://ftp.gnu.org/gnu/mpfr/mpfr-${mpfr_version}.tar.gz
+wget ftp://mirror.vexxhost.com/gnu/mpfr/mpfr-${mpfr_version}.tar.gz
 tar xvfz mpfr-${mpfr_version}.tar.gz
 
 cd mpfr-${mpfr_version}
@@ -267,10 +262,49 @@ make install -j ${ncores}
 cd ${gcc}
 
 printf "\n\n************************************************************\n"
+printf "ppl\n"
+printf "************************************************************\n\n"
+
+wget http://bugseng.com/products/ppl/download/ftp/releases/${ppl_version}/ppl-${ppl_version}.tar.gz
+tar xvfz ppl-${ppl_version}.tar.gz
+
+cd ppl-${ppl_version}
+
+${gcc}/ppl-${ppl_version}/configure \
+--prefix=${gcc_install} \
+--with-gmp=${gcc_install}
+
+make -j ${ncores}
+make install -j ${ncores}
+
+cd ${gcc}
+
+printf "\n\n************************************************************\n"
+printf "cloog\n"
+printf "************************************************************\n\n"
+
+wget http://ftp.vim.org/languages/gcc/infrastructure/cloog-${cloog_version}.tar.gz
+tar xvfz cloog-${cloog_version}.tar.gz
+
+cd cloog-${cloog_version}
+
+${gcc}/cloog-${cloog_version}/configure \
+--prefix=${gcc_install} \
+--with-gmp-prefix=${gcc_install} \
+--with-gmp=system \
+--with-isl=system \
+--with-isl-prefix=${gcc_install}
+
+make -j ${ncores}
+make install -j ${ncores}
+
+cd ${gcc}
+
+printf "\n\n************************************************************\n"
 printf "mpc\n"
 printf "************************************************************\n\n"
 
-wget ftp://ftp.gnu.org/gnu/mpc/mpc-${mpc_version}.tar.gz
+wget ftp://mirror.vexxhost.com/gnu/mpc/mpc-${mpc_version}.tar.gz
 tar xvfz mpc-${mpc_version}.tar.gz
 
 cd mpc-${mpc_version}
@@ -296,20 +330,13 @@ cd binutils-${binutils_version}
 
 ${gcc}/binutils-${binutils_version}/configure \
 --prefix=${gcc_install}                       \
---enable-gold=yes                             \
---enable-ld=default                           \
---enable-plugins                              \
---enable-lto                                  \
 --with-gmp=${gcc_install}                     \
 --with-mpfr=${gcc_install}                    \
 --with-mpc=${gcc_install}                     \
 --with-isl=${gcc_install}
 
-
 make -j ${ncores}
 make install -j ${ncores}
-
-export cc=gcc
 
 cd ${gcc}
 
@@ -317,18 +344,18 @@ printf "\n\n************************************************************\n"
 printf "gcc\n"
 printf "************************************************************\n\n"
 
-wget ftp://gcc.gnu.org/pub/gcc/releases/gcc-${gcc_version}/gcc-${gcc_version}.tar.bz2
-tar xvfj gcc-${gcc_version}.tar.bz2
+#wget http://mirrors-usa.go-parts.com/gcc/releases/gcc-${gcc_version}/gcc-${gcc_version}.tar.gz
+wget http://mirrors.concertpass.com/gcc/releases/gcc-${gcc_version}/gcc-${gcc_version}.tar.gz
+tar xvfz gcc-${gcc_version}.tar.gz
 
 cd gcc-${gcc_version}
 
 ${gcc}/gcc-${gcc_version}/configure \
---enable-libssp                     \
---enable-gold=yes                   \
---enable-ld=default                 \
---enable-plugins                    \
 --enable-lto                        \
---with-tune=generic                 \
+--enable-libssp                     \
+--enable-gold                       \
+--with-arch=core-avx-i              \
+--with-tune=core-avx2               \
 --enable-languages='c,c++,fortran'  \
 --disable-multilib                  \
 --prefix=${gcc_install}             \
@@ -340,7 +367,6 @@ ${gcc}/gcc-${gcc_version}/configure \
 
 make BOOT_CFLAGS='-O2' bootstrap -j ${ncores}
 make install -j ${ncores}
-
 
 if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}

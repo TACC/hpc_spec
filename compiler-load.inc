@@ -1,5 +1,7 @@
 # -*-rpm-spec-*-
 #
+# $Id: compiler-load.inc 987 2012-02-17 18:11:05Z karl $
+#
 #-----------------------------------------
 # Load Desired Compiler for RPM Builds
 #-----------------------------------------
@@ -12,6 +14,9 @@ if [ -f "$BASH_ENV" ]; then
   myhost=${myhost%.tacc.utexas.edu}
   SYSHOST=${myhost#*.}
   MP_basic="/opt/apps/modulefiles:/opt/modulefiles"
+  MP_ls4="/share1/apps/teragrid/modulefiles:$MP_basic"
+  MP_longhorn=$MP_basic
+  MP_stampede="/opt/apps/xsede/modulefiles:$MP_basic"
   MP_wrangler="/opt/apps/xsede/modulefiles:$MP_basic"
   eval "MP=\${MP_$SYSHOST}"
 
@@ -44,6 +49,14 @@ fi
   export FC=gfortran
   export F77=gfortran
   export FC=gfortran
+%endif
+
+%if "%{comp_fam}" == "pgi"
+  export CC=pgcc
+  export CXX=pgCC
+  export FC=pgf90
+  export F77=pgf77
+  export F90=pgf90
 %endif
 
 module load %{comp_module}

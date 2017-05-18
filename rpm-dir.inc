@@ -4,9 +4,9 @@
 # Define local build root and top level dir for rpm builds
 #-------------------------------------------------------------------
 
-Buildroot:       /var/tmp/%{name}-%{version}-buildroot
-%define _topdir  /admin/build/rpms/
-%define APPS     /opt/apps
+Buildroot: /var/tmp/%{name}-%{version}-buildroot
+%define _topdir /admin/build/rpms/
+%define APPS    /opt/apps
 %define MODULES  modulefiles
 %define SPEC_DIR %{_topdir}/SPECS
 

@@ -1,0 +1,94 @@
+Summary: Test
+ 
+#
+#
+#
+
+Name: apache-maven
+Version: 3.3.3
+Release: 1
+License: GPL 
+Vendor: Apache
+Group: Application
+Source: %{name}-%{version}.tar.gz
+Packager: ngaffney@tacc.utexas.edu
+Buildroot: /var/tmp/%{name}-%{version}-buildroot
+
+%define debug_package %{nil}
+%include rpm-dir.inc
+
+%define APPS /opt/apps/
+%define MODULES modulefiles
+
+
+%define INSTALL_DIR %{APPS}/%{name}/%{version}
+%define MODULE_DIR  %{APPS}/%{MODULES}/%{name}
+
+
+%description
+describe abt the software
+%prep
+tacctmpfs -m %{INSTALL_DIR}
+
+rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+ 
+##
+## SETUP
+##
+##setup -n %{name}-%{version}
+ 
+##
+## BUILD
+##
+%build
+
+%install
+
+
+rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
+mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
+wget "http://apache.arvixe.com/maven/maven-3/3.3.3/binaries/apache-maven-3.3.3-bin.tar.gz"
+tar xzf apache-maven-3.3.3-bin.tar.gz
+rm apache-maven-3.3.3-bin.tar.gz
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
+help(
+[[
+The Apache Maven build environment.
+]]
+)
+
+--
+-- Create environment variables.
+--
+-- set variable
+
+
+-- bin or executable
+local mvn_path=$INSTALL_DIR/bin
+
+--  LD_LIBRARY_PATH
+
+prepend_path("PATH", $mvn_math)
+
+
+EOF
+
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
+#%Module3.1.1#################################################
+##
+## version file for %{name}-%{version}
+##
+ 
+set     ModulesVersion      "%{version}"
+EOF
+
+%files
+%defattr(-,root,install)
+%{MODULE_DIR}
+
+%post
+tacctmpfs -m %{INSTALL_DIR}
+
+%clean
+rm -rf $RPM_BUILD_ROOT

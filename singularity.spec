@@ -1,0 +1,81 @@
+%{!?_rel:%{expand:%%global _rel 0.1}}
+
+%include rpm-dir.inc
+
+Summary: Application and environment virtualization
+Name: singularity
+Version: 2.2.1
+Release: %{_rel}%{?dist}
+# https://spdx.org/licenses/BSD-3-Clause-LBNL.html
+License: BSD-3-Clause-LBNL
+Group: System Environment/Base
+URL: http://singularity.lbl.gov/
+Source: %{name}-%{version}.tar.gz
+ExclusiveOS: linux
+BuildRoot: %{?_tmppath}%{!?_tmppath:/var/tmp}/%{name}-%{version}-%{release}-root
+
+%description
+Singularity provides functionality to build the smallest most minimal
+possible containers, and running those containers as single application
+environments.
+
+%package devel
+Summary: Development libraries for Singularity
+Group: System Environment/Development
+
+%description devel
+Development files for Singularity
+
+%prep
+%setup
+
+
+%build
+%configure 
+%{__make} %{?mflags}
+
+
+%install
+%{__make} install DESTDIR=$RPM_BUILD_ROOT %{?mflags_install}
+rm -f $RPM_BUILD_ROOT/%{_libdir}/lib*.la
+
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+
+%files
+%defattr(-, root, root)
+%doc examples AUTHORS COPYING ChangeLog INSTALL NEWS README.md
+%attr(0755, root, root) %dir %{_sysconfdir}/singularity
+%attr(0644, root, root) %config(noreplace) %{_sysconfdir}/singularity/*
+%dir %{_libexecdir}/singularity
+%attr(4755, root, root) %{_libexecdir}/singularity/sexec-suid
+%{_libexecdir}/singularity/bootstrap
+%{_libexecdir}/singularity/cli
+%{_libexecdir}/singularity/helpers
+%{_libexecdir}/singularity/python
+%{_libexecdir}/singularity/get-section
+%{_libexecdir}/singularity/image-handler.sh
+%{_libexecdir}/singularity/sexec
+%{_libexecdir}/singularity/functions
+%{_libexecdir}/singularity/image-bind
+%{_libexecdir}/singularity/image-create
+%{_libexecdir}/singularity/image-expand
+%{_libexecdir}/singularity/image-mount
+%{_bindir}/singularity
+%{_bindir}/run-singularity
+%{_mandir}/man1/*
+%{_libdir}/lib*.so.*
+%{_sysconfdir}/bash_completion.d/singularity
+
+
+%files devel
+%defattr(-, root, root)
+%{_libdir}/lib*.so
+%{_libdir}/lib*.a
+%{_includedir}/*.h
+
+
+
+%changelog

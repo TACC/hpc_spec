@@ -1,0 +1,16 @@
+*.log
+*.swp
+*~
+\#*\#
+nohup.out
+*.[0-9]
+.kent
+.cyrus
+stampede-rpms
+CHROOT_ONLY*
+*.bak
+*.cmake-cache
+*.orig
+*.install
+log
+tmp

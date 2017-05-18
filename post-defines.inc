@@ -2,6 +2,9 @@
 # W. Cyrus Proctor
 # John Fonner (Banner)
 #
+# 2015-12-03 WCP -- Adding NORELOC and HIDDEN canaries
+# 2015-11-10 WCP -- Adding variable for default rpmdb path
+# 2015-10-27 WCP -- Tailored for LS5
 # 2015-10-25 WCP -- Finish the job!
 # 2015-10-03 WCP -- Updated for local/shared logic error/warns
 # 2015-10-01 WCP -- Updated for verbose print
@@ -31,9 +34,10 @@ function vcat() {
 }
 
 arraytest[0]='test' || (echo 'Failure: arrays not supported in this version of bash.' && exit 2)
-sharefs=(home work scratch share)
-sharerpm=/home/03078/cproctor/rpmtest/sharerpm_config
-
+#sharefs=(home1 work scratch share)
+sharefs=()
+sharerpm=/admin/build/rpms/RPMS/x86_64/sharerpm_config
+default_rpmdb_path=%{_dbpath} ### Changed in /usr/lib/rpm/macros to /opt/apps/rpmdb
 
 R='\033[1;31m' # Red
 G='\033[1;32m' # Green
@@ -53,6 +57,11 @@ elif [ $(( ${PACKAGE_POST:=0} + ${MODULEFILE_POST:=0} + ${PACKAGE_PREUN:=0} > 1 
   printf "${R}Exiting!${NC}\n"
   exit -1
 fi 
+
+export   RELOC=%{RELOC}
+export VISIBLE=%{VISIBLE}
+vprintf "Relocatable: ${RELOC}\n"
+vprintf "Visible: ${VISIBLE}\n"
 
 
 vprintf "${F}======================================================================${NC}\n"
@@ -75,10 +84,10 @@ if [ ${PACKAGE_PREUN:=0} = 1 ]; then
   vprintf "This is the %{RPM_PACKAGE_NAME} subpackage preuninstall script\n"
 fi
 # Query rpm after installation for location of canary files -----------------------------------------------------------------------
-if [ ${RPM_DBPATH:=/var/lib/rpm} = /var/lib/rpm ]; then                                                                         # |
+if [ "${RPM_DBPATH:=${default_rpmdb_path}}" = "${default_rpmdb_path}" ]; then                                                                         # |
   export install_canary_path=$(rpm -ql %{RPM_PACKAGE_NAME}    | grep .tacc_install_canary)                                      # |
   export  module_canary_path=$(rpm -ql %{RPM_MODULEFILE_NAME} | grep .tacc_module_canary)                                       # |
-  vprintf "Using default RPM database path:                             %{_dbpath}\n"                                           # |
+  vprintf "Using default RPM database path:                             ${default_rpmdb_path}\n"                                           # |
 else                                                                                                                            # |
   export install_canary_path=$(rpm --dbpath ${RPM_DBPATH} -ql %{RPM_PACKAGE_NAME}    | grep .tacc_install_canary)               # |
   export  module_canary_path=$(rpm --dbpath ${RPM_DBPATH} -ql %{RPM_MODULEFILE_NAME} | grep .tacc_module_canary)                # |
@@ -109,7 +118,7 @@ if [ ${PACKAGE_POST:=0} = 1 ]; then                                             
     vprintf "${G}POST_MODULE_PREFIX set but null or unset${NC}\n"                                                               # |
     vprintf "${G}Has %{RPM_MODULEFILE_NAME} been installed in this rpm database yet?${NC}\n"                                    # |
     vprintf "${G}Install %{RPM_MODULEFILE_NAME} to automatically update %{MODULE_SUFFIX}/%{MODULE_FILENAME}${NC}\n"             # |
-    if [ ${RPM_DBPATH} = /var/lib/rpm ]; then
+    if [ ${RPM_DBPATH} = ${default_rpmdb_path} ]; then
       export POST_PACKAGE_INSTALL_ROOT=`awk -F/ '{print $(2)}' <<< ${POST_INSTALL_PREFIX}`
       vprintf "POST_PACKAGE_INSTALL_ROOT: ${POST_PACKAGE_INSTALL_ROOT}\n"
       for fsrootp in ${sharefs[@]}; do
@@ -141,7 +150,7 @@ if [ ${PACKAGE_POST:=0} = 1 ]; then                                             
   else                                                                                                                          # |
     vprintf "rpm post-install module prefix:                              ${POST_MODULE_PREFIX}  \n"                            # |
     vprintf "rpm modulefile install location:                             ${POST_MODULE_PREFIX}/%{MODULE_SUFFIX}  \n"           # |
-    if [ ${RPM_DBPATH} = /var/lib/rpm ]; then
+    if [ ${RPM_DBPATH} = ${default_rpmdb_path} ]; then
       export POST_PACKAGE_INSTALL_ROOT=`awk -F/ '{print $(2)}' <<< ${POST_INSTALL_PREFIX}`
       vprintf "POST_PACKAGE_INSTALL_ROOT: ${POST_PACKAGE_INSTALL_ROOT}\n"
       export PACKAGE_SHARE=${zero}
@@ -209,7 +218,7 @@ if [ ${PACKAGE_POST:=0} = 1 ]; then                                             
 fi                                                                                                                              # |
 if [ ${MODULEFILE_POST:=0} = 1 ]; then                                                                                          # |
   if [ ${POST_INSTALL_PREFIX:-x} = x ]; then                                                                                    # |
-    if [ ${RPM_DBPATH} = /var/lib/rpm ]; then
+    if [ ${RPM_DBPATH} = ${default_rpmdb_path} ]; then
       if grep -Fsq "%{RPM_PACKAGE_NAME}" ${sharerpm}; then
         vprintf "Entry for %{RPM_PACKAGE_NAME} found in ${sharerpm}\n"
         export sharerpm_entry=`grep -F "%{RPM_PACKAGE_NAME}" ${sharerpm}`
@@ -244,7 +253,7 @@ if [ ${MODULEFILE_POST:=0} = 1 ]; then                                          
   fi                                                                                                                            # |
 fi 
 if [ ${PACKAGE_PREUN:=0} = 1 ]; then
-  if [ ${RPM_DBPATH} = /var/lib/rpm ]; then
+  if [ ${RPM_DBPATH} = ${default_rpmdb_path} ]; then
     export POST_PACKAGE_INSTALL_ROOT=`awk -F/ '{print $(2)}' <<< ${POST_INSTALL_PREFIX}`
     vprintf "POST_PACKAGE_INSTALL_ROOT: ${POST_PACKAGE_INSTALL_ROOT}\n"
     export PACKAGE_SHARE=${zero}
@@ -349,13 +358,13 @@ if [ ${PACKAGE_PREUN:=0} = 1 ]; then
 fi
 if [ ! ${POST_INSTALL_PREFIX:-x} = x ] && [ ! ${POST_MODULE_PREFIX:-x} = x ]; then                                              # |
   export POST_INSTALL_ERR=0
-  if [ "%{INSTALL_PREFIX}" = "${POST_INSTALL_PREFIX}" ];then
+  if [ "%{INSTALL_PREFIX}" = "${POST_INSTALL_PREFIX}" ] && [ "${RELOC}" = "${one}" ];then
     echo -e "${R}ERROR: \$POST_INSTALL_PREFIX matches temporary install prefix %{INSTALL_PREFIX}!${NC}"
     echo -e "${R}ERROR: Use the --relocate %{INSTALL_PREFIX}=/some/real/path${NC}"
     export POST_INSTALL_ERR=1
   fi
   export POST_MODULE_ERR=0
-  if [ "%{MODULE_PREFIX}" = "${POST_MODULE_PREFIX}" ];then
+  if [ "%{MODULE_PREFIX}" = "${POST_MODULE_PREFIX}" ] && [ "${RELOC}" = "${one}" ];then
     echo -e "${R}ERROR: \$POST_MODULE_PREFIX matches temporary module prefix %{MODULE_PREFIX}!${NC}"
     echo -e "${R}ERROR: Use the --relocate %{MODULE_PREFIX}=/some/real/path${NC}"
     export POST_MODULE_ERR=1

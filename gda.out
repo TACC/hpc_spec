@@ -1,0 +1,10 @@
+rpmbuild  -bb qt-4.8.5.spec 2>&1 | tee -a qt-4.8.5.log
+Build Start time: Mon Sep 14 17:44:57 CDT 2015
+Executing(%prep): /bin/sh -e /var/tmp/rpm-tmp.tH2Kyg
++ umask 022
++ cd /admin/build/rpms//BUILD
++ LANG=C
++ export LANG
++ unset DISPLAY
++ cd /admin/build/rpms/BUILD
++ rm -rf qt-everywhere-opensource-src-4.8.5
