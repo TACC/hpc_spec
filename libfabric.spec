@@ -1,6 +1,6 @@
 #
 # W. Cyrus Proctor
-# 2015-12-11
+# 2015-11-07
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -20,24 +20,24 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name mkl
-%define MODULE_VAR    MKL
+%define pkg_base_name libfabric
+%define MODULE_VAR    LIBFABRIC
 
 # Create some macros (spec file variables)
-%define major_version 17
-%define minor_version 0
-%define patch_version 4
+%define major_version 1
+%define minor_version 4
+%define micro_version 2
 
-%define pkg_version %{major_version}.%{minor_version}.%{patch_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-%include compiler-defines.inc
+#%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+%include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -49,9 +49,9 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1%{?dist}
-License:   proprietary
-Group:     Compiler
-URL:       https://software.intel.com/en-us/intel-compilers
+License:   GPLv2 or BSD
+Group:     System Environment/Libraries
+URL:       http://www.github.com/ofiwg/libfabric
 Packager:  TACC - cproctor@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
@@ -65,20 +65,29 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
-This is specifically an rpm for the Intel MKL modulefile
-used on Stampede 2 for GCC.
+penFabrics Interfaces (OFI) is a framework focused on exporting fabric
+communication services to applications. OFI is best described as a collection
+of libraries and applications used to export fabric services. The key
+components of OFI are: application interfaces, provider libraries, kernel
+services, daemons, and test applications.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...
-This is specifically an rpm for the Intel MKL modulefile
-used on Stampede 2 for GCC.
+This is the long description for the modulefile RPM...  OpenFabrics Interfaces
+(OFI) is a framework focused on exporting fabric communication services to
+applications. OFI is best described as a collection of libraries and
+applications used to export fabric services. The key components of OFI are:
+application interfaces, provider libraries, kernel services, daemons, and test
+applications.
 
 %description
-This is specifically an rpm for the Intel MKL modulefile
-used on Stampede 2 for GCC.
+OpenFabrics Interfaces (OFI) is a framework focused on exporting fabric
+communication services to applications. OFI is best described as a collection
+of libraries and applications used to export fabric services. The key
+components of OFI are: application interfaces, provider libraries, kernel
+services, daemons, and test applications.
 
 #---------------------------------------
 %prep
@@ -101,6 +110,8 @@ used on Stampede 2 for GCC.
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
+
+%setup -n %{pkg_base_name}-%{pkg_version}
 
 
 #---------------------------------------
@@ -126,6 +137,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  mkdir -p %{INSTALL_DIR}
+  mount -t tmpfs tmpfs %{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -139,7 +152,19 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
  
-  # Nothing to do!
+  export CC=gcc
+  export ncores=8
+  # DO NOT preppend $RPM_BUILD_ROOT in prefix
+  ./configure \
+  --prefix=%{INSTALL_DIR}
+  make -j ${ncores}
+  make install -j ${ncores}
+  
+  if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
+    mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  fi
+  cp -r %{INSTALL_DIR} $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+  umount %{INSTALL_DIR}
   
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -162,59 +187,48 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
-The Intel Math Kernel Library (Intel MKL) improves performance with math
-routines for software applications that solve large computational problems.
-Intel MKL provides BLAS and LAPACK linear algebra routines, fast Fourier
-transforms, vectorized math functions, random number generation functions, and
-other functionality.
+local help_message = [[
+OpenFabrics Interfaces (OFI) is a framework focused on exporting fabric
+communication services to applications. OFI is best described as a collection
+of libraries and applications used to export fabric services. The key
+components of OFI are: application interfaces, provider libraries, kernel
+services, daemons, and test applications.
 
-The Intel MKL module enables the use of the MKL with the GNU GCC compilers by
-updating the $LD_LIBRARY_PATH, $INCLUDE, and $MANPATH environment variables to
-access the MKL libraries, include files, and available man pages, respectively.
+This module defines the environmental variables TACC_%{MODULE_VAR}_DIR,
+TACC_%{MODULE_VAR}_BIN, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC
+for the location of the main libfabric directory, binaries, libraries,
+and include files respectively.
 
-The following additional environment variables are also defined:
-
-$TACC_MKL_DIR           (path to Math Kernel Library root         )
-$TACC_MKL_LIB           (path to Math Kernel Library libs         )
-$TACC_MKL_INC           (path to Math Kernel Library includes     )
-$TACC_MKL_DOC           (path to Math Kernel Library documentation)
-
-To use the MKL with Intel compilers, please see the Intel module help
-by issuing a "module help intel".
+The location of the binary files is also added to your PATH.
+The location of the library files is also added to your LD_LIBRARY_PATH.
+Documentation is also added to your MANPATH.
 
 Version %{version}
 ]]
 
---help(help_msg)
-help(help_msg)
+help(help_message,"\n")
 
-whatis("Name: Intel MKL"                                                    )
-whatis("Version: %{version}"                                                )
-whatis("Category: Library, Runtime Support"                                 )
-whatis("Description: Intel Math Kernel Library"                             )
-whatis("URL: https://software.intel.com/en-us/intel-mkl"                    )
+whatis("Name: %{name}")
+whatis("Version: %{version}")
+whatis("Category: system, environment libaries")
+whatis("Keywords: System, Environment Libraries")
+whatis("Description: Fabric communication services")
+whatis("URL: http://www.github.com/ofiwg/libfabric")
 
--- Create environment variables.
-local base         = "/opt/intel"
-local full_xe      = "compilers_and_libraries/linux"
-local installDir   = pathJoin(base,full_xe)
-local mklRoot      = pathJoin(installDir,"mkl")
+-- Export environmental variables
+local libfabric_dir="%{INSTALL_DIR}"
+local libfabric_bin=pathJoin(libfabric_dir,"bin")
+local libfabric_lib=pathJoin(libfabric_dir,"lib")
+local libfabric_inc=pathJoin(libfabric_dir,"include")
+setenv("TACC_LIBFABRIC_DIR",libfabric_dir)
+setenv("TACC_LIBFABRIC_BIN",libfabric_bin)
+setenv("TACC_LIBFABRIC_LIB",libfabric_lib)
+setenv("TACC_LIBFABRIC_INC",libfabric_inc)
 
-setenv( "MKLROOT"      ,              mklRoot )
-setenv( "TACC_MKL_DIR" ,              mklRoot )
-setenv( "TACC_MKL_LIB" ,              pathJoin( mklRoot    , "lib/intel64" ) )
-setenv( "TACC_MKL_INC" ,              pathJoin( mklRoot    , "include" ) )
-setenv( "TACC_MKL_DOC" ,              pathJoin( installDir , "documentation/en/mkl" ) )
-
-prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( mklRoot    , "lib/intel64" ) )
-
-prepend_path( "INCLUDE" ,             pathJoin( mklRoot    , "include" ) )
-
-prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2016/en/debugger/gdb-ia/man" ) )
-prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2016/en/debugger/gdb-igfx/man" ) )
-prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2016/en/man/common" ) )
-prepend_path( "MANPATH" ,             pathJoin( mklRoot ,    "benchmarks/mp_linpack/man" ) )
+-- Prepend the libfabric directories to the adequate PATH variables
+prepend_path("PATH",libfabric_bin)
+prepend_path("LD_LIBRARY_PATH",libfabric_lib)
+prepend_path("MANPATH", pathJoin(libfabric_dir, "share/man"))
 
 EOF
   
