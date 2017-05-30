@@ -1,6 +1,6 @@
 #
-# W. Cyrus Proctor
-# 2015-11-07
+# Damon McDougall
+# 2017-05-12
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -24,9 +24,9 @@ Summary: A Nice little relocatable skeleton spec file example.
 %define MODULE_VAR    LIBMESH
 
 # Create some macros (spec file variables)
-%define major_version 0
-%define minor_version 9
-%define micro_version 4
+%define major_version 1
+%define minor_version 2
+%define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -49,10 +49,10 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1
-License:   BSD
+License:   LGPL
 Group:     System/Utils
 URL:       https://libmesh.github.io
-Packager:  TACC - cproctor@tacc.utexas.edu
+Packager:  TACC - dmcdougall@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -94,6 +94,9 @@ serial and parallel platforms.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+%setup -n %{pkg_base_name}-%{pkg_version}
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -106,9 +109,6 @@ serial and parallel platforms.
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
-%setup -n %{pkg_base_name}-%{pkg_version}
-
 
 #---------------------------------------
 %build
@@ -127,11 +127,9 @@ serial and parallel platforms.
 # Insert necessary module commands
 #module load autotools
 #module load python
-#module load petsc
 #module load trilinos
-#module load boost
-module load hdf5
-#module load slepc
+module load petsc
+module load slepc
 
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
@@ -157,11 +155,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
  
 export ncores=16
 
-#export PETSC_DIR=${TACC_PETSC_DIR} 
-#export PETSC_ARCH=haswell 
-#export TRILINOS_DIR=${TACC_TRILINOS_DIR}
-export HDF5_DIR=${TACC_HDF5_DIR}
-#export SLEPC_DIR=${TACC_SLEPC_DIR}
 export METHODS=opt
 export CC=mpicc 
 export CXX=mpicxx 
@@ -173,13 +166,12 @@ export F77=mpif90
 
 #autoreconf --install --verbose
 
-./configure \
---prefix=%{INSTALL_DIR}
-#--with-trilinos=${TACC_TRILINOS_DIR} \
-#--with-boost=${TACC_BOOST_DIR}
+./configure --prefix=%{INSTALL_DIR}
 
 make -j ${ncores}
-make -j ${ncores} install
+make install
+
+cp -r %{INSTALL_DIR}/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/
 
   
 #-----------------------  
@@ -204,20 +196,14 @@ make -j ${ncores} install
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_message = [[
-Cantera is a suite of object-oriented software tools for problems involving
-chemical kinetics, thermodynamics, and/or transport processes. Cantera provides
-types (or classes) of objects representing phases of matter, interfaces between
-these phases, reaction managers, time-dependent reactor networks, and steady
-one-dimensional reacting flows. Cantera is currently used for applications
-including combustion, detonations, electrochemical energy conversion and
-storage, fuel cells, batteries, aqueous electrolyte solutions, plasmas, and
-thin film deposition. Cantera can be used from Python and Matlab, or in
-applications written in C++ and Fortran 90.
-
+The libMesh library provides a framework for the numerical simulation of
+partial differential equations using arbitrary unstructured discretizations
+on serial and parallel platforms.
 
 This module defines the environmental variables TACC_%{MODULE_VAR}_DIR,
-TACC_%{MODULE_VAR}_BIN and TACC_%{MODULE_VAR}_LIB for the location of 
-the main Cantera directory, the binaries, and libraries respectively.
+TACC_%{MODULE_VAR}_BIN, TACC_%{MODULE_VAR}_INC and TACC_%{MODULE_VAR}_LIB for
+the location of the main Cantera directory, the binaries, and libraries
+respectively.
 
 The location of the binary files is also added to your PATH while the 
 location of the libaries are added to your LD_LIBRARY_PATH.
@@ -231,20 +217,22 @@ whatis("Name: %{name}")
 whatis("Version: %{version}")
 whatis("Category: system, utilities")
 whatis("Keywords: System, Utility")
-whatis("Description: tools for problems involving chemical kinetics, thermodynamics, and/or transport processes.")
-whatis("URL: http://www.cantera.org")
+whatis("Description: framework for the numerical simulation of PDEs")
+whatis("URL: http://www.libmesh.github.io")
 
 -- Export environmental variables
-local cantera_dir="%{INSTALL_DIR}"
-local cantera_bin=pathJoin(cantera_dir,"bin")
-local cantera_lib=pathJoin(cantera_dir,"lib")
-setenv("TACC_CANTERA_DIR",cantera_dir)
-setenv("TACC_CANTERA_BIN",cantera_bin)
-setenv("TACC_CANTERA_LIB",cantera_lib)
+local libmesh_dir="%{INSTALL_DIR}"
+local libmesh_bin=pathJoin(libmesh_dir,"bin")
+local libmesh_lib=pathJoin(libmesh_dir,"lib")
+local libmesh_inc=pathJoin(libmesh_dir,"include")
+setenv("TACC_LIBMESH_DIR",libmesh_dir)
+setenv("TACC_LIBMESH_BIN",libmesh_bin)
+setenv("TACC_LIBMESH_LIB",libmesh_lib)
+setenv("TACC_LIBMESH_INC",libmesh_inc)
 
--- Prepend the cantera directories to the adequate PATH variables
-prepend_path("PATH",cantera_bin)
-prepend_path("LD_LIBRARY_PATH",cantera_lib)
+-- Prepend the libmesh directories to the adequate PATH variables
+prepend_path("PATH",libmesh_bin)
+prepend_path("LD_LIBRARY_PATH",libmesh_lib)
 
 EOF
   
