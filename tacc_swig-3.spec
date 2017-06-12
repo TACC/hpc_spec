@@ -1,4 +1,12 @@
 #
+# Spec file for SWIG:
+# interface generator utility 
+# which is always too old for trilinos
+#
+# Victor Eijkhout, 2017
+# based on:
+#
+# Bar.spec, 
 # W. Cyrus Proctor
 # Antonio Gomez
 # 2015-08-25
@@ -18,28 +26,28 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: A Nice little relocatable skeleton spec file example.
+Summary:    Set of tools for manipulating geographic and Cartesian data sets
 
 # Give the package a base name
-%define pkg_base_name qt5
-%define MODULE_VAR    QT5
+%define pkg_base_name swig
+%define MODULE_VAR    SWIG
 
 # Create some macros (spec file variables)
-%define major_version 5
-%define minor_version 9
-%define micro_version 0
+%define major_version 3
+%define minor_version 0
+%define micro_version 12
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
+%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
-#%include name-defines-noreloc.inc
+#%include name-defines.inc
+%include name-defines-noreloc-home1.inc
 #%include name-defines-hidden.inc
 #%include name-defines-hidden-noreloc.inc
 ########################################
@@ -52,33 +60,42 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3%{?dist}
-License:   GPL
-Group:     X11/Application
-URL:       http://qt.io
-Packager:  TACC - jbarbosa@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Release:   2%{?dist}
+License:   GNU
+Group:     Development/Tools
+Vendor:     SOEST - hawaii
+Group:      Libraries/maps
+Source:	    swig-%{version}.tar.gz
+URL:	    http://swig.soest.hawaii.edu/ 
+Packager:   eijkhout@tacc.utexas.edu
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
-
+%global _python_bytecompile_errors_terminate_build 0
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: X11/Application
+Summary: SWIG install
+Group: System Environment/Base
 %description package
+This is the long description for the package RPM...
 
 %package %{MODULEFILE}
-Summary: The modulefile RPM
-Group: Lmod/Modulefiles
+Summary: SWIG install
+Group: System Environment/Base
 %description modulefile
 This is the long description for the modulefile RPM...
 
 %description
-The longer-winded description of the package that will 
-end in up inside the rpm and is queryable if installed via:
-rpm -qi <rpm-name>
+SWIG is a software development tool that connects programs written in C and C++
+with a variety of high-level programming languages. SWIG is primarily used with
+common scripting languages such as Perl, Python, Tcl/Tk, and Ruby, however the
+list of supported languages also includes non-scripting languages such as Java,
+OCAML and C#. Also several interpreted and compiled Scheme implementations
+(Guile, MzScheme, Chicken) are supported. SWIG is most commonly used to create
+high-level interpreted or compiled programming environments, user interfaces,
+and as a tool for testing and prototyping C/C++ software. SWIG can also export
+its parse tree in the form of XML and Lisp s-expressions. 
 
 
 #---------------------------------------
@@ -91,7 +108,7 @@ rpm -qi <rpm-name>
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-#%setup -n %{pkg_base_name}-%{pkg_version}
+%setup -n %{pkg_base_name}-%{pkg_version}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -119,22 +136,14 @@ rpm -qi <rpm-name>
 
 # Setup modules
 %include system-load.inc
-module purge
 # Load Compiler
-#%include compiler-load.inc
+%include compiler-load.inc
 # Load MPI Library
 #%include mpi-load.inc
-
-# Insert further module commands
-
-echo "Building the package?:    %{BUILD_PACKAGE}"
-echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
 #------------------------
 %if %{?BUILD_PACKAGE}
 #------------------------
-
-  export QA_SKIP_BUILD_ROOT=1
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
   
@@ -150,43 +159,19 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
   
-  # Create some dummy directories and files for fun
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
-  
-  # Copy everything from tarball over to the installation directory
-  # cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  export WORK_DIR=`pwd`
-  export WORK_INSTALL_DIR=$RPM_BUILD_ROOT/%{INSTALL_DIR}
+#
+# Use mount temp trick
+#
+mkdir -p             %{INSTALL_DIR}
+mount -t tmpfs tmpfs %{INSTALL_DIR}
 
-  # 2) Required modules
-  #module load intel python cmake
-  
-  module load swr
+./configure --prefix=%{INSTALL_DIR} \
+ && make \
+ && make install
 
-  # 3) Build LLVM
-  cd ${WORK_DIR}
+cp -r %{INSTALL_DIR}/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/
 
-  git clone https://code.qt.io/qt/qt5.git
-  cd qt5/
-  git checkout %{major_version}.%{minor_version}
-  perl init-repository -f --module-subset=default,-qtwebkit,-qtwebkit-examples,-qtwebengine,-qtandroidextras,-qtmacextras
- ./configure -developer-build -confirm-license --prefix=$WORK_INSTALL_DIR -opensource -avx2 -release -nomake examples -nomake tests
-
-  make -j8
-  make install
- 
-cat > $WORK_INSTALL_DIR/bin/qt.conf << "EOF"
-[Paths]
-Prefix = /opt/apps/qt5/5.9.0 
-EOF
-   
-
-# Remove buildroot
-#find $RPM_BUILD_ROOT%{INSTALL_DIR} -type f -print0 | 
-#    xargs -0 sed -i -e s,$RPM_BUILD_ROOT,,g
-
+umount %{INSTALL_DIR}
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -208,52 +193,43 @@ EOF
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
-The %{MODULE_VAR} module defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
-TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
-include files, and tools respectively.
-]]
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
+help( [[
+Simplified Wrapper and Interface Generator
+This module loads swig.
+The command directory is added to PATH.
+The include directory is added to INCLUDE.
+The lib     directory is added to LD_LIBRARY_PATH.
 
---help(help_msg)
-help(help_msg)
+Version %{version}
+]] )
 
-whatis("Name: qt5")
-whatis("Version: %{pkg_version}%{dbg}")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
+whatis( "Simplified Wrapper and Interface Generator" )
+whatis( "Version: %{version}" )
+whatis( "Category: Development/Tools" )
+whatis( "Description: SWIG is a software development tool that connects programs written in C and C++ with a variety of high-level programming languages." )
+whatis( "URL: http://www.swig.org" )
 
--- Create environment variables.
-local qt_dir           = "%{INSTALL_DIR}"
+local swig_dir = "swig_dir"
 
-family("qt")
-prepend_path(    "PATH",                pathJoin(qt_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(qt_dir, "lib"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/qt%{pkg_version}/modulefiles")
-prepend_path(    "QT_QPA_PLATFORM_PLUGIN_PATH", pathJoin(qt_dir, "plugins/platforms"))
-setenv( "QTDIR",                qt_dir)
-setenv( "TACC_%{MODULE_VAR}_DIR",                qt_dir)
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(qt_dir, "include"))
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(qt_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(qt_dir, "bin"))
-
+prepend_path( "PATH", pathJoin( swig_dir,"bin" ) )
+setenv("TACC_SWIG_DIR", swig_dir )
+setenv("TACC_SWIG_BIN", pathJoin(swig_dir,"bin" ) )
 EOF
-  
+
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module3.1.1#################################################
+#%Module1.0####################################################################
 ##
-## version file for %{BASENAME}%{version}
+## Version file for %{name} version %{version}
 ##
-
-set     ModulesVersion      "%{version}"
+set ModulesVersion "%version"
 EOF
-  
+
   # Check the syntax of the generated lua modulefile only if a visible module
   %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
   %endif
+
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -305,3 +281,8 @@ export PACKAGE_PREUN=1
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
 
+%changelog
+* Thu Jun 01 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: lua modulefiles
+* Fri Feb 24 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial release

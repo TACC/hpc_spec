@@ -2,7 +2,7 @@ Prefix:    /opt/apps
 Summary:   lmod: Lua based Modules
 Name:      lmod
 Version:   7.4.12
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   MIT
 Vendor:    Robert McLay
 Group:     System Environment/Base
@@ -243,7 +243,8 @@ EOF
 %{INSTALL_DIR}
 %{MODULE_DIR}
 %{MODULE_DIR_ST}
-%{ZSH_SITE_FUNC}
+%{ZSH_SITE_FUNC}/_ml
+%{ZSH_SITE_FUNC}/_module
 
 %post -n %{pkg_name}
 

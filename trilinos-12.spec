@@ -119,16 +119,26 @@ mount -t tmpfs tmpfs %{INSTALL_DIR}
 ##cp -r * %{INSTALL_DIR}
 ##pushd %{INSTALL_DIR}
 
-module list
-module spider python
-module load cmake python boost phdf5 
-#parallel-netcdf
-# swig
+module load cmake boost swig
 %if "%{comp_fam}" == "gcc"
+  which gcc
   module load mkl
 %else
   export MKLFLAG="-mkl"
 %endif
+
+export COPTFLAGS="-g %{TACC_OPT}"
+%if "%{comp_fam}" == "gcc"
+  export HAS_HDF5=OFF
+  export HAS_NETCDF=OFF
+  export HAS_PYTHON=OFF
+%else
+  export HAS_HDF5=ON
+  export HAS_NETCDF=ON
+  export HAS_PYTHON=ON
+  module load phdf5 parallel-netcdf python
+%endif
+export HAS_SEACAS=${HAS_NETCDF}
 
 ##
 ## start of configure install loop
@@ -204,6 +214,7 @@ setenv("TRILINOS_ARCH",            trilinos_arch)
 setenv("TRILINOS_DIR",             trilinos_dir)
 setenv("TACC_TRILINOS_DIR",        trilinos_dir)
 setenv("TACC_TRILINOS_BIN",        pathJoin(trilinos_dir,trilinos_arch,"bin") )
+setenv("TACC_TRILINOS_INC",        pathJoin(trilinos_dir,trilinos_arch,"include") )
 setenv("TACC_TRILINOS_LIB",        pathJoin(trilinos_dir,trilinos_arch,"lib") )
 EOF
 

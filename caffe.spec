@@ -21,25 +21,25 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name qt5
-%define MODULE_VAR    QT5
+%define pkg_base_name caffe 
+%define MODULE_VAR    CAFFE 
 
 # Create some macros (spec file variables)
-%define major_version 5
-%define minor_version 9
+%define major_version 1
+%define minor_version 0
 %define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
-#%include mpi-defines.inc
+%include compiler-defines.inc
+%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
-#%include name-defines-noreloc.inc
+#%include name-defines.inc
+%include name-defines-noreloc.inc
 #%include name-defines-hidden.inc
 #%include name-defines-hidden-noreloc.inc
 ########################################
@@ -52,11 +52,11 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3%{?dist}
-License:   GPL
-Group:     X11/Application
-URL:       http://qt.io
-Packager:  TACC - jbarbosa@tacc.utexas.edu
+Release:   1%{?dist}
+License:   BSD-2
+Group:     Data/Deep Learning
+URL:       https://github.com/intel/caffe
+Packager:  TACC - zzhang@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -65,20 +65,18 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: X11/Application
+Summary: Caffe is a deep learning framework. This is the Intel distribution with MPI support. 
+Group: Data/Deep Learning
 %description package
+Caffe is a deep learning framework made with expression, speed, and modularity in mind. It is developed by the Berkeley Vision and Learning Center (BVLC) and community contributors.
 
 %package %{MODULEFILE}
-Summary: The modulefile RPM
-Group: Lmod/Modulefiles
+Summary: Caffe is a deep learning framework. This is the Intel distribution with MPI support.
+Group: Data/Deep Learning
 %description modulefile
-This is the long description for the modulefile RPM...
 
 %description
-The longer-winded description of the package that will 
-end in up inside the rpm and is queryable if installed via:
-rpm -qi <rpm-name>
+Caffe is a deep learning framework made with expression, speed, and modularity in mind. It is developed by the Berkeley Vision and Learning Center (BVLC) and community contributors.
 
 
 #---------------------------------------
@@ -91,7 +89,8 @@ rpm -qi <rpm-name>
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-#%setup -n %{pkg_base_name}-%{pkg_version}
+#The following line extract the tar ball from previously specified path
+%setup -n %{pkg_base_name}-%{pkg_version}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -119,11 +118,18 @@ rpm -qi <rpm-name>
 
 # Setup modules
 %include system-load.inc
+
 module purge
+
+module load TACC
+
+module load boost/1.64
+module load hdf5/1.8.16
+
 # Load Compiler
 #%include compiler-load.inc
 # Load MPI Library
-#%include mpi-load.inc
+%include mpi-load.inc
 
 # Insert further module commands
 
@@ -134,10 +140,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 %if %{?BUILD_PACKAGE}
 #------------------------
 
-  export QA_SKIP_BUILD_ROOT=1
-
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -151,43 +154,55 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   
   # Create some dummy directories and files for fun
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
-  
-  # Copy everything from tarball over to the installation directory
-  # cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  export WORK_DIR=`pwd`
-  export WORK_INSTALL_DIR=$RPM_BUILD_ROOT/%{INSTALL_DIR}
+  #mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+  #mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+  #mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
+  # download libraries
+  git clone https://github.com/zhaozhang/caffe-stampede2.git
 
-  # 2) Required modules
-  #module load intel python cmake
-  
-  module load swr
+  # Install MLSL
+  mkdir -p ../mlsl
+  pushd ../mlsl
+  wget https://github.com/01org/MLSL/releases/download/v2017-Preview/l_mlsl_p_2017.0.014.tgz
+  tar zxf l_mlsl_p_2017.0.014.tgz
+  ./install.sh -s -d /admin/build/rpms/BUILD/caffe-1.0.0/caffe-stampede2/libraries/mlsl
+  popd
 
-  # 3) Build LLVM
-  cd ${WORK_DIR}
-
-  git clone https://code.qt.io/qt/qt5.git
-  cd qt5/
-  git checkout %{major_version}.%{minor_version}
-  perl init-repository -f --module-subset=default,-qtwebkit,-qtwebkit-examples,-qtwebengine,-qtandroidextras,-qtmacextras
- ./configure -developer-build -confirm-license --prefix=$WORK_INSTALL_DIR -opensource -avx2 -release -nomake examples -nomake tests
-
-  make -j8
+  # Install protocol-buffer
+  pushd caffe-stampede2/libraries
+  mkdir protocol-buffer-build
+  pushd protocol-buffer-build
+  wget https://github.com/google/protobuf/releases/download/v3.0.0/protobuf-cpp-3.0.0.tar.gz
+  tar zxf protobuf-cpp-3.0.0.tar.gz
+  pushd protobuf-3.0.0
+  CC=icc CXX=icpc ./configure --prefix=/admin/build/rpms/BUILD/caffe-1.0.0/caffe-stampede2/libraries/protocol-buffer-build
+  make
   make install
- 
-cat > $WORK_INSTALL_DIR/bin/qt.conf << "EOF"
-[Paths]
-Prefix = /opt/apps/qt5/5.9.0 
-EOF
-   
+  export PATH=/admin/build/rpms/BUILD/caffe-1.0.0/caffe-stampede2/libraries/protocol-buffer-build/bin:$PATH
+  popd
+  popd
+  popd
 
-# Remove buildroot
-#find $RPM_BUILD_ROOT%{INSTALL_DIR} -type f -print0 | 
-#    xargs -0 sed -i -e s,$RPM_BUILD_ROOT,,g
+  # Build Caffe
+  cp caffe-stampede2/Makefile.config .
+  cp caffe-stampede2/Makefile .
+  #cd caffe-1.0.0
+  unset MKLROOT
+  #make clean
+  CXX=icpc CXXFLAGS="-xCORE-AVX2 -axMIC-AVX512" make all -j 8
+  #make pycaffe
+  make distribute
 
+  # Zhao: After make distribute, simply copy distribute/ to $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  cp -r external/mkl/mklml_lnx_2017.0.2.20170110 caffe-stampede2/libraries/mklml
+  cp -r caffe-stampede2/libraries distribute/
+  rm -rf distribute/libraries/protocol-buffer-build
 
+  # echo "TACC_OPT %{TACC_OPT}"
+  # move . to %{INSTALL_DIR} 
+
+  # Copy everything from tarball over to the installation directory
+  cp -r distribute/* $RPM_BUILD_ROOT/%{INSTALL_DIR}
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -219,26 +234,35 @@ include files, and tools respectively.
 --help(help_msg)
 help(help_msg)
 
-whatis("Name: qt5")
+whatis("Name: caffe")
 whatis("Version: %{pkg_version}%{dbg}")
 %if "%{is_debug}" == "1"
 setenv("TACC_%{MODULE_VAR}_DEBUG","1")
 %endif
 
 -- Create environment variables.
-local qt_dir           = "%{INSTALL_DIR}"
+local bar_dir           = "%{INSTALL_DIR}"
 
-family("qt")
-prepend_path(    "PATH",                pathJoin(qt_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(qt_dir, "lib"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/qt%{pkg_version}/modulefiles")
-prepend_path(    "QT_QPA_PLATFORM_PLUGIN_PATH", pathJoin(qt_dir, "plugins/platforms"))
-setenv( "QTDIR",                qt_dir)
-setenv( "TACC_%{MODULE_VAR}_DIR",                qt_dir)
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(qt_dir, "include"))
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(qt_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(qt_dir, "bin"))
-
+family("caffe")
+prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "lib"))
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/boost/lib"))
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/gflags/lib"))
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/glog/lib"))
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/leveldb/lib"))
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/lmdb/lib"))
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/mlsl/intel64/lib"))
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/opencv/lib"))
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/protocol-buffer/lib"))
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/snappy/lib"))
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/mklml/lib"))
+prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/bar1_1/modulefiles")
+setenv( "TACC_%{MODULE_VAR}_DIR",                bar_dir)
+setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(bar_dir, "include"))
+setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(bar_dir, "lib"))
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(bar_dir, "bin"))
+load("hdf5")
+load("boost")
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'

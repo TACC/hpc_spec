@@ -1,7 +1,7 @@
-#
-# W. Cyrus Proctor
-# Antonio Gomez
-# 2015-08-25
+# Carlos Rosales-Fernandez (carlos@tacc.utexas.edu)
+# 2017-05-22
+# Modified for Stampede 2 deployment and avx512
+# This version is patch 2 with the missing fortran hearders
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -21,20 +21,20 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name qt5
-%define MODULE_VAR    QT5
+%define pkg_base_name remora
+%define MODULE_VAR    REMORA
 
 # Create some macros (spec file variables)
-%define major_version 5
-%define minor_version 9
+%define major_version 1
+%define minor_version 8
 %define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
-#%include mpi-defines.inc
+%include compiler-defines.inc
+%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
@@ -52,11 +52,11 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3%{?dist}
-License:   GPL
-Group:     X11/Application
-URL:       http://qt.io
-Packager:  TACC - jbarbosa@tacc.utexas.edu
+Release:   1%{?dist}
+License:   MIT
+Group:     Profiling/Tools
+URL:       https://github.com/TACC/remora
+Packager:  TACC - carlos@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -66,8 +66,9 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 %package %{PACKAGE}
 Summary: The package RPM
-Group: X11/Application
+Group: Development/Tools
 %description package
+This is the long description for the package RPM...
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
@@ -76,10 +77,11 @@ Group: Lmod/Modulefiles
 This is the long description for the modulefile RPM...
 
 %description
-The longer-winded description of the package that will 
-end in up inside the rpm and is queryable if installed via:
-rpm -qi <rpm-name>
-
+REMORA provides an easy to use profiler that collects several different statistics for a running job:
+        - Memory usage
+        - CPU usage
+        - I/O load
+        - ...
 
 #---------------------------------------
 %prep
@@ -91,7 +93,7 @@ rpm -qi <rpm-name>
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-#%setup -n %{pkg_base_name}-%{pkg_version}
+%setup -n %{pkg_base_name}-%{pkg_version}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -121,9 +123,9 @@ rpm -qi <rpm-name>
 %include system-load.inc
 module purge
 # Load Compiler
-#%include compiler-load.inc
+%include compiler-load.inc
 # Load MPI Library
-#%include mpi-load.inc
+%include mpi-load.inc
 
 # Insert further module commands
 
@@ -133,8 +135,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 %if %{?BUILD_PACKAGE}
 #------------------------
-
-  export QA_SKIP_BUILD_ROOT=1
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
   
@@ -149,45 +149,28 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
+
+
+# Mount temp trick
+ mkdir -p             %{INSTALL_DIR}
+ mount -t tmpfs tmpfs %{INSTALL_DIR}
+
+export CFLAGS="%{TACC_OPT}"
+export LDFLAGS="%{TACC_OPT}"
+
+## sed -i 's/icc/#icc/g' ./install.sh
+sed -i 's/pip/#pip/g' ./install.sh
+REMORA_INSTALL_PREFIX=%{INSTALL_DIR} ./install.sh
+
+module load python
+pip install blockdiag --target=%{INSTALL_DIR}/python
+
+
+mkdir -p                 $RPM_BUILD_ROOT/%{INSTALL_DIR}
+cp    -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+umount                                   %{INSTALL_DIR}
+
   
-  # Create some dummy directories and files for fun
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
-  
-  # Copy everything from tarball over to the installation directory
-  # cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  export WORK_DIR=`pwd`
-  export WORK_INSTALL_DIR=$RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-  # 2) Required modules
-  #module load intel python cmake
-  
-  module load swr
-
-  # 3) Build LLVM
-  cd ${WORK_DIR}
-
-  git clone https://code.qt.io/qt/qt5.git
-  cd qt5/
-  git checkout %{major_version}.%{minor_version}
-  perl init-repository -f --module-subset=default,-qtwebkit,-qtwebkit-examples,-qtwebengine,-qtandroidextras,-qtmacextras
- ./configure -developer-build -confirm-license --prefix=$WORK_INSTALL_DIR -opensource -avx2 -release -nomake examples -nomake tests
-
-  make -j8
-  make install
- 
-cat > $WORK_INSTALL_DIR/bin/qt.conf << "EOF"
-[Paths]
-Prefix = /opt/apps/qt5/5.9.0 
-EOF
-   
-
-# Remove buildroot
-#find $RPM_BUILD_ROOT%{INSTALL_DIR} -type f -print0 | 
-#    xargs -0 sed -i -e s,$RPM_BUILD_ROOT,,g
-
-
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -209,38 +192,89 @@ EOF
   
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
-The %{MODULE_VAR} module defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
-TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
-include files, and tools respectively.
+local help_message=[[
+REMORA is an easy to use profiler that allows users to get information
+regarding their jobs. The information collected by the tool includes:
+    - Memory usage
+    - CPU usage
+    - I/O load (Lustre,DVS)
+    - NUMA memory
+    - Network topology
+
+To use the tool, simply modify your batch script and include 'remora' before
+your executable or ibrun.
+
+Examples:
+...
+#SBATCH -n 16
+#SBATCH -A my_project
+
+remora ibrun my_parallel_program [arguments]
+
+---------------------------------------
+...
+#SBATCH -n 1
+#SBATCH -A my_project
+remora ./my_program [arguments]
+
+---------------------------------------
+
+remora will create a folder with a number of files that contain the values
+for the parameters previously introduced.
+
+It is also possibly to get plots of those files for an easier analysis.
+Load a python module ('module load python') and use the tool 'remora_post'.
+Within the batch script, 'remora_post' does not need any parameter. From
+the login node, you can cd to the location that contains the remora_JOBID
+folder. Once there run 'remora_post -j JOBID'.
+
+The following environment variables control the behaviour of the tool:
+
+  - REMORA_PERIOD  - How often memory usage is checked. Default
+                     is 10 seconds.
+  - REMORA_VERBOSE - Verbose mode will save all information to
+                     a file. Default is 0 (off).
+  - REMORA_MODE    - FULL for all stats, BASIC for memory and cpu only.
+                     Default if FULL.
+  - REMORA_TMPDIR  - Directory for intermediate files. Default is the
+                     remora output directory.
+
+The remora module also defines the following environment variables:
+REMORA_DIR, REMORA_LIB, REMORA_INC and REMORA_BIN for the location
+of the REMORA distribution, libraries, include files, and tools respectively.
+
+To generate a summary report after a crash use:
+
+remora_post_crash <JOBID>
 ]]
 
---help(help_msg)
-help(help_msg)
+help(help_message,"\n")
 
-whatis("Name: qt5")
-whatis("Version: %{pkg_version}%{dbg}")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
+whatis("Name: Remora")
+whatis("Version: 1.7.0")
+whatis("Category: Profiling/Tools ")
+whatis("Keywords: Tools, Profiling, Resources")
+whatis("Description: REsource MOnitoring for Remote Applications")
+whatis("URL: https://github.com/TACC/remora")
 
 -- Create environment variables.
-local qt_dir           = "%{INSTALL_DIR}"
+local remora_dir           = "%{INSTALL_DIR}"
 
-family("qt")
-prepend_path(    "PATH",                pathJoin(qt_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(qt_dir, "lib"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/qt%{pkg_version}/modulefiles")
-prepend_path(    "QT_QPA_PLATFORM_PLUGIN_PATH", pathJoin(qt_dir, "plugins/platforms"))
-setenv( "QTDIR",                qt_dir)
-setenv( "TACC_%{MODULE_VAR}_DIR",                qt_dir)
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(qt_dir, "include"))
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(qt_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(qt_dir, "bin"))
+family("remora")
+prepend_path(    "PATH",                pathJoin(remora_dir, "bin"))
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(remora_dir, "lib"))
+prepend_path(    "PYTHONPATH",      pathJoin(remora_dir, "/python"))
+setenv( "TACC_REMORA_DIR",       remora_dir)
+setenv( "TACC_REMORA_INC",       pathJoin(remora_dir, "include"))
+setenv( "TACC_REMORA_LIB",       pathJoin(remora_dir, "lib"))
+setenv( "REMORA_BIN",       pathJoin(remora_dir, "bin"))
+setenv( "REMORA_PERIOD",    "10")
+setenv( "REMORA_MODE",  "FULL")
+setenv( "REMORA_VERBOSE",   "0")
 
 EOF
-  
+
+# Version File
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -249,7 +283,8 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 
 set     ModulesVersion      "%{version}"
 EOF
-  
+ 
+ 
   # Check the syntax of the generated lua modulefile only if a visible module
   %if %{?VISIBLE}
     %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}

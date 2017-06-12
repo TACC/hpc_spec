@@ -53,7 +53,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GPL
 Group:     Software/Library
 URL:       http://ospray.org
@@ -247,7 +247,7 @@ setenv("TACC_%{MODULE_VAR}_DEBUG","1")
 %endif
 
 -- Create environment variables.
-local opsray_dir           = "%{INSTALL_DIR}"
+local ospray_dir           = "%{INSTALL_DIR}"
 
 family("ospray")
 prepend_path(    "PATH",                pathJoin(ospray_dir, "bin"))

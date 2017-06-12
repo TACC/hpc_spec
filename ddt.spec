@@ -1,66 +1,154 @@
 #
 # Spec file for DDT
 #
+# Give the package a base name
+%define pkg_base_name ddt
+%define MODULE_VAR    ddt
+
+# Create some macros (spec file variables)
+%define major_version 7
+%define minor_version 0
+%define micro_version 3
+
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+
+### Toggle On/Off ###
+%include rpm-dir.inc
+
+########################################
+### Construct name based on includes ###
+########################################
+#%include name-defines.inc
+%include name-defines-noreloc.inc
+#%include name-defines-hidden.inc
+#%include name-defines-hidden-noreloc.inc
+
+############ Do Not Change #############
+# Name: ddt
+# Version: 7.0.3
+Name:      %{pkg_name}
+Version:   %{pkg_version}
+BuildRoot: /var/tmp/%{pkg_name}_%{pkg_version}-buildroot
 Summary: DDT is a parallel, symbolic debugger.
-Name: ddt
-Version: 7.0.3
+########################################
+
 Release: 1%{?dist}
 License: Commercial
-Group: tools/debugging
-Source0: ddt_7.0.3.tar.gz
-URL: http://www.allinea.com
-Distribution: SuSE Linux
 Vendor: Allinea
+URL: http://www.allinea.com
 Packager: TACC - cazes@tacc.utexas.edu
-%include rpm-dir.inc
+# Source0: ddt_7.0.3.tar.gz
+Source:    %{pkg_base_name}_%{pkg_version}.tar.gz
 %define _unpack_name ddt_7.0.3
 %define _system_config_file system.config
 
-%define APPS /opt/apps
+
+# Turn off debug package mode
+%define debug_package %{nil}
+%define dbg           %{nil}
+
+%package %{PACKAGE}
+Summary: DDT is a parallel, symbolic debugger.
+Group: tools/debugging
+%description package
+The Distributed Debugging Tool is a comprehensive graphical debugger for scalar, multi-threaded and large-scale parallel applications that are written in C, C++ and Fortran.
+
+%package %{MODULEFILE}
+Summary: The modulefile RPM
+Group: Lmod/Modulefiles
+%description modulefile
+The Distributed Debugging Tool is a comprehensive graphical debugger for scalar, multi-threaded and large-scale parallel applications that are written in C, C++ and Fortran.
+
+%description 
+The Distributed Debugging Tool is a comprehensive graphical debugger for scalar, multi-threaded and large-scale parallel applications that are written in C, C++ and Fortran.
+
+%define HOME1 /home1/apps
+%define OPT /opt/apps
 %define MODULES modulefiles
 
-%define INSTALL_DIR %{APPS}/%{name}/%{version}
-%define MODULE_DIR  %{APPS}/%{MODULES}/%{name}
+%define INSTALL_DIR %{HOME1}/%{pkg_base_name}/%{version}
+%define MODULE_DIR  %{OPT}/%{MODULES}/%{pkg_base_name}
 
 # %define licenses ddt-license
 # BuildRoot: /tmp/%{name}-%{version}-buildroot
-%description
-
-The Distributed Debugging Tool is a comprehensive graphical debugger for scalar,
-multi-threaded and large-scale parallel applications that are written in C, C++ and
-Fortran.
-
-%package -n %{name}-modulefile
-Summary: Module file for %{name}
-Group: tools/debugging
-%description -n %{name}-modulefile
-Module file for %{name}
 
 %prep
-# rm -rf  $RPM_BUILD_ROOT/%INSTALL_DIR
-mkdir -p $RPM_BUILD_ROOT/%INSTALL_DIR
-pwd
 
-%setup -n ddt_%{version}
+#------------------------
+%if %{?BUILD_PACKAGE}
+#------------------------
+  # Delete the package installation directory.
+  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+#  %setup -n ddt_%{version}
+%setup -n %{pkg_base_name}_%{pkg_version}
+#-----------------------
+%endif # BUILD_PACKAGE |
+#-----------------------
+
+#---------------------------
+%if %{?BUILD_MODULEFILE}
+#---------------------------
+  #Delete the module installation directory.
+  rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
+#--------------------------
+%endif # BUILD_MODULEFILE |
+#--------------------------
+
 
 %build
+echo "Building the package?:    %{BUILD_PACKAGE}"
+echo "Building the modulefile?: %{BUILD_MODULEFILE}"
+
+#------------------------
+%if %{?BUILD_PACKAGE}
+#------------------------
+
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+  #######################################
+  ##### Create TACC Canary Files ########
+  #######################################
+  touch $RPM_BUILD_ROOT/%{INSTALL_DIR}/.tacc_install_canary
+  #######################################
+  ########### Do Not Remove #############
+  #######################################
+
+  #========================================
+  # Insert Build/Install Instructions Here
+  #========================================
+
 # cp $RPM_SOURCE_DIR/%{licenses} ./License
+   cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  ###
+  ### Edit config.ddt file to reflect installation directory
+  ###
+  cp $RPM_BUILD_ROOT/%{INSTALL_DIR}/%{_system_config_file} $RPM_BUILD_ROOT/%{INSTALL_DIR}/%{_system_config_file}.orig
 
-cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
-###
-### Edit config.ddt file to reflect installation directory
-###
-cp $RPM_BUILD_ROOT/%{INSTALL_DIR}/%{_system_config_file} $RPM_BUILD_ROOT/%{INSTALL_DIR}/%{_system_config_file}.orig
+  sed -i -e 's@INSTALL_DIR@%{INSTALL_DIR}@' $RPM_BUILD_ROOT/%{INSTALL_DIR}/%{_system_config_file}
 
-sed -i -e 's@INSTALL_DIR@%{INSTALL_DIR}@' $RPM_BUILD_ROOT/%{INSTALL_DIR}/%{_system_config_file}
+  chmod -R a+rX $RPM_BUILD_ROOT/%INSTALL_DIR
 
-#
-#
-chmod -R a+rX $RPM_BUILD_ROOT/%INSTALL_DIR
+#-----------------------
+%endif # BUILD_PACKAGE |
+#-----------------------
 
-# rm -rf  $RPM_BUILD_ROOT/%MODULE_DIR
-mkdir -p $RPM_BUILD_ROOT/%MODULE_DIR
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
+
+#---------------------------
+%if %{?BUILD_MODULEFILE}
+#---------------------------
+
+  # rm -rf  $RPM_BUILD_ROOT/%MODULE_DIR
+  mkdir -p $RPM_BUILD_ROOT/%MODULE_DIR
+  #######################################
+  ##### Create TACC Canary Files ########
+  #######################################
+  touch $RPM_BUILD_ROOT/%{MODULE_DIR}/.tacc_module_canary
+  #######################################
+  ########### Do Not Remove #############
+  #######################################
+
+  cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 
 --  modulefile for DDT 
 
@@ -128,13 +216,66 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 set     ModulesVersion      "%{version}"
 EOF
 
-%files
-%defattr(-,root,root)
-%{INSTALL_DIR}
-%{MODULE_DIR}
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
+#%Module3.1.1#################################################
+##
+## version file for %{BASENAME}%{version}
+##
 
-%post
+set     ModulesVersion      "%{version}"
+EOF
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %endif
+#--------------------------
+%endif # BUILD_MODULEFILE |
+#--------------------------
+
+
+#------------------------
+%if %{?BUILD_PACKAGE}
+# %files
+%files package
+#------------------------
+
+  %defattr(-,root,root)
+  # RPM package contains files within these directories
+  %{INSTALL_DIR}
+
+#-----------------------
+%endif # BUILD_PACKAGE |
+#-----------------------
+#---------------------------
+%if %{?BUILD_MODULEFILE}
+%files modulefile
+#---------------------------
+
+  %defattr(-,root,root)
+  # RPM modulefile contains files within these directories
+  %{MODULE_DIR}
+
+#--------------------------
+%endif # BUILD_MODULEFILE |
+#--------------------------
+
+########################################
+## Fix Modulefile During Post Install ##
+########################################
+%post %{PACKAGE}
+export PACKAGE_POST=1
+%include post-defines.inc
+%post %{MODULEFILE}
+export MODULEFILE_POST=1
+%include post-defines.inc
+%preun %{PACKAGE}
+export PACKAGE_PREUN=1
+%include post-defines.inc
+########################################
+############ Do Not Remove #############
+########################################
 
 
 %clean
-# rm -rf $RPM_BUILD_ROOT
+rm -rf $RPM_BUILD_ROOT
+

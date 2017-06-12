@@ -32,7 +32,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -50,6 +50,9 @@ Group: System Environment/Base
 %package %{PACKAGE}-xx
 Summary: Petsc local binary install
 Group: System Environment/Base
+# %package %{PACKAGE}-xd
+# Summary: Petsc local binary install
+# Group: System Environment/Base
 %package %{PACKAGE}-sources
 Summary: Petsc local binary install
 Group: System Environment/Base
@@ -137,8 +140,8 @@ export HYPRESTRING=hypre
 %if "%{is_intel}" == "1"
 export LOCALCC=icc
 export LOCALFC=ifort
-export XOPTFLAGS="-g %{TACC_OPT}" 
-# "-xCORE-AVX2 -axMIC-AVX512 -g -O2"
+export XOPTFLAGS="%{TACC_OPT} -O2" 
+# "-xCORE-AVX2 -axMIC-AVX512 -O2"
 export COPTFLAGS=${XOPTFLAGS}
 export CXXOPTFLAGS=${XOPTFLAGS}
 export FOPTFLAGS=${XOPTFLAGS}
@@ -156,7 +159,7 @@ export MPI_EXTRA_OPTIONS="--with-mpiexec=mpirun_rsh"
 
 export PETSC_CONFIGURE_OPTIONS="\
   --with-x=0 -with-pic \
-  --with-make-np=8 \
+  --with-make-np=12 \
   --with-external-packages-dir=%{INSTALL_DIR}/externalpackages \
   "
 mkdir -p %{INSTALL_DIR}/externalpackages
@@ -208,6 +211,14 @@ export usedebug=no
 export CFLAGS=${COPTFLAGS}
 export CXXFLAGS=${CXXOPTFLAGS}
 export FFLAGS=${FOPTFLAGS}
+  # --COPTFLAGS=<string>
+  #      Override the debugging/optimization flags for the C compiler
+  # --CXXOPTFLAGS=<string>
+  #      Override the debugging/optimization flags for the C++ compiler
+  # --FOPTFLAGS=<string>
+  #      Override the debugging/optimization flags for the Fortran compiler
+  # --CUDAOPTFLAGS=<string>
+  #      Override the debugging/optimization flags for the CUDA compiler
 case "${ext}" in 
 *debug ) export usedebug=yes 
 	export CFLAGS=${CNOOPTFLAGS}
@@ -385,11 +396,11 @@ export FPIC_OPTIONS=
 #
 %if "%{is_impi}" == "1"
   export PETSC_MPICH_HOME="${MPICH_HOME}/intel64"
-#  export mpi="--with-cc=/opt/apps/intel15/impi/5.0.2.044/intel64/bin/mpicc
+  export mpi="--with-mpi-compilers=1 --with-mpi-include=${TACC_IMPI_INC} --with-mpi-lib=${TACC_IMPI_LIB}/release_mt/libmpi.so"
 %else
   export PETSC_MPICH_HOME="${MPICH_HOME}"
+  export mpi="--with-mpi-compilers=1 --with-mpi-dir=${PETSC_MPICH_HOME} --with-mpi-lib=${TACC_IMPI_HOME}"
 %endif
-  export mpi="--with-mpi-compilers=1 --with-mpi-dir=${PETSC_MPICH_HOME}"
 echo "Finding mpi in ${PETSC_MPICH_HOME}"
 
 case "${ext}" in
@@ -430,8 +441,18 @@ else
     ${mpi} ${clanguage} ${scalar} ${dynamicshared} ${precision} ${packages} \
     --with-debugging=${usedebug} \
     ${BLAS_LAPACK_OPTIONS} ${MPI_EXTRA_OPTIONS} ${CUDA_OPTIONS} ${INDEX_OPTIONS} \
-    CFLAGS="${CFLAGS}" FFLAGS="${FFLAGS}" CXXFLAGS="${CXXFLAGS}"
+    COPTFLAGS="${CFLAGS}" FOPTFLAGS="${FFLAGS}" CXXOPTFLAGS="${CXXFLAGS}"
 fi
+
+pushd ${architecture}
+for f in ./lib/petsc/conf/configure.log \
+    ./lib/petsc/conf/petscvariables \
+    ./lib/petsc/conf/PETScBuildInternal.cmake \
+    ./lib/petsc/conf/RDict.db \
+    ./include/petscmachineinfo.h ; do
+  sed -i -e "s/debug-mt/release_mt/" $f
+done
+popd
 
 ##
 ## Make!
@@ -439,8 +460,12 @@ PETSC_DIR=`pwd` PETSC_ARCH=${architecture} make MAKE_NP=12
 ##
 ##
 
+#
+# cleanup
+#
 # as of 3.7 the object files are kept. I don't think we need them
 /bin/rm -rf $PETSC_ARCH/obj/src
+find $PETSC_ARCH -name \*.o -exec rm -f {} \;
 #/bin/rm -rf ${architecture}/obj
 
 ##
@@ -504,17 +529,37 @@ EOF
 ##
 done
 
+#
+# more cleanup
+#
+/bin/rm -rf externalpackages/git.*
+find externalpackages -name \*.o -exec rm -f {} \;
+
 cp -r bin config externalpackages include lib makefile src \
     $RPM_BUILD_ROOT/%{INSTALL_DIR}
 cp -r knightslanding* \
     $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 popd
-umount %{INSTALL_DIR}
+# umount %{INSTALL_DIR}
 
 echo "Directory to package: $RPM_BUILD_ROOT/%{INSTALL_DIR}"
 echo "listing:"
 ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+%files %{PACKAGE}-sources
+  %defattr(-,root,install,)
+  %{INSTALL_DIR}/bin 
+  %{INSTALL_DIR}/config
+  %{INSTALL_DIR}/externalpackages
+  %{INSTALL_DIR}/include
+  %{INSTALL_DIR}/lib
+  %{INSTALL_DIR}/makefile
+  %{INSTALL_DIR}/src 
+
+%files %{MODULEFILE}
+  %defattr(-,root,install,)
+  %{MODULE_DIR}
 
 %files %{PACKAGE}
   %defattr(-,root,install,)
@@ -529,30 +574,19 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 %files %{PACKAGE}-xx
   %defattr(-,root,install,)
   %{INSTALL_DIR}/knightslanding-cxx
-  %{INSTALL_DIR}/knightslanding-cxxdebug
   %{INSTALL_DIR}/knightslanding-complex
-  %{INSTALL_DIR}/knightslanding-complexdebug
   %{INSTALL_DIR}/knightslanding-cxxcomplex
-  %{INSTALL_DIR}/knightslanding-cxxcomplexdebug
   %{INSTALL_DIR}/knightslanding-cxxi64
+  # and debug variants
+  %{INSTALL_DIR}/knightslanding-cxxdebug
+  %{INSTALL_DIR}/knightslanding-complexdebug
+  %{INSTALL_DIR}/knightslanding-cxxcomplexdebug
   %{INSTALL_DIR}/knightslanding-cxxi64debug
-
-%files %{PACKAGE}-sources
-  %defattr(-,root,install,)
-%{INSTALL_DIR}/bin 
-%{INSTALL_DIR}/config
-%{INSTALL_DIR}/externalpackages
-%{INSTALL_DIR}/include
-%{INSTALL_DIR}/lib
-%{INSTALL_DIR}/makefile
-%{INSTALL_DIR}/src 
-
-%files %{MODULEFILE}
-  %defattr(-,root,install,)
-  %{MODULE_DIR}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Mon Jun 05 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: trying to get hold of release_mt version of libmpi
 * Mon May 08 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

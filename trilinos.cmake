@@ -33,10 +33,10 @@ cmake -VV \
   -D BoostLib_INCLUDE_DIRS:PATH=$TACC_BOOST_INC      \
   -D BoostLib_LIBRARY_DIRS:PATH=$TACC_BOOST_LIB      \
   \
-  -D TPL_ENABLE_HDF5:BOOL=ON \
+  -D TPL_ENABLE_HDF5:BOOL=${HAS_HDF5} \
   -D HDF5_INCLUDE_DIRS:PATH=$TACC_HDF5_INC    \
   -D HDF5_LIBRARY_DIRS:PATH=$TACC_HDF5_LIB    \
-  -D TPL_ENABLE_Netcdf:BOOL=ON \
+  -D TPL_ENABLE_Netcdf:BOOL=${HAS_NETCDF} \
   -D Netcdf_INCLUDE_DIRS:PATH=$TACC_NETCDF_INC    \
   -D Netcdf_LIBRARY_DIRS:PATH=$TACC_NETCDF_LIB    \
   \
@@ -68,9 +68,9 @@ cmake -VV \
   -D Phalanx_EXPLICIT_TEMPLATE_INSTANTIATION=ON \
   -D Trilinos_ENABLE_Rythmos:BOOL=ON \
   -D Trilinos_ENABLE_Sacado:Bool=ON \
-  -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
-  -D Trilinos_ENABLE_SEACAS:BOOL=ON \
-  -D Trilinos_ENABLE_SEACASBlot:BOOL=ON \
+  -D Trilinos_ENABLE_SEACAS:BOOL=${HAS_SEACAS} \
+  -D Trilinos_ENABLE_SEACASIoss:BOOL=${HAS_SEACAS} \
+  -D Trilinos_ENABLE_SEACASBlot:BOOL=${HAS_SEACAS} \
   -D Trilinos_ENABLE_SECONDARY_STABLE_CODE:BOOL=ON \
   -D Trilinos_ENABLE_Shards:BOOL=ON \
   -D Trilinos_ENABLE_ShyLU:BOOL=ON \
@@ -83,14 +83,14 @@ cmake -VV \
   -D Trilinos_ENABLE_TriKota:BOOL=ON \
   -D Trilinos_ENABLE_Zoltan:BOOL=ON \
   \
+  -D Trilinos_ENABLE_PyTrilinos:Bool=${HAS_PYTHON} \
   -D CMAKE_PYTHON_INCLUDE_DIR:PATH="${TACC_PYTHON_INC}" \
   -D CMAKE_PYTHON_LIBRARIES:STRING="${TACC_PYTHON_LIB}" \
-  -D Trilinos_ENABLE_PyTrilinos:Bool=ON \
   -D PyTrilinos_DOCSTRINGS:BOOL=OFF \
   -D SWIG_EXECUTABLE:FILEPATH=${TACC_SWIG_DIR}/bin/swig \
   \
   ${TRILINOS_LOCATION}/trilinos-${VERSION} \
-  | tee /admin/build/admin/rpms/stampede/SPECS/trilinos-${VERSION}-cmake.log 2>&1
+  | tee /admin/build/admin/rpms/stampede2/SPECS/trilinos-${VERSION}-cmake.log 2>&1
 
 # NOX test OFF in an attempt to pass the KNL intel 17 comiler.
 # MueLu also OFF because the tutorials don't link

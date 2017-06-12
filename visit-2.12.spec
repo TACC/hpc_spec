@@ -34,7 +34,7 @@ Summary:  spec file to generate relocatable rpm for the visit visualization soft
 
 # Give the package a base name
 %define pkg_base_name visit
-%define MODULE_VAR    visit
+%define MODULE_VAR    VISIT
 
 # Create some macros (spec file variables). This is how we specify the version of
 # VisIt that we are packaging. For Example VisIt-2.12.0 would have major_version
@@ -67,7 +67,7 @@ Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
-Release:  1%{?dist}
+Release:  3%{?dist}
 License:  GPL
 URL:   https://wci.llnl.gov/simulation/computer-codes/visit
 Group:    Visualization 
@@ -78,6 +78,7 @@ Packager:  TACC - semeraro@tacc.utexas.edu
 %define dbg           %{nil}
 
 %define VISIT_SRC visit.%{version}.%{comp_fam_ver}.%{mpi_fam_ver}.%{release}.tar.gz
+
 
 %package %{PACKAGE}
 Summary: The package RPM
@@ -208,6 +209,7 @@ setenv("TACC_%{MODULE_VAR}_DEBUG","1")
 %endif
 
 local visit_dir = "%{INSTALL_DIR}"
+local SWRLIB = os.getenv("TACC_SWR_LIB") or " "
 
 family("visit")
 
@@ -220,6 +222,7 @@ prepend_path("PATH",pathJoin(visit_dir,"bin"))
 prepend_path("PYTHONPATH",pathJoin(visit_dir,"current/linux-x86_64/lib/site-packages/visit"))
 prepend_path("INCLUDE",pathJoin(visit_dir,"current/linux-x86_64/include"))
 prepend_path("LD_LIBRARY_PATH",pathJoin(visit_dir,"current/linux-x86_64/lib"))
+prepend_path("LD_LIBRARY_PATH",SWRLIB)
 
 setenv("TACC_%{MODULE_VAR}_DIR", visit_dir)
 setenv("TACC_%{MODULE_VAR}_INC", pathJoin(visit_dir,"%{version}/linux-x86_64/include"))

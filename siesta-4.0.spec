@@ -1,7 +1,5 @@
-#
-# W. Cyrus Proctor
-# Antonio Gomez
-# 2015-08-25
+# Carlos Rosales-Fernandez (carlos@tacc.utexas.edu)
+# 2017-05-22
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -21,20 +19,19 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name qt5
-%define MODULE_VAR    QT5
+%define pkg_base_name siesta
+%define MODULE_VAR    SIESTA
 
 # Create some macros (spec file variables)
-%define major_version 5
-%define minor_version 9
-%define micro_version 0
+%define major_version 4
+%define minor_version 0
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{major_version}.%{minor_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
-#%include mpi-defines.inc
+%include compiler-defines.inc
+%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
@@ -52,11 +49,11 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3%{?dist}
+Release:   1%{?dist}
 License:   GPL
-Group:     X11/Application
-URL:       http://qt.io
-Packager:  TACC - jbarbosa@tacc.utexas.edu
+Group:     Applications/Chemistry
+URL:       http://www.icmab.es/siesta/
+Packager:  TACC - carlos@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -66,8 +63,9 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 %package %{PACKAGE}
 Summary: The package RPM
-Group: X11/Application
+Group: Development/Tools
 %description package
+This is the long description for the package RPM...
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
@@ -76,10 +74,10 @@ Group: Lmod/Modulefiles
 This is the long description for the modulefile RPM...
 
 %description
-The longer-winded description of the package that will 
-end in up inside the rpm and is queryable if installed via:
-rpm -qi <rpm-name>
-
+Siesta (Spanish Initiative for Electronic Simulations with Thousands of Atoms)
+is both a method and its computer program implementation, to perform electronic
+structure calculations and ab initio molecular dynamics simulations of
+molecules and solids.
 
 #---------------------------------------
 %prep
@@ -91,7 +89,7 @@ rpm -qi <rpm-name>
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-#%setup -n %{pkg_base_name}-%{pkg_version}
+%setup -n %{pkg_base_name}-%{pkg_version}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -121,9 +119,9 @@ rpm -qi <rpm-name>
 %include system-load.inc
 module purge
 # Load Compiler
-#%include compiler-load.inc
+%include compiler-load.inc
 # Load MPI Library
-#%include mpi-load.inc
+%include mpi-load.inc
 
 # Insert further module commands
 
@@ -133,8 +131,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 %if %{?BUILD_PACKAGE}
 #------------------------
-
-  export QA_SKIP_BUILD_ROOT=1
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
   
@@ -149,45 +145,50 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
+
+
+# Mount temp trick
+ mkdir -p             %{INSTALL_DIR}
+ mount -t tmpfs tmpfs %{INSTALL_DIR}
+
+# Prepare the build directory
+cd ./Obj
+sh ../Src/obj_setup.sh
+cp ../Src/Sys/stampede_intel_mkl.make ./arch.make
+
+# Build siesta
+CC=icc CXX=icpc make
+mkdir %{INSTALL_DIR}/bin
+cp siesta %{INSTALL_DIR}/bin
+
+# Build transiesta
+make clean
+CC=icc CXX=icpc make transiesta
+cp transiesta %{INSTALL_DIR}/bin
+
+mkdir -p                 $RPM_BUILD_ROOT/%{INSTALL_DIR}
+cp -r ../Examples %{INSTALL_DIR}
+cp -r ../Tutorials %{INSTALL_DIR}
+cp -r ../Docs %{INSTALL_DIR}
+
+# Build Utilities
+cd ../Util
+sh ./build_all.sh
+cp ./COOP/dm_creator %{INSTALL_DIR}/bin
+cp ./COOP/mprop %{INSTALL_DIR}/bin
+cp ./TBTrans/tbtrans %{INSTALL_DIR}/bin
+cp ./Denchar/Src/denchar %{INSTALL_DIR}/bin
+cp ./STM/ol-stm/Src/stm %{INSTALL_DIR}/bin
+cp ./STM/simple-stm/plstm %{INSTALL_DIR}/bin
+cp ./Gen-basis/gen-basis %{INSTALL_DIR}/bin
+cp ./Gen-basis/ioncat %{INSTALL_DIR}/bin
+cp ./Gen-basis/ionplot.sh %{INSTALL_DIR}/bin
+
+mkdir -p                 $RPM_BUILD_ROOT/%{INSTALL_DIR}
+cp    -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+umount                                   %{INSTALL_DIR}
+
   
-  # Create some dummy directories and files for fun
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
-  
-  # Copy everything from tarball over to the installation directory
-  # cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  export WORK_DIR=`pwd`
-  export WORK_INSTALL_DIR=$RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-  # 2) Required modules
-  #module load intel python cmake
-  
-  module load swr
-
-  # 3) Build LLVM
-  cd ${WORK_DIR}
-
-  git clone https://code.qt.io/qt/qt5.git
-  cd qt5/
-  git checkout %{major_version}.%{minor_version}
-  perl init-repository -f --module-subset=default,-qtwebkit,-qtwebkit-examples,-qtwebengine,-qtandroidextras,-qtmacextras
- ./configure -developer-build -confirm-license --prefix=$WORK_INSTALL_DIR -opensource -avx2 -release -nomake examples -nomake tests
-
-  make -j8
-  make install
- 
-cat > $WORK_INSTALL_DIR/bin/qt.conf << "EOF"
-[Paths]
-Prefix = /opt/apps/qt5/5.9.0 
-EOF
-   
-
-# Remove buildroot
-#find $RPM_BUILD_ROOT%{INSTALL_DIR} -type f -print0 | 
-#    xargs -0 sed -i -e s,$RPM_BUILD_ROOT,,g
-
-
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -209,38 +210,56 @@ EOF
   
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
-The %{MODULE_VAR} module defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
-TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
-include files, and tools respectively.
+local help_message=[[
+This module loads Siesta built with Intel 17 and Intel MPI 17.
+This module makes available the following executables:
+
+siesta
+transiesta
+
+as well as the following utilities:
+
+tbtrans
+denchar
+dm_creator
+mprop
+stm
+plstm
+gen-basis
+ioncat
+
+In order to run siesta please create a link to the binary inside the execution
+directory, and make sure your submission script contains the lines:
+
+module load siesta
+ibrun ./siesta < input.fdf
+
+As of version 4.0 Siesta no longer provides the Atom program to generate 
+pseudopotentials. Please go to this addresss in order to obtain one:
+
+http://nninc.cnf.cornell.edu/
+
+Version 4.0
 ]]
 
---help(help_msg)
-help(help_msg)
+help(help_message,"\n")
 
-whatis("Name: qt5")
-whatis("Version: %{pkg_version}%{dbg}")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
+whatis("Siesta")
+whatis("Version: 4.0")
+whatis("Category: application, chemistry")
+whatis("Keywords: Chemistry, Molecular Dynamics, Application")
+whatis("Description: Spanish Initiative for Electronic Simulations with Thousands of Atoms")
+whatis("URL: http://www.icmab.es/siesta/")
 
--- Create environment variables.
-local qt_dir           = "%{INSTALL_DIR}"
+help(help_message,"\n")
 
-family("qt")
-prepend_path(    "PATH",                pathJoin(qt_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(qt_dir, "lib"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/qt%{pkg_version}/modulefiles")
-prepend_path(    "QT_QPA_PLATFORM_PLUGIN_PATH", pathJoin(qt_dir, "plugins/platforms"))
-setenv( "QTDIR",                qt_dir)
-setenv( "TACC_%{MODULE_VAR}_DIR",                qt_dir)
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(qt_dir, "include"))
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(qt_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(qt_dir, "bin"))
+setenv("TACC_SIESTA_DIR","/opt/apps/intel17/impi/siesta/4.0")
+setenv("TACC_SIESTA_BIN","/opt/apps/intel17/impi/siesta/4.0/bin")
+prepend_path("PATH","/opt/apps/intel17/impi/siesta/4.0/bin")
 
 EOF
-  
+
+# Version File
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -249,7 +268,8 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 
 set     ModulesVersion      "%{version}"
 EOF
-  
+ 
+ 
   # Check the syntax of the generated lua modulefile only if a visible module
   %if %{?VISIBLE}
     %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}

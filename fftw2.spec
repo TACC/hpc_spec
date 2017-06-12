@@ -1,32 +1,32 @@
 #
-# Antonio Gomez-Iglesias
-# 2017-05-15
+# Spec file for FFTW2
 #
+# Prepared on 2017-05-30 for Stampede 2.
 
-Summary: Boost spec file (www.boost.org)
+Summary:   FFTW2 local binary install
 
 # Give the package a base name
-%define pkg_base_name boost
-%define MODULE_VAR    BOOST
+%define pkg_base_name fftw2 
+%define MODULE_VAR FFTW2
 
 # Create some macros (spec file variables)
-%define major_version 1
-%define minor_version 64
-%define micro_version 0
+%define major_version 2
+%define minor_version 1
+%define micro_version 5
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
-%define mpi_fam none
-
-### Toggle On/Off ###
+# Toggle On/Off ###
 %include rpm-dir.inc
 %include compiler-defines.inc
-#%include mpi-defines.inc
+%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
 #%include name-defines.inc
-%include name-defines-noreloc.inc
+%include name-defines-noreloc-home1.inc
+#%include name-defines-hidden.inc
+#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -39,11 +39,11 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
 Release:   1%{?dist}
 License:   GPL
-Group:     Utility
-URL:       http://www.boost.org
-Packager:  TACC - agomez@tacc.utexas.edu
-Source0:   boost_1_64_0.tar.gz
-Source1:   icu4c-59_1-src.tgz
+Group:     System Environment/Base
+URL:       http://www.fftw.org
+Packager:  TACC - alamas@tacc.utexas.edu
+Source:    fftw-%{pkg_version}.tar.gz
+
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -51,30 +51,22 @@ Source1:   icu4c-59_1-src.tgz
 
 
 %package %{PACKAGE}
-Summary: Boost RPM
-Group: Development/System Environment
+Summary: The package RPM
+Group: Development/Tools
 %description package
-Boost provides free peer-reviewed portable C++ source libraries.
+This is the long description for the package RPM...
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-Module RPM for Boost
+This is the long description for the modulefile RPM...
 
 %description
-
-Boost emphasizes libraries that work well with the C++ Standard
-Library. Boost libraries are intended to be widely useful, and usable
-across a broad spectrum of applications. The Boost license encourages
-both commercial and non-commercial use.
-
-Boost aims to establish "existing practice" and provide reference
-implementations so that Boost libraries are suitable for eventual
-standardization. Ten Boost libraries are already included in the C++
-Standards Committee Library Technical Report (TR1) as a step toward
-becoming part of a future C++ Standard. More Boost libraries are
-proposed for the upcoming TR2.
+FFTW is a C subroutine library for computing the discrete Fourier
+transform (DFT) in one or more dimensions, of arbitrary input size, and of
+both real and complex data (as well as of even/odd data, i.e. the discrete
+cosine/sine transforms or DCT/DST).
 
 
 #---------------------------------------
@@ -86,9 +78,7 @@ proposed for the upcoming TR2.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-%setup -n boost_%{major_version}_%{minor_version}_%{micro_version}  %{name}-%{version}
-%setup -n boost_%{major_version}_%{minor_version}_%{micro_version}  -T -D -a 1
+%setup -n fftw-%{pkg_version}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -103,7 +93,6 @@ proposed for the upcoming TR2.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-
 #---------------------------------------
 %build
 #---------------------------------------
@@ -113,13 +102,16 @@ proposed for the upcoming TR2.
 %install
 #---------------------------------------
 
+
 # Setup modules
 %include system-load.inc
-%include compiler-defines.inc
-#%include mpi-defines.inc
 module purge
+# Load Compiler
 %include compiler-load.inc
-#module load intel
+# Load MPI Library
+%include mpi-load.inc
+
+# Insert further module commands
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -129,8 +121,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
 
   #######################################
   ##### Create TACC Canary Files ########
@@ -144,51 +134,35 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
 
-  ICU_MODE=Linux
-  %if "%{comp_fam}" == "intel"
-        export CONFIGURE_FLAGS=--with-toolset=intel-linux
-        ICU_MODE=Linux/ICC
-  %endif
+
+%if "%{is_mvapich2}" == "1"
+  export MPICC=mpicc
+  export MPIF77=mpif90
+#  export LDFLAGS=-L${MPICH_HOME}/lib
+%endif
+%if "%{is_impi}" == "1"
+  export MPICC=mpiicc
+  export MPIF77=mpiifort
+#  export LDFLAGS=-L${MPICH_HOME}/intel64/lib
+%endif
+
+unset PHG_CONFIG_PATH
+
+#./configure CFLAGS="-O3 " FFLAGS="-O3 -mcmodel=medium" --prefix=%{INSTALL_DIR} --enable-shared --enable-mpi --enable-threads 
+COMMON_CONFIG_ARGS="--prefix=%{INSTALL_DIR} --enable-type-prefix --enable-threads --enable-mpi"
+
+./configure CFLAGS="-O3 -xAVX" FFLAGS="-O3 -mcmodel=medium" ${COMMON_CONFIG_ARGS}
+ make -j 16
+make DESTDIR=$RPM_BUILD_ROOT install
+
+make clean
+./configure CFLAGS="-O3 -xAVX" FFLAGS="-O3 -mcmodel=medium" ${COMMON_CONFIG_ARGS} --enable-float
+make -j16
+make DESTDIR=$RPM_BUILD_ROOT install
 
 
-  %if "%{mpi_fam}" != "none"
-        CXX=mpicxx
-  %endif
-
-  %if "%{comp_fam}" == "gcc"
-        export CONFIGURE_FLAGS=--with-toolset=gcc
-  %endif
-
-  WD=`pwd`
-
-  cd icu/source
-  CXXFLAGS="%{TACC_OPT}" CFLAGS="%{TACC_OPT}" ./runConfigureICU  $ICU_MODE --prefix=%{INSTALL_DIR}
-  make -j 28
-  make install
-  rm -f ~/user-config.jam
-
-  cd $WD
-  EXTRA="-sICU_PATH=%{INSTALL_DIR}"
-  CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all --without-libraries=mpi,python"
-
-  ./bootstrap.sh --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
-
-  ./b2 -j 28 --prefix=%{INSTALL_DIR} $EXTRA cxxflags="%{TACC_OPT}" cflags="%{TACC_OPT}" linkflags="%{TACC_OPT}" install
-  
-  mkdir -p              $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-
-
-  rm -f ~/tools/build/v2/user-config.jam
-
-  if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-        mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  fi
-
-  cp -r %{INSTALL_DIR} $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-  umount %{INSTALL_DIR}
-
-#---------------------- -
+cp fortran/fftw_f77.i $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
+#-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
 
@@ -206,64 +180,67 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   ########### Do Not Remove #############
   #######################################
 
-# Write out the modulefile associated with the application
+
+## Module for fftw2
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
-help([[
-The boost module file defines the following environment variables:"
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC for"
-the location of the boost distribution."
+local help_message = [[
+The FFTW2 modulefile defines the following environment variables:
+TACC_FFTW2_DIR, TACC_FFTW2_LIB, and TACC_FFTW2_INC
+for the location of the FFTW %{version} distribution,
+libraries, and include files, respectively.
 
-To load the mpi boost      do "module load boost-mpi"
-To load the rest of boost  do "module load boost"
+To use the FFTW library, compile the source code with the option:
 
-It is save to load both.
+        -I$TACC_FFTW2_INC
 
-boost-python is not currently supported.
+and add the following options to the link step for double precision:
 
-Version %{version}"
-]])
+        -L$TACC_FFTW2_LIB -ldrfftw -ldfftw
 
-whatis("Name: boost")
+For single precison, link with:
+
+        -L$TACC_FFTW2_LIB -lsrfftw -lsfftw
+
+Version %{version}
+]]
+
+help(help_message,"\n")
+
+whatis("Name: FFTW 2")
 whatis("Version: %{version}")
-whatis("Category: %{group}")
-whatis("Keywords: System, Library, C++")
-whatis("URL: http://www.boost.org")
-whatis("Description: Boost provides free peer-reviewed portable C++ source libraries %{BOOST_TYPE}.")
+whatis("Category: library, mathematics")
+whatis("Keywords: Library, Mathematics, FFT")
+whatis("URL: http://www.fftw.org")
+whatis("Description: Numerical library, contains discrete Fourier transformation")
 
 
-setenv("TACC_%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
-setenv("TACC_%{MODULE_VAR}_LIB","%{INSTALL_DIR}/lib")
-setenv("TACC_%{MODULE_VAR}_INC","%{INSTALL_DIR}/include")
+local fftw_dir="%{INSTALL_DIR}"
 
--- Add boost to the LD_LIBRARY_PATH
-prepend_path("LD_LIBRARY_PATH","%{INSTALL_DIR}/lib")
+setenv("TACC_FFTW2_DIR",fftw_dir)
+setenv("TACC_FFTW2_LIB",pathJoin(fftw_dir,"lib"))
+setenv("TACC_FFTW2_INC",pathJoin(fftw_dir,"include"))
 
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module3.1.1#################################################
-##
-## version file for %{MODULE_VAR}%{version}
-##
 
 set     ModulesVersion      "%{version}"
 EOF
 
-  # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %endif
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
 
 #------------------------
 %if %{?BUILD_PACKAGE}
 %files package
 #------------------------
-
+  
   %defattr(-,root,install,)
-  # RPM package contains files within these directories
   %{INSTALL_DIR}
 
 #-----------------------
@@ -277,12 +254,9 @@ EOF
   %defattr(-,root,install,)
   # RPM modulefile contains files within these directories
   %{MODULE_DIR}
-
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
-
 ########################################
 ## Fix Modulefile During Post Install ##
 ########################################
@@ -294,7 +268,7 @@ export MODULEFILE_POST=1
 %include post-defines.inc
 %preun %{PACKAGE}
 export PACKAGE_PREUN=1
-%include post-defines.inc
+
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -303,3 +277,4 @@ export PACKAGE_PREUN=1
 %clean
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
+

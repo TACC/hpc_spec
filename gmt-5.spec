@@ -47,7 +47,7 @@ Summary:    Set of tools for manipulating geographic and Cartesian data sets
 ### Construct name based on includes ###
 ########################################
 #%include name-defines.inc
-%include name-defines-noreloc.inc
+%include name-defines-noreloc-home1.inc
 #%include name-defines-hidden.inc
 #%include name-defines-hidden-noreloc.inc
 ########################################
@@ -60,7 +60,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GNU
 Group:     Development/Tools
 Vendor:     SOEST - hawaii
@@ -244,39 +244,33 @@ umount tmpfs
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version} << 'EOF'
-#%Module1.0####################################################################
-##
-## GMT - Generic Mapping Tools
-##
-proc ModulesHelp { } {
-        puts stderr "\n"
-	puts stderr "\tModule %{name} loads environmental variables defining"
-        puts stderr "\tthe location of GMT directory, libraries, and binaries: "
-        puts stderr "\tTACC_GMT_DIR TACC_GMT_LIB TACC_GMT_BIN\n"
-	puts stderr "\tVersion %{version}\n"
-}
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
+help( [[
+Module %{name} loads environmental variables defining
+the location of GMT directory, libraries, and binaries:
+TACC_GMT_DIR TACC_GMT_LIB TACC_GMT_BIN
 
-module-whatis "GMT"
-module-whatis "Version: %{version}"
-module-whatis "Category: system, development"
-module-whatis "Keywords: System, Cartesian Grids"
-module-whatis "Description: Generic Mapping Tools: Tools for manipulating geographic and Cartesian data sets"
-module-whatis "URL: http://gmt.soest.hawaii.edu/"
+Version: %{version}
+]] )
 
-# Tcl script only
-set version %{version}
+whatis( "GMT" )
+whatis( "Version: %{version}" )
+whatis( "Category: system, development" )
+whatis( "Keywords: System, Cartesian Grids" )
+whatis( "Description: Generic Mapping Tools: Tools for manipulating geographic and Cartesian data sets" )
+whatis( "URL: http://gmt.soest.hawaii.edu/" )
 
-# Export environmental variables
-setenv TACC_GMT_DIR %{INSTALL_DIR}
-setenv TACC_GMT_BIN %{INSTALL_DIR}/bin
-setenv TACC_GMT_LIB %{INSTALL_DIR}/lib
-setenv TACC_GMT_SHARE %{INSTALL_DIR}/share
+local version =  "%{version}"
+local gmt_dir =  "%{INSTALL_DIR}"
 
-# Prepend the GMT directories to the adequate PATH variables
-prepend-path PATH %{INSTALL_DIR}/share
-prepend-path PATH %{INSTALL_DIR}/bin
-prepend-path LD_LIBRARY_PATH %{INSTALL_DIR}/lib
+setenv("TACC_GMT_DIR",gmt_dir)
+setenv("TACC_GMT_BIN",pathJoin( gmt_dir,"bin" ) )
+setenv("TACC_GMT_LIB",pathJoin( gmt_dir,"lib" ) )
+setenv("TACC_GMT_SHARE",pathJoin( gmt_dir,"share" ) )
+
+prepend_path ("PATH",pathJoin( gmt_dir,"share" ) )
+prepend_path ("PATH",pathJoin( gmt_dir,"bin" ) )
+prepend_path ("LD_LIBRARY_PATH",pathJoin( gmt_dir, "lib" ) )
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
@@ -289,7 +283,7 @@ EOF
 
   # Check the syntax of the generated lua modulefile only if a visible module
   %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
   %endif
 
 #--------------------------
@@ -344,5 +338,7 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Thu Jun 01 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: lua modulefiles
 * Mon May 08 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release
