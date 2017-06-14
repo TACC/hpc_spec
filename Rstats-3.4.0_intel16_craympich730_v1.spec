@@ -1,12 +1,12 @@
 Summary:    R is a free software environment for statistical computing and graphics.
 Name:       Rstats
-Version:    3.2.1
-Release:    3 
+Version:    3.4.0
+Release:    %{?dist}
 License:    GPLv2
 Vendor:     R Foundation for Statistical Computing
 Group:      Applications/Statistics
 Source:     %{name}-%{version}.tar.gz
-Packager:   TACC - walling@tacc.utexas.edu, rhuang@tacc.utexas.edu
+Packager:   TACC - walling@tacc.utexas.edu
 
 #------------------------------------------------
 # BASIC DEFINITIONS
@@ -54,24 +54,20 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 
 # Create temporary directory for the install.  We need this to ???
-#mkdir -p             %{INSTALL_DIR}
-#mount -t tmpfs tmpfs %{INSTALL_DIR}
-tacctmpfs -m %{INSTALL_DIR}
+mkdir -p             %{INSTALL_DIR}
+mount -t tmpfs tmpfs %{INSTALL_DIR}
+#tacctmpfs -m %{INSTALL_DIR}
 
 
 echo "Once more into the breach...."
 
 module purge
 module load TACC
-#module swap intel intel/15.0.1 # This is the default on Wrangler, no need to import
 
-#Use default mvapich
+# Want default of intel17 and impi17
 
 # Load other dependent libraries
-module load hdf5
-module load netcdf
 module load boost
-#module load cxx11
 
 echo COMPILER LOAD: %{comp_fam_ver_load}
 echo MPI      LOAD: %{mpi_fam_ver_load}
@@ -87,39 +83,50 @@ mkdir -p ${SRC_DIR}
 echo ${SRC_DIR}
 cd ${SRC_DIR}
 
-wget -q -N 'http://cran.r-project.org/src/base/R-3/R-3.2.1.tar.gz'
-tar zxf R-3.2.1.tar.gz
-cd R-3.2.1
+#wget -q -N 'http://cran.r-project.org/src/base/R-3/R-3.2.1.tar.gz'
+
+# Ensure default new file permissions are what we want
+
+#umask 022
+#check_umask="$(umask)"
+#echo $check_umask
+
+
+# Using a custom modified version of R source that should live in SOURCES
+cp /admin/build/admin/rpms/stampede2/SOURCES/R-3.4.0-custom.tar.gz R-3.4.0.tar.gz
+tar zxfp R-3.4.0.tar.gz
+cd R-3.4.0
 
 ./configure --prefix=%{INSTALL_DIR} \
   --enable-R-shlib --enable-shared \
-  --with-blas --with-lapack --with-x=no \
+  --with-blas --with-lapack --with-x=yes --with-cairo=yes \
   CC=mpicc CXX=mpicxx F77=ifort FC=ifort \
   LD=xild AR=xiar \
-  SHLIB_CFLAGS="-fPIC -openmp -mkl=parallel -O3 -xHost  "\
-  MAIN_FFLAGS="-fPIC -openmp -mkl=parallel -O3 -xHost  "\
-  SHLIB_FFLAGS="-fPIC -openmp -mkl=parallel -O3 -xHost  "\
-  MAIN_LDFLAGS="-fPIC -openmp -mkl=parallel -O3 -xHost  -L${TACC_MKL_LIB} -lmkl_rt"\
-  SHLIB_LDFLAGS="-fPIC -openmp -mkl=parallel -O3 -xHost  -L${TACC_MKL_LIB} -lmkl_rt"\
-  DYLIB_LDFLAGS="-fPIC -openmp -mkl=parallel -O3 -xHost  -L${TACC_MKL_LIB} -lmkl_rt"\
-  SHLIB_CXXLDFLAGS="-fPIC -openmp -mkl=parallel -O3 -xHost   -L${TACC_MKL_LIB} -lmkl_rt"\
-  SHLIB_FCLDFLAGS="-shared -fPIC -openmp -mkl=parallel -O3 -xHost   -L${TACC_MKL_LIB} -lmkl_rt"\
-  BLAS_LIBS="-fPIC -openmp -mkl=parallel -O3 -xHost  -L${TACC_MKL_LIB} -lmkl_rt"\
-  LAPACK_LIBS="-fPIC -openmp -mkl=parallel -O3 -xHost  -L${TACC_MKL_LIB} -lmkl_rt"\
-  CFLAGS="-fPIC -openmp -mkl=parallel -O3 -xHost  -L${TACC_MKL_LIB} -lmkl_rt"\
-  LDFLAGS="-fPIC -openmp -mkl=parallel -O3 -xHost  -L${TACC_MKL_LIB} -lmkl_rt"\
-  CPPFLAGS="-fPIC -openmp -mkl=parallel -O3 -xHost  -L${TACC_MKL_LIB} -lmkl_rt"\
-  FFLAGS="-fPIC -openmp -mkl=parallel -O3 -xHost  -L${TACC_MKL_LIB} -lmkl_rt"\
-  CXXFLAGS="-fPIC -openmp -mkl=parallel -O3 -xHost  -L${TACC_MKL_LIB} -lmkl_rt"\
-  FCFLAGS="-fPIC -openmp -mkl=parallel -O3 -xHost  -L${TACC_MKL_LIB} -lmkl_rt"
+  SHLIB_CFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  "\
+  MAIN_FFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  "\
+  SHLIB_FFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  "\
+  MAIN_LDFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  -L${TACC_MKL_LIB} -lmkl_rt"\
+  SHLIB_LDFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  -L${TACC_MKL_LIB} -lmkl_rt"\
+  DYLIB_LDFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  -L${TACC_MKL_LIB} -lmkl_rt"\
+  SHLIB_CXXLDFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  -L${TACC_MKL_LIB} -lmkl_rt"\
+  SHLIB_FCLDFLAGS="-shared -fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512   -L${TACC_MKL_LIB} -lmkl_rt"\
+  BLAS_LIBS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  -L${TACC_MKL_LIB} -lmkl_rt"\
+  LAPACK_LIBS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  -L${TACC_MKL_LIB} -lmkl_rt"\
+  CFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  -L${TACC_MKL_LIB} -lmkl_rt"\
+  LDFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  -L${TACC_MKL_LIB} -lmkl_rt"\
+  CPPFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  -L${TACC_MKL_LIB} -lmkl_rt"\
+  FFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  -L${TACC_MKL_LIB} -lmkl_rt"\
+  CXXFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  -L${TACC_MKL_LIB} -lmkl_rt"\
+  FCFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  -L${TACC_MKL_LIB} -lmkl_rt"
 
 # read -p "Press [Enter] key to continue..."
-
+#make clean
 make -j20
 make install
 
 cd ${SRC_DIR}
-rm -r R-3.2.1
+
+rm -r R-3.4.0
 
 # Ensure the R just built is used in the rest of the commands below
 export PATH=%{INSTALL_DIR}/bin:$PATH
@@ -141,8 +148,8 @@ cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
 #----------------------------------------------------------
 # UNMOUNT THE TEMP FILESYSTEM
 #----------------------------------------------------------
-#umount  %{INSTALL_DIR}
-tacctmpfs -u %{INSTALL_DIR}
+umount  %{INSTALL_DIR}
+#tacctmpfs -u %{INSTALL_DIR}
 
 #----------------------------------------------------------
 # Create the module file
@@ -186,12 +193,7 @@ prepend_path("MANPATH", r_man)
 
 prepend_path("LD_LIBRARY_PATH", r_lib)
 
-
-prepend_path("PATH","/opt/apps/gcc/4.9.1/bin")
-prepend_path("LD_LIBRARY_PATH","/opt/apps/gcc/4.9.1/lib")
-prepend_path("LD_LIBRARY_PATH","/opt/apps/gcc/4.9.1/lib64")
-
-try_load("RstatsPackages/3.2.1")
+try_load("RstatsPackages/3.4.0")
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
