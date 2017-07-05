@@ -60,7 +60,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
+Release:   3%{?dist}
 License:   GNU
 Group:     Development/Tools
 Vendor:     SOEST - hawaii
@@ -210,7 +210,7 @@ whatis( "Category: Development/Tools" )
 whatis( "Description: SWIG is a software development tool that connects programs written in C and C++ with a variety of high-level programming languages." )
 whatis( "URL: http://www.swig.org" )
 
-local swig_dir = "swig_dir"
+local swig_dir = "%{INSTALL_DIR}"
 
 prepend_path( "PATH", pathJoin( swig_dir,"bin" ) )
 setenv("TACC_SWIG_DIR", swig_dir )
@@ -282,6 +282,8 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Thu Jun 15 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: proper path in modulefiles
 * Thu Jun 01 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: lua modulefiles
 * Fri Feb 24 2017 eijkhout <eijkhout@tacc.utexas.edu>

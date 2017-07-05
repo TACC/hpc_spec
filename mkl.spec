@@ -205,16 +205,15 @@ setenv( "MKLROOT"      ,              mklRoot )
 setenv( "TACC_MKL_DIR" ,              mklRoot )
 setenv( "TACC_MKL_LIB" ,              pathJoin( mklRoot    , "lib/intel64" ) )
 setenv( "TACC_MKL_INC" ,              pathJoin( mklRoot    , "include" ) )
-setenv( "TACC_MKL_DOC" ,              pathJoin( installDir , "documentation/en/mkl" ) )
+setenv( "TACC_MKL_DOC" ,              pathJoin( base       , "documentation_2017/en/mkl/ps2017" ) )
 
 prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( mklRoot    , "lib/intel64" ) )
 
 prepend_path( "INCLUDE" ,             pathJoin( mklRoot    , "include" ) )
 
-prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2016/en/debugger/gdb-ia/man" ) )
-prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2016/en/debugger/gdb-igfx/man" ) )
-prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2016/en/man/common" ) )
-prepend_path( "MANPATH" ,             pathJoin( mklRoot ,    "benchmarks/mp_linpack/man" ) )
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2017/en/debugger/gdb-ia/man" ) )
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2017/en/debugger/gdb-igfx/man" ) )
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2017/en/man/common" ) )
 
 EOF
   

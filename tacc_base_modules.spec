@@ -18,7 +18,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3%{?dist}
+Release:   4%{?dist}
 License:   GPL
 Group:     Module Magic
 Packager:  TACC - mclay@tacc.utexas.edu
@@ -80,6 +80,7 @@ load("impi")
 load("git")
 load("autotools")
 load("python")
+load("cmake")
 try_load("xalt")
 
 prepend_path("MANPATH","/usr/local/man:/usr/share/man:/usr/X11R6/man:/usr/kerberos/man:/usr/man")

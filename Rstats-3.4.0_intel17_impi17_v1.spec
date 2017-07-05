@@ -1,7 +1,7 @@
 Summary:    R is a free software environment for statistical computing and graphics.
 Name:       Rstats
 Version:    3.4.0
-Release:    %{?dist}
+Release:    2%{?dist}
 License:    GPLv2
 Vendor:     R Foundation for Statistical Computing
 Group:      Applications/Statistics
@@ -16,6 +16,7 @@ Packager:   TACC - walling@tacc.utexas.edu
 %include system-defines.inc
 %include compiler-defines.inc
 %include mpi-defines.inc
+%include name-defines-noreloc.inc
 
 %define PNAME Rstats
 %define MODULE_VAR TACC_R
@@ -97,27 +98,28 @@ cp /admin/build/admin/rpms/stampede2/SOURCES/R-3.4.0-custom.tar.gz R-3.4.0.tar.g
 tar zxfp R-3.4.0.tar.gz
 cd R-3.4.0
 
+# Old: MAIN_FFLAGS="-fPIC -qopenmp -mkl=parallel -O1 -xCORE-AVX2 -axMIC-AVX512  "\
 ./configure --prefix=%{INSTALL_DIR} \
   --enable-R-shlib --enable-shared \
   --with-blas --with-lapack --with-x=yes --with-cairo=yes \
-  CC=mpicc CXX=mpicxx F77=ifort FC=ifort \
+  CC=icc CXX=icpc F77=ifort FC=ifort \
   LD=xild AR=xiar \
-  SHLIB_CFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  "\
-  MAIN_FFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  "\
-  SHLIB_FFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  "\
-  MAIN_LDFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  -L${TACC_MKL_LIB} -lmkl_rt"\
-  SHLIB_LDFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  -L${TACC_MKL_LIB} -lmkl_rt"\
-  DYLIB_LDFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  -L${TACC_MKL_LIB} -lmkl_rt"\
-  SHLIB_CXXLDFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  -L${TACC_MKL_LIB} -lmkl_rt"\
-  SHLIB_FCLDFLAGS="-shared -fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512   -L${TACC_MKL_LIB} -lmkl_rt"\
-  BLAS_LIBS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  -L${TACC_MKL_LIB} -lmkl_rt"\
-  LAPACK_LIBS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  -L${TACC_MKL_LIB} -lmkl_rt"\
-  CFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  -L${TACC_MKL_LIB} -lmkl_rt"\
-  LDFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  -L${TACC_MKL_LIB} -lmkl_rt"\
-  CPPFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  -L${TACC_MKL_LIB} -lmkl_rt"\
-  FFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  -L${TACC_MKL_LIB} -lmkl_rt"\
-  CXXFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  -L${TACC_MKL_LIB} -lmkl_rt"\
-  FCFLAGS="-fPIC -qopenmp -mkl=parallel -O3 -xCORE-AVX2 -axMIC-AVX512  -L${TACC_MKL_LIB} -lmkl_rt"
+  SHLIB_CFLAGS="-fPIC -qopenmp -mkl=parallel -O2 "\
+  MAIN_FFLAGS="-fPIC -qopenmp -mkl=parallel -O2 "\
+  SHLIB_FFLAGS="-fPIC -qopenmp -mkl=parallel -O2 "\
+  MAIN_LDFLAGS="-fPIC -qopenmp -mkl=parallel -O2 "\
+  SHLIB_LDFLAGS="-fPIC -qopenmp -mkl=parallel -O2 "\
+  DYLIB_LDFLAGS="-fPIC -qopenmp -mkl=parallel -O2 "\
+  SHLIB_CXXLDFLAGS="-fPIC -qopenmp -mkl=parallel -O2 "\
+  SHLIB_FCLDFLAGS="-shared -fPIC -qopenmp -mkl=parallel -O2 "\
+  BLAS_LIBS="-fPIC -qopenmp -mkl=parallel -O2 -xCORE-AVX2 "\
+  LAPACK_LIBS="-fPIC -qopenmp -mkl=parallel -O2 "\
+  CFLAGS="-fPIC -qopenmp -mkl=parallel -O2 "\
+  LDFLAGS="-fPIC -qopenmp -mkl=parallel -O2 "\
+  CPPFLAGS="-fPIC -qopenmp -mkl=parallel -O2 "\
+  FFLAGS="-fPIC -qopenmp -mkl=parallel -O2 "\
+  CXXFLAGS="-fPIC -qopenmp -mkl=parallel -O2 "\
+  FCFLAGS="-fPIC -qopenmp -mkl=parallel -O2 "
 
 # read -p "Press [Enter] key to continue..."
 #make clean

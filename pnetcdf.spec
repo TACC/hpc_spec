@@ -16,6 +16,10 @@ Vendor:    Unidata Program Center, UCAR
 Packager:  TACC - cazes@tacc.utexas.edu
 BuildRoot: /var/tmp/%{name}-%{version}-buildroot
 
+# Turn off debug package mode
+%define debug_package %{nil}
+%define dbg           %{nil}
+
 %define APPS /opt/apps
 %define MODULES modulefiles
 

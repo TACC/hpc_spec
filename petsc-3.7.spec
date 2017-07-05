@@ -244,19 +244,16 @@ export hdf5download=
 export hdf5versionextra=
 
 %if "%{comp_fam}" == "intel" && "%{comp_fam_ver}" != "intel15"
+    module load phdf5
     export hdf5string="hdf5"
     export hdf5download="--with-hdf5=1 --with-hdf5-dir=${TACC_HDF5_DIR}"
     export hdf5versionextra="; hdf5 support"
 %endif
 
-# waiting for McLay
-export hdf5string=
-export hdf5download=
-export hdf5versionextra=
-
-if [ ! -z "${hdf5string}" ] ; then
-    module load phdf5
-fi
+# # waiting for McLay
+# export hdf5string=
+# export hdf5download=
+# export hdf5versionextra=
 
 export versionextra="${versionextra}${hdf5versionextra}"
 
@@ -588,5 +585,6 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 * Mon Jun 05 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: trying to get hold of release_mt version of libmpi
+-            adding hdf5
 * Mon May 08 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

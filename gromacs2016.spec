@@ -245,6 +245,7 @@ env CC=mpicc CXX=mpicxx cmake .. \
 -DGMX_SOFTWARE_INVSQRT=OFF \
 -DGMX_SKIP_DEFAULT_CFLAGS=ON \
 -DCMAKE_EXE_LINKER_FLAGS=" -mkl=sequential" \
+-DGMX_OPENMP=ON \
 -DGMX_OPENMP_MAX_THREADS=256 \
 -DCMAKE_C_FLAGS="-std=gnu99 -O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -mkl=sequential -g " \
 -DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -mkl=sequential -g " \

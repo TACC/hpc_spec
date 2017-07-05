@@ -31,7 +31,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tar.gz
@@ -120,6 +120,9 @@ mount -t tmpfs tmpfs %{INSTALL_DIR}
 ##pushd %{INSTALL_DIR}
 
 module load cmake boost swig
+## VLE stopgap!
+export BOOST_ROOT=${TACC_BOOST_DIR}
+
 %if "%{comp_fam}" == "gcc"
   which gcc
   module load mkl
@@ -132,10 +135,12 @@ export COPTFLAGS="-g %{TACC_OPT}"
   export HAS_HDF5=OFF
   export HAS_NETCDF=OFF
   export HAS_PYTHON=OFF
+  export HAS_MUELU=ON
 %else
   export HAS_HDF5=ON
   export HAS_NETCDF=ON
   export HAS_PYTHON=ON
+  export HAS_MUELU=ON
   module load phdf5 parallel-netcdf python
 %endif
 export HAS_SEACAS=${HAS_NETCDF}
@@ -153,6 +158,13 @@ pushd /tmp/trilinos-build
 
 export VERSION=%{version}
 export TRILINOS_LOCATION=%{_topdir}/BUILD/
+
+%if "%{comp_fam}" == "gcc"
+  echo "%%%% MueLu stats %%%%"
+  gcc -v
+  uname -a
+  export VERBOSE=1
+%endif
 
 %include trilinos.cmake
 
@@ -176,8 +188,17 @@ make -j 8             # Trilinos can compile in parallel
 make install
 
 ( cd %{INSTALL_DIR} && \
-  find . -name \*.cmake -exec sed -i -e '/STKDoc_testsConfig.cmake/d' {} \; -print \
+  find . -name \*.cmake \
+         -exec sed -i -e '/STKDoc_testsConfig.cmake/d' \
+                      -e '/COMPILER_FLAGS/s/mkl/mkl -L\${TACC_PYTHON_LIB} -lpython2.7/' \
+                   {} \; \
+         -print \
 )
+export nosed="\
+                      -e '?EXTRA_LD_FLAGS?s?""?"/opt/apps/intel17/python/2.7.13/lib/libpython2.7.so"?' \
+    "
+#SET(Trilinos_CXX_COMPILER_FLAGS " -mkl -DMPICH_SKIP_MPICXX -std=c++11 -O3 -DNDEBUG")
+#SET(Trilinos_C_COMPILER_FLAGS " -mkl -O3 -DNDEBUG")
 
 echo "are we still in /tmp/trilinos-build?"
 pwd
@@ -249,5 +270,7 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Fri Jun 30 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: fix broken stuff that trips up dealII
 * Fri May 12 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

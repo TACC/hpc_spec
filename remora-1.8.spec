@@ -1,4 +1,5 @@
 # Carlos Rosales-Fernandez (carlos@tacc.utexas.edu)
+# Antonio Gomez (agomez@tacc.utexas.edu)
 # 2017-05-22
 # Modified for Stampede 2 deployment and avx512
 # This version is patch 2 with the missing fortran hearders
@@ -27,7 +28,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 # Create some macros (spec file variables)
 %define major_version 1
 %define minor_version 8
-%define micro_version 0
+%define micro_version 1 
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -56,7 +57,7 @@ Release:   1%{?dist}
 License:   MIT
 Group:     Profiling/Tools
 URL:       https://github.com/TACC/remora
-Packager:  TACC - carlos@tacc.utexas.edu
+Packager:  TACC - agomez@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -206,6 +207,7 @@ your executable or ibrun.
 
 Examples:
 ...
+#SBATCH -N 2
 #SBATCH -n 16
 #SBATCH -A my_project
 
@@ -213,20 +215,20 @@ remora ibrun my_parallel_program [arguments]
 
 ---------------------------------------
 ...
+#SBATCH -N 1
 #SBATCH -n 1
 #SBATCH -A my_project
 remora ./my_program [arguments]
 
 ---------------------------------------
 
-remora will create a folder with a number of files that contain the values
-for the parameters previously introduced.
+REMORA will create a set of folders with a number of files that contain
+the values for the parameters previously introduced.
 
-It is also possibly to get plots of those files for an easier analysis.
-Load a python module ('module load python') and use the tool 'remora_post'.
-Within the batch script, 'remora_post' does not need any parameter. From
-the login node, you can cd to the location that contains the remora_JOBID
-folder. Once there run 'remora_post -j JOBID'.
+REMORA will also create a set of HTML files with the results plotted for
+an easier analysis. There's a summary HTML file in the main results folder
+that contains links to the different results. Transfer the results to your
+own machine to visualize them.
 
 The following environment variables control the behaviour of the tool:
 
@@ -251,7 +253,7 @@ remora_post_crash <JOBID>
 help(help_message,"\n")
 
 whatis("Name: Remora")
-whatis("Version: 1.7.0")
+whatis("Version: 1.8.1")
 whatis("Category: Profiling/Tools ")
 whatis("Keywords: Tools, Profiling, Resources")
 whatis("Description: REsource MOnitoring for Remote Applications")

@@ -20,24 +20,31 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name cmake
-%define MODULE_VAR    CMAKE
+%define pkg_base_name basemap
+%define MODULE_VAR    BASEMAP
 
 # Create some macros (spec file variables)
-%define major_version 3
-%define minor_version 8
-%define micro_version 2
+%define major_version 1
+%define minor_version 0
+%define micro_version 7
+
+%define geos_major_version 3
+%define geos_minor_version 6
+%define geos_micro_version 1
+
+%define python_version 2.7.13
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define geos_pkg_version %{geos_major_version}.%{geos_minor_version}.%{geos_micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
+%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+%include name-defines-noreloc-home1.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -65,35 +72,26 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
-CMake  is an extensible, open-source system that manages the build process in
-an operating system and in a compiler-independent manner. Unlike many cross-
-platform systems, CMake is designed to be used in conjunction with the native
-build environment. Simple configuration files placed in each source directory
-(called CMakeLists.txt files) are used to generate standard build files (e.g.,
-makefiles on Unix and projects/workspaces in Windows MSVC) which are used in
-the usual way.
+The matplotlib basemap toolkit is a library for plotting 2D data on maps in
+Python. It is similar in functionality to the matlab mapping toolbox, the IDL
+mapping facilities, GrADS, or the Generic Mapping Tools. PyNGL and CDAT are
+other libraries that provide similar capabilities in Python.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
-CMake  is an extensible, open-source system that manages the build process in
-an operating system and in a compiler-independent manner. Unlike many cross-
-platform systems, CMake is designed to be used in conjunction with the native
-build environment. Simple configuration files placed in each source directory
-(called CMakeLists.txt files) are used to generate standard build files (e.g.,
-makefiles on Unix and projects/workspaces in Windows MSVC) which are used in
-the usual way.
+The matplotlib basemap toolkit is a library for plotting 2D data on maps in
+Python. It is similar in functionality to the matlab mapping toolbox, the IDL
+mapping facilities, GrADS, or the Generic Mapping Tools. PyNGL and CDAT are
+other libraries that provide similar capabilities in Python.
 
 %description
-CMake  is an extensible, open-source system that manages the build process in
-an operating system and in a compiler-independent manner. Unlike many cross-
-platform systems, CMake is designed to be used in conjunction with the native
-build environment. Simple configuration files placed in each source directory
-(called CMakeLists.txt files) are used to generate standard build files (e.g.,
-makefiles on Unix and projects/workspaces in Windows MSVC) which are used in
-the usual way.
+The matplotlib basemap toolkit is a library for plotting 2D data on maps in
+Python. It is similar in functionality to the matlab mapping toolbox, the IDL
+mapping facilities, GrADS, or the Generic Mapping Tools. PyNGL and CDAT are
+other libraries that provide similar capabilities in Python.
 
 
 #---------------------------------------
@@ -118,7 +116,7 @@ the usual way.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n %{pkg_base_name}-%{pkg_version}
+#%setup -n %{pkg_base_name}-%{pkg_version}
 
 
 #---------------------------------------
@@ -135,6 +133,8 @@ the usual way.
 
 # Insert necessary module commands
 module purge
+%include compiler-load.inc
+module load python
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -144,6 +144,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  mkdir -p %{INSTALL_DIR}
+  mount -t tmpfs tmpfs %{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -157,18 +159,82 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
  
-  export CC=gcc
-  export ncores=68
-  export CFLAGS="-mtune=generic"
-  #export LDFLAGS="-Wl,-rpath,${GCC_LIB} -march=core-avx -mtune=core-avx2" # Location of correct libstdc++.so.6
-  export LDFLAGS="-mtune=generic" # Location of correct libstdc++.so.6
-  echo ${LD_LIBRARY_PATH}
-  echo ${LDFLAGS}
-  # DO NOT preppend $RPM_BUILD_ROOT in prefix
-  ./bootstrap --prefix=%{INSTALL_DIR}
-  make -j ${ncores}
-  make DESTDIR=$RPM_BUILD_ROOT install -j ${ncores}
-  
+export ncores=68
+export geos=`pwd`/geos
+export geos_install=%{INSTALL_DIR}
+export GEOS_DIR=${geos_install}
+
+export geos_major=%{geos_major_version}
+export geos_minor=%{geos_minor_version}
+export geos_patch=%{geos_micro_version}
+export geos_version=${geos_major}.${geos_minor}.${geos_patch}
+
+
+export CC=icc
+export CXX=icpc
+export CFLAGS="-xCORE-AVX2 -axMIC-AVX512,CORE-AVX512"
+export CXXFLAGS="-xCORE-AVX2 -axMIC-AVX512,CORE-AVX512"
+export LDFLAGS="-xCORE-AVX2 -axMIC-AVX512,CORE-AVX512"
+
+mkdir -p ${geos}
+cd ${geos}
+
+printf "\n\n************************************************************\n"
+printf "geos\n"
+printf "************************************************************\n\n"
+
+wget http://download.osgeo.org/geos/geos-${geos_version}.tar.bz2
+tar xvfj geos-${geos_version}.tar.bz2
+
+cd geos-${geos_version}
+${geos}/geos-${geos_version}/configure \
+--prefix=${geos_install}               \
+--enable-python
+
+make -j ${ncores}
+make -j ${ncores} install
+ 
+if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+fi
+
+cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+umount %{INSTALL_DIR}/
+
+########################
+########################
+########################
+
+export basemap=`pwd`/basemap
+export basemap_install=%{INSTALL_DIR}
+
+export basemap_major=%{major_version}
+export basemap_minor=%{minor_version}
+export basemap_patch=%{micro_version}
+export basemap_version=${basemap_major}.${basemap_minor}.${basemap_patch}
+
+
+export CC=icc
+export CXX=icpc
+export CFLAGS="-shared -lpthread -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512"
+export CXXFLAGS="-shared -lpthread -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512"
+export LDFLAGS="-xCORE-AVX2 -axMIC-AVX512,CORE-AVX512"
+
+mkdir -p ${basemap}
+cd ${basemap}
+
+printf "\n\n************************************************************\n"
+printf "basemap\n"
+printf "************************************************************\n\n"
+
+wget http://downloads.sourceforge.net/project/matplotlib/matplotlib-toolkits/basemap-${basemap_version}/basemap-${basemap_version}.tar.gz
+tar xvfz basemap-${basemap_version}.tar.gz
+
+cd basemap-${basemap_version}
+python setup.py install --prefix=${basemap_install}
+
+
+ 
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -191,40 +257,43 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_message = [[
-CMake is an open-source, cross-platform family of tools designed to build, test
-and package software. CMake is used to control the software compilation process
-using simple platform and compiler independent configuration files, and
-generate native makefiles and workspaces that can be used in the compiler
-environment of your choice. 
+The matplotlib basemap toolkit is a library for plotting 2D data on maps in
+Python. It is similar in functionality to the matlab mapping toolbox, the IDL
+mapping facilities, GrADS, or the Generic Mapping Tools. PyNGL and CDAT are
+other libraries that provide similar capabilities in Python.
 
-This module defines the environmental variables TACC_%{MODULE_VAR}_BIN
-and TACC_%{MODULE_VAR}_DIR for the location of the main CMake directory
-and the binaries.
+This module defines the environmental variables TACC_%{MODULE_VAR}_LIB
+and TACC_%{MODULE_VAR}_DIR for the location of the main GEOS directory
+and the libraries.
 
-The location of the binary files is also added to your PATH.
+The location of the library files for GEOS and basemap are added to your
+LD_LIBRARY_PATH while basemap is also added to your PYTHONPATH.
 
-Extended documentation on CMake can be found under $TACC_%{MODULE_VAR}_DIR/doc.
 
 Version %{version}
 ]]
+
+prereq("python","%{python_version}")
 
 help(help_message,"\n")
 
 whatis("Name: %{name}")
 whatis("Version: %{version}")
-whatis("Category: system, utilities")
-whatis("Keywords: System, Utility")
-whatis("Description: tool for generation of files from source")
-whatis("URL: http://www.cmake.org")
+whatis("Category: Python Package")
+whatis("Keywords: Cartography")
+whatis("Description: Plot 2D data on maps in Python")
+whatis("URL: https://matplotlib.org/basemap/users/intro.html")
 
 -- Export environmental variables
-local cmake_dir="%{INSTALL_DIR}"
-local cmake_bin=pathJoin(cmake_dir,"bin")
-setenv("TACC_CMAKE_DIR",cmake_dir)
-setenv("TACC_CMAKE_BIN",cmake_bin)
+local basemap_dir="%{INSTALL_DIR}"
+local geos_lib=pathJoin(basemap_dir,"lib")
+setenv("TACC_%{MODULE_VAR}_DIR",basemap_dir)
+setenv("TACC_GEOS_LIB",geos_lib)
 
--- Prepend the cmake directories to the adequate PATH variables
-prepend_path("PATH",cmake_bin)
+-- Prepend the basemap directories to the adequate PATH variables
+prepend_path("LD_LIBRARY_PATH", geos_lib)
+prepend_path("LD_LIBRARY_PATH", pathJoin(basemap_dir,"lib"))
+prepend_path("PYTHONPATH",      pathJoin(basemap_dir,"lib/python2.7/site-packages"))
 
 EOF
   
@@ -280,9 +349,11 @@ export PACKAGE_POST=1
 %post %{MODULEFILE}
 export MODULEFILE_POST=1
 %include post-defines.inc
+ln -s %{INSTALL_DIR}/lib/python2.7/site-packages/mpl_toolkits/basemap /opt/apps/intel17/python/%{python_version}/lib/python2.7/site-packages/mpl_toolkits/basemap
 %preun %{PACKAGE}
 export PACKAGE_PREUN=1
 %include post-defines.inc
+unlink /opt/apps/intel17/python/%{python_version}/lib/python2.7/site-packages/mpl_toolkits/basemap
 ########################################
 ############ Do Not Remove #############
 ########################################

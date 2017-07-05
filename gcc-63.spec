@@ -27,12 +27,12 @@ Summary: A Nice little non-relocatable skeleton spec file example.
 %define MODULE_VAR    GCC
 
 # Create some macros (spec file variables)
-%define major_version 7
-%define minor_version 1
+%define major_version 6
+%define minor_version 3
 %define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
-%define gcc_ver gcc7_1
+%define gcc_ver gcc6_3
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -190,8 +190,8 @@ export binutils_major=2
 #export binutils_minor=27
 export binutils_minor=28
 
-export gcc_major=7
-export gcc_minor=1
+export gcc_major=6
+export gcc_minor=3
 export gcc_patch=0
 
 export gmp_version=${gmp_major}.${gmp_minor}.${gmp_patch}
@@ -419,9 +419,9 @@ setenv(       "TACC_%{MODULE_VAR}_INC"   , pathJoin(gcc_dir,"include"   )       
 family("compiler")
 EOF
 
-
-#cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version << 'EOF'
+ 
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
+#cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version << 'EOF'
 #%Module3.1.1#################################################
 ##
 ## version file for %{BASENAME}%{version}

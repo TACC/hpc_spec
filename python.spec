@@ -1,7 +1,7 @@
 Summary:    Python is a high-level general-purpose programming language.
 Name:       tacc-python 
 Version:    2.7.13
-Release:    2%{?dist}
+Release:    3%{?dist}
 License:    GPLv2
 Vendor:     Python Software Foundation
 Group:      Applications
@@ -76,7 +76,7 @@ cd %{_topdir}/SOURCES
 
 export PATH=%{INSTALL_DIR_COMP}/bin:$PATH
 export LD_LIBRARY_PATH=%{INSTALL_DIR_COMP}/lib64:%{INSTALL_DIR_COMP}/lib:$LD_LIBRARY_PATH
-export PYTHONPATH=%{INSTALL_DIR_COMP}/lib:$PYTHONPATH
+#export PYTHONPATH=%{INSTALL_DIR_COMP}/lib:$PYTHONPATH
 
 ############################################################
 # System Specific
@@ -117,11 +117,12 @@ if [ ! -f "%{INSTALL_DIR_COMP}/bin/python" ]; then
     export LD_LIBRARY_PATH=`pwd`:$LD_LIBRARY_PATH
     ls
     %if "%{comp_fam_name}" == "Intel"
-    ./configure --prefix=%{INSTALL_DIR_COMP} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc' CFLAGS="-O3 -fp-model strict -fp-model source -ipo -prec-div -prec-sqrt %{TACC_OPT}" LDFLAGS="-ipo -Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth --without-gcc --with-libm=-limf --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip    
+    #./configure --prefix=%{INSTALL_DIR_COMP} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc' CFLAGS="-O3 -fp-model strict -fp-model source -ipo -prec-div -prec-sqrt %{TACC_OPT}" LDFLAGS="-ipo -Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth --without-gcc --with-libm=-limf --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip --enable-unicode=ucs4    
+    ./configure --prefix=%{INSTALL_DIR_COMP} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc' CFLAGS="-O3 -fp-model strict -fp-model source -ipo -prec-div -prec-sqrt %{TACC_OPT}" LDFLAGS="-ipo -Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth --without-gcc --with-libm=-limf --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip --enable-unicode=ucs4    
     %endif
     %if "%{comp_fam_name}" == "GNU"
-    #./configure --prefix=%{INSTALL_DIR_COMP} CFLAGS="-flto -ffat-lto-objects -fuse-linker-plugin %{TACC_OPT}" LDFLAGS="-flto -ffat-lto-objects -fuse-linker-plugin -rdynamic" --with-system-ffi --enable-shared --with-pth --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip    
-    ./configure --prefix=%{INSTALL_DIR_COMP} --with-system-ffi --enable-shared --with-lto --with-pth --with-threads --with-computed-gotos --with-ensurepip    
+    ./configure --prefix=%{INSTALL_DIR_COMP} CFLAGS="-flto -ffat-lto-objects -fuse-linker-plugin %{TACC_OPT}" LDFLAGS="-shared -flto -ffat-lto-objects -fuse-linker-plugin -rdynamic" --with-system-ffi --enable-shared --with-pth --with-threads --with-lto --with-computed-gotos --with-ensurepip --enable-unicode=ucs4          
+    #./configure --prefix=%{INSTALL_DIR_COMP} --with-system-ffi --enable-shared --with-lto --with-pth --with-threads --with-computed-gotos --with-ensurepip --enable-unicode=ucs4       
     %endif
 
     make -j 28
@@ -186,11 +187,12 @@ library_dirs = $MKL_LIB
 include_dirs = $MKL_INC
 mkl_libs    = mkl_rt
 lapack_libs = " > site.cfg
-    export CFLAGS="-m64 -Wl,--no-as-needed"    
-    export CXXFLAGS="-m64 -Wl,--no-as-needed"
-    export LDFLAGS="-ldl -lm"
-    export FFLAGS="-m64"
-
+   
+    #export CFLAGS="-m64 -Wl,--no-as-needed"    
+    #export CXXFLAGS="-m64 -Wl,--no-as-needed"
+    #export LDFLAGS="-ldl -lm -shared"
+    #export FFLAGS="-m64"
+   
     %{INSTALL_DIR_COMP}/bin/python setup.py config --fcompiler=gfortran build_clib --fcompiler=gfortran build_ext --fcompiler=gfortran install
     %endif
 fi
@@ -217,34 +219,33 @@ fi
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: matplotlib	
 CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: cython	
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: cffi	
-#%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: pandas
-%{INSTALL_DIR_COMP}/bin/pip install pandas
+CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: pandas
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: psutil
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: numexpr
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: rpyc	
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: ipython
 %{INSTALL_DIR_COMP}/bin/pip install jupyter	
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: mako
-
-
-#Antonio: Removed this temporarily
 CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: lxml
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: pystuck
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: fortran-magic
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: MySQL
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: psycopg2
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: mercurial
-
-#Antonio: Removed the next three temporarily
 CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: yt
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: theano
-%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: scikit_learn
+CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: scikit_learn
 
-if module load phdf5; then
-    CC="mpicc -ip-no-inlining" HDF5_MPI="ON" HDF5_DIR=$TACC_HDF5_DIR pip install --no-binary=h5py --no-deps --ignore-installed h5py --user
-    #%{INSTALL_DIR_COMP}/bin/pip install h5py
-    %{INSTALL_DIR_COMP}/bin/pip install tables
-fi
+
+#wget https://github.com/matplotlib/basemap/archive/v1.1.0.tar.gz
+#tar xvf v1.1.0.tar.gz
+#cd basemap-1.1.0/
+#%{INSTALL_DIR_COMP}/bin/python setup.py install
+
+#if module load hdf5; then
+#    %{INSTALL_DIR_COMP}/bin/pip install h5py
+#    %{INSTALL_DIR_COMP}/bin/pip install tables
+#fi
 #############################################################
 # mpi4py: use INSTALL_DIR_MPI
 ############################################################
@@ -256,6 +257,12 @@ fi
   module load %{PNAME}/%{version}	
   module load %{mpi_module}   
   %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_MPI}" mpi4py
+
+  if module load phdf5; then
+      export PYTHONPATH=%{INSTALL_DIR_MPI}/lib/python2.7/site-packages
+      CC="mpicc -ip-no-inlining" HDF5_MPI="ON" HDF5_DIR=$TACC_HDF5_DIR %{INSTALL_DIR_COMP}/bin/pip install --no-binary=h5py --no-deps --install-option="--prefix=%{INSTALL_DIR_MPI}" --ignore-installed h5py
+      %{INSTALL_DIR_COMP}/bin/pip install tables
+  fi
 %endif
 
 #----------------------------------------------------------
@@ -324,8 +331,8 @@ local python_lib   = "%{INSTALL_DIR_COMP}/lib"
 local python_man   = "%{INSTALL_DIR_COMP}/share/man:%{INSTALL_DIR_COMP}/man"
 
 %if "%{comp_fam_name}" == "GNU"
-local mkl_lib      = "$MKL_LIB"
-local omp_lib      = "$OMP_LIB"
+local mkl_lib      = $MKL_LIB
+local omp_lib      = $OMP_LIB
 %endif
 
 setenv("TACC_PYTHON_DIR", python_dir)
@@ -360,7 +367,6 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}
 cat >    $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}/%{version}.lua << 'EOF'
 inherit()
 whatis("Version-notes: Compiler:%{comp_fam_ver}. MPI:%{mpi_fam_ver}")
-prepend_path("PATH",       "%{INSTALL_DIR_MPI}/lib/python2.7/site-packages/mpi4py/bin")
 prepend_path("PYTHONPATH", "%{INSTALL_DIR_MPI}/lib/python2.7/site-packages")
 EOF
 

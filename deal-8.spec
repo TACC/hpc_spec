@@ -11,7 +11,8 @@ Summary: Dealii install
 
 %define dealiipetscversion 3.7
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+### %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version git20170615
 
 %include rpm-dir.inc
 %include compiler-defines.inc
@@ -134,6 +135,11 @@ ls $TACC_TRILINOS_DIR
 ##
 ## start of configure install
 ##
+
+# sed -i \
+#   -e '64aINCLUDE(${DEAL_II_FEATURE_CONFIG})' \
+#   -e '64afind_package(Trilinos COMPONENTS /opt/apps/intel17/python/2.7.13/lib/libpython2.7.so HINTS ${DEAL_II_TRILINOS_DIR})' \
+#   CMakeLists.txt
 
 export LOGDIR=`pwd`
 rm -rf /tmp/dealii-build

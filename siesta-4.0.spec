@@ -1,3 +1,4 @@
+# 2017-06-29 cproctor stewarding
 # Carlos Rosales-Fernandez (carlos@tacc.utexas.edu)
 # 2017-05-22
 #
@@ -49,11 +50,11 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GPL
 Group:     Applications/Chemistry
 URL:       http://www.icmab.es/siesta/
-Packager:  TACC - carlos@tacc.utexas.edu
+Packager:  TACC - cproctor@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -237,7 +238,7 @@ ibrun ./siesta < input.fdf
 As of version 4.0 Siesta no longer provides the Atom program to generate 
 pseudopotentials. Please go to this addresss in order to obtain one:
 
-http://nninc.cnf.cornell.edu/
+http://nninc.cnf.cornell.edu
 
 Version 4.0
 ]]
@@ -249,13 +250,14 @@ whatis("Version: 4.0")
 whatis("Category: application, chemistry")
 whatis("Keywords: Chemistry, Molecular Dynamics, Application")
 whatis("Description: Spanish Initiative for Electronic Simulations with Thousands of Atoms")
-whatis("URL: http://www.icmab.es/siesta/")
+whatis("URL: http://www.icmab.es/siesta")
 
 help(help_message,"\n")
 
-setenv("TACC_SIESTA_DIR","/opt/apps/intel17/impi/siesta/4.0")
-setenv("TACC_SIESTA_BIN","/opt/apps/intel17/impi/siesta/4.0/bin")
-prepend_path("PATH","/opt/apps/intel17/impi/siesta/4.0/bin")
+local siesta_dir="%{INSTALL_DIR}"
+setenv("TACC_SIESTA_DIR", siesta_dir)
+setenv("TACC_SIESTA_BIN", pathJoin(siesta_dir, "bin"))
+prepend_path("PATH",      pathJoin(siesta_dir, "bin"))
 
 EOF
 

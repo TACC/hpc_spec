@@ -1,6 +1,8 @@
-#
-# Kevin Chen, chenk@tacc.utexas.edu
-# 2016-09-30
+# Carlos Rosales-Fernandez (carlos@tacc.utexas.edu)
+# Antonio Gomez (agomez@tacc.utexas.edu)
+# 2017-05-22
+# Modified for Stampede 2 deployment and avx512
+# This version is patch 2 with the missing fortran hearders
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -20,25 +22,25 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name gsl
-%define MODULE_VAR    GSL
+%define pkg_base_name remora
+%define MODULE_VAR    REMORA
 
 # Create some macros (spec file variables)
-%define major_version 2
-%define minor_version 3
-%define micro_version 0
+%define major_version 1
+%define minor_version 8
+%define micro_version 1 
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-%include compiler-defines.inc
+#%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-#%include name-defines.inc
-%include name-defines-noreloc.inc
+%include name-defines.inc
+#%include name-defines-noreloc.inc
 #%include name-defines-hidden.inc
 #%include name-defines-hidden-noreloc.inc
 ########################################
@@ -52,11 +54,11 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1%{?dist}
-License:   GPL
-Group:     Development/Tools
-URL:       http://www.gnu.org/software/bar
-Packager:  TACC - Kevin Chen chenk@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+License:   MIT
+Group:     Profiling/Tools
+URL:       https://github.com/TACC/remora
+Packager:  TACC - agomez@tacc.utexas.edu
+Source:    %{pkg_base_name}-base-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -64,60 +66,23 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 
 %package %{PACKAGE}
-
-Summary: The GNU Scientific Library (GSL) is a numerical library for C and C++ programmers.
-Group: System Environment/Base
-
+Summary: The package RPM
+Group: Development/Tools
 %description package
-
-The GNU Scientific Library (GSL) is a numerical library for C and C++ programmers. It is free software under the GNU General Public License.
-
-The library provides a wide range of mathematical routines such as random number generators, special functions and least-squares fitting. There are over 1000 functions in total
-
-The complete range of subject areas covered by the library includes,
-
-Complex Numbers Roots of Polynomials
-Special Functions Vectors and Matrices
-Permutations  Sorting
-BLAS Support  Linear Algebra
-Eigensystems  Fast Fourier Transforms
-Quadrature  Random Numbers
-Quasi-Random Sequences  Random Distributions
-Statistics  Histograms
-N-Tuples  Monte Carlo Integration
-Simulated Annealing Differential Equations
-Interpolation Numerical Differentiation
-Chebyshev Approximation Series Acceleration
-Discrete Hankel Transforms  Root-Finding
-Minimization  Least-Squares Fitting
-Physical Constants  IEEE Floating-Point
-Discrete Wavelet Transforms Basis splines
-
-Unlike the licenses of proprietary numerical libraries the license of GSL does not restrict scientific cooperation. It allows you to share your programs freely with others.
-
-GSL can be found in the gsl subdirectory on your nearest GNU mirror http://ftpmirror.gnu.org/gsl/.
-
-Main GNU ftp site: ftp://ftp.gnu.org/gnu/gsl/
-For other ways to obtain GSL, please read How to get GNU Software
-
-Installation instructions can be found in the included README and INSTALL files.
-
-Precompiled binary packages are included in most GNU/Linux distributions.
-
-A compiled version of GSL is available as part of Cygwin on Windows (but we recommend using GSL on a free operating system, such as GNU/Linux).
-
+This is the long description for the package RPM...
 
 %package %{MODULEFILE}
-Summary: The GNU Scientific Library (GSL) is a numerical library for C and C++ programmers.
-Group: System Environment/Base
+Summary: The modulefile RPM
+Group: Lmod/Modulefiles
 %description modulefile
+This is the long description for the modulefile RPM...
+
 %description
-
-The GNU Scientific Library (GSL) is a numerical library for C and C++ programmers. It is free software under the GNU General Public License.
-
-The library provides a wide range of mathematical routines such as random number generators, special functions and least-squares fitting. There are ove
-
-
+REMORA provides an easy to use profiler that collects several different statistics for a running job:
+        - Memory usage
+        - CPU usage
+        - I/O load
+        - ...
 
 #---------------------------------------
 %prep
@@ -159,7 +124,7 @@ The library provides a wide range of mathematical routines such as random number
 %include system-load.inc
 module purge
 # Load Compiler
-%include compiler-load.inc
+#%include compiler-load.inc
 # Load MPI Library
 #%include mpi-load.inc
 
@@ -173,8 +138,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -187,39 +150,25 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-  WD=`pwd`
 
-  # Create some dummy directories and files for fun
-#  export CFLAGS="-O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -fp-model precise"
-#  export CPPFLAGS="-O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -fp-model precise"
- %if "%is_intel" == "1" 
-  export CC=`which icc`
-  export CXX=`which icpc`
-  export CFLAGS="-O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -fp-model precise"
-  export CPPFLAGS="-O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -fp-model precise"
-%endif
 
-%if "%is_gcc" == "1" 
-  export CC=`which gcc`
-  export CXX=`which g++`
-  export CFLAGS="-O3 -mavx512f -mavx512cd"
-  export CPPFLAGS="-O3 -mavx512f -mavx512cd"
-%endif
- 
+# Mount temp trick
+ mkdir -p             %{INSTALL_DIR}
+ mount -t tmpfs tmpfs %{INSTALL_DIR}
 
-  export CFLAGS="%{TACC_OPT}"
-  export CPPFLAGS="%{TACC_OPT}"
-  export LDFLAGS="%{TACC_OPT}"
+export CFLAGS="%{TACC_OPT}"
+export LDFLAGS="%{TACC_OPT}"
 
-#  export CONFIG_FLAGS="-O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -fp-model precise"
-  ./configure --prefix=%{INSTALL_DIR}
-  make -j 12
-  make install
-#  sed -i -- 's/tmprpm/opt\/apps/g' %{INSTALL_DIR}/bin/gsl-config 
-# Copy everything from tarball over to the installation directory
-  cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-  umount %{INSTALL_DIR}
+## sed -i 's/icc/#icc/g' ./install.sh
+sed -i 's/pip/#pip/g' ./install.sh
+REMORA_INSTALL_PREFIX=%{INSTALL_DIR} ./install.sh
 
+
+mkdir -p                 $RPM_BUILD_ROOT/%{INSTALL_DIR}
+cp    -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+umount                                   %{INSTALL_DIR}
+
+  
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -241,36 +190,89 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
-The %{MODULE_VAR} module defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
-TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
-include files, and tools respectively.
+local help_message=[[
+REMORA is an easy to use profiler that allows users to get information
+regarding their jobs. The information collected by the tool includes:
+    - Memory usage
+    - CPU usage
+    - I/O load (Lustre,DVS)
+    - NUMA memory
+    - Network topology
+
+To use the tool, simply modify your batch script and include 'remora' before
+your executable or ibrun.
+
+Examples:
+...
+#SBATCH -N 2
+#SBATCH -n 16
+#SBATCH -A my_project
+
+remora ibrun my_parallel_program [arguments]
+
+---------------------------------------
+...
+#SBATCH -N 1
+#SBATCH -n 1
+#SBATCH -A my_project
+remora ./my_program [arguments]
+
+---------------------------------------
+
+REMORA will create a set of folders with a number of files that contain
+the values for the parameters previously introduced.
+
+REMORA will also create a set of HTML files with the results plotted for
+an easier analysis. There's a summary HTML file in the main results folder
+that contains links to the different results. Transfer the results to your
+own machine to visualize them.
+
+The following environment variables control the behaviour of the tool:
+
+  - REMORA_PERIOD  - How often memory usage is checked. Default
+                     is 10 seconds.
+  - REMORA_VERBOSE - Verbose mode will save all information to
+                     a file. Default is 0 (off).
+  - REMORA_MODE    - FULL for all stats, BASIC for memory and cpu only.
+                     Default if FULL.
+  - REMORA_TMPDIR  - Directory for intermediate files. Default is the
+                     remora output directory.
+
+The remora module also defines the following environment variables:
+REMORA_DIR, REMORA_LIB, REMORA_INC and REMORA_BIN for the location
+of the REMORA distribution, libraries, include files, and tools respectively.
+
+To generate a summary report after a crash use:
+
+remora_post_crash <JOBID>
 ]]
 
---help(help_msg)
-help(help_msg)
+help(help_message,"\n")
 
-whatis("Name: GSL")
-whatis("Version: %{pkg_version}%{dbg}")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
+whatis("Name: Remora")
+whatis("Version: 1.8.1")
+whatis("Category: Profiling/Tools ")
+whatis("Keywords: Tools, Profiling, Resources")
+whatis("Description: REsource MOnitoring for Remote Applications")
+whatis("URL: https://github.com/TACC/remora")
 
 -- Create environment variables.
-local bar_dir           = "%{INSTALL_DIR}"
+local remora_dir           = "%{INSTALL_DIR}"
 
-family("GSL")
-prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "lib"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/bar1_1/modulefiles")
-setenv( "TACC_%{MODULE_VAR}_DIR",                bar_dir)
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(bar_dir, "include"))
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(bar_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(bar_dir, "bin"))
-setenv( "PKG_CONFIG_PATH",       pathJoin(bar_dir, "lib/pkgconfig"))
+family("remora")
+prepend_path(    "PATH",                pathJoin(remora_dir, "bin"))
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(remora_dir, "lib"))
+setenv( "TACC_REMORA_DIR",       remora_dir)
+setenv( "TACC_REMORA_INC",       pathJoin(remora_dir, "include"))
+setenv( "TACC_REMORA_LIB",       pathJoin(remora_dir, "lib"))
+setenv( "REMORA_BIN",       pathJoin(remora_dir, "bin"))
+setenv( "REMORA_PERIOD",    "10")
+setenv( "REMORA_MODE",  "FULL")
+setenv( "REMORA_VERBOSE",   "0")
+
 EOF
-  
+
+# Version File
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -279,7 +281,8 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 
 set     ModulesVersion      "%{version}"
 EOF
-  
+ 
+ 
   # Check the syntax of the generated lua modulefile only if a visible module
   %if %{?VISIBLE}
     %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}

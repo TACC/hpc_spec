@@ -37,7 +37,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GPL
 Group:     Utility
 URL:       http://www.boost.org
@@ -210,15 +210,10 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help([[
 The boost module file defines the following environment variables:"
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC for"
+BOOST_ROOT, TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC for"
 the location of the boost distribution."
 
-To load the mpi boost      do "module load boost-mpi"
-To load the rest of boost  do "module load boost"
-
-It is save to load both.
-
-boost-python is not currently supported.
+boost-python and boost-mpi are not currently supported.
 
 Version %{version}"
 ]])
@@ -228,15 +223,18 @@ whatis("Version: %{version}")
 whatis("Category: %{group}")
 whatis("Keywords: System, Library, C++")
 whatis("URL: http://www.boost.org")
-whatis("Description: Boost provides free peer-reviewed portable C++ source libraries %{BOOST_TYPE}.")
+whatis("Description: Boost provides free peer-reviewed portable C++ source libraries.")
 
 
 setenv("TACC_%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
 setenv("TACC_%{MODULE_VAR}_LIB","%{INSTALL_DIR}/lib")
 setenv("TACC_%{MODULE_VAR}_INC","%{INSTALL_DIR}/include")
+setenv("TACC_%{MODULE_VAR}_BIN","%{INSTALL_DIR}/bin")
+setenv("BOOST_ROOT","%{INSTALL_DIR}")
 
 -- Add boost to the LD_LIBRARY_PATH
 prepend_path("LD_LIBRARY_PATH","%{INSTALL_DIR}/lib")
+prepend_path("PATH", "%{INSTALL_DIR}/bin")
 
 EOF
 

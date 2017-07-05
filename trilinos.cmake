@@ -13,6 +13,7 @@ cmake -VV \
   -D CMAKE_BUILD_TYPE:STRING=RELEASE \
   -D CMAKE_C_FLAGS:STRING="${COPTFLAGS} ${MKLFLAG}" \
   -D CMAKE_CXX_FLAGS:STRING="${COPTFLAGS} ${MKLFLAG} -DMPICH_SKIP_MPICXX" \
+  -D Trilinos_EXTRA_LINK_FLAGS="${TACC_PYTHON_LIB}/libpython2.7.so" \
   \
   -D BLAS_INCLUDE_DIRS:PATH="${TACC_MKL_INC}" \
   -D BLAS_LIBRARY_DIRS:PATH="${TACC_MKL_LIB}" \
@@ -58,7 +59,7 @@ cmake -VV \
   -D Trilinos_ENABLE_Kokkos:BOOL=ON \
   -D Trilinos_ENABLE_ML:BOOL=ON \
   -D Trilinos_ENABLE_MOOCHO:BOOL=ON \
-  -D Trilinos_ENABLE_MueLu:BOOL=ON \
+  -D Trilinos_ENABLE_MueLu:BOOL=${HAS_MUELU} \
   -D                 MueLu_ENABLE_Tutorial:BOOL=OFF \
   -D Trilinos_ENABLE_NOX=ON \
   -D                 NOX_ENABLE_TESTS:BOOL=OFF \

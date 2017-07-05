@@ -21,27 +21,30 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name caffe 
-%define MODULE_VAR    CAFFE 
+%define pkg_base_name namd
+%define MODULE_VAR    NAMD
 
 # Create some macros (spec file variables)
-%define major_version 1
-%define minor_version 0
-%define micro_version 0
+%define major_version 2.12
+#%define minor_version
+#%define micro_version
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
-
+#%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}
 ### Toggle On/Off ###
-%include rpm-dir.inc                  
+%include rpm-dir.inc
+
 %include compiler-defines.inc
 %include mpi-defines.inc
+
+#%include name-defines-noreloc.inc
+
 ########################################
 ### Construct name based on includes ###
 ########################################
-#%include name-defines.inc
-%include name-defines-noreloc.inc
-#%include name-defines-hidden.inc
-#%include name-defines-hidden-noreloc.inc
+%include name-defines.inc
+
+
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -53,11 +56,12 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   2%{?dist}
-License:   BSD-2
-Group:     Data/Deep Learning
-URL:       https://github.com/intel/caffe
-Packager:  TACC - zzhang@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+License:   GPL
+Group:     Theoretical and Computational Biophysics Group, UIUC
+URL:       http://www.ks.uiuc.edu/Development/Download/download.cgi?PackageName=NAMD
+Packager:  TACC - huang@tacc.utexas.edu
+Source:    NAMD_2.12_Source.tar.gz
+Source1:   tcl8.5.9-linux-x86_64-threaded.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -65,19 +69,31 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 
 %package %{PACKAGE}
-Summary: Caffe is a deep learning framework. This is the Intel distribution with MPI support. 
-Group: Data/Deep Learning
+Summary: The NAMD 2.12
+Group: Applications/Chemistry
 %description package
-Caffe is a deep learning framework made with expression, speed, and modularity in mind. It is developed by the Berkeley Vision and Learning Center (BVLC) and community contributors.
+NAMD, recipient of a 2002 Gordon Bell Award, is a parallel molecular dynamics
+code designed for high-performance simulation of large biomolecular systems.
+Based on Charm++ parallel objects, NAMD scales to hundreds of processors on
+high-end parallel platforms and tens of processors on commodity clusters
+using gigabit ethernet.
 
 %package %{MODULEFILE}
-Summary: Caffe is a deep learning framework. This is the Intel distribution with MPI support.
-Group: Data/Deep Learning
+Summary: The modulefile RPM
+Group: Lmod/Modulefiles
 %description modulefile
+NAMD, recipient of a 2002 Gordon Bell Award, is a parallel molecular dynamics
+code designed for high-performance simulation of large biomolecular systems.
+Based on Charm++ parallel objects, NAMD scales to hundreds of processors on
+high-end parallel platforms and tens of processors on commodity clusters
+using gigabit ethernet.
 
 %description
-Caffe is a deep learning framework made with expression, speed, and modularity in mind. It is developed by the Berkeley Vision and Learning Center (BVLC) and community contributors.
-
+NAMD, recipient of a 2002 Gordon Bell Award, is a parallel molecular dynamics
+code designed for high-performance simulation of large biomolecular systems.
+Based on Charm++ parallel objects, NAMD scales to hundreds of processors on
+high-end parallel platforms and tens of processors on commodity clusters
+using gigabit ethernet.
 
 #---------------------------------------
 %prep
@@ -88,10 +104,6 @@ Caffe is a deep learning framework made with expression, speed, and modularity i
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-#The following line extract the tar ball from previously specified path
-%setup -n %{pkg_base_name}-%{pkg_version}
-
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -105,11 +117,27 @@ Caffe is a deep learning framework made with expression, speed, and modularity i
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
+%setup -n NAMD_%{pkg_version}_Source
 
 
 #---------------------------------------
 %build
 #---------------------------------------
+%include compiler-load.inc
+%include mpi-load.inc
+
+tar -xvf charm-6.7.1.tar
+cd charm-6.7.1/
+env MPICXX=mpicxx CC=icc CXX=icpc ./build charm++ mpi-linux-x86_64-smp-iccstatic --incdir $TACC_IMPI_INC --libdir $TACC_IMPI_LIB --no-build-shared --with-production --suffix knl -j48 -xMIC-AVX512
+cd ..
+
+tar -zxvf $RPM_SOURCE_DIR/tcl8.5.9-linux-x86_64-threaded.tar.gz
+
+export namd_home=`pwd`
+./config Linux-KNL-icc --charm-arch mpi-linux-x86_64-smp-iccstatic-knl --with-mkl --mkl-prefix $TACC_MKL_DIR --with-tcl --tcl-prefix $namd_home/tcl8.5.9-linux-x86_64-threaded
+#./config Linux-x86_64-icc --charm-arch mpi-linux-x86_64-mpicxx --with-fftw --fftw-prefix $namd_home/fftw-crayxt3 --with-tcl --tcl-prefix $namd_home/tcl8.5.9-crayxe
+cd Linux-KNL-icc
+make -j 48
 
 
 #---------------------------------------
@@ -119,19 +147,8 @@ Caffe is a deep learning framework made with expression, speed, and modularity i
 # Setup modules
 %include system-load.inc
 
+# Insert necessary module commands
 module purge
-
-module load TACC
-
-module load boost/1.64
-module load hdf5/1.8.16
-
-# Load Compiler
-#%include compiler-load.inc
-# Load MPI Library
-%include mpi-load.inc
-
-# Insert further module commands
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -141,6 +158,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -152,58 +170,20 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-  
+
   # Create some dummy directories and files for fun
-  #mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  #mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
-  #mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
-  # download libraries
-  git clone https://github.com/zhaozhang/caffe-stampede2.git
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
 
-  # Install MLSL
-  mkdir -p ../mlsl
-  pushd ../mlsl
-  wget https://github.com/01org/MLSL/releases/download/v2017-Preview/l_mlsl_p_2017.0.014.tgz
-  tar zxf l_mlsl_p_2017.0.014.tgz
-  ./install.sh -s -d /admin/build/rpms/BUILD/caffe-1.0.0/caffe-stampede2/libraries/mlsl
-  popd
+  cp -p Linux-KNL-icc/{namd2,psfgen,flipbinpdb,flipdcd,sortreplicas} $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
+  cp -r lib $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  chmod -Rf u+rwX,g+rwX,o=rX                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-  # Install protocol-buffer
-  pushd caffe-stampede2/libraries
-  mkdir protocol-buffer-build
-  pushd protocol-buffer-build
-  wget https://github.com/google/protobuf/releases/download/v3.0.0/protobuf-cpp-3.0.0.tar.gz
-  tar zxf protobuf-cpp-3.0.0.tar.gz
-  pushd protobuf-3.0.0
-  CC=icc CXX=icpc ./configure --prefix=/admin/build/rpms/BUILD/caffe-1.0.0/caffe-stampede2/libraries/protocol-buffer-build
-  make
-  make install
-  export PATH=/admin/build/rpms/BUILD/caffe-1.0.0/caffe-stampede2/libraries/protocol-buffer-build/bin:$PATH
-  popd
-  popd
-  popd
-
-  # Build Caffe
-  cp caffe-stampede2/Makefile.config .
-  cp caffe-stampede2/Makefile .
-  #cd caffe-1.0.0
-  unset MKLROOT
-  #make clean
-  CXX=icpc CXXFLAGS="-xCORE-AVX2 -axMIC-AVX512" make all -j 8
-  #make pycaffe
-  make distribute
-
-  # Zhao: After make distribute, simply copy distribute/ to $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  cp -r external/mkl/mklml_lnx_2017.0.2.20170110 caffe-stampede2/libraries/mklml
-  cp -r caffe-stampede2/libraries distribute/
-  rm -rf distribute/libraries/protocol-buffer-build
-
-  # echo "TACC_OPT %{TACC_OPT}"
-  # move . to %{INSTALL_DIR} 
 
   # Copy everything from tarball over to the installation directory
-  cp -r distribute/* $RPM_BUILD_ROOT/%{INSTALL_DIR}
-#-----------------------  
+#  cp * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+#-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
 
@@ -213,7 +193,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -221,51 +201,84 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
+
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_msg=[[
-The %{MODULE_VAR} module defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
-TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
-include files, and tools respectively.
+The TACC NAMD module appends the path to the namd2 executable
+to the PATH environment variable. Also TACC_NAMD_DIR,
+TACC_NAMD_BIN, and TACC_NAMD_LIB are set to NAMD home
+bin, and lib directories; lib directory contains information for
+ABF, random acceleration MD(RAMD), replica exchange MD(REMD).
+
+Two recommended settings are shown in the following example slurm 
+scripts. 
+
+#  Example for one or two nodes. four tasks per node
+#SBATCH -J test # Job Name
+#SBATCH -o test.o%j
+#SBATCH -N 1    # Total number of nodes
+#SBATCH -n 4    # Total number of mpi tasks
+#SBATCH -p normal # Queue (partition) name -- normal, development, etc.
+#SBATCH -t 24:00:00 # Run time (hh:mm:ss) - 24 hours
+
+module load intel/16.0.3 impi namd/2.12
+ibrun namd2 +ppn 32 +pemap 0-63+68 +commap 64-67 input &> output
+
+For two nodes,
+#SBATCH -N 2    # Total number of nodes
+#SBATCH -n 8    # Total number of mpi tasks
+
+
+#  Example for more than one nodes. 13 tasks per node. Scales better!!
+#SBATCH -J test # Job Name
+#SBATCH -o test.o%j
+#SBATCH -N 3     # Total number of nodes
+#SBATCH -n 39    # Total number of mpi tasks
+#SBATCH -p normal # Queue (partition) name -- normal, development, etc.
+#SBATCH -t 24:00:00 # Run time (hh:mm:ss) - 24 hours
+
+module load intel/16.0.3 impi namd/2.12
+ibrun namd2 +ppn 8 +pemap 0-51+68 +commap 52-67 input &> output
+
+For four nodes,
+#SBATCH -N 4    # Total number of nodes
+#SBATCH -n 52    # Total number of mpi tasks
+
+
+You may need to change some parameters if necessary. You can try 
+both settings then use the optimal one. You do not need to change 
+"+ppn 32 +pemap 0-63+68 +commap 64-67" or "+ppn 8 +pemap 0-51+68 
++commap 52-67". "run_namd" is NOT provided any more.
+
+
+Version %{version}
 ]]
 
 --help(help_msg)
 help(help_msg)
 
-whatis("Name: caffe")
+whatis("Name: NAMD")
 whatis("Version: %{pkg_version}%{dbg}")
 %if "%{is_debug}" == "1"
 setenv("TACC_%{MODULE_VAR}_DEBUG","1")
 %endif
 
--- Create environment variables.
-local bar_dir           = "%{INSTALL_DIR}"
+whatis("Category: application, chemistry")
+whatis("Keywords: Chemistry, Biology, Molecular Dynamics, Application")
+whatis("URL: http://www.ks.uiuc.edu/Research/namd/")
+whatis("Description: Scalable Molecular Dynamics software")
 
-family("caffe")
-prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "lib"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/boost/lib"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/gflags/lib"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/glog/lib"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/leveldb/lib"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/lmdb/lib"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/mlsl/intel64/lib"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/opencv/lib"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/protocol-buffer/lib"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/snappy/lib"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/mklml/lib"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/bar1_1/modulefiles")
-setenv( "TACC_%{MODULE_VAR}_DIR",                bar_dir)
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(bar_dir, "include"))
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(bar_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(bar_dir, "bin"))
-setenv( "MLSL_ROOT",       pathJoin(bar_dir, "libraries/mlsl"))
-load("hdf5")
-load("boost")
+-- Create environment variables.
+local namd_dir           = "%{INSTALL_DIR}"
+
+family("namd")
+prepend_path(    "PATH",                pathJoin(namd_dir, "bin"))
+prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/namd_2.10/modulefiles")
+setenv( "TACC_%{MODULE_VAR}_DIR",                namd_dir)
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(namd_dir, "bin"))
 EOF
-  
+
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -274,11 +287,10 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 
 set     ModulesVersion      "%{version}"
 EOF
-  
-  # Check the syntax of the generated lua modulefile only if a visible module
-  %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-  %endif
+
+  # Check the syntax of the generated lua modulefile
+  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -298,7 +310,7 @@ EOF
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile 
+%files modulefile
 #---------------------------
 
   %defattr(-,root,install,)
@@ -308,6 +320,7 @@ EOF
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
+
 
 ########################################
 ## Fix Modulefile During Post Install ##

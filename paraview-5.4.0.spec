@@ -1,119 +1,90 @@
-#
-# W. Cyrus Proctor
-# 2016-02-06
-#
-# Important Build-Time Environment Variables (see name-defines.inc)
-# NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
-# NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
-#
-# Important Install-Time Environment Variables (see post-defines.inc)
-# VERBOSE=1       -> Print detailed information at install time
-# RPM_DBPATH      -> Path To Non-Standard RPM Database Location
-#
-# Typical Command-Line Example:
-# ./build_rpm.sh Bar.spec
-# cd ../RPMS/x86_64
-# rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
-# rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
-# rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
+Summary:  ParaView 5.4.0 local binary install
 
-Summary: A Nice little relocatable skeleton spec file example.
+%define pkg_base_name paraview
+%define MODULE_VAR    PARAVIEW
 
-# Give the package a base name
-%define pkg_base_name TACC
-%define MODULE_VAR    TACC
-
-# Create some macros (spec file variables)
-%define major_version 1
-%define minor_version 0
+%define major_version 5
+%define minor_version 4
+%define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}
 
-### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
-#%include mpi-defines.inc
-########################################
-### Construct name based on includes ###
-########################################
-%include name-defines-noreloc.inc
+%include compiler-defines.inc
+%include mpi-defines.inc
+
+%include name-defines.inc
+
 ########################################
 ############ Do Not Remove #############
 ########################################
 
 ############ Do Not Change #############
-#Name:      %{pkg_name}
-# 2016-02-06 Hacked name to keep TACC
-Name:      tacc-base_modules
+Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4%{?dist}
+Release:   1%{?dist}
 License:   GPL
-Group:     Module Magic
-Packager:  TACC - cproctor@tacc.utexas.edu
+Group:     Visualization
+URL:       //www.kitware.com
+Packager:  TACC - gda@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
 
-
 %package %{PACKAGE}
 Summary: The package RPM
-Group: Development/Tools
+Group: Visualization
 %description package
-This is the long description for the package RPM...
-Welcome to the TACC Module way!
+The paraview package contains the paraview visualization software from Kitware. The package
+contains the precompiled binary and any libraries needed to support the various
+third party components
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
-Group: Lmod/Modulefiles
+Group: Visualization/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...
-Welcome to the TACC Module way!
+The module sets the required user environment needed to run paraview on TACC systems. It
+sets paths to executables and modifies LD_LIBRARY_PATH
+
 
 %description
-Welcome to the TACC Module way!
+The Paraview visualization software supports visualization of large scale scientific data
+in a variety of formats. The software runs in parallel or serial on a variety of compute
+platforms. Paraview supports a large number of visualization methods. It also supports
+python scripting for batch use
 
-#---------------------------------------
 %prep
-#---------------------------------------
 
-#------------------------
 %if %{?BUILD_PACKAGE}
-#------------------------
-  # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-#-----------------------
-%endif # BUILD_PACKAGE |
-#-----------------------
 
-#---------------------------
+%setup -n %{pkg_base_name}-%{pkg_version}
+
+%endif
+
 %if %{?BUILD_MODULEFILE}
-#---------------------------
-  #Delete the module installation directory.
   rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
-#--------------------------
-%endif # BUILD_MODULEFILE |
-#--------------------------
 
+%endif
 
-#---------------------------------------
 %build
-#---------------------------------------
 
-
-#---------------------------------------
 %install
-#---------------------------------------
 
 # Setup modules
-# Nothing to do!
+%include system-load.inc
+module purge
+# Load Compiler
+%include compiler-load.inc
+# Load MPI Library
+%include mpi-load.inc
 
-# Insert necessary module commands
-# None to have!
+# Insert further module commands
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -135,17 +106,21 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
+  
+  echo "TACC_OPT %{TACC_OPT}"
+  
+  # Copy everything from tarball over to the installation directory
 
-  # Nothing to see here!
+  echo #######################################
+  pwd
+  echo #######################################
 
-#-----------------------  
-%endif # BUILD_PACKAGE |
-#-----------------------
+  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  
+%endif
 
 
-#---------------------------
 %if %{?BUILD_MODULEFILE}
-#---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
   
@@ -157,41 +132,48 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   ########### Do Not Remove #############
   #######################################
   
+
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/TACC.lua << 'EOF'
-local helpMsg = [[
-The %{MODULE_VAR} modulefile defines the default paths and environment
-variables needed to use the local software and utilities
-available, placing them after the vendor-supplied
-paths in PATH and MANPATH.
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
+local help_msg=[[ 
+The %{MODULE_VAR} module defines the following environment variables:
+TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC,
+TACC_%{MODULE_VAR}_BIN and TACC_%{MODULE_VAR}_PYTHONPATH for the location of the
+%{MODULE_VAR} distribution, libraries, include files, tools, and python packages
+respectively.
 ]]
 
-help(helpMsg)
+--help(help_msg)
+help(help_msg)
 
+whatis("Name: paraview")
+whatis("Version: %{pkg_version}%{dbg}")
+%if "%{is_debug}" == "1"
+setenv("TACC_%{MODULE_VAR}_DEBUG","1")
+%endif
 
-if (os.getenv("USER") ~= "root") then
-  append_path("PATH",  ".")
-end
+-- Create environment variables.
+local paraview_dir           = "%{INSTALL_DIR}"
 
-load("intel")
-load("impi")
-load("git")
-load("autotools")
-load("python")
-load("cmake")
-try_load("xalt")
+family("paraview")
 
-prepend_path("MANPATH","/usr/local/man:/usr/share/man:/usr/X11R6/man:/usr/kerberos/man:/usr/man")
+prereq("swr", "qt5")
 
--- Environment change - assume single threaded to fix silly MKL
-if (mode() == "load" and os.getenv("OMP_NUM_THREADS") == nil) then
-  setenv("OMP_NUM_THREADS","1")
-end
+prepend_path("PATH",              pathJoin(paraview_dir, "bin"))
+prepend_path("LD_LIBRARY_PATH",   pathJoin(paraview_dir, "lib"))
+prepend_path("LD_LIBRARY_PATH",   pathJoin(paraview_dir, "ospray", "lib64"))
+prepend_path("LD_LIBRARY_PATH",   pathJoin(paraview_dir, "embree", "lib64"))
+prepend_path("PYTHONPATH",        pathJoin(paraview_dir, "lib", "paraview-5.1", "site-packages"))
+prepend_path("PYTHONPATH",        pathJoin(paraview_dir, "lib", "paraview-5.1", "site-packages", "vtk"))
 
---prepend_path{ "PATH", "/opt/apps/tacc/bin", priority=10 }
+prepend_path("MODULEPATH",        "%{MODULE_PREFIX}/paraview5_4/modulefiles")
 
+setenv("TACC_%{MODULE_VAR}_DIR",  paraview_dir)
+setenv("TACC_%{MODULE_VAR}_INC",  pathJoin(paraview_dir, "include"))
+setenv("TACC_%{MODULE_VAR}_LIB",  pathJoin(paraview_dir, "lib"))
+setenv("TACC_%{MODULE_VAR}_BIN",  pathJoin(paraview_dir, "bin"))
 EOF
-  
+
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -201,9 +183,10 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 set     ModulesVersion      "%{version}"
 EOF
   
-  # Check the syntax of the generated lua modulefile
-  ####%{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %endif
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -233,7 +216,6 @@ EOF
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
 
 ########################################
 ## Fix Modulefile During Post Install ##
