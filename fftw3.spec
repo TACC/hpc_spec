@@ -2,6 +2,10 @@
 # 2017-05-17
 # Modified for Stampede 2 deployment and avx512
 # This version is patch 2 with the missing fortran hearders
+# 
+# 2017-07-10 
+# User ticket TUP:38819 pointed out incorrect files in libtool files
+# It appears this will not work as a relocatable
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -38,8 +42,8 @@ Summary: A Nice little relocatable skeleton spec file example.
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
-#%include name-defines-noreloc.inc
+#%include name-defines.inc
+%include name-defines-noreloc.inc
 #%include name-defines-hidden.inc
 #%include name-defines-hidden-noreloc.inc
 ########################################
@@ -52,7 +56,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GPL
 Group:     System Environment/Base
 URL:       http://www.fftw.org

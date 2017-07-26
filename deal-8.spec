@@ -117,12 +117,16 @@ mount -t tmpfs tmpfs %{INSTALL_DIR}
 
 module list
 for m in boost cmake \
-    mumps netcdf p4est phdf5 \
+    mumps p4est phdf5 \
     petsc/%{dealiipetscversion} slepc/%{dealiipetscversion} \
     trilinos ; do
   module --ignore_cache load $m ; 
 done
-export TACC_METIS_DIR=$PETSC_DIR/$PETSC_ARCH
+%if "%{comp_fam}" == "intel"
+  module load netcdf
+%endif
+
+#export TACC_METIS_DIR=$PETSC_DIR/$PETSC_ARCH
 ls $TACC_P4EST_DIR
 ls $TACC_TRILINOS_DIR
 
@@ -135,11 +139,6 @@ ls $TACC_TRILINOS_DIR
 ##
 ## start of configure install
 ##
-
-# sed -i \
-#   -e '64aINCLUDE(${DEAL_II_FEATURE_CONFIG})' \
-#   -e '64afind_package(Trilinos COMPONENTS /opt/apps/intel17/python/2.7.13/lib/libpython2.7.so HINTS ${DEAL_II_TRILINOS_DIR})' \
-#   CMakeLists.txt
 
 export LOGDIR=`pwd`
 rm -rf /tmp/dealii-build
@@ -156,12 +155,12 @@ echo "Installing deal with Petsc: ${PETSC_DIR}/${PETSC_ARCH}"
     -DCMAKE_CXX_COMPILER="mpicxx" \
     -DDEAL_II_WITH_CXX11=ON \
     -DCMAKE_Fortran_COMPILER=mpif90 \
-    -DDEAL_II_CXX_FLAGS_DEBUG="-std=c++14 -g -O0" \
+    -DDEAL_II_CXX_FLAGS_DEBUG="-std=c++14 -g %{TACC_OPT} -O0" \
     -DDEAL_II_CXX_FLAGS_RELEASE="-std=c++14 %{TACC_OPT} -O2" \
     -DDEAL_II_WITH_MPI=ON \
     ` if [ ${TACC_FAMILY_COMPILER} = "gcc" ] ; then echo " \
-        -DMPI_CXX_INCLUDE_PATH=${MPICH_HOME}/include \
-        -DMPI_CXX_LIBRARIES=${MPICH_HOME}/lib \
+        -DMPI_CXX_INCLUDE_PATH=${MPICH_HOME}/intel64/include \
+        -DMPI_CXX_LIBRARIES=${MPICH_HOME}/intel64/lib \
     " ; fi ` \
     -DDEAL_II_COMPONENT_MESH_CONVERTER=ON \
     -DBOOST_DIR=${TACC_BOOST_DIR} \
@@ -182,12 +181,13 @@ echo "Installing deal with Petsc: ${PETSC_DIR}/${PETSC_ARCH}"
     %{_topdir}/BUILD/dealii-%{version} \
     2>&1 | tee ${LOGDIR}/dealii_cmake.log
 export disabled=" \
+        -DPETSC_INCLUDE_DIR_COMMON=${PETSC_DIR} \
     -DNETCDF_DIR=${TACC_NETCDF_DIR} \
     "
 make 2>&1 | tee ${LOGDIR}/dealii_compile.log
 
 make install
-make test
+( make test || true )
 
 popd # back out of INSTALL_DIR
 

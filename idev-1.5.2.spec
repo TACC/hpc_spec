@@ -1,3 +1,5 @@
+# rpmbuild -bb idev-1.5.2-2.spec 2>&1 | tee log_idev-1.5.2-2
+# rpmbuild -bb idev-1.5.2-x.spec 2>&1 | tee log_idev-1.5.2-x
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
@@ -18,7 +20,7 @@ Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
-Release:   1%{?dist}
+Release:   3%{?dist}
 License:   GPL
 Group:     Development/Tools
 URL:       https:/github.com/tacc/idev
@@ -67,11 +69,8 @@ and cuda programs.
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 %setup -c -n idev-%{pkg_version}
-#setup -c
-echo `pwd` > /tmp/whereami1_a
 
 %install
-echo `pwd` > /tmp/whereami2_a
 mkdir -p      $RPM_BUILD_ROOT/%{INSTALL_DIR}
 cp idev       $RPM_BUILD_ROOT/%{INSTALL_DIR}
 cp idev_utils $RPM_BUILD_ROOT/%{INSTALL_DIR}

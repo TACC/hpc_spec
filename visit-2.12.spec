@@ -67,7 +67,7 @@ Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
-Release:  3%{?dist}
+Release:  4%{?dist}
 License:  GPL
 URL:   https://wci.llnl.gov/simulation/computer-codes/visit
 Group:    Visualization 

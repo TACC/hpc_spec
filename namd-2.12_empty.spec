@@ -1,7 +1,4 @@
-# MUMPS specfile
-# Victor Eijkhout 2017
 #
-# based on Bar.spec
 # W. Cyrus Proctor
 # Antonio Gomez
 # 2015-08-25
@@ -21,32 +18,32 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: Mumps, piggybacking on the PETSc install
+Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name mumps
-%define MODULE_VAR    MUMPS
+%define pkg_base_name namd
+%define MODULE_VAR    NAMD
 
 # Create some macros (spec file variables)
-%define major_version 4
-%define minor_version 10
+%define major_version 2.12
+%define minor_version 0
 %define micro_version 0
 
-%define pkg_version %{major_version}.%{minor_version}
-%define petscversion 3.7
-###%define NO_PACKAGE 0
-
+#%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}
 ### Toggle On/Off ###
-%include rpm-dir.inc                  
+%include rpm-dir.inc
+
 %include compiler-defines.inc
 %include mpi-defines.inc
+
+#%include name-defines-noreloc.inc
+
 ########################################
 ### Construct name based on includes ###
 ########################################
-#%include name-defines.inc
-%include name-defines-noreloc-home1.inc
-#%include name-defines-hidden.inc
-#%include name-defines-hidden-noreloc.inc
+%include name-defines.inc
+
 
 ########################################
 ############ Do Not Remove #############
@@ -59,11 +56,12 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1%{?dist}
-License:   BSD-like
-Group:     Development/Numerical-Libraries
-URL:       http://graal.ens-lyon.fr/MUMPS/
-Packager:  TACC - eijkhout@tacc.utexas.edu
-#Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+License:   GPL
+Group:     Theoretical and Computational Biophysics Group, UIUC
+URL:       http://www.ks.uiuc.edu/Development/Download/download.cgi?PackageName=NAMD
+Packager:  TACC - huang@tacc.utexas.edu
+Source:    NAMD_2.12_Source.tar.gz
+Source1:   tcl8.5.9-linux-x86_64-threaded.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -71,23 +69,47 @@ Packager:  TACC - eijkhout@tacc.utexas.edu
 
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: The NAMD 2.12
+Group: Applications/Chemistry
 %description package
-This is the long description for the package RPM...
+NAMD, recipient of a 2002 Gordon Bell Award, is a parallel molecular dynamics
+code designed for high-performance simulation of large biomolecular systems.
+Based on Charm++ parallel objects, NAMD scales to hundreds of processors on
+high-end parallel platforms and tens of processors on commodity clusters
+using gigabit ethernet.
 
 %package %{MODULEFILE}
-Summary: Mumps local binary install
-Group: System Environment/Base
+Summary: The modulefile RPM
+Group: Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...
+NAMD, recipient of a 2002 Gordon Bell Award, is a parallel molecular dynamics
+code designed for high-performance simulation of large biomolecular systems.
+Based on Charm++ parallel objects, NAMD scales to hundreds of processors on
+high-end parallel platforms and tens of processors on commodity clusters
+using gigabit ethernet.
 
 %description
-Mumps is a solver library for distributed sparse linear system.
+NAMD, recipient of a 2002 Gordon Bell Award, is a parallel molecular dynamics
+code designed for high-performance simulation of large biomolecular systems.
+Based on Charm++ parallel objects, NAMD scales to hundreds of processors on
+high-end parallel platforms and tens of processors on commodity clusters
+using gigabit ethernet.
 
 #---------------------------------------
 %prep
 #---------------------------------------
+
+rm   -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+#------------------------
+%if %{?BUILD_PACKAGE}
+#------------------------
+  # Delete the package installation directory.
+  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+#-----------------------
+%endif # BUILD_PACKAGE |
+#-----------------------
 
 #---------------------------
 %if %{?BUILD_MODULEFILE}
@@ -98,31 +120,35 @@ Mumps is a solver library for distributed sparse linear system.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
+%setup -n NAMD_%{pkg_version}_Source
+
+
 #---------------------------------------
 %build
 #---------------------------------------
+%include compiler-load.inc
+%include mpi-load.inc
 
-
-#---------------------------------------
 %install
 #---------------------------------------
 
 # Setup modules
 %include system-load.inc
+
+# Insert necessary module commands
 module purge
 
-%include compiler-load.inc
-%include mpi-load.inc
-
-echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
+
 
 #---------------------------
 %if %{?BUILD_MODULEFILE}
 #---------------------------
 
+mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
+
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -130,94 +156,48 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
-##
-## configure install loop
-##
-export dynamic="debug cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug "
 
-for ext in \
-  "" \
-  ${dynamic} \
-  ; do
+cat >    $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
+local err_message = [[
 
-echo "module file for ${ext}"
+   NAMD 2.12 is not available under Intel 17 at this time. 
+Please load NAMD/2.12 using the following command, 
 
-module unload petsc
-if [ -z "${ext}" ] ; then
-  export architecture=knightslanding
-  module load petsc/%{petscversion}
-else
-  export architecture=knightslanding-${ext}
-  module load petsc/%{petscversion}-${ext}
-fi
+module load intel/16.0.3 impi namd/2.12
 
+module help namd 
+for usage. 
 
-##
-## modulefile part of the configure install loop
-##
-if [ -z "${ext}" ] ; then
-  export modulefilename=%{version}
-else
-  export modulefilename=%{version}-${ext}
-fi
+]]
 
-echo 
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua << EOF
-help( [[
-The Mumps module defines the following environment variables:
-TACC_MUMPS_INC and TACC_MUMPS_LIB for the location
-of the Mumps include files and libraries.
+LmodError(err_message,"\n")
 
-Version %{version}
-]] )
-
-whatis( "Name: Mumps" )
-whatis( "Version: %{version}" )
-whatis( "Category: library, mathematics" )
-whatis( "URL: http://graal.ens-lyon.fr/MUMPS/" )
-whatis( "Description: Numerical library for sparse solvers" )
-
-local             mumps_arch =    "${architecture}"
-local             mumps_dir  =     "${TACC_PETSC_DIR}"
-local             mumps_inc  = pathJoin(mumps_dir,mumps_arch,"include")
-local             mumps_lib  = pathJoin(mumps_dir,mumps_arch,"lib")
-
-prepend_path("LD_LIBRARY_PATH", mumps_lib)
-
-setenv("TACC_MUMPS_INC",        mumps_inc )
-setenv("TACC_MUMPS_LIB",        mumps_lib)
 EOF
 
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
-#%Module1.0#################################################
-##
-## version file for Mumps %version
-##
 
-set     ModulesVersion      "${modulefilename}"
-EOF
-
-## %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua 
-
-  # Check the syntax of the generated lua modulefile only if a visible module
-  %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua
-  %endif
-
-##
-## end of module file loop
-##
-done
+  # Check the syntax of the generated lua modulefile
+#  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
 
+#------------------------
+%if %{?BUILD_PACKAGE}
+%files package
+#------------------------
+
+  %defattr(-,root,install,)
+  # RPM package contains files within these directories
+  %{INSTALL_DIR}
+
+#-----------------------
+%endif # BUILD_PACKAGE |
+#-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile 
+%files modulefile
 #---------------------------
 
   %defattr(-,root,install,)
@@ -227,6 +207,7 @@ done
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
+
 
 ########################################
 ## Fix Modulefile During Post Install ##
@@ -249,6 +230,3 @@ export PACKAGE_PREUN=1
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
 
-%changelog
-* Tue May 30 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 1: initial release

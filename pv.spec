@@ -1,18 +1,27 @@
-Summary:  IDL 8.4 local binary install
+Summary: A Nice little relocatable skeleton spec file example.
 
-%define pkg_base_name idl
-%define MODULE_VAR    IDL
+# Give the package a base name
+%define pkg_base_name paraview
+%define MODULE_VAR    PARAVIEW
 
-%define major_version 8
+# Create some macros (spec file variables)
+%define major_version 5
 %define minor_version 4
 %define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}
 
+### Toggle On/Off ###
 %include rpm-dir.inc                  
-
+%include compiler-defines.inc
+%include mpi-defines.inc
+########################################
+### Construct name based on includes ###
+########################################
 %include name-defines.inc
-
+#%include name-defines-noreloc.inc
+#%include name-defines-hidden.inc
+#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -23,82 +32,95 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
-License:   Exelis
-Group:     Visualization
-URL:       Exelis
-Packager:  TACC - gda@tacc.utexas.edu
+Release:   1%{?dist}
+License:   GPL
+Group:     Development/Tools
+URL:       http://www.gnu.org/software/xx
+Packager:  TACC - agomez@tacc.utexas.edu, cproctor@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
-
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
 
+
 %package %{PACKAGE}
 Summary: The package RPM
 Group: Visualization
 %description package
-The IDL package contains the IDL visualization software from Exelis. The package
-contains the precompiled binary and any libraries needed to support the various
-third party components
+This is the long description for the package RPM...
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Visualization/Modulefiles
 %description modulefile
-The module sets the required user environment needed to run IDL on TACC systems. It
-sets paths to executables and modifies LD_LIBRARY_PATH
-
+This is the long description for the modulefile RPM...
 
 %description
-The IDL visualization software supports visualization and analysis of large scale scientific data.
+The longer-winded description of the package that will 
+end in up inside the rpm and is queryable if installed via:
+rpm -qi <rpm-name>
 
+
+#---------------------------------------
 %prep
+#---------------------------------------
 
+echo =============  PREP START =================
+
+#------------------------
 %if %{?BUILD_PACKAGE}
+#------------------------
+  # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 %setup -n %{pkg_base_name}-%{pkg_version}
 
-%endif
+echo =============  PREP AFTER SETUP =================
 
+#-----------------------
+%endif # BUILD_PACKAGE |
+#-----------------------
+
+#---------------------------
 %if %{?BUILD_MODULEFILE}
+#---------------------------
+  #Delete the module installation directory.
   rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
+#--------------------------
+%endif # BUILD_MODULEFILE |
+#--------------------------
 
-%endif
 
+
+#---------------------------------------
 %build
+#---------------------------------------
 
+
+#---------------------------------------
 %install
+#---------------------------------------
 
+# Setup modules
+%include system-load.inc
+module purge
+# Load Compiler
+#%include compiler-load.inc
+# Load MPI Library
+#%include mpi-load.inc
+
+# Insert further module commands
+
+echo "Building the package?:    %{BUILD_PACKAGE}"
+echo "Building the modulefile?: %{BUILD_MODULEFILE}"
+
+#------------------------
 %if %{?BUILD_PACKAGE}
+#------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-cat > setup_answers << 'EOF'
-y
-INSTALLDIR
-y
-y
-y
-n
-n
-n
-y
-y
-y
-y
-y
-n
-n
-
-EOF
-
-  if [ -e %{APPS}/%{pkg_base_name}/%{version} ] ; then rm -rf %{APPS}/%{pkg_base_name}/%{version} ;  fi
-  sed "s?INSTALLDIR?%{APPS}/%{pkg_base_name}/%{version}?" < setup_answers  | ./install.sh -s
-
-
+  
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -107,23 +129,33 @@ EOF
   ########### Do Not Remove #############
   #######################################
 
-  echo #######################################
-  pwd
-  echo #######################################
-
-  # cp -r %{pkg_base_name}-%{pkg_version}/* $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  cp -r %{APPS}/%{pkg_base_name}/%{version}/*  $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/license
-  cp %{_sourcedir}/idl8.4_license_221797.dat $RPM_BUILD_ROOT/%{INSTALL_DIR}/license/license.dat
-
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
   
-%endif
+  # Create some dummy directories and files for fun
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
+
+  echo "TACC_OPT %{TACC_OPT}"
+  
+  # Copy everything from tarball over to the installation directory
+  echo =============
+  pwd
+  ls
+  echo =============
+
+  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  
+#-----------------------  
+%endif # BUILD_PACKAGE |
+#-----------------------
 
 
+#---------------------------
 %if %{?BUILD_MODULEFILE}
+#---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
   
@@ -135,37 +167,37 @@ EOF
   ########### Do Not Remove #############
   #######################################
   
-
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[ 
+local help_msg=[[
 The %{MODULE_VAR} module defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, ITT_DIR and IDL_DIR
+TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
+TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
+include files, and tools respectively.
 ]]
 
 --help(help_msg)
 help(help_msg)
 
-whatis("Name: idl")
+whatis("Name: xx")
 whatis("Version: %{pkg_version}%{dbg}")
 %if "%{is_debug}" == "1"
 setenv("TACC_%{MODULE_VAR}_DEBUG","1")
 %endif
 
 -- Create environment variables.
-local idl_dir           = "%{INSTALL_DIR}"
+local xx_dir           = "%{INSTALL_DIR}"
 
-family("idl")
-
-prepend_path("PATH",              pathJoin(idl_dir, "idl", "bin"))
-
-prepend_path("MODULEPATH",        "%{MODULE_PREFIX}/idl8_4/modulefiles")
-
-setenv("TACC_%{MODULE_VAR}_DIR",  idl_dir)
-setenv("IDL_DIR",  		  pathJoin(idl_dir, "idl"))
-setenv("ITT_DIR",  		  idl_dir)
+family("xx")
+prepend_path(    "PATH",                pathJoin(xx_dir, "bin"))
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(xx_dir, "lib"))
+prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/xx1_1/modulefiles")
+setenv( "TACC_%{MODULE_VAR}_DIR",                xx_dir)
+setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(xx_dir, "include"))
+setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(xx_dir, "lib"))
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(xx_dir, "bin"))
 EOF
-
+  
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##

@@ -30,7 +30,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPL
 Vendor: https://github.com/cburstedde/p4est
 #Source1: p4est-setup.sh
@@ -101,8 +101,8 @@ mount -t tmpfs tmpfs %{INSTALL_DIR}
 # pushd %{INSTALL_DIR}
 
 %if "%{comp_fam}" == "gcc"
-#  module load mkl
-  export MKLROOT=/opt/intel/compilers_and_libraries_2017.2.174/linux/mkl
+  module load mkl
+#  export MKLROOT=/opt/intel/compilers_and_libraries_2017.2.174/linux/mkl
   export BLASOPTIONS="-Wl,--start-group $MKLROOT/lib/intel64/libmkl_intel_lp64.a $MKLROOT/lib/intel64/libmkl_sequential.a $MKLROOT/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread -lm"
   export BLASFLAG=
 %else
@@ -114,8 +114,8 @@ mpicc -show
     --prefix=%{INSTALL_DIR}/ \
     CC=mpicc CFLAGS="%{TACC_OPT} -g ${BLASFLAG}" \
     CXX=mpicxx CXXFLAGS="%{TACC_OPT} -g ${BLASFLAG}" \
-    FC=mpif90 FFLAGS="-O2 -g ${BLASFLAG}" \
-    F77=mpif77 \
+    FC=mpif90 FCLAGS="-O2 -g ${BLASFLAG}" \
+    F77=mpif77 FFLAGS="-O2 -g ${BLASFLAG}" \
     LIBS="${BLASOPTIONS}" \
     --enable-mpi \
     && make && make install
@@ -147,12 +147,14 @@ whatis( "Description: octree support for dealii" )
 
 local             p4est_dir =     "%{INSTALL_DIR}"
 
-prepend_path("LD_LIBRARY_PATH", pathJoin(p4est_dir,petsc_arch,"lib") )
+prepend_path("LD_LIBRARY_PATH", pathJoin(p4est_dir,"lib") )
+prepend_path("PATH", pathJoin(p4est_dir,"bin") )
 
 setenv(          "P4EST_DIR",             p4est_dir)
 setenv(          "TACC_P4EST_DIR",        p4est_dir)
-setenv(          "TACC_P4EST_LIB",        pathJoin(p4est_dir,petsc_arch,"lib"))
-setenv(          "TACC_P4EST_INC",        pathJoin(p4est_dir,petsc_arch,"include"))
+setenv(          "TACC_P4EST_BIN",        pathJoin(p4est_dir,"bin"))
+setenv(          "TACC_P4EST_INC",        pathJoin(p4est_dir,"include"))
+setenv(          "TACC_P4EST_LIB",        pathJoin(p4est_dir,"lib"))
 
 EOF
 
@@ -179,5 +181,7 @@ EOF
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Wed Jul 12 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: adding bin directory
 * Tue May 09 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

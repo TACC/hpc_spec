@@ -21,15 +21,15 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name Bar
-%define MODULE_VAR    BAR
+%define pkg_base_name swr
+%define MODULE_VAR    SWR
 
 # Create some macros (spec file variables)
-%define major_version 1
-%define minor_version 1
-%define micro_version 0
+%define major_version 17
+%define minor_version 0
+%define micro_version 7
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -52,11 +52,11 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GPL
-Group:     Development/Tools
-URL:       http://www.gnu.org/software/bar
-Packager:  TACC - agomez@tacc.utexas.edu, cproctor@tacc.utexas.edu
+Group:     X11/Driver:
+URL:       http://openswr.org
+Packager:  TACC - jbarbosa@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -66,9 +66,9 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 %package %{PACKAGE}
 Summary: The package RPM
-Group: Development/Tools
+Group: X11/Driver
 %description package
-This is the long description for the package RPM...
+The purpose of OpenSWR is to provide a high performance, highly scalable OpenGL compatible software rasterizer that allows use of unmodified visualization software. This allows working with datasets where GPU hardware isn't available or is limiting. OpenSWR is completely CPU-based, and runs on anything from laptops, to workstations, to compute nodes in HPC systems.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
@@ -92,7 +92,7 @@ rpm -qi <rpm-name>
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%setup -n %{pkg_base_name}-%{pkg_version}
+#%setup -n %{pkg_base_name}-%{pkg_version}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -135,6 +135,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 %if %{?BUILD_PACKAGE}
 #------------------------
 
+  export QA_SKIP_BUILD_ROOT=1
+
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
   
   #######################################
@@ -155,8 +157,125 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
   
   # Copy everything from tarball over to the installation directory
-  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  # cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  export WORK_DIR=`pwd`
+  export WORK_INSTALL_DIR=$RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+
+
+
+  # 2) Required modules
+  module load intel cmake
+
+#  cd ${WORK_DIR}
+#  virtualenv python_ve
+#  source ${WORK_DIR}/python_ve/bin/activate
+#  pip install --upgrade pip
+#  pip install --upgrade mako
+#  pip install --upgrade lxml
+
+
+  # 3) Build LLVM
+  cd ${WORK_DIR}
+  export LLVM_BUILD_DIR=${WORK_DIR}/llvm-3.9
+  export PATH=/opt/apps/gcc/5.4.0/bin:$PATH
+  export CXX=/opt/apps/gcc/5.4.0/bin/g++
+  export CC=/opt/apps/gcc/5.4.0/bin/gcc
+  export LD_LIBRARY_PATH=/opt/apps/gcc/5.4.0/lib:/opt/apps/gcc/5.4.0/lib64:$LD_LIBRARY_PATH
+  export INCLUDE=/opt/apps/gcc/5.4.0/include:$INCLUDE
+  export LLVM_WORK_INSTALL_DIR=${WORK_INSTALL_DIR}
+  mkdir -p $LLVM_BUILD_DIR && cd $LLVM_BUILD_DIR
+  wget -c -N http://www.llvm.org/releases/3.9.1/llvm-3.9.1.src.tar.xz
+  tar xf llvm-3.9.1.src.tar.xz && mv llvm-3.9.1.src src
+  mkdir -p build && cd build
+  cmake ../src \
+   -DCMAKE_CXX_COMPILER=/opt/apps/gcc/5.4.0/bin/g++ \
+   -DCMAKE_C_COMPILER=/opt/apps/gcc/5.4.0/bin/gcc \
+   -DCMAKE_BUILD_TYPE=Release \
+   -DLLVM_ENABLE_RTTI=ON \
+   -DLLVM_ENABLE_TERMINFO=OFF \
+   -DLLVM_TARGETS_TO_BUILD=X86 \
+   -DLLVM_LINK_LLVM_DYLIB=ON \
+   -DCMAKE_INSTALL_PREFIX=${LLVM_WORK_INSTALL_DIR} 
+
+
+  make -j8 && make install
+  export PATH=${LLVM_WORK_INSTALL_DIR}/bin:$PATH
+
+
+
+  cd ${WORK_DIR}
+  export ACLOCAL="aclocal -I/usr/share/aclocal"
+# 4) Pull OpenSWR mesa source and build
+  mkdir -p ${WORK_DIR}/openswr-mesa && cd ${WORK_DIR}/openswr-mesa
+  #git clone git://anongit.freedesktop.org/git/mesa/mesa .
+  wget -c -N https://mesa.freedesktop.org/archive/mesa-%{pkg_version}.tar.gz
+  tar xzf mesa-%{pkg_version}.tar.gz
+  cd mesa-%{pkg_version}
+  mkdir -p build && cd build
+  ../autogen.sh \
+   --disable-gbm \
+   --disable-dri \
+   --disable-egl \
+   --enable-xlib-glx \
+   --enable-shared-glapi \
+   --enable-gallium-osmesa \
+   --with-gallium-drivers=swrast,swr \
+   --prefix=${WORK_INSTALL_DIR} 
+   CPPFLAGS=-I/work/01206/jbarbosa/stampede/swr/GL.stampede
+  make -j8
+  make install
   
+cat > ${WORK_INSTALL_DIR}/bin/mesa << "EOF"
+#!/bin/bash
+LD_LIBRARY_PATH=${TACC_SWR_DIR}/lib:$LD_LIBRARY_PATH $*
+EOF
+chmod 755 ${WORK_INSTALL_DIR}/bin/mesa
+
+cat > ${WORK_INSTALL_DIR}/bin/swr << "EOF"
+#!/bin/bash
+if [ -z "$KNOB_MAX_WORKER_THREADS" ]; then
+	NUMBER_CORES_IN_NODE=`cat /proc/cpuinfo | grep processor | wc -l`
+	NUMBER_CORES_IN_NODE=$(($NUMBER_CORES_IN_NODE / 4))
+	if [ -z "$SLURM_TASKS_PER_NODE" ]; then
+		KNOB_MAX_WORKER_THREADS=$NUMBER_CORES_IN_NODE
+	else
+		if [[ $1 == -* ]] ; then
+			TASKS_PER_NODE=`echo $1 | sed "s/-//"`
+			shift
+		else
+			TASKS_PER_NODE=$(($SLURM_NTASKS / $SLURM_NNODES))
+		fi
+		KNOB_MAX_WORKER_THREADS=$(($NUMBER_CORES_IN_NODE / $TASKS_PER_NODE))
+	fi
+fi
+echo USING $KNOB_MAX_WORKER_THREADS
+KNOB_MAX_WORKER_THREADS=$KNOB_MAX_WORKER_THREADS XLIB_SKIP_ARGB_VISUALS=1 LD_LIBRARY_PATH=${TACC_SWR_DIR}/lib:$LD_LIBRARY_PATH GALLIUM_DRIVER=swr $*
+EOF
+chmod 755 ${WORK_INSTALL_DIR}/bin/swr
+
+
+cat > ${WORK_INSTALL_DIR}/bin/swr_nk << "EOF"
+LD_LIBRARY_PATH=${TACC_SWR_DIR}/lib:$LD_LIBRARY_PATH GALLIUM_DRIVER=swr $*
+EOF
+chmod 755 ${WORK_INSTALL_DIR}/bin/swr_nk
+
+
+# Remove buildroot
+
+#find $RPM_BUILD_ROOT%{INSTALL_DIR} -type f -print0 | 
+#    xargs -0 sed -i -e s,$RPM_BUILD_ROOT,,g
+
+find $RPM_BUILD_ROOT%{INSTALL_DIR} -name swr | 
+   xargs sed -i -e s,$RPM_BUILD_ROOT,,g
+
+find $RPM_BUILD_ROOT%{INSTALL_DIR} -name swr_nk | 
+   xargs sed -i -e s,$RPM_BUILD_ROOT,,g
+
+find $RPM_BUILD_ROOT%{INSTALL_DIR} -name mesa | 
+   xargs sed -i -e s,$RPM_BUILD_ROOT,,g
+
+
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -188,23 +307,28 @@ include files, and tools respectively.
 --help(help_msg)
 help(help_msg)
 
-whatis("Name: bar")
+whatis("Name: swr")
 whatis("Version: %{pkg_version}%{dbg}")
 %if "%{is_debug}" == "1"
 setenv("TACC_%{MODULE_VAR}_DEBUG","1")
 %endif
 
 -- Create environment variables.
-local bar_dir           = "%{INSTALL_DIR}"
+local swr_dir           = "%{INSTALL_DIR}"
 
-family("bar")
-prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "lib"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/bar1_1/modulefiles")
-setenv( "TACC_%{MODULE_VAR}_DIR",                bar_dir)
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(bar_dir, "include"))
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(bar_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(bar_dir, "bin"))
+family("swr")
+prepend_path(    "PATH",                pathJoin(swr_dir, "bin"))
+prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/swr%{pkg_version}/modulefiles")
+setenv( "TACC_%{MODULE_VAR}_DIR",                swr_dir)
+setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(swr_dir, "include"))
+setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(swr_dir, "lib"))
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(swr_dir, "bin"))
+
+local gcc_dir                              = "/opt/apps/gcc/5.4.0"
+prepend_path( "PATH"                     , pathJoin(gcc_dir,"bin"       )               )
+prepend_path( "LD_LIBRARY_PATH"          , pathJoin(gcc_dir,"lib"       )               )
+prepend_path( "LD_LIBRARY_PATH"          , pathJoin(gcc_dir,"lib64"     )               )
+prepend_path( "INCLUDE"                  , pathJoin(gcc_dir,"include"   )               )
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'

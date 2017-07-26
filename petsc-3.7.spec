@@ -32,7 +32,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -441,6 +441,10 @@ else
     COPTFLAGS="${CFLAGS}" FOPTFLAGS="${FFLAGS}" CXXOPTFLAGS="${CXXFLAGS}"
 fi
 
+####
+#### post-processing fixes
+#### <<<<<<<<<<<<<<<<
+####
 pushd ${architecture}
 for f in ./lib/petsc/conf/configure.log \
     ./lib/petsc/conf/petscvariables \
@@ -449,7 +453,15 @@ for f in ./lib/petsc/conf/configure.log \
     ./include/petscmachineinfo.h ; do
   sed -i -e "s/debug-mt/release_mt/" $f
 done
+#grep dependency /home1/apps/intel17/impi17_0/petsc/3.7/knightslanding/lib/libsundials_nvecparallel.la
+#dependency_libs=' -lmpi. /opt/apps/gcc/5.4.0/lib/../lib64/libstdc++.la'
+for f in ./lib/libsundials*.la ; do
+  sed -i -e "/dependency_libs/s/lmpi./lmpi/" $f
+done
 popd
+####
+#### >>>>>>>>>>>>>>>>
+####
 
 ##
 ## Make!
@@ -583,6 +595,8 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Mon Jul 17 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: post-processing sundials
 * Mon Jun 05 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: trying to get hold of release_mt version of libmpi
 -            adding hdf5

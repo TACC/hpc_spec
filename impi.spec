@@ -49,7 +49,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   proprietary
 Group:     MPI
 URL:       https://software.intel.com/en-us/intel-mpi-library
@@ -140,7 +140,13 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
  
-  # Nothing to do!
+%if "%{comp_fam_name}" == "GNU"
+  # gfortran "use mpi" statements are busted
+  # fix intel's mess
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+  cp %{_sourcedir}/mpif90.15 $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
+  chmod +rx $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
+%endif
   
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -211,6 +217,7 @@ whatis("Category: library, Runtime Support"                                 )
 whatis("Description: Intel MPI Library (C/C++/Fortran for x86_64) "         )
 whatis("URL: http://software.intel.com/en-us/articles/intel-mpi-library/ "  )
 prepend_path( "PATH"                   , pathJoin( base_dir , "intel64/bin"      ) )
+prepend_path( "PATH"                   , pathJoin( "%{INSTALL_DIR}" , "bin"      ) )
 prepend_path( "LD_LIBRARY_PATH"        , pathJoin( base_dir , "intel64/lib"      ) )
 prepend_path( "MANPATH"                , pathJoin( base_dir , "man"              ) )
 prepend_path( "MODULEPATH"             ,"/opt/apps/%{comp_fam_ver}/impi%{underscore_version}/modulefiles" )
@@ -245,7 +252,7 @@ EOF
   
   # Check the syntax of the generated lua modulefile
   ### don't check the hidden one!
-  ### %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------
 %endif # BUILD_MODULEFILE |

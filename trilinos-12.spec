@@ -130,20 +130,29 @@ export BOOST_ROOT=${TACC_BOOST_DIR}
   export MKLFLAG="-mkl"
 %endif
 
-export COPTFLAGS="-g %{TACC_OPT}"
+export COPTFLAGS="-g %{TACC_OPT} -O2"
 %if "%{comp_fam}" == "gcc"
-  export HAS_HDF5=OFF
-  export HAS_NETCDF=OFF
-  export HAS_PYTHON=OFF
+  export HAS_HDF5=ON
+  export HAS_NETCDF=ON
+  export HAS_PYTHON=ON
   export HAS_MUELU=ON
 %else
   export HAS_HDF5=ON
   export HAS_NETCDF=ON
   export HAS_PYTHON=ON
   export HAS_MUELU=ON
-  module load phdf5 parallel-netcdf python
+  module load 
 %endif
 export HAS_SEACAS=${HAS_NETCDF}
+if [ "${HAS_HDF5}" = "ON" ] ; then
+  module load phdf5
+fi
+if [ "${HAS_NETCDF}" = "ON" ] ; then
+  module load parallel-netcdf
+fi
+if [ "${HAS_PYTHON}" = "ON" ] ; then
+  module load python
+fi
 
 ##
 ## start of configure install loop
@@ -191,11 +200,14 @@ make install
   find . -name \*.cmake \
          -exec sed -i -e '/STKDoc_testsConfig.cmake/d' \
                       -e '/COMPILER_FLAGS/s/mkl/mkl -L\${TACC_PYTHON_LIB} -lpython2.7/' \
+                      -e '/EXTRA_LD_FLAGS/s?""?"/opt/apps/intel17/python/2.7.13/lib/libpython2.7.so"?' \
+                      -e '/SET.*TPL_LIBRARIES/s?""?"/opt/apps/intel17/python/2.7.13/lib/libpython2.7.so"?' \
+                      -e '/SET.*TPL_LIBRARIES/s?so"?so;/opt/apps/intel17/python/2.7.13/lib/libpython2.7.so"?' \
                    {} \; \
          -print \
 )
+## SET(Zoltan_TPL_LIBRARIES "")
 export nosed="\
-                      -e '?EXTRA_LD_FLAGS?s?""?"/opt/apps/intel17/python/2.7.13/lib/libpython2.7.so"?' \
     "
 #SET(Trilinos_CXX_COMPILER_FLAGS " -mkl -DMPICH_SKIP_MPICXX -std=c++11 -O3 -DNDEBUG")
 #SET(Trilinos_C_COMPILER_FLAGS " -mkl -O3 -DNDEBUG")
@@ -272,5 +284,6 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 * Fri Jun 30 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: fix broken stuff that trips up dealII
+             also enabling python for gcc
 * Fri May 12 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

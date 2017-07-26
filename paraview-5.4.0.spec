@@ -25,7 +25,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GPL
 Group:     Visualization
 URL:       //www.kitware.com
@@ -172,6 +172,8 @@ setenv("TACC_%{MODULE_VAR}_DIR",  paraview_dir)
 setenv("TACC_%{MODULE_VAR}_INC",  pathJoin(paraview_dir, "include"))
 setenv("TACC_%{MODULE_VAR}_LIB",  pathJoin(paraview_dir, "lib"))
 setenv("TACC_%{MODULE_VAR}_BIN",  pathJoin(paraview_dir, "bin"))
+
+setenv("OSPRAY_SET_AFFINITY",  "0")
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'

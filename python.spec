@@ -1,7 +1,7 @@
 Summary:    Python is a high-level general-purpose programming language.
 Name:       tacc-python 
 Version:    2.7.13
-Release:    3%{?dist}
+Release:    4%{?dist}
 License:    GPLv2
 Vendor:     Python Software Foundation
 Group:      Applications
@@ -69,35 +69,28 @@ export BASH_ENV=/etc/tacc/tacc_functions
 %include system-load.inc
 %include compiler-load.inc
 
-# Set up src directory
-export SRC_DIR=/tmp/src
-mkdir -p ${SRC_DIR}
-cd %{_topdir}/SOURCES
-
 export PATH=%{INSTALL_DIR_COMP}/bin:$PATH
 export LD_LIBRARY_PATH=%{INSTALL_DIR_COMP}/lib64:%{INSTALL_DIR_COMP}/lib:$LD_LIBRARY_PATH
-#export PYTHONPATH=%{INSTALL_DIR_COMP}/lib:$PYTHONPATH
 
 ############################################################
-# System Specific
+# System Specific Libraries
 ############################################################
 %if "%{comp_fam_name}" == "Intel"
     #export ISAFLAGS=TACC_OPT #"-xCORE-AVX2 -axCOMMON-AVX512"
-    export MKL_INC=$TACC_MKL_INC
-    export MKL_LIB=$TACC_MKL_LIB
-    export OMP_LIB=$ICC_LIB
+    export MKL_INC=${TACC_MKL_INC}
+    export MKL_LIB=${TACC_MKL_LIB}
+    export OMP_LIB=${ICC_LIB}
 %endif
 %if "%{comp_fam_name}" == "GNU"
     #export ISAFLAGSTACC_OPT #="-march=native"
     ml intel
-    export MKL_INC=$TACC_MKL_INC
-    export MKL_LIB=$TACC_MKL_LIB
-    export OMP_LIB=$ICC_LIB
+    export MKL_INC=${TACC_MKL_INC}
+    export MKL_LIB=${TACC_MKL_LIB}
+    export OMP_LIB=${ICC_LIB}
     ml gcc
-    export LD_LIBRARY_PATH=$MKL_LIB:$OMP_LIB:$LD_LIBRARY_PATH
+    export LD_LIBRARY_PATH=${MKL_LIB}:${OMP_LIB}:${LD_LIBRARY_PATH}
 %endif
 
-echo $LD_LIBRARY_PATH | sed -e "s/:/\n/g" 
 ############################################################
 # Build core python here
 ############################################################
@@ -111,18 +104,17 @@ if [ ! -f "%{INSTALL_DIR_COMP}/bin/python" ]; then
     if [ ! -f "%{_topdir}/SOURCES/Python-%{version}.tgz" ]; then
      	wget http://www.python.org/ftp/python/%{version}/Python-%{version}.tgz
     fi	
-    rm -rf ${SRC_DIR}/Python-%{version}
-    tar -xzf %{_topdir}/SOURCES/Python-%{version}.tgz -C ${SRC_DIR}
-    cd ${SRC_DIR}/Python-%{version}
+    rm -rf %{_topdir}/SOURCES/Python-%{version}
+    tar -xzf %{_topdir}/SOURCES/Python-%{version}.tgz -C %{_topdir}/SOURCES
+    cd %{_topdir}/SOURCES/Python-%{version}
     export LD_LIBRARY_PATH=`pwd`:$LD_LIBRARY_PATH
     ls
+
     %if "%{comp_fam_name}" == "Intel"
-    #./configure --prefix=%{INSTALL_DIR_COMP} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc' CFLAGS="-O3 -fp-model strict -fp-model source -ipo -prec-div -prec-sqrt %{TACC_OPT}" LDFLAGS="-ipo -Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth --without-gcc --with-libm=-limf --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip --enable-unicode=ucs4    
     ./configure --prefix=%{INSTALL_DIR_COMP} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc' CFLAGS="-O3 -fp-model strict -fp-model source -ipo -prec-div -prec-sqrt %{TACC_OPT}" LDFLAGS="-ipo -Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth --without-gcc --with-libm=-limf --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip --enable-unicode=ucs4    
     %endif
     %if "%{comp_fam_name}" == "GNU"
-    ./configure --prefix=%{INSTALL_DIR_COMP} CFLAGS="-flto -ffat-lto-objects -fuse-linker-plugin %{TACC_OPT}" LDFLAGS="-shared -flto -ffat-lto-objects -fuse-linker-plugin -rdynamic" --with-system-ffi --enable-shared --with-pth --with-threads --with-lto --with-computed-gotos --with-ensurepip --enable-unicode=ucs4          
-    #./configure --prefix=%{INSTALL_DIR_COMP} --with-system-ffi --enable-shared --with-lto --with-pth --with-threads --with-computed-gotos --with-ensurepip --enable-unicode=ucs4       
+    ./configure --prefix=%{INSTALL_DIR_COMP} CFLAGS="-flto -ffat-lto-objects -fuse-linker-plugin %{TACC_OPT}" LDFLAGS="-fPIC -flto -ffat-lto-objects -fuse-linker-plugin -rdynamic" --with-system-ffi --enable-shared --with-pth --with-threads --with-lto --with-computed-gotos --with-ensurepip --enable-unicode=ucs4          
     %endif
 
     make -j 28
@@ -151,7 +143,6 @@ fi
 %{INSTALL_DIR_COMP}/bin/pip install readline
 %{INSTALL_DIR_COMP}/bin/pip install egenix-mx-base
 
-
 #############################################################
 # scipy stack: use INSTALL_DIR_COMP . 
 # We need to know which pip modules are compiler specific.  
@@ -165,34 +156,22 @@ if ! $(%{INSTALL_DIR_COMP}/bin/python -c "import numpy"); then
 	wget https://github.com/numpy/numpy/releases/download/v1.12.1/numpy-1.12.1.tar.gz
     fi	   
     
-    rm -rf ${SRC_DIR}/numpy-1.12.1 	   
-    tar -xzvf %{_topdir}/SOURCES/numpy-1.12.1.tar.gz -C ${SRC_DIR}	
-    cd ${SRC_DIR}/numpy-1.12.1
+    rm -rf %{_topdir}/SOURCES/numpy-1.12.1 	   
+    tar -xzvf %{_topdir}/SOURCES/numpy-1.12.1.tar.gz -C %{_topdir}/SOURCES	
+    cd %{_topdir}/SOURCES/numpy-1.12.1
 
     sed -i 's/-openmp/-fopenmp '"%{TACC_OPT}"'/' numpy/distutils/intelccompiler.py
     sed -i 's/-openmp/-fopenmp '"%{TACC_OPT}"'/' numpy/distutils/fcompiler/intel.py
-
-    %if "%{comp_fam_name}" == "Intel"
     echo "[mkl]
-library_dirs = $MKL_LIB:$OMP_LIB
-include_dirs = $MKL_INC
+library_dirs = ${MKL_LIB}:${OMP_LIB}
+include_dirs = ${MKL_INC}
 mkl_libs = mkl_rt
 lapack_libs = " > site.cfg
+
+    %if "%{comp_fam_name}" == "Intel"
     %{INSTALL_DIR_COMP}/bin/python setup.py config --compiler=intelem --fcompiler=intelem build_clib --compiler=intelem --fcompiler=intelem build_ext --compiler=intelem --fcompiler=intelem install
     %endif
-
-    %if "%{comp_fam_name}" == "GNU"	
-    echo "[mkl]
-library_dirs = $MKL_LIB
-include_dirs = $MKL_INC
-mkl_libs    = mkl_rt
-lapack_libs = " > site.cfg
-   
-    #export CFLAGS="-m64 -Wl,--no-as-needed"    
-    #export CXXFLAGS="-m64 -Wl,--no-as-needed"
-    #export LDFLAGS="-ldl -lm -shared"
-    #export FFLAGS="-m64"
-   
+    %if "%{comp_fam_name}" == "GNU"
     %{INSTALL_DIR_COMP}/bin/python setup.py config --fcompiler=gfortran build_clib --fcompiler=gfortran build_ext --fcompiler=gfortran install
     %endif
 fi
@@ -204,13 +183,13 @@ if ! $(%{INSTALL_DIR_COMP}/bin/python -c "import scipy"); then
 	wget -O scipy-0.19.0.tar.gz https://github.com/scipy/scipy/releases/download/v0.19.0/scipy-0.19.0.tar.gz
     fi	   
 
-    rm -rf ${SRC_DIR}/scipy-0.19.0
-    tar -xzvf scipy-0.19.0.tar.gz -C ${SRC_DIR} 
-    cd ${SRC_DIR}/scipy-0.19.0
+    rm -rf %{_topdir}/SOURCES/scipy-0.19.0
+    tar -xzvf scipy-0.19.0.tar.gz -C %{_topdir}/SOURCES	 
+    cd %{_topdir}/SOURCES/scipy-0.19.0
+
     %if "%{comp_fam_name}" == "Intel"
     %{INSTALL_DIR_COMP}/bin/python setup.py config --compiler=intelem --fcompiler=intelem build_clib --compiler=intelem --fcompiler=intelem build_ext --compiler=intelem --fcompiler=intelem install
     %endif
-
     %if "%{comp_fam_name}" == "GNU"	
     %{INSTALL_DIR_COMP}/bin/python setup.py config --fcompiler=gfortran build_clib --fcompiler=gfortran build_ext --fcompiler=gfortran install
     %endif
@@ -232,8 +211,9 @@ CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: lxml
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: MySQL
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: psycopg2
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: mercurial
-CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: yt
+#CFLAGS="-O0" %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: yt
 %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: theano
+%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: ply
 CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: scikit_learn
 
 
@@ -299,7 +279,7 @@ fi
 #------- Serial Module
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR_COMP}
 
-cat >    $RPM_BUILD_ROOT/%{MODULE_DIR_COMP}/%{version}.lua << 'EOF'
+cat >    $RPM_BUILD_ROOT/%{MODULE_DIR_COMP}/%{version}.lua << EOF
 help(
 [[
 This is the Python package built on %(date +'%B %d, %Y').
@@ -331,8 +311,8 @@ local python_lib   = "%{INSTALL_DIR_COMP}/lib"
 local python_man   = "%{INSTALL_DIR_COMP}/share/man:%{INSTALL_DIR_COMP}/man"
 
 %if "%{comp_fam_name}" == "GNU"
-local mkl_lib      = $MKL_LIB
-local omp_lib      = $OMP_LIB
+local mkl_lib      = "${MKL_LIB}"
+local omp_lib      = "${OMP_LIB}"
 %endif
 
 setenv("TACC_PYTHON_DIR", python_dir)

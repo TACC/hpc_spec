@@ -3,7 +3,7 @@
 Summary: XALT
 Name: xalt
 Version: 1.7
-Release: 2
+Release: 4
 License: LGPLv2
 Group: System Environment/Base
 Source0:  xalt-%{version}-devel.tar.bz2
@@ -41,7 +41,7 @@ fi
 module --latest load intel
 module load python
 
-./configure --prefix=%{INSTALL_DIR} --with-syshostConfig=nth_name:2 --with-config=Config/TACC_config.py --with-transmission=syslog --with-trackMPIOnly=yes
+CXX=/usr/bin/g++ CC=/usr/bin/gcc ./configure CXX=/usr/bin/g++ CC=/usr/bin/gcc --prefix=%{INSTALL_DIR} --with-syshostConfig=nth_name:2 --with-config=Config/TACC_config.py --with-transmission=syslog --with-trackMPIOnly=yes
 
 make CXX=/usr/bin/g++ CC=/usr/bin/gcc DESTDIR=$RPM_BUILD_ROOT install Inst_TACC
 rm -f $RPM_BUILD_ROOT/%{INSTALL_DIR}/sbin/xalt_db.conf

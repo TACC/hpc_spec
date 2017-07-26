@@ -1,7 +1,7 @@
 Summary:    Python is a high-level general-purpose programming language.
 Name:       tacc-python3 
 Version:    3.6.1
-Release:    1%{?dist}
+Release:    2%{?dist}
 License:    GPLv2
 Vendor:     Python Software Foundation
 Group:      Applications
@@ -11,7 +11,7 @@ Packager:   TACC - rtevans@tacc.utexas.edu
 # Either Python package or mpi4py will be built 
 # based on this switch
 #------------------------------------------------
-%define build_mpi4py      0
+%define build_mpi4py      1
 %global _python_bytecompile_errors_terminate_build 0
 #------------------------------------------------
 # BASIC DEFINITIONS
@@ -69,15 +69,8 @@ export BASH_ENV=/etc/tacc/tacc_functions
 %include system-load.inc
 %include compiler-load.inc
 
-# Set up src directory
-export SRC_DIR=/tmp/src
-mkdir -p ${SRC_DIR}
-cd %{_topdir}/SOURCES
-
 export PATH=%{INSTALL_DIR_COMP}/bin:$PATH
 export LD_LIBRARY_PATH=%{INSTALL_DIR_COMP}/lib64:%{INSTALL_DIR_COMP}/lib:$LD_LIBRARY_PATH
-export PYTHONPATH=%{INSTALL_DIR_COMP}/lib:$PYTHONPATH
-
 
 ############################################################
 # System Specific
@@ -98,7 +91,6 @@ export PYTHONPATH=%{INSTALL_DIR_COMP}/lib:$PYTHONPATH
     export LD_LIBRARY_PATH=$MKL_LIB:$OMP_LIB:$LD_LIBRARY_PATH
 %endif
 
-echo $LD_LIBRARY_PATH | sed -e "s/:/\n/g" 
 ############################################################
 # Build core python here
 ############################################################
@@ -112,16 +104,18 @@ if [ ! -f "%{INSTALL_DIR_COMP}/bin/python3" ]; then
     if [ ! -f "%{_topdir}/SOURCES/Python-%{version}.tgz" ]; then
      	wget http://www.python.org/ftp/python/%{version}/Python-%{version}.tgz
     fi	
-    rm -rf ${SRC_DIR}/Python-%{version}
-    tar -xzf %{_topdir}/SOURCES/Python-%{version}.tgz -C ${SRC_DIR}
-    cd ${SRC_DIR}/Python-%{version}
+
+    rm -rf %{_topdir}/SOURCES/Python-%{version}
+    tar -xzf %{_topdir}/SOURCES/Python-%{version}.tgz -C %{_topdir}/SOURCES
+    cd %{_topdir}/SOURCES/Python-%{version}
     export LD_LIBRARY_PATH=`pwd`:$LD_LIBRARY_PATH
     ls
+
     %if "%{comp_fam_name}" == "Intel"
     ./configure --prefix=%{INSTALL_DIR_COMP} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc' CFLAGS="-O3 -fp-model strict -fp-model source -ipo -prec-div -prec-sqrt %{TACC_OPT}" LDFLAGS="-ipo -Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth --without-gcc --with-libm=-limf --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip
     %endif
     %if "%{comp_fam_name}" == "GNU"
-    ./configure --prefix=%{INSTALL_DIR_COMP} CFLAGS="-flto -ffat-lto-objects -fuse-linker-plugin %{TACC_OPT}" LDFLAGS="-flto -ffat-lto-objects -fuse-linker-plugin -rdynamic" --with-system-ffi --enable-shared --with-pth --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip
+    ./configure --prefix=%{INSTALL_DIR_COMP} CFLAGS="-flto -ffat-lto-objects -fuse-linker-plugin %{TACC_OPT}" LDFLAGS="-fPIC -flto -ffat-lto-objects -fuse-linker-plugin -rdynamic" --with-system-ffi --enable-shared --with-pth --with-threads --with-lto --with-computed-gotos --with-ensurepip
     %endif
 
     make -j 28
@@ -162,9 +156,10 @@ if ! $(%{INSTALL_DIR_COMP}/bin/python3 -c "import numpy"); then
 	wget https://github.com/numpy/numpy/releases/download/v1.12.1/numpy-1.12.1.tar.gz
     fi	   
     
-    rm -rf ${SRC_DIR}/numpy-1.12.1 	   
-    tar -xzvf %{_topdir}/SOURCES/numpy-1.12.1.tar.gz -C ${SRC_DIR}	
-    cd ${SRC_DIR}/numpy-1.12.1
+    
+    rm -rf %{_topdir}/SOURCES/numpy-1.12.1 	   
+    tar -xzvf %{_topdir}/SOURCES/numpy-1.12.1.tar.gz -C %{_topdir}/SOURCES	
+    cd %{_topdir}/SOURCES/numpy-1.12.1
 
     sed -i 's/-openmp/-qopenmp '"%{TACC_OPT}"'/' numpy/distutils/intelccompiler.py
     sed -i 's/-openmp/-qopenmp '"%{TACC_OPT}"'/' numpy/distutils/fcompiler/intel.py
@@ -195,9 +190,9 @@ if ! $(%{INSTALL_DIR_COMP}/bin/python3 -c "import scipy"); then
 	wget -O scipy-0.19.0.tar.gz https://github.com/scipy/scipy/releases/download/v0.19.0/scipy-0.19.0.tar.gz
     fi	   
 
-    rm -rf ${SRC_DIR}/scipy-0.19.0
-    tar -xzvf scipy-0.19.0.tar.gz -C ${SRC_DIR} 
-    cd ${SRC_DIR}/scipy-0.19.0
+    rm -rf %{_topdir}/SOURCES/scipy-0.19.0
+    tar -xzvf scipy-0.19.0.tar.gz -C %{_topdir}/SOURCES	 
+    cd %{_topdir}/SOURCES/scipy-0.19.0
 
     %if "%{comp_fam_name}" == "Intel"
     %{INSTALL_DIR_COMP}/bin/python3 setup.py config --compiler=intelem --fcompiler=intelem build_clib --compiler=intelem --fcompiler=intelem build_ext --compiler=intelem --fcompiler=intelem install
@@ -211,8 +206,7 @@ fi
 %{INSTALL_DIR_COMP}/bin/pip3 install --no-binary :all: matplotlib	
 CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip3 install --no-binary :all: cython	
 %{INSTALL_DIR_COMP}/bin/pip3 install --no-binary :all: cffi	
-#%{INSTALL_DIR_COMP}/bin/pip3 install --no-binary :all: pandas
-%{INSTALL_DIR_COMP}/bin/pip3 install pandas
+CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip3 install --no-binary :all: pandas
 %{INSTALL_DIR_COMP}/bin/pip3 install --no-binary :all: psutil
 %{INSTALL_DIR_COMP}/bin/pip3 install --no-binary :all: numexpr
 %{INSTALL_DIR_COMP}/bin/pip3 install --no-binary :all: rpyc	
@@ -226,14 +220,13 @@ CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip3 install --no-binary :all: lxml
 %{INSTALL_DIR_COMP}/bin/pip3 install --no-binary :all: mercurial
 CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip3 install --no-binary :all: yt
 %{INSTALL_DIR_COMP}/bin/pip3 install --no-binary :all: theano
-#%{INSTALL_DIR_COMP}/bin/pip3 install --no-binary :all: scikit_learn
-%{INSTALL_DIR_COMP}/bin/pip3 install scikit_learn
+%{INSTALL_DIR_COMP}/bin/pip3 install --no-binary :all: ply
+CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip3 install --no-binary :all: scikit_learn
 
-if module load phdf5; then
-    CC="mpicc -ip-no-inlining" HDF5_MPI="ON" HDF5_DIR=$TACC_HDF5_DIR pip3 install --no-binary=h5py --no-deps --ignore-installed h5py --user
-    #%{INSTALL_DIR_COMP}/bin/pip3 install h5py
-    %{INSTALL_DIR_COMP}/bin/pip3 install tables
-fi
+#if module load phdf5; then
+#    %{INSTALL_DIR_COMP}/bin/pip3 install h5py
+#    %{INSTALL_DIR_COMP}/bin/pip3 install tables
+#fi
 #############################################################
 # mpi4py: use INSTALL_DIR_MPI
 ############################################################
@@ -245,6 +238,12 @@ fi
   module load %{PNAME}/%{version}	
   module load %{mpi_module}   
   %{INSTALL_DIR_COMP}/bin/pip3 install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_MPI}" mpi4py
+
+  if module load phdf5; then
+      export PYTHONPATH=%{INSTALL_DIR_MPI}/lib/python3.6/site-packages
+      CC="mpicc -ip-no-inlining" HDF5_MPI="ON" HDF5_DIR=$TACC_HDF5_DIR %{INSTALL_DIR_COMP}/bin/pip3 install --no-binary=h5py --no-deps --install-option="--prefix=%{INSTALL_DIR_MPI}" --ignore-installed h5py
+      %{INSTALL_DIR_COMP}/bin/pip3 install tables
+  fi
 %endif
 
 #----------------------------------------------------------
@@ -349,7 +348,6 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}
 cat >    $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}/%{version}.lua << 'EOF'
 inherit()
 whatis("Version-notes: Compiler:%{comp_fam_ver}. MPI:%{mpi_fam_ver}")
-prepend_path("PATH",       "%{INSTALL_DIR_MPI}/lib/python3.6/site-packages/mpi4py/bin")
 prepend_path("PYTHONPATH", "%{INSTALL_DIR_MPI}/lib/python3.6/site-packages")
 EOF
 

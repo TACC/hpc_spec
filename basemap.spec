@@ -25,8 +25,8 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 # Create some macros (spec file variables)
 %define major_version 1
-%define minor_version 0
-%define micro_version 7
+%define minor_version 1
+%define micro_version 0
 
 %define geos_major_version 3
 %define geos_minor_version 6
@@ -55,7 +55,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   BSD
 Group:     System/Utils
 URL:       http://www.cmake.org
@@ -158,9 +158,12 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
- 
+
+export top=`pwd`
 export ncores=68
-export geos=`pwd`/geos
+
+
+export geos=${top}/geos
 export geos_install=%{INSTALL_DIR}
 export GEOS_DIR=${geos_install}
 
@@ -194,18 +197,11 @@ ${geos}/geos-${geos_version}/configure \
 make -j ${ncores}
 make -j ${ncores} install
  
-if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-fi
-
-cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-umount %{INSTALL_DIR}/
-
 ########################
 ########################
 ########################
 
-export basemap=`pwd`/basemap
+export basemap=${top}/basemap
 export basemap_install=%{INSTALL_DIR}
 
 export basemap_major=%{major_version}
@@ -227,12 +223,22 @@ printf "\n\n************************************************************\n"
 printf "basemap\n"
 printf "************************************************************\n\n"
 
-wget http://downloads.sourceforge.net/project/matplotlib/matplotlib-toolkits/basemap-${basemap_version}/basemap-${basemap_version}.tar.gz
-tar xvfz basemap-${basemap_version}.tar.gz
+wget https://github.com/matplotlib/basemap/archive/v${basemap_version}.tar.gz
+#wget http://downloads.sourceforge.net/project/matplotlib/matplotlib-toolkits/basemap-${basemap_version}/basemap-${basemap_version}.tar.gz
+tar xvfz v${basemap_version}.tar.gz
 
 cd basemap-${basemap_version}
 python setup.py install --prefix=${basemap_install}
 
+pip install --prefix=%{INSTALL_DIR} --no-binary :all: --install-option="--prefix=%{INSTALL_DIR}" pyproj
+
+
+if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+fi
+
+cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+umount %{INSTALL_DIR}/
 
  
 #-----------------------  
@@ -273,7 +279,7 @@ LD_LIBRARY_PATH while basemap is also added to your PYTHONPATH.
 Version %{version}
 ]]
 
-prereq("python","%{python_version}")
+prereq("python/%{python_version}")
 
 help(help_message,"\n")
 
@@ -347,12 +353,13 @@ EOF
 export PACKAGE_POST=1
 %include post-defines.inc
 %post %{MODULEFILE}
+ln -s %{INSTALL_DIR}/lib/python2.7/site-packages/mpl_toolkits/basemap /opt/apps/intel17/python/%{python_version}/lib/python2.7/site-packages/mpl_toolkits/basemap
 export MODULEFILE_POST=1
 %include post-defines.inc
-ln -s %{INSTALL_DIR}/lib/python2.7/site-packages/mpl_toolkits/basemap /opt/apps/intel17/python/%{python_version}/lib/python2.7/site-packages/mpl_toolkits/basemap
 %preun %{PACKAGE}
 export PACKAGE_PREUN=1
 %include post-defines.inc
+%preun %{MODULEFILE}
 unlink /opt/apps/intel17/python/%{python_version}/lib/python2.7/site-packages/mpl_toolkits/basemap
 ########################################
 ############ Do Not Remove #############

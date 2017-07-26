@@ -37,7 +37,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
+Release:   3%{?dist}
 License:   GPL
 Group:     Utility
 URL:       http://www.boost.org
@@ -169,7 +169,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   cd $WD
   EXTRA="-sICU_PATH=%{INSTALL_DIR}"
-  CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all --without-libraries=mpi,python"
+  CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all --without-libraries=mpi"
 
   ./bootstrap.sh --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
 
@@ -213,7 +213,7 @@ The boost module file defines the following environment variables:"
 BOOST_ROOT, TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC for"
 the location of the boost distribution."
 
-boost-python and boost-mpi are not currently supported.
+boost-mpi is not currently supported.
 
 Version %{version}"
 ]])

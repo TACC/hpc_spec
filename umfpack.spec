@@ -1,4 +1,4 @@
-# MUMPS specfile
+# UMFPACK specfile
 # Victor Eijkhout 2017
 #
 # based on Bar.spec
@@ -21,18 +21,18 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: Mumps, piggybacking on the PETSc install
+Summary: Umfpack, piggybacking on the PETSc install
 
 # Give the package a base name
-%define pkg_base_name mumps
-%define MODULE_VAR    MUMPS
+%define pkg_base_name umfpack
+%define MODULE_VAR    UMFPACK
 
 # Create some macros (spec file variables)
-%define major_version 4
-%define minor_version 10
-%define micro_version 0
+%define major_version 5
+%define minor_version 7
+%define micro_version 1
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 %define petscversion 3.7
 ###%define NO_PACKAGE 0
 
@@ -61,7 +61,7 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 Release:   1%{?dist}
 License:   BSD-like
 Group:     Development/Numerical-Libraries
-URL:       http://graal.ens-lyon.fr/MUMPS/
+URL:       http://faculty.cse.tamu.edu/davis/suitesparse.html
 Packager:  TACC - eijkhout@tacc.utexas.edu
 #Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
@@ -77,13 +77,13 @@ Group: Development/Tools
 This is the long description for the package RPM...
 
 %package %{MODULEFILE}
-Summary: Mumps local binary install
+Summary: Umfpack local binary install
 Group: System Environment/Base
 %description modulefile
 This is the long description for the modulefile RPM...
 
 %description
-Mumps is a solver library for distributed sparse linear system.
+Umfpack is a solver library for distributed sparse linear system.
 
 #---------------------------------------
 %prep
@@ -165,34 +165,34 @@ fi
 echo 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua << EOF
 help( [[
-The Mumps module defines the following environment variables:
-TACC_MUMPS_INC and TACC_MUMPS_LIB for the location
-of the Mumps include files and libraries.
+The Umfpack module defines the following environment variables:
+TACC_UMFPACK_INC and TACC_UMFPACK_LIB for the location
+of the Umfpack include files and libraries.
 
 Version %{version}
 ]] )
 
-whatis( "Name: Mumps" )
+whatis( "Name: Umfpack" )
 whatis( "Version: %{version}" )
 whatis( "Category: library, mathematics" )
-whatis( "URL: http://graal.ens-lyon.fr/MUMPS/" )
+whatis( "URL: http://faculty.cse.tamu.edu/davis/suitesparse.html" )
 whatis( "Description: Numerical library for sparse solvers" )
 
-local             mumps_arch =    "${architecture}"
-local             mumps_dir  =     "${TACC_PETSC_DIR}"
-local             mumps_inc  = pathJoin(mumps_dir,mumps_arch,"include")
-local             mumps_lib  = pathJoin(mumps_dir,mumps_arch,"lib")
+local             umfpack_arch =    "${architecture}"
+local             umfpack_dir  =     "${TACC_PETSC_DIR}"
+local             umfpack_inc  = pathJoin(umfpack_dir,umfpack_arch,"include")
+local             umfpack_lib  = pathJoin(umfpack_dir,umfpack_arch,"lib")
 
-prepend_path("LD_LIBRARY_PATH", mumps_lib)
+prepend_path("LD_LIBRARY_PATH", umfpack_lib)
 
-setenv("TACC_MUMPS_INC",        mumps_inc )
-setenv("TACC_MUMPS_LIB",        mumps_lib)
+setenv("TACC_UMFPACK_INC",        umfpack_inc )
+setenv("TACC_UMFPACK_LIB",        umfpack_lib)
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
 #%Module1.0#################################################
 ##
-## version file for Mumps %version
+## version file for Umfpack %version
 ##
 
 set     ModulesVersion      "${modulefilename}"
@@ -250,5 +250,5 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Tue May 30 2017 eijkhout <eijkhout@tacc.utexas.edu>
+* Mon Jul 24 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

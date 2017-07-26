@@ -21,13 +21,13 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name qt5
-%define MODULE_VAR    QT5
+%define pkg_base_name swr
+%define MODULE_VAR    SWR
 
 # Create some macros (spec file variables)
-%define major_version 5
-%define minor_version 9
-%define micro_version 0
+%define major_version 17
+%define minor_version 1
+%define micro_version 4
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -52,10 +52,10 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4%{?dist}
+Release:   1%{?dist}
 License:   GPL
-Group:     X11/Application
-URL:       http://qt.io
+Group:     X11/Driver
+URL:       http://openswr.org
 Packager:  TACC - jbarbosa@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
@@ -66,8 +66,9 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 %package %{PACKAGE}
 Summary: The package RPM
-Group: X11/Application
+Group: X11/Driver
 %description package
+The purpose of OpenSWR is to provide a high performance, highly scalable OpenGL compatible software rasterizer that allows use of unmodified visualization software. This allows working with datasets where GPU hardware isn't available or is limiting. OpenSWR is completely CPU-based, and runs on anything from laptops, to workstations, to compute nodes in HPC systems.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
@@ -157,36 +158,173 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   
   # Copy everything from tarball over to the installation directory
   # cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  export WORK_DIR=`pwd`
+  export WORK_DIR=`pwd`/swr
+  mkdir -p $WORK_DIR
   export WORK_INSTALL_DIR=$RPM_BUILD_ROOT/%{INSTALL_DIR}
 
+
+
+
   # 2) Required modules
-  #module load intel python cmake
-  
-  module load swr
+  module load intel cmake
+
+#  cd ${WORK_DIR}
+#  virtualenv python_ve
+#  source ${WORK_DIR}/python_ve/bin/activate
+#  pip install --upgrade pip
+#  pip install --upgrade mako
+#  pip install --upgrade lxml
+
 
   # 3) Build LLVM
   cd ${WORK_DIR}
+  export CFLAGS='%{TACC_OPT}'
+  export CXXFLAGS='%{TACC_OPT}'
+  export LLVM_BUILD_DIR=${WORK_DIR}/llvm-3.9
+  export PATH=/opt/apps/gcc/5.4.0/bin:$PATH
+  export LD_LIBRARY_PATH=/opt/apps/gcc/5.4.0/lib:/opt/apps/gcc/5.4.0/lib64:$LD_LIBRARY_PATH
+  export INCLUDE=/opt/apps/gcc/5.4.0/include:$INCLUDE
+  export LLVM_WORK_INSTALL_DIR=${WORK_INSTALL_DIR}
+  mkdir -p $LLVM_BUILD_DIR && cd $LLVM_BUILD_DIR
+  wget -c -N http://www.llvm.org/releases/3.9.1/llvm-3.9.1.src.tar.xz
+  tar xf llvm-3.9.1.src.tar.xz && mv llvm-3.9.1.src src
+  mkdir -p build && cd build
+  cmake ../src \
+   -DCMAKE_CXX_COMPILER=/opt/apps/gcc/5.4.0/bin/g++ \
+   -DCMAKE_C_COMPILER=/opt/apps/gcc/5.4.0/bin/gcc \
+   -DCMAKE_BUILD_TYPE=Release \
+   -DLLVM_ENABLE_RTTI=ON \
+   -DLLVM_ENABLE_TERMINFO=OFF \
+   -DLLVM_TARGETS_TO_BUILD=X86 \
+   -DLLVM_LINK_LLVM_DYLIB=ON \
+   -DCMAKE_INSTALL_PREFIX=${LLVM_WORK_INSTALL_DIR} 
 
-  git clone https://code.qt.io/qt/qt5.git
-  cd qt5/
-  git checkout %{major_version}.%{minor_version}
-  perl init-repository -f --module-subset=default,-qtwebkit,-qtwebkit-examples,-qtwebengine,-qtandroidextras,-qtmacextras
- ./configure -developer-build -confirm-license --prefix=$WORK_INSTALL_DIR -opensource -avx2 -avx512 -qt-xcb -release -nomake examples -nomake tests
+
+  make -j8 && make install
+  export PATH=${LLVM_WORK_INSTALL_DIR}/bin:$PATH
+  export LD_LIBRARY_PATH=${LLVM_WORK_INSTALL_DIR}/lib:$LD_LIBRARY_PATH
+
+  cd ${WORK_DIR}
+  wget https://xcb.freedesktop.org/dist/libpthread-stubs-0.4.tar.bz2
+  tar xjf libpthread-stubs-0.4.tar.bz2
+  cd libpthread-stubs-0.4
+  ./configure --prefix=${WORK_INSTALL_DIR}
+  make
+  make install
+
+
+  cd ${WORK_DIR}
+  wget -c https://dri.freedesktop.org/libdrm/libdrm-2.4.81.tar.bz2
+  tar xjf libdrm-2.4.81.tar.bz2
+  cd libdrm-2.4.81
+  ./configure --prefix=${WORK_INSTALL_DIR} \
+	--disable-silent-rules \
+	--disable-dependency-tracking \
+	--disable-cairo-tests \
+	--disable-radeon \
+  	--disable-amdgpu \
+  	--disable-nouveau \
+  	--disable-vmwgfx \
+	--enable-intel 
+  make 
+  make install
+
+  export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:${WORK_INSTALL_DIR}/lib/pkgconfig
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_PATH:${WORK_INSTALL_DIR}/lib
+
+  cd ${WORK_DIR}
+  export ACLOCAL="aclocal -I/usr/share/aclocal"
+# 4) Pull OpenSWR mesa source and build
+  mkdir -p ${WORK_DIR}/openswr-mesa && cd ${WORK_DIR}/openswr-mesa
+  wget -c -N https://mesa.freedesktop.org/archive/mesa-%{pkg_version}.tar.gz
+  tar xzf mesa-%{pkg_version}.tar.gz
+  cd mesa-%{pkg_version}
+
+
+  #unset CFLAGS
+  #unset CPPFLAGS
+  #export %{TACC_OPT}
+  #export CFLAGS=%{TACC_OPT}
+  export CPPFLAGS=%{TACC_OPT}
+
+  export CC=`which icpc`
+  export CXX=`which icpc`
+  export CPP=`which icpc`
+
+  mkdir -p build && cd build
+  #../autogen.sh \
+  # --enable-xlib-glx \
+  # --enable-shared-glapi \
+  # --enable-gallium-osmesa \
+  # --enable-texture-float \
+  # --disable-gbm \
+  # --disable-dri \
+  # --disable-egl \
+  # --disable-xvmc \
+  # --disable-llvm-shared-libs \
+  # --with-gallium-drivers=swrast,swr \
+  # --prefix=${WORK_INSTALL_DIR} 
+   ../autogen.sh \
+   --disable-gbm \
+   --disable-dri \
+   --disable-egl \
+   --enable-xlib-glx \
+   --enable-shared-glapi \
+   --enable-gallium-osmesa \
+   --with-gallium-drivers=swrast,swr \
+   --prefix=${WORK_INSTALL_DIR} 
+   CPPFLAGS=-I/work/01206/jbarbosa/stampede/swr/GL.stampede
+ 
 
   make -j8
   make install
- 
-cat > $WORK_INSTALL_DIR/bin/qt.conf << "EOF"
-[Paths]
-Prefix = /opt/apps/qt5/5.9.0 
-Plugins = /opt/apps/qt5/5.9.0/plugins
+
+
+
+  
+cat > ${WORK_INSTALL_DIR}/bin/mesa << "EOF"
+#!/bin/bash
+LD_LIBRARY_PATH=${TACC_SWR_DIR}/lib:$LD_LIBRARY_PATH $*
 EOF
-   
+chmod 755 ${WORK_INSTALL_DIR}/bin/mesa
+
+cat > ${WORK_INSTALL_DIR}/bin/swr << "EOF"
+#!/bin/bash
+if [ -z "$KNOB_MAX_WORKER_THREADS" ]; then
+	NUMBER_CORES_IN_NODE=`cat /proc/cpuinfo | grep processor | wc -l`
+	if [ -z "$SLURM_TASKS_PER_NODE" ]; then
+	      KNOB_MAX_WORKER_THREADS=$NUMBER_CORES_IN_NODE
+	else
+	      regex='([0-9]+).*'
+	      [[ $SLURM_TASKS_PER_NODE =~ $regex ]]
+	      NUMBER_PROCESSES_PER_NODE=${BASH_REMATCH[1]}
+	      KNOB_MAX_WORKER_THREADS=$(($NUMBER_CORES_IN_NODE / $NUMBER_PROCESSES_PER_NODE))
+	fi
+fi
+KNOB_MAX_WORKER_THREADS=$KNOB_MAX_WORKER_THREADS XLIB_SKIP_ARGB_VISUALS=1 LD_LIBRARY_PATH=${TACC_SWR_DIR}/lib:$LD_LIBRARY_PATH GALLIUM_DRIVER=swr $*
+EOF
+chmod 755 ${WORK_INSTALL_DIR}/bin/swr
+
+
+cat > ${WORK_INSTALL_DIR}/bin/swr_nk << "EOF"
+LD_LIBRARY_PATH=${TACC_SWR_DIR}/lib:$LD_LIBRARY_PATH GALLIUM_DRIVER=swr $*
+EOF
+chmod 755 ${WORK_INSTALL_DIR}/bin/swr_nk
+
 
 # Remove buildroot
+
 #find $RPM_BUILD_ROOT%{INSTALL_DIR} -type f -print0 | 
 #    xargs -0 sed -i -e s,$RPM_BUILD_ROOT,,g
+
+find $RPM_BUILD_ROOT%{INSTALL_DIR} -name swr | 
+   xargs sed -i -e s,$RPM_BUILD_ROOT,,g
+
+find $RPM_BUILD_ROOT%{INSTALL_DIR} -name swr_nk | 
+   xargs sed -i -e s,$RPM_BUILD_ROOT,,g
+
+find $RPM_BUILD_ROOT%{INSTALL_DIR} -name mesa | 
+   xargs sed -i -e s,$RPM_BUILD_ROOT,,g
 
 
 #-----------------------  
@@ -220,26 +358,28 @@ include files, and tools respectively.
 --help(help_msg)
 help(help_msg)
 
-whatis("Name: qt5")
+whatis("Name: swr")
 whatis("Version: %{pkg_version}%{dbg}")
 %if "%{is_debug}" == "1"
 setenv("TACC_%{MODULE_VAR}_DEBUG","1")
 %endif
 
 -- Create environment variables.
-local qt_dir           = "%{INSTALL_DIR}"
+local swr_dir           = "%{INSTALL_DIR}"
 
-family("qt")
-prepend_path(    "PATH",                pathJoin(qt_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(qt_dir, "lib"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/qt%{pkg_version}/modulefiles")
-prepend_path(    "QT_QPA_PLATFORM_PLUGIN_PATH", pathJoin(qt_dir, "plugins"))
-setenv( "QTDIR",                qt_dir)
-setenv( "TACC_%{MODULE_VAR}_DIR",                qt_dir)
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(qt_dir, "include"))
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(qt_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(qt_dir, "bin"))
+family("swr")
+prepend_path(    "PATH",                pathJoin(swr_dir, "bin"))
+prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/swr%{pkg_version}/modulefiles")
+setenv( "TACC_%{MODULE_VAR}_DIR",                swr_dir)
+setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(swr_dir, "include"))
+setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(swr_dir, "lib"))
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(swr_dir, "bin"))
 
+local gcc_dir                              = "/opt/apps/gcc/5.4.0"
+prepend_path( "PATH"                     , pathJoin(gcc_dir,"bin"       )               )
+prepend_path( "LD_LIBRARY_PATH"          , pathJoin(gcc_dir,"lib"       )               )
+prepend_path( "LD_LIBRARY_PATH"          , pathJoin(gcc_dir,"lib64"     )               )
+prepend_path( "INCLUDE"                  , pathJoin(gcc_dir,"include"   )               )
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'

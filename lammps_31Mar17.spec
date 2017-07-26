@@ -1,6 +1,10 @@
 
-##rpmbuild -bb --define 'is_intel17 1' --define 'is_impi 1' lammps_31Mar17.spec |& tee log_lammps_31Mar17.0
-##rpmbuild -bb --define 'is_intel15 1' --define 'is_mvapich2 1' --define 'mpiV 2_1' lammps-10Feb15.spec|tee lmp.log
+##rpmbuild -bb --define 'is_intel17 1' --define 'is_impi 1' lammps_31Mar17.spec 2>&1 | tee log_lammps_31Mar17.0
+
+#Presently only using: -xMIC-AVX512  in tools, libs and lmps make
+#With SKX, use general AVX options:
+# Change:  INTEL_FIX="-xMIC-AVX512 -fp-model fast=2 -qno-offload -qoverride-limits -free -cpp -Tf"
+#     To: -xCORE-AVX2 -axMIC-AVX512
 
 #LAMMPS
 
@@ -16,7 +20,6 @@
 %include rpm-dir.inc                  
 %include compiler-defines.inc
 %include mpi-defines.inc
-
 %include name-defines-noreloc.inc
 
 Summary: LAMMPS is a Classical Molecular Dynamics package.
@@ -24,7 +27,7 @@ Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
-Release:   3%{?dist}
+Release:   1%{?dist}
 License:   GPL
 Vendor:    Sandia
 Group:     applications/chemistry
@@ -34,21 +37,13 @@ Packager:  TACC - milfeld@tacc.utexas.edu
 
 %define   kimver   1.7.3
 %define   vorover  0.4.6
-%define   cudaver  7.5 
+%define   cudaver  6.5 
 %define   cudasm   sm_35
 %define   LMP_VER  knl
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
-
-# Important macors
-%define PNAME           lammps
-%define INSTALL_DIR     %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{PNAME}/%{version}
-%define MODULE_DIR      %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{MODULES}/%{PNAME}
-%define RPM_NAME        %{PNAME}-%{comp_fam_ver}-%{mpi_fam_ver}
-%{echo: WITH MPI %PNAME-%{comp_fam_ver}-%{mpi_fam_ver}}
-%{echo: WITH MPI %RPM_NAME}
 
 
 %package %{PACKAGE}
@@ -63,6 +58,7 @@ Group: Lmod/Modulefiles
 %description modulefile
 LAMMPS Molecular Dynamics modulefile.
 
+
 #Will be in rpm and is queryable if installed via: rpm -qi <rpm-name>
 %description
 LAMMPS is a classical molecular dynamics code with the following functionality: 
@@ -72,37 +68,33 @@ It is easy to extend with new features and functionality.
 It has a syntax for defining and using variables and formulas, 
 as well as a syntax for looping over runs and breaking out of loops.
 
-
 %prep
 
-  %if %{?BUILD_PACKAGE}
-    rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+   %if %{?BUILD_PACKAGE}
+     rm   -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+    #mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+   %endif # BUILD_PACKAGE |
+
+   %if %{?BUILD_MODULEFILE}
+     rm   -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
+   %endif # BUILD_MODULEFILE |
+
+
+   %if %{?BUILD_PACKAGE}
 %setup -n %{pkg_base_name}-%{pkg_version}
 
-  %endif # BUILD_PACKAGE |
-
-  %if %{?BUILD_MODULEFILE}
-    rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
-  %endif # BUILD_MODULEFILE |
+   %endif # BUILD_PACKAGE |
 
 
 %build
 %if %{?BUILD_PACKAGE}
 
-  unset MODULEPATH
-  if [ -f "$BASH_ENV" ]; then
-    . $BASH_ENV
-    module purge
-    clearMT
-    MP="/opt/apps/tools/modulefiles:/opt/apps/modulefiles"
+    set +x
+    %include system-load.inc
+    %include compiler-load.inc
+    %include mpi-load.inc
+    set -x
 
-    if [ -z "$MODULEPATH" ]; then
-     export MODULEPATH=$(/opt/apps/lmod/lmod/libexec/addto --append MODULEPATH ${MP//:/ })
-    fi  
-  fi
-
-  module load %{comp_module}
-  module load %{mpi_module}
 
 # PREP  v ################################################################################
 
@@ -124,10 +116,11 @@ as well as a syntax for looping over runs and breaking out of loops.
 #                          Uses soname in very complex way.
    LMP_DIR=`pwd`
 
-   mkdir -p %{INSTALL_DIR}/lib
+   mkdir -p             %{INSTALL_DIR}/lib
    mount -t tmpfs tmpfs %{INSTALL_DIR}/lib
 
- cd         %{INSTALL_DIR}/lib
+ cd                     %{INSTALL_DIR}/lib
+
     echo "start: untarring $LMP_DIR/kim-api-v${KIM_VER}.tar"
     tar                -xf $LMP_DIR/kim-api-v${KIM_VER}.tar
     mv kim-api-v${KIM_VER} kim
@@ -148,8 +141,8 @@ as well as a syntax for looping over runs and breaking out of loops.
     tar               -xzf $LMP_DIR/voro++-0.4.6.tar.gz
     [[ -d voronoi ]] && mv voronoi voronoi.$$
     mv voro++-0.4.6  voronoi
-    cp voronoi.$$/install.py voronoi
-    cp voronoi.$$/README voronoi/README_lammpsdistro
+    cp voronoi.$$/install.py voronoi                     #what is this for?
+    cp voronoi.$$/README voronoi/README_lammpsdistro                     #what is this for?
     echo "end:   untarring $LMP_DIR/voro++-0.4.6.tar.gz"
 
 #    [[ ! -z quip.0 ]] && mv quip quip.0
@@ -711,8 +704,8 @@ make package-status
 
 #  FINALLY:   Let there be light -- make lammmps
 
-   echo make -j 10 knl  # |& tee make_tacc.log
-        make -j 10 knl  # |& tee make_tacc.log
+   echo make -j 10 knl  # 2>&1 | tee make_tacc.log
+        make -j 10 knl  # 2>&1 | tee make_tacc.log
         mv lmp_knl _lmp_knl
 
 echo "Finished Making _lmp_knl"
@@ -750,7 +743,7 @@ echo "Finished Making _lmp_knl"
 #       make      tacc  # |& tee make_tacc.log
 #        mv lmp_tacc _lmp_tacc_mic
 
-#echo "Finished Making _lmp_tacc_mic"
+#echo "Finished Making _lmp_"
 
 
 
@@ -768,9 +761,6 @@ cd ..
 
 %install
 
-  %include system-load.inc
-  module purge
- 
   echo "Installing the package?:    %{BUILD_PACKAGE}"
   echo "Installing the modulefile?: %{BUILD_MODULEFILE}"
  
@@ -842,14 +832,14 @@ cd ..
 # INSTALL LAMMPS^
 
 
-# INSTALL MODULEFILE V
+
+#### INSTALL MODULEFILE V
+
 %if %{?BUILD_MODULEFILE}
 
-  mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-  touch    $RPM_BUILD_ROOT/%{MODULE_DIR}/.tacc_module_canary
+    mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
+    touch    $RPM_BUILD_ROOT/%{MODULE_DIR}/.tacc_module_canary
   
-
-## Module for lammps
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 local help_message = [[
 The LAMMPS modulefile defines the following environment variables:
@@ -938,6 +928,7 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 set     ModulesVersion      "%{version}"
 EOF
 
+
 %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
 
 
@@ -962,24 +953,7 @@ EOF
 %endif # BUILD_MODULEFILE |
 
 
-########################################
-## Fix Modulefile During Post Install ##
-########################################
-%post %{PACKAGE}
-  export PACKAGE_POST=1
-  %include post-defines.inc
-%post %{MODULEFILE}
-  export MODULEFILE_POST=1
-  %include post-defines.inc
-%preun %{PACKAGE}
-  export PACKAGE_PREUN=1
-  %include post-defines.inc
-########################################
-############ Do Not Remove #############
-########################################
-
 #---------------------------------------
 %clean
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
-

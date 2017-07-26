@@ -1,0 +1,17 @@
+export FENICS_DIR=/admin/build/admin/rpms/stampede2/SOURCES/fenics
+cd $FENICS_DIR
+
+rm -rf fiat* instant* dijitso* ufl* ffc* dolfin* mshr* eigen*
+
+git clone https://git@bitbucket.org/fenics-project/fiat
+git clone https://git@bitbucket.org/fenics-project/instant
+git clone https://git@bitbucket.org/fenics-project/dijitso
+git clone https://git@bitbucket.org/fenics-project/ufl
+git clone https://git@bitbucket.org/fenics-project/ffc
+git clone https://git@bitbucket.org/fenics-project/dolfin
+git clone https://git@bitbucket.org/fenics-project/mshr
+hg clone https://bitbucket.org/eigen/eigen
+
+cd ..
+
+tar fcz fenics-2017july.tgz fenics
