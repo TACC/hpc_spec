@@ -180,12 +180,25 @@ echo "Installing deal with Petsc: ${PETSC_DIR}/${PETSC_ARCH}"
     \
     %{_topdir}/BUILD/dealii-%{version} \
     2>&1 | tee ${LOGDIR}/dealii_cmake.log
+
+##
+## abort if cmake fails
+if [ $? -ne 0 ] ; then exit 1 ; fi
+##
+##
+
+##
+## options set aside
+##
 export disabled=" \
         -DPETSC_INCLUDE_DIR_COMMON=${PETSC_DIR} \
     -DNETCDF_DIR=${TACC_NETCDF_DIR} \
     "
-make 2>&1 | tee ${LOGDIR}/dealii_compile.log
+##
+## Make!
+##
 
+make 2>&1 | tee ${LOGDIR}/dealii_compile.log
 make install
 ( make test || true )
 

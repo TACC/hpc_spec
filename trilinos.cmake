@@ -52,7 +52,7 @@ cmake -VV \
   -D Trilinos_ENABLE_Epetra:Bool=ON \
   -D Trilinos_ENABLE_EpetraExt:Bool=ON \
   -D                 Epetra_ENABLE_TESTS:BOOL=ON \
-  -D Trilinos_ENABLE_FEI:Bool=OFF \
+  -D Trilinos_ENABLE_FEI:Bool=ON \
   -D Trilinos_ENABLE_Ifpack:Bool=ON \
   -D Trilinos_ENABLE_Intrepid:BOOL=ON \
   -D                 Intrepid_ENABLE_TESTS:BOOL=ON \
@@ -76,7 +76,7 @@ cmake -VV \
   -D Trilinos_ENABLE_SECONDARY_STABLE_CODE:BOOL=ON \
   -D Trilinos_ENABLE_Shards:BOOL=ON \
   -D Trilinos_ENABLE_ShyLU:BOOL=ON \
-  -D Trilinos_ENABLE_STK:BOOL=ON \
+  -D Trilinos_ENABLE_STK:BOOL=${HAS_STK} \
   -D Trilinos_ENABLE_Stokhos:BOOL=ON \
   -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
   -D Trilinos_ENABLE_Teko:BOOL=ON \
@@ -99,4 +99,4 @@ cmake -VV \
 
 # seems like a bug: https://github.com/trilinos/Trilinos/issues/169
 
-export trilinos_extra_libs="Amesos,Basker,Anasazi,AztecOO,Belos,Epetra,EpetraExt,Ifpack,Intrepid,ML,MOOCHO,MueLu,NOX,Pamgen,Phalanx,Rhythmos,Sacado,SEACASIoss,SEACAS,SEACASBlot,Shards,ShyLU,Stokhos,Stratimikos,Teko,Teuchos,TriKota,Zoltan; also support enabled for Bool,Hdf5,Netcdf"
+export trilinos_extra_libs="Amesos,Basker,Anasazi,AztecOO,Belos,Epetra,EpetraExt,FEI,Ifpack,Intrepid,ML,MOOCHO,MueLu,NOX,Pamgen,Phalanx,Rhythmos,Sacado,SEACASIoss,SEACAS,SEACASBlot,Shards,ShyLU,Stokhos,Stratimikos,Teko,Teuchos,TriKota,Zoltan; also support enabled for Bool,Hdf5,Netcdf"

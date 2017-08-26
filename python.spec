@@ -71,18 +71,16 @@ export BASH_ENV=/etc/tacc/tacc_functions
 
 export PATH=%{INSTALL_DIR_COMP}/bin:$PATH
 export LD_LIBRARY_PATH=%{INSTALL_DIR_COMP}/lib64:%{INSTALL_DIR_COMP}/lib:$LD_LIBRARY_PATH
-
+export PIP=%{INSTALL_DIR_COMP}/bin/pip
 ############################################################
 # System Specific Libraries
 ############################################################
 %if "%{comp_fam_name}" == "Intel"
-    #export ISAFLAGS=TACC_OPT #"-xCORE-AVX2 -axCOMMON-AVX512"
     export MKL_INC=${TACC_MKL_INC}
     export MKL_LIB=${TACC_MKL_LIB}
     export OMP_LIB=${ICC_LIB}
 %endif
 %if "%{comp_fam_name}" == "GNU"
-    #export ISAFLAGSTACC_OPT #="-march=native"
     ml intel
     export MKL_INC=${TACC_MKL_INC}
     export MKL_LIB=${TACC_MKL_LIB}
@@ -95,7 +93,7 @@ export LD_LIBRARY_PATH=%{INSTALL_DIR_COMP}/lib64:%{INSTALL_DIR_COMP}/lib:$LD_LIB
 # Build core python here
 ############################################################
 
-if [ ! -f "%{INSTALL_DIR_COMP}/bin/python" ]; then
+if [ ! -f "%{INSTALL_DIR_COMP}/bin/%{PNAME}" ]; then
     if ! mountpoint -q %{INSTALL_DIR_COMP} ; then	
         mkdir -p %{INSTALL_DIR_COMP}
         mount -t tmpfs tmpfs %{INSTALL_DIR_COMP}
@@ -111,46 +109,48 @@ if [ ! -f "%{INSTALL_DIR_COMP}/bin/python" ]; then
     ls
 
     %if "%{comp_fam_name}" == "Intel"
-    ./configure --prefix=%{INSTALL_DIR_COMP} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc' CFLAGS="-O3 -fp-model strict -fp-model source -ipo -prec-div -prec-sqrt %{TACC_OPT}" LDFLAGS="-ipo -Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth --without-gcc --with-libm=-limf --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip --enable-unicode=ucs4    
+    #./configure --prefix=%{INSTALL_DIR_COMP} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc' CFLAGS="-O3 -fp-model strict -fp-model source -ipo -prec-div -prec-sqrt %{TACC_OPT}" LDFLAGS="-ipo -Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth --without-gcc --with-libm=-limf --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip --enable-unicode=ucs4    
+    ./configure --prefix=%{INSTALL_DIR_COMP} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc -lssp' CFLAGS="-Wformat -Wformat-security -D_FORTIFY_SOURCE=2 -fstack-protector -fwrapv -fpic -O3" LDFLAGS="-Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth --without-gcc --with-libm=-limf --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip --enable-unicode=ucs4    
     %endif
     %if "%{comp_fam_name}" == "GNU"
     ./configure --prefix=%{INSTALL_DIR_COMP} CFLAGS="-flto -ffat-lto-objects -fuse-linker-plugin %{TACC_OPT}" LDFLAGS="-fPIC -flto -ffat-lto-objects -fuse-linker-plugin -rdynamic" --with-system-ffi --enable-shared --with-pth --with-threads --with-lto --with-computed-gotos --with-ensurepip --enable-unicode=ucs4          
     %endif
 
-    make -j 28
+    make -j 1
     make sharedinstall
     make -i install
 fi
+
 ############################################################
 # core python modules
 ############################################################
 if [ ! -f "%{INSTALL_DIR_COMP}/bin/pip" ]; then
     wget https://bootstrap.pypa.io/get-pip.py
-    %{INSTALL_DIR_COMP}/bin/python get-pip.py
+    %{INSTALL_DIR_COMP}/bin/%{PNAME} get-pip.py
 fi
-%{INSTALL_DIR_COMP}/bin/pip install --trusted-host pypi.python.org certifi
-%{INSTALL_DIR_COMP}/bin/pip install nose
-%{INSTALL_DIR_COMP}/bin/pip install virtualenv
-%{INSTALL_DIR_COMP}/bin/pip install virtualenvwrapper    
-%{INSTALL_DIR_COMP}/bin/pip install sympy
-%{INSTALL_DIR_COMP}/bin/pip install brewer2mpl
-%{INSTALL_DIR_COMP}/bin/pip install futures
-%{INSTALL_DIR_COMP}/bin/pip install simpy    
-%{INSTALL_DIR_COMP}/bin/pip install jsonpickle
-%{INSTALL_DIR_COMP}/bin/pip install meld3
-%{INSTALL_DIR_COMP}/bin/pip install supervisor
-%{INSTALL_DIR_COMP}/bin/pip install paramiko
-%{INSTALL_DIR_COMP}/bin/pip install readline
-%{INSTALL_DIR_COMP}/bin/pip install egenix-mx-base
+${PIP} install --trusted-host pypi.python.org certifi
+${PIP} install nose
+${PIP} install virtualenv
+${PIP} install virtualenvwrapper    
+${PIP} install sympy
+${PIP} install brewer2mpl
+${PIP} install futures
+${PIP} install simpy    
+${PIP} install jsonpickle
+${PIP} install meld3
+${PIP} install supervisor
+${PIP} install paramiko
+${PIP} install readline
+${PIP} install egenix-mx-base
 
 #############################################################
 # scipy stack: use INSTALL_DIR_COMP . 
 # We need to know which pip modules are compiler specific.  
-# numpy scipy matplotlib jupyter pandas sympy nose
+# numpy scipy matplotlib jupyter pandas sympy
 ############################################################
 
 ### Numpy
-if ! $(%{INSTALL_DIR_COMP}/bin/python -c "import numpy"); then
+if ! $(%{INSTALL_DIR_COMP}/bin/%{PNAME} -c "import numpy"); then
     cd %{_topdir}/SOURCES	
     if [ ! -f "%{_topdir}/SOURCES/numpy-1.12.1.tar.gz" ]; then	
 	wget https://github.com/numpy/numpy/releases/download/v1.12.1/numpy-1.12.1.tar.gz
@@ -169,15 +169,15 @@ mkl_libs = mkl_rt
 lapack_libs = " > site.cfg
 
     %if "%{comp_fam_name}" == "Intel"
-    %{INSTALL_DIR_COMP}/bin/python setup.py config --compiler=intelem --fcompiler=intelem build_clib --compiler=intelem --fcompiler=intelem build_ext --compiler=intelem --fcompiler=intelem install
+    %{INSTALL_DIR_COMP}/bin/%{PNAME} setup.py config --compiler=intelem --fcompiler=intelem build_clib --compiler=intelem --fcompiler=intelem build_ext --compiler=intelem --fcompiler=intelem install
     %endif
     %if "%{comp_fam_name}" == "GNU"
-    %{INSTALL_DIR_COMP}/bin/python setup.py config --fcompiler=gfortran build_clib --fcompiler=gfortran build_ext --fcompiler=gfortran install
+    %{INSTALL_DIR_COMP}/bin/%{PNAME} setup.py config --fcompiler=gfortran build_clib --fcompiler=gfortran build_ext --fcompiler=gfortran install
     %endif
 fi
 
 ### Scipy
-if ! $(%{INSTALL_DIR_COMP}/bin/python -c "import scipy"); then
+if ! $(%{INSTALL_DIR_COMP}/bin/%{PNAME} -c "import scipy"); then
     cd %{_topdir}/SOURCES	
     if [ ! -f "%{_topdir}/SOURCES/scipy-0.19.0.tar.gz" ]; then	
 	wget -O scipy-0.19.0.tar.gz https://github.com/scipy/scipy/releases/download/v0.19.0/scipy-0.19.0.tar.gz
@@ -188,43 +188,72 @@ if ! $(%{INSTALL_DIR_COMP}/bin/python -c "import scipy"); then
     cd %{_topdir}/SOURCES/scipy-0.19.0
 
     %if "%{comp_fam_name}" == "Intel"
-    %{INSTALL_DIR_COMP}/bin/python setup.py config --compiler=intelem --fcompiler=intelem build_clib --compiler=intelem --fcompiler=intelem build_ext --compiler=intelem --fcompiler=intelem install
+    %{INSTALL_DIR_COMP}/bin/%{PNAME} setup.py config --compiler=intelem --fcompiler=intelem build_clib --compiler=intelem --fcompiler=intelem build_ext --compiler=intelem --fcompiler=intelem install
     %endif
-    %if "%{comp_fam_name}" == "GNU"	
-    %{INSTALL_DIR_COMP}/bin/python setup.py config --fcompiler=gfortran build_clib --fcompiler=gfortran build_ext --fcompiler=gfortran install
+    %if "%{comp_fam_name}" == "GNU"
+    %{INSTALL_DIR_COMP}/bin/%{PNAME} setup.py config --fcompiler=gfortran build_clib --fcompiler=gfortran build_ext --fcompiler=gfortran install
     %endif
 fi
 
-%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: matplotlib	
-CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: cython	
-%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: cffi	
-CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: pandas
-%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: psutil
-%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: numexpr
-%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: rpyc	
-%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: ipython
-%{INSTALL_DIR_COMP}/bin/pip install jupyter	
-%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: mako
-CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: lxml
-%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: pystuck
-%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: fortran-magic
-%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: MySQL
-%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: psycopg2
-%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: mercurial
-#CFLAGS="-O0" %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: yt
-%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: theano
-%{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: ply
-CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: scikit_learn
+### pycairo
+if ! $(%{INSTALL_DIR_COMP}/bin/%{PNAME} -c "import cairo"); then
+    if [ ! -f "%{_topdir}/SOURCES/pycairo-1.15.0.tar.gz" ]; then		
+	wget -O pycairo-1.15.0.tar.gz https://github.com/pygobject/pycairo/releases/download/v1.15.0/pycairo-1.15.0.tar.gz
+    fi
+    rm -rf %{_topdir}/SOURCES/pycairo-1.15.0.tar.gz
+    tar -xzvf pycairo-1.15.0.tar.gz -C %{_topdir}/SOURCES	 
+    cd %{_topdir}/SOURCES/pycairo-1.15.0
+    python setup.py install --prefix=%{INSTALL_DIR_COMP}
+fi	   
+
+### pygobject
+if ! $(%{INSTALL_DIR_COMP}/bin/%{PNAME} -c "import gobject"); then
+    if [ ! -f "%{_topdir}/SOURCES/" ]; then		
+	wget -O pygobject-2.28.6.tar.xz http://ftp.gnome.org/pub/GNOME/sources/pygobject/2.28/pygobject-2.28.6.tar.xz
+    fi
+    rm -rf %{_topdir}/SOURCES/pygobject-2.28.6
+    tar xvf pygobject-2.28.6.tar.xz -C %{_topdir}/SOURCES	 
+    cd %{_topdir}/SOURCES/pygobject-2.28.6
+    sed -i 's/case GI_INFO_TYPE_ERROR_DOMAIN:/ /' gi/pygi-info.c
+    ./configure --prefix=%{INSTALL_DIR_COMP}; make; make install   
+fi	   
+
+### pygtk
+if ! $(%{INSTALL_DIR_COMP}/bin/%{PNAME} -c "import pygtk"); then
+    if [ ! -f "%{_topdir}/SOURCES/pygtk-2.24.0.tar.gz" ]; then		
+	wget -O pygtk-2.24.0.tar.gz http://ftp.gnome.org/pub/GNOME/sources/pygtk/2.24/pygtk-2.24.0.tar.gz
+    fi
+    rm -rf %{_topdir}/SOURCES/pygtk-2.24.0
+    tar -xzvf pygtk-2.24.0.tar.gz -C %{_topdir}/SOURCES	 
+    cd %{_topdir}/SOURCES/pygtk-2.24.0
+    ./configure --prefix=%{INSTALL_DIR_COMP}; make; make install   
+fi	   
 
 
-#wget https://github.com/matplotlib/basemap/archive/v1.1.0.tar.gz
-#tar xvf v1.1.0.tar.gz
-#cd basemap-1.1.0/
-#%{INSTALL_DIR_COMP}/bin/python setup.py install
+${PIP} install --no-binary :all: matplotlib	
+CFLAGS="-O2" ${PIP} install --no-binary :all: cython	
+${PIP} install --no-binary :all: cffi	
+CFLAGS="-O2" ${PIP} install --no-binary :all: pandas
+${PIP} install --no-binary :all: psutil
+${PIP} install --no-binary :all: numexpr
+${PIP} install --no-binary :all: rpyc	
+${PIP} install --no-binary :all: ipython
+${PIP} install jupyter	
+${PIP} install --no-binary :all: mako
+CFLAGS="-O2" ${PIP} install --no-binary :all: lxml
+${PIP} install --no-binary :all: pystuck
+${PIP} install --no-binary :all: fortran-magic
+${PIP} install --no-binary :all: MySQL
+${PIP} install --no-binary :all: psycopg2
+${PIP} install --no-binary :all: mercurial
+#CFLAGS="-O0" ${PIP} install --no-binary :all: yt
+${PIP} install --no-binary :all: theano
+${PIP} install --no-binary :all: ply
+CFLAGS="-O2" ${PIP} install --no-binary :all: scikit_learn
 
 #if module load hdf5; then
-#    %{INSTALL_DIR_COMP}/bin/pip install h5py
-#    %{INSTALL_DIR_COMP}/bin/pip install tables
+#    ${PIP} install h5py
+#    ${PIP} install tables
 #fi
 #############################################################
 # mpi4py: use INSTALL_DIR_MPI
@@ -236,12 +265,12 @@ CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: scikit_learn
   fi
   module load %{PNAME}/%{version}	
   module load %{mpi_module}   
-  %{INSTALL_DIR_COMP}/bin/pip install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_MPI}" mpi4py
+  ${PIP} install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_MPI}" mpi4py
 
   if module load phdf5; then
       export PYTHONPATH=%{INSTALL_DIR_MPI}/lib/python2.7/site-packages
-      CC="mpicc -ip-no-inlining" HDF5_MPI="ON" HDF5_DIR=$TACC_HDF5_DIR %{INSTALL_DIR_COMP}/bin/pip install --no-binary=h5py --no-deps --install-option="--prefix=%{INSTALL_DIR_MPI}" --ignore-installed h5py
-      %{INSTALL_DIR_COMP}/bin/pip install tables
+      CC="mpicc -ip-no-inlining" HDF5_MPI="ON" HDF5_DIR=$TACC_HDF5_DIR ${PIP} install --no-binary=h5py --no-deps --install-option="--prefix=%{INSTALL_DIR_MPI}" --ignore-installed h5py
+      ${PIP} install tables
   fi
 %endif
 

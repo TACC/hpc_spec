@@ -1,7 +1,9 @@
-## rpmbuild -bb --define 'is_intel17 1' --define 'is_impi 1' tau-2.26.2p1.spec 2>&1 | tee log_tau-2.26.2p1
+## rpmbuild -bb --define 'is_intel17 1' --define 'is_impi 1' tau-2.26.2p1.spec 2>&1 | tee log_tau-2.26.2p1-2.x
 #
-#  rpm -hiv $r/tacc-tau
-#  rpm -e   tacc-tau...
+# rpm -hiv --nodeps $r/tacc-tau-intel17-impi17_0-package-2.26.2p1-2.el7.centos.x86_64.rpm
+# rpm -hiv --nodeps $r/tacc-tau-intel17-impi17_0-modulefile-2.26.2p1-2.el7.centos.x86_64.rpm
+#  rpm -e   tacc-tau-intel17-impi17_0-package-2.26.2p1-2
+#  rpm -e   tacc-tau-intel17-impi17_0-modulefile-2.26.2p1-2
 
 # Give the package a base name
 %define pkg_base_name tau
@@ -24,7 +26,7 @@
 Summary:   Spec file for TAU
 Name:      %{pkg_name}
 Version:   %{pkg_version}
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   University of Oregon, ZAM, and LANL
 Vendor:    Department of Computer Science, Oregon 
 Group:     Development/Languages
@@ -124,9 +126,15 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
      module load papi/%{PAPI_version}
      module load cmake
 
-     ./configure -tag=intelmpi %{PREFIX} -c++=mpicxx -cc=mpicc -fortran=mpif90 %{PDT} %{PAPI} -bfd=download -iowrapper -unwind=download -ompt=download
+     ./configure -tag=intelmpi %{PREFIX} -c++=mpicxx -cc=mpicc -fortran=mpif90 \
+                 %{PDT} %{PAPI} -ompt=download \
+                 -bfd=download -iowrapper -unwind=download
+     make clean install -j 10
 
-     make install -j 10
+     ./configure -tag=intelomp %{PREFIX} -c++=icpc   -cc=icc   -fortran=ifort \
+                 %{PDT} %{PAPI} -ompt=download \
+                 -bfd=download -iowrapper -unwind=download
+     make clean install -j 10
 
   %endif  #BUILD_PACKAGE |
 
@@ -185,18 +193,22 @@ environment.
 The Tau makefile (for the Tau compiler wrappers to use) is specified in the 
 TAU_MAKEFILE environement variable. The syntax for makefile name is:
 
-    <path>/Makefile.<hyphen_separated_component_list>\n
+    <path>/Makefile.tau-<hyphen_separated_component_list>\n
 
 and the components are:
     Intel Compilers (icpc)
-    MPI (mpi)
-    OMP (openmp)
-    OpenMP Tool Kit (not available on KNL)
-    PAPI (papi is now included by default)
-    PDtoolkit (pdt)
+    MPI             (mpi)    also has intelmpi tag name
+    OMP             (openmp)
+    OpenMP Tool     (ompt)   openmp events
+    PAPI            (papi)   now included by default
+    PDtoolkit       (pdt)    now included by default
 
-Only a single TAU Makefile has been generated for this version. 
-The Make file variable TAU_MAKEFILE is set to
+The default TAU Makefile is set for MPI and hybrid applications.
+It has the intelmpi tag in its name.
+For pure OpenMP applications use a Makefile with the 
+intelomp tag (and no mpi component).
+
+The default for the Make file variable TAU_MAKEFILE is:
 
     $TACC_TAU_LIB/%{TAU_makefile}
 
@@ -253,7 +265,7 @@ prepend_path(    "MANPATH"        , "%{PAPI_dir}/man"       )
 setenv(           "TACC_TAU_DIR",            tau_dir        )
 setenv(           "TACC_TAU_BIN",            tau_bin        )
 setenv(           "TACC_TAU_LIB",            tau_lib        )
-setenv(           "TACC_TAU_DOC",   pathJoin(tau_dir,"doc"))
+setenv(           "TACC_TAU_DOC",   pathJoin(tau_dir,"docs"))
 setenv(                "TAU",                tau_lib        )
 setenv(           "TAU_MAKEFILE", pathJoin(tau_lib,"%{TAU_makefile}") )
 setenv("PAPI_PERFMON_EVENT_FILE",   "%{PAPI_events}"        )

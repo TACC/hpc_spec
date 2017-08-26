@@ -2,87 +2,108 @@
 # bunch of pip-based installs
 #
 module list
-rm -rf ${FENICS_DIR}/fiat
-mkdir -p ${FENICS_DIR}/fiat
+export PIP=pip3
+export PIP_OPTION=--install-option
+export PYTHON_VERSION=3.6
+
+mkdir -p ${FENICS_DIR}/python
+( pip3 install --prefix=${FENICS_DIR}/python ply )
+export PYTHONPATH=$PYTHONPATH:${FENICS_DIR}/python/lib/python${PYTHON_VERSION}/site-packages
+export PYTHON_EXTRA_PATHS=${PYTHON_EXTRA_PATHS}:${FENICS_DIR}/python/lib/python${PYTHON_VERSION}/site-packages
+export PY_PLY_PATH=${FENICS_DIR}/python/lib/python${PYTHON_VERSION}/site-packages
+export PY_PLY_path=${FENICS_DIR}/python/lib/python${PYTHON_VERSION}/site-packages
+
 export PKG_INSTALL_DIR=${FENICS_DIR}/fiat
-( echo ; echo "Fiat install" ; echo ; \
-  cd fiat    && pip3 install --install-option "--prefix=${PKG_INSTALL_DIR}" . )
-#    2>&1 | tee -a ${LOG_DIR}/install.log
-export PYTHONPATH=$PYTHONPATH:${FENICS_DIR}/fiat/lib/python2.7/site-packages/
-export PYTHON_EXTRA_PATHS=${PYTHON_EXTRA_PATHS}:${FENICS_DIR}/fiat/lib/python2.7/site-packages/
+rm -rf ${PKG_INSTALL_DIR}
+mkdir -p ${PKG_INSTALL_DIR}
+( echo ; echo "Fiat install in ${PKG_INSTALL_DIR}" ; echo ; \
+  cd fiat    && ${PIP} install ${PIP_OPTION}="--prefix=${PKG_INSTALL_DIR}" . )
+export PYTHONPATH=$PYTHONPATH:${PKG_INSTALL_DIR}/lib/python${PYTHON_VERSION}/site-packages/
+export PYTHON_EXTRA_PATHS=${PYTHON_EXTRA_PATHS}:${PKG_INSTALL_DIR}/lib/python${PYTHON_VERSION}/site-packages/
 
-rm -rf ${FENICS_DIR}/instant
-mkdir -p ${FENICS_DIR}/instant
 export PKG_INSTALL_DIR=${FENICS_DIR}/instant
-( echo ; echo "Instant install" ; echo ; \
-  cd instant && pip3 install --install-option "--prefix=${PKG_INSTALL_DIR}" . ) 
-#    2>&1 | tee -a ${LOG_DIR}/install.log
-export PYTHONPATH=$PYTHONPATH:${FENICS_DIR}/instant/lib/python2.7/site-packages/
-export PYTHON_EXTRA_PATHS=${PYTHON_EXTRA_PATHS}:${FENICS_DIR}/instant/lib/python2.7/site-packages/
+rm -rf ${PKG_INSTALL_DIR}
+mkdir -p ${PKG_INSTALL_DIR}
+( echo ; echo "Instant install in ${PKG_INSTALL_DIR}" ; echo ; \
+  cd instant && ${PIP} install ${PIP_OPTION}="--prefix=${PKG_INSTALL_DIR}" . ) 
+export PYTHONPATH=$PYTHONPATH:${PKG_INSTALL_DIR}/lib/python${PYTHON_VERSION}/site-packages/
+export PYTHON_EXTRA_PATHS=${PYTHON_EXTRA_PATHS}:${PKG_INSTALL_DIR}/lib/python${PYTHON_VERSION}/site-packages/
 
-rm -rf ${FENICS_DIR}/dijitso
-mkdir -p ${FENICS_DIR}/dijitso
 export PKG_INSTALL_DIR=${FENICS_DIR}/dijitso
-( echo ; echo "Dijitso install" ; echo ; \
-  cd dijitso && pip3 install --install-option "--prefix=${PKG_INSTALL_DIR}" . ) 
-#    2>&1 | tee -a ${LOG_DIR}/install.log
-export PYTHONPATH=$PYTHONPATH:${FENICS_DIR}/dijitso/lib/python2.7/site-packages/
-export PYTHON_EXTRA_PATHS=${PYTHON_EXTRA_PATHS}:${FENICS_DIR}/dijitso/lib/python2.7/site-packages/
+rm -rf ${PKG_INSTALL_DIR}
+mkdir -p ${PKG_INSTALL_DIR}
+( echo ; echo "Dijitso install in ${PKG_INSTALL_DIR}" ; echo ; \
+  cd dijitso && ${PIP} install ${PIP_OPTION}="--prefix=${PKG_INSTALL_DIR}" . ) 
+export PYTHONPATH=$PYTHONPATH:${PKG_INSTALL_DIR}/lib/python${PYTHON_VERSION}/site-packages/
+export PYTHON_EXTRA_PATHS=${PYTHON_EXTRA_PATHS}:${PKG_INSTALL_DIR}/lib/python${PYTHON_VERSION}/site-packages/
 
-rm -rf ${FENICS_DIR}/ufl
-mkdir -p ${FENICS_DIR}/ufl
 export PKG_INSTALL_DIR=${FENICS_DIR}/ufl
-( echo ; echo "UFL install" ; echo ; \
-  cd ufl     && pip3 install --install-option "--prefix=${PKG_INSTALL_DIR}" . ) 
-#    2>&1 | tee -a ${LOG_DIR}/install.log
-export PYTHONPATH=$PYTHONPATH:${FENICS_DIR}/ufl/lib/python2.7/site-packages/
-export PYTHON_EXTRA_PATHS=${PYTHON_EXTRA_PATHS}:${FENICS_DIR}/ufl/lib/python2.7/site-packages/
+rm -rf ${PKG_INSTALL_DIR}
+mkdir -p ${PKG_INSTALL_DIR}
+( echo ; echo "UFL install in ${PKG_INSTALL_DIR}" ; echo ; \
+  cd ufl     && ${PIP} install ${PIP_OPTION}="--prefix=${PKG_INSTALL_DIR}" . ) 
+export PYTHONPATH=$PYTHONPATH:${PKG_INSTALL_DIR}/lib/python${PYTHON_VERSION}/site-packages/
+export PYTHON_EXTRA_PATHS=${PYTHON_EXTRA_PATHS}:${PKG_INSTALL_DIR}/lib/python${PYTHON_VERSION}/site-packages/
 
-rm -rf ${FENICS_DIR}/ffc
-mkdir -p ${FENICS_DIR}/ffc
 export PKG_INSTALL_DIR=${FENICS_DIR}/ffc
-( echo ; echo "FFC install" ; echo ; \
-  cd ffc     && pip3 install --install-option "--prefix=${PKG_INSTALL_DIR}" . ) 
-#    2>&1 | tee -a ${LOG_DIR}/install.log
-export PYTHONPATH=$PYTHONPATH:${FENICS_DIR}/ffc/lib/python2.7/site-packages/
-export PYTHON_EXTRA_PATHS=${PYTHON_EXTRA_PATHS}:${FENICS_DIR}/ffc/lib/python2.7/site-packages/
+rm -rf ${PKG_INSTALL_DIR}
+mkdir -p ${PKG_INSTALL_DIR}
+( echo ; echo "FFC install in ${PKG_INSTALL_DIR}" ; echo ; \
+  cd ffc     && ${PIP} install ${PIP_OPTION}="--prefix=${PKG_INSTALL_DIR}" . ) 
+export PYTHONPATH=$PYTHONPATH:${PKG_INSTALL_DIR}/lib/python${PYTHON_VERSION}/site-packages/
+export PYTHON_EXTRA_PATHS=${PYTHON_EXTRA_PATHS}:${PKG_INSTALL_DIR}/lib/python${PYTHON_VERSION}/site-packages/
 
 #
-# the next two are cmake-based
+# the next three are cmake-based
 #
-export cmake_flags="-DCMAKE_CXX_COMPILER=icpc -DCMAKE_C_COMPILER=icc"
+export cmake_flags="-DCMAKE_CXX_COMPILER=${FENICS_X_COMPILER} -DCMAKE_C_COMPILER=${FENICS_C_COMPILER}"
 export BOOST_ROOT=${TACC_BOOST_DIR}
 
 export PKG_INSTALL_DIR=${FENICS_DIR}/eigen
-( echo ; echo "Eigen install" ; echo \
-  && rm -rf ${FENICS_DIR}/eigen && mkdir -p ${FENICS_DIR}/eigen \
-  && rm -rf ${FENICS_DIR}/eigen-build && mkdir -p ${FENICS_DIR}/eigen-build && cd eigen-build \
+export EIGEN_INSTALL_DIR=${FENICS_DIR}/eigen
+rm -rf ${PKG_INSTALL_DIR}
+mkdir -p ${PKG_INSTALL_DIR}
+export PKG_BUILD_DIR=${BUILD_DIR}/eigen-build
+rm -rf ${PKG_BUILD_DIR}
+mkdir -p ${PKG_BUILD_DIR}
+( echo ; echo "Eigen install in ${PKG_INSTALL_DIR}" ; echo \
+  && cd ${PKG_BUILD_DIR} \
   && cmake -D CMAKE_INSTALL_PREFIX:PATH=${PKG_INSTALL_DIR} \
-        ${cmake_flags} ../eigen \
-  && make install ) 
-#    2>&1 | tee -a ${LOG_DIR}/install.log
+        ${cmake_flags} ${SRC_DIR}/eigen \
+  && make && make install ) 
+export CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:${PKG_INSTALL_DIR}
 
 export PKG_INSTALL_DIR=${FENICS_DIR}/dolfin
-export EIGEN_DIR=${FENICS_DIR}/eigen
-( echo ; echo "Dolfin install" ; echo \
-  && rm -rf ${FENICS_DIR}/dolfin && mkdir -p ${FENICS_DIR}/dolfin \
-  && rm -rf ${FENICS_DIR}/dolfin-build && mkdir -p ${FENICS_DIR}/dolfin-build && cd dolfin-build \
+rm -rf ${PKG_INSTALL_DIR}
+mkdir -p ${PKG_INSTALL_DIR}
+export PKG_BUILD_DIR=${BUILD_DIR}/dolfin-build
+rm -rf ${PKG_BUILD_DIR}
+mkdir -p ${PKG_BUILD_DIR}
+( echo ; echo "Dolfin install in ${PKG_INSTALL_DIR}" ; echo \
+  && cd ${PKG_BUILD_DIR} \
   && cmake -D CMAKE_INSTALL_PREFIX:PATH=${PKG_INSTALL_DIR} \
-        -D EIGEN_DIR=${FENICS_DIR}/eigen \
-        ${cmake_flags} ../dolfin \
-  && make install ) 
-#    2>&1 | tee -a ${LOG_DIR}/install.log
-export PYTHONPATH=$PYTHONPATH:${FENICS_DIR}/dolfin/lib/python2.7/site-packages/
-export PYTHON_EXTRA_PATHS=${PYTHON_EXTRA_PATHS}:${FENICS_DIR}/dolfin/lib/python2.7/site-packages/
+        -D CMAKE_CXX_COMPILER:FILEPATH=mpicxx \
+        -D CMAKE_C_COMPILER:FILEPATH=mpicc \
+        -D CMAKE_Fortran_COMPILER:FILEPATH=mpif90 \
+        -D DOLFIN_AUTO_DETECT_MPI=false \
+        -D EIGEN3_INCLUDE_DIR=${EIGEN_INSTALL_DIR}/include/eigen3 \
+        ${cmake_flags} ${SRC_DIR}/dolfin \
+  && make && make install ) 
+export PYTHONPATH=$PYTHONPATH:${PKG_INSTALL_DIR}/lib/python${PYTHON_VERSION}/site-packages/
+export PYTHON_EXTRA_PATHS=${PYTHON_EXTRA_PATHS}:${PKG_INSTALL_DIR}/lib/python${PYTHON_VERSION}/site-packages/
+export CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:${PKG_INSTALL_DIR}
 
-rm -rf ${FENICS_DIR}/mshr
-mkdir -p ${FENICS_DIR}/mshr
-echo ; echo "Mshr install" ; echo
 export PKG_INSTALL_DIR=${FENICS_DIR}/mshr
+rm -rf ${PKG_INSTALL_DIR}
+mkdir -p ${PKG_INSTALL_DIR}
+export PKG_BUILD_DIR=${BUILD_DIR}/mshr-build
+rm -rf ${PKG_BUILD_DIR}
+mkdir -p ${PKG_BUILD_DIR}
+echo ; echo "Mshr install in ${PKG_INSTALL_DIR}" ; echo
 ( cd mshr \
-  && rm -rf ${FENICS_DIR}/build && mkdir -p ${FENICS_DIR}/build && cd build \
-  && cmake -D CMAKE_INSTALL_PREFIX:PATH=${PKG_INSTALL_DIR} ${cmake_flags} .. \
-  && make install ) 
-#    2>&1 | tee -a ${LOG_DIR}/install.log
-export PYTHONPATH=$PYTHONPATH:${FENICS_DIR}/mshr/lib/python2.7/site-packages/
-export PYTHON_EXTRA_PATHS=${PYTHON_EXTRA_PATHS}:${FENICS_DIR}/mshr/lib/python2.7/site-packages/
+  && cd ${PKG_BUILD_DIR} \
+  && cmake -D CMAKE_INSTALL_PREFIX:PATH=${PKG_INSTALL_DIR} \
+           ${cmake_flags} ${SRC_DIR}/mshr \
+  && make && make install ) 
+export PYTHONPATH=$PYTHONPATH:${PKG_INSTALL_DIR}/lib/python${PYTHON_VERSION}/site-packages/
+export PYTHON_EXTRA_PATHS=${PYTHON_EXTRA_PATHS}:${PKG_INSTALL_DIR}/lib/python${PYTHON_VERSION}/site-packages/

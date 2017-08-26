@@ -1,6 +1,7 @@
 # build rpm
 
 # rpmbuild -bb --define 'is_intel17 1' --define 'is_impi 1' amask-1.0.spec 2>&1 | tee amask-1.0.log
+# rpmbuild -bb --define 'is_intel17 1' --define 'is_impi 1' amask-1.0.spec 2>&1 | tee amask-1.0-x.log
 #
 # Build only PACKAGE or MODULE -- set variable.  E.g. NO_PACKAGE=1 rpmbuild -bb ... only build modulefile
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -47,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.gnu.org/software/bar
@@ -92,6 +93,15 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
 %if %{?BUILD_PACKAGE}
 %setup -n %{pkg_base_name}-%{pkg_version}
+  echo `pwd` >/tmp/whereami0
+  env        >/tmp/env0
+  ls -ld     >/tmp/ls0
+  cd ..
+  ls -la %{pkg_base_name}-%{pkg_version}
+  rm -rf %{pkg_base_name}-%{pkg_version}
+  git clone https://github.com/tacc/amask.git
+  mv amask %{pkg_base_name}-%{pkg_version}
+
 %endif # BUILD_PACKAGE |
 
 
@@ -216,7 +226,6 @@ local APP_dir           = "%{INSTALL_DIR}"
 family("APP")
 prepend_path(    "PATH",                pathJoin(APP_dir, "bin"))
 prepend_path(    "LD_LIBRARY_PATH",     pathJoin(APP_dir, "lib"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/APP1_1/modulefiles")
 setenv( "TACC_%{MODULE_VAR}_DIR",                APP_dir)
 setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(APP_dir, "lib"))
 setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(APP_dir, "bin"))
@@ -258,7 +267,6 @@ EOF
   %{MODULE_DIR}
 
 %endif # BUILD_MODULEFILE |
-
 
 ## Fix Modulefile During Post Install ##
 

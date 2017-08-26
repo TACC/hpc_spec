@@ -1,5 +1,5 @@
-# rpmbuild -bb idev-1.5.2-2.spec 2>&1 | tee log_idev-1.5.2-2
-# rpmbuild -bb idev-1.5.2-x.spec 2>&1 | tee log_idev-1.5.2-x
+# rpmbuild -bb idev-1.5.2-2.spec 2>&1 | tee idev-1.5.2-2.log
+# rpmbuild -bb idev-1.5.2-x.spec 2>&1 | tee log_idev-1.5.2-x.log
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name

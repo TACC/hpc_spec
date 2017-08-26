@@ -4,7 +4,7 @@
 Summary:   Standard TACC Login scripts for our friendly Linux Clusters.
 Name:      tacc_login_scripts
 Version:   2.1
-Release:   47
+Release:   49
 License:   Proprietary
 Group:     System Environment/Base
 Source0:   %{name}-%{version}.tar.gz
@@ -29,7 +29,7 @@ Group: System Environment/Base
 These are the scripts for login nodes
 
 %description -n %{name}-compute
-These are the scripts for login nodes
+These are the scripts for compute nodes
 
 %prep
 %setup -q

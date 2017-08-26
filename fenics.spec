@@ -36,8 +36,8 @@ Release: 2%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tgz
-URL: http://fenics.sandia.gov/
-Vendor: Sandia National Labs
+URL: https://fenicsproject.org/
+Vendor: Fenics project
 Packager: TACC -- eijkhout@tacc.utexas.edu
 
 %define debug_package %{nil}
@@ -45,47 +45,31 @@ Packager: TACC -- eijkhout@tacc.utexas.edu
 %global _python_bytecompile_errors_terminate_build 0
 
 %package %{PACKAGE}
-Summary: Fenics is a large suite of numerical algorithms from Sandia National Laboratories
+Summary: FEniCS is a popular open-source (LGPLv3) computing platform for solving partial differential equations (PDEs). 
 Group: Development/Numerical-Libraries
 %package %{MODULEFILE}
-Summary: Fenics is a large suite of numerical algorithms from Sandia National Laboratories
+Summary: FEniCS is a popular open-source (LGPLv3) computing platform for solving partial differential equations (PDEs). 
 Group: Development/Numerical-Libraries
 
 %description
 %description %{PACKAGE}
-The Fenics Project is an effort to develop algorithms and enabling
-technologies within an object-oriented software framework for the
-solution of large-scale, complex multi-physics engineering and
-scientific problems. A unique design feature of Fenics is its focus
-on packages.
+FEniCS is a popular open-source (LGPLv3) computing platform for
+solving partial differential equations (PDEs). 
+FEniCS enables users to
+quickly translate scientific models into efficient finite element
+code. With the high-level Python and C++ interfaces to FEniCS, it is
+easy to get started, but FEniCS offers also powerful capabilities for
+more experienced programmers. FEniCS runs on a multitude of platforms
+ranging from laptops to high-performance clusters.
 
-Each Fenics package is a self-contained, independent piece of
-software with its own set of requirements, its own development team
-and group of users. Because of this, Fenics itself is designed to
-respect the autonomy of packages. Fenics offers a variety of ways
-for a particular package to interact with other Fenics packages. It
-also offers a set of tools that can assist package developers with
-builds across multiple platforms, generating documentation and
-regression testing across a set of target platforms. At the same time,
-what a package must do to be called a Fenics package is minimal, and
-varies with each package.
 %description %{MODULEFILE}
-The Fenics Project is an effort to develop algorithms and enabling
-technologies within an object-oriented software framework for the
-solution of large-scale, complex multi-physics engineering and
-scientific problems. A unique design feature of Fenics is its focus
-on packages.
-
-Each Fenics package is a self-contained, independent piece of
-software with its own set of requirements, its own development team
-and group of users. Because of this, Fenics itself is designed to
-respect the autonomy of packages. Fenics offers a variety of ways
-for a particular package to interact with other Fenics packages. It
-also offers a set of tools that can assist package developers with
-builds across multiple platforms, generating documentation and
-regression testing across a set of target platforms. At the same time,
-what a package must do to be called a Fenics package is minimal, and
-varies with each package.
+FEniCS is a popular open-source (LGPLv3) computing platform for
+solving partial differential equations (PDEs). FEniCS enables users to
+quickly translate scientific models into efficient finite element
+code. With the high-level Python and C++ interfaces to FEniCS, it is
+easy to get started, but FEniCS offers also powerful capabilities for
+more experienced programmers. FEniCS runs on a multitude of platforms
+ranging from laptops to high-performance clusters.
 
 %prep
 
@@ -119,46 +103,60 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 mkdir -p %{INSTALL_DIR}
 mount -t tmpfs tmpfs %{INSTALL_DIR}
 
-module load cmake boost python3
+module load cmake boost python3 swig
+module load gsl petsc phdf5
+# trilinos : gives problems with the STKdoc_tests
+
+%if "%{comp_fam}" == "gcc"
+FENICS_C_COMPILER=gcc
+FENICS_X_COMPILER=g++
+%else
+FENICS_C_COMPILER=icc
+FENICS_X_COMPILER=icpc
+%endif
 
 export LOG_DIR=%{_topdir}/SPECS
+export SRC_DIR=%{_topdir}/BUILD/fenics
+export BUILD_DIR=%{_topdir}/BUILD/fenics
 export FENICS_DIR=%{INSTALL_DIR}
 export PYTHON_EXTRA_PATHS=
 
 rm -f ${LOG_DIR}/fenics_install.log
 . %{_topdir}/SPECS/fenics.install
 
+cp -r %{INSTALL_DIR}/{fiat,instant,dijitso,ufl,ffc,eigen,dolfin,mshr} ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
+cp -r %{INSTALL_DIR}/python ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
+
+umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
+
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
 help( [[
-The fenics module defines the following environment variables:
-TACC_FENICS_DIR, TACC_FENICS_BIN, and
-TACC_FENICS_LIB for the location
-of the Fenics distribution, documentation, binaries,
-and libraries.
+The fenics module defines the environment variables:
+TACC_FENICS_DIR for the location of the Fenics distribution, 
+and PYTHONPATH. Fenics requires python3.
 
-Version %{version}${versionextra}
-external packages installed: ${packageslisting}
+Version %{version}
 ]] )
 
 whatis( "Name: Fenics" )
-whatis( "Version: %{version}${versionextra}${dynamicextra}" )
-whatis( "Version-notes: external packages installed: ${packages}" )
+whatis( "Version: %{version}" )
 whatis( "Category: library, mathematics" )
-whatis( "URL: http://www-unix.mcs.anl.gov/fenics/fenics-as/" )
-whatis( "Description: Portable Extendible Toolkit for Scientific Computing, Numerical library for sparse linear algebra" )
+whatis( "URL: https://fenicsproject.org/" )
+whatis( "Description: Fenics, finite element package" )
 
-local             fenics_arch =    "${architecture}"
 local             fenics_dir =     "%{INSTALL_DIR}/"
+local             python_dir =     "${PYTHON_EXTRA_PATHS}"
 
-prepend_path("PATH",            pathJoin(fenics_dir,fenics_arch,"bin") )
-prepend_path("LD_LIBRARY_PATH", pathJoin(fenics_dir,fenics_arch,"lib") )
-
-setenv("FENICS_ARCH",            fenics_arch)
-setenv("FENICS_DIR",             fenics_dir)
+prepend_path("PYTHONPATH",      python_dir )
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"ufl","bin" )
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"python","bin" )
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"mshr","bin" )
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"instant","bin" )
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"fiat","bin" )
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"ffc","bin" )
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"dolfin","bin" )
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"dijitso","bin" )
 setenv("TACC_FENICS_DIR",        fenics_dir)
-setenv("TACC_FENICS_BIN",        pathJoin(fenics_dir,fenics_arch,"bin") )
-setenv("TACC_FENICS_INC",        pathJoin(fenics_dir,fenics_arch,"include") )
-setenv("TACC_FENICS_LIB",        pathJoin(fenics_dir,fenics_arch,"lib") )
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
@@ -176,11 +174,6 @@ EOF
 ## end of configure install section
 ##
 
-module unload python
-cp -r %{INSTALL_DIR}/* ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
-
-umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
-
 %files %{PACKAGE}
   %defattr(-,root,install,)
   %{INSTALL_DIR}
@@ -192,7 +185,7 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
-* Fri Jun 30 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: fix broken stuff that trips up dealII
-* Fri May 12 2017 eijkhout <eijkhout@tacc.utexas.edu>
+* Fri Aug 25 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: much LD_LIBRARY_PATH
+* Fri Jul 28 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

@@ -188,7 +188,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
   mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
+#  mount -t tmpfs tmpfs %{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -1742,7 +1742,7 @@ settings = {
     "icc, linux, release" : {
         "appends" : {
             "flags" : {
-                "compile" : [ "ip" ],
+                #"compile" : [ "ip" ],  ####################################################### ERROR with Intel 17.0.4 IMPI 17.0.3
                 "mode" : [ "O3" ],
             },
             "defines" : [ "NDEBUG" ],
@@ -2951,8 +2951,10 @@ settings = {
             },
         },
         "overrides" : {
-            "cxx" : "mpicxx_wrapper -g -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512",
-            "cc"  : "mpicc_wrapper -g -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512",
+            "cxx" : "mpicxx_wrapper -g",
+            "cc"  : "mpicc_wrapper -g",
+            #"cxx" : "mpicxx_wrapper -g -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512",
+            #"cc"  : "mpicc_wrapper -g -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512",
         },
         "removes" : {
         },
@@ -2975,7 +2977,7 @@ export   EXTRAS=mpi,cxx11
 
 ./scons.py -c
 rm -f .sconsign.dblite
-./scons.py -j1 mode=${MODE} extras=${EXTRAS} cxx=${COMPILER} bin 
+./scons.py -j64 mode=${MODE} extras=${EXTRAS} cxx=${COMPILER} bin 
 
 
   cd $RPM_BUILD_ROOT 
@@ -2983,7 +2985,7 @@ rm -f .sconsign.dblite
   cp -rp %{INSTALL_DIR}/rosetta_src_%{build_version}_bundle/main/source/bin   $RPM_BUILD_ROOT/%{INSTALL_DIR}
   cp -rp %{INSTALL_DIR}/rosetta_src_%{build_version}_bundle/main/source/build $RPM_BUILD_ROOT/%{INSTALL_DIR}
   cp -rp %{INSTALL_DIR}/rosetta_src_%{build_version}_bundle/main/database     $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  umount %{INSTALL_DIR}
+#  umount %{INSTALL_DIR}
   
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -3070,8 +3072,8 @@ whatis("Description: The premier software suite for macromolecular modeling")
 if (found) then
   -- Create environment variables.
   local base_dir           = "%{INSTALL_DIR}"
-  local rosetta_lib        = "build/src/release/linux/%{kern_ver}/64/x86/%{comp}/%{comp_ver}/mpi"
-  local ext_lib            = "build/external/release/linux/%{kern_ver}/64/x86/%{comp}/%{comp_ver}/mpi"
+  local rosetta_lib        = "build/src/release/linux/%{kern_ver}/64/x86/%{comp}/%{comp_ver}/cxx11-mpi"
+  local ext_lib            = "build/external/release/linux/%{kern_ver}/64/x86/%{comp}/%{comp_ver}/cxx11-mpi"
 
 
   prepend_path( "PATH",                   pathJoin(base_dir, "bin"))

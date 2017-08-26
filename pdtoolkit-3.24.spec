@@ -1,4 +1,4 @@
-## rpmbuild -bb --define 'is_intel17 1' --define 'is_impi 1' pdtoolkit-3.24.spec 2>&1 | tee log_pdt-3.24
+## rpmbuild -bb --define 'is_intel17 1' --define 'is_impi 1' pdtoolkit-3.24.spec 2>&1 | tee log_pdt-3.24-2.x
 #
 
 # Give the package a base name
@@ -22,7 +22,7 @@
 Summary:   Spec file for PDToolkit
 Name:      %{pkg_name}
 Version:   %{pkg_version}
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   University of Oregon, ZAM, and LANL
 Vendor:    Department of Computer Science, Oregon 
 Group:     Development/Languages
@@ -195,22 +195,6 @@ EOF
 %endif # BUILD_MODULEFILE |
 
 
-
-########################################
-## Fix Modulefile During Post Install ##
-########################################
-%post %{PACKAGE}
-export PACKAGE_POST=1
-%include post-defines.inc
-%post %{MODULEFILE}
-export MODULEFILE_POST=1
-%include post-defines.inc
-%preun %{PACKAGE}
-export PACKAGE_PREUN=1
-%include post-defines.inc
-########################################
-############ Do Not Remove #############
-########################################
 
 %clean
 rm -rf $RPM_BUILD_ROOT

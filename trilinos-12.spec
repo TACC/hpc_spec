@@ -31,7 +31,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 2%{?dist}
+Release: 4%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tar.gz
@@ -136,12 +136,13 @@ export COPTFLAGS="-g %{TACC_OPT} -O2"
   export HAS_NETCDF=ON
   export HAS_PYTHON=ON
   export HAS_MUELU=ON
+  export HAS_STK=OFF
 %else
   export HAS_HDF5=ON
   export HAS_NETCDF=ON
   export HAS_PYTHON=ON
   export HAS_MUELU=ON
-  module load 
+  export HAS_STK=ON
 %endif
 export HAS_SEACAS=${HAS_NETCDF}
 if [ "${HAS_HDF5}" = "ON" ] ; then
@@ -226,8 +227,8 @@ TACC_TRILINOS_LIB for the location
 of the Trilinos distribution, documentation, binaries,
 and libraries.
 
-Version %{version}${versionextra}
-external packages installed: ${packageslisting}
+Version %{version}
+external packages installed: ${trilinos_extra_libs}
 ]] )
 
 whatis( "Name: Trilinos" )
@@ -282,6 +283,10 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Wed Aug 16 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 4: adding FEI
+* Mon Jul 31 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: disable STK for gcc
 * Fri Jun 30 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: fix broken stuff that trips up dealII
              also enabling python for gcc
