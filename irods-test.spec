@@ -1,5 +1,7 @@
 #
-# Adapted from Bar.spec by Victor Eijkhout 2015/11/30
+# W. Cyrus Proctor
+# Antonio Gomez
+# 2015-08-25
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -16,30 +18,28 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: SLEPc rpm build scxript
+Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name slepc
-%define MODULE_VAR    SLEPC
+%define pkg_base_name irods
+%define MODULE_VAR    IRODS
 
 # Create some macros (spec file variables)
-%define major_version 3
-%define minor_version 7
-%define micro_version 3
+%define major_version 4
+%define minor_version 0
+%define micro_version 1
 
-%define pkg_version %{major_version}.%{minor_version}
-%define pkg_full_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-%include compiler-defines.inc
-%include mpi-defines.inc
-
+#%include compiler-defines.inc
+#%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-#%include name-defines.inc
-%include name-defines-noreloc.inc
+%include name-defines.inc
+#%include name-defines-noreloc.inc
 #%include name-defines-hidden.inc
 #%include name-defines-hidden-noreloc.inc
 ########################################
@@ -52,12 +52,12 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4
+Release:   1
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.gnu.org/software/bar
-Packager:  TACC - eijkhout@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_full_version}.tar.gz
+Packager:  TACC -
+Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -65,10 +65,10 @@ Source:    %{pkg_base_name}-%{pkg_full_version}.tar.gz
 
 
 %package %{PACKAGE}
-Summary: SLEPCc rpm building
-Group: HPC/libraries
+Summary: The package RPM
+Group: Development/Tools
 %description package
-Simple Linear Eigenvalue Problem solvers
+This is the long description for the package RPM...
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
@@ -92,7 +92,7 @@ rpm -qi <rpm-name>
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%setup -n %{pkg_base_name}-%{pkg_full_version}
+%setup -n %{pkg_base_name}-%{pkg_version}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -121,11 +121,12 @@ rpm -qi <rpm-name>
 # Setup modules
 %include system-load.inc
 module purge
-%include compiler-load.inc
-%include mpi-load.inc
+# Load Compiler
+#%include compiler-load.inc
+# Load MPI Library
+#%include mpi-load.inc
 
 # Insert further module commands
-module load cmake
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -149,46 +150,12 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   
   # Create some dummy directories and files for fun
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+#  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+#  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+#  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
   
-#-----------------------  
-%endif # BUILD_PACKAGE |
-#-----------------------
-
-# same as in petsc
-export dynamiccc="debug uni unidebug i64 i64debug"
-export dynamiccxx="cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug cxxi64 cxxi64debug"
-
-echo "See what petsc versions there are"
-module spider petsc
-module spider petsc/3.7
-
-for ext in \
-  "" \
-  ${dynamiccc} ${dynamiccxx} ; do
-
-#------------------------
-%if %{?BUILD_PACKAGE}
-#------------------------
-
-export architecture=haswell
-if [ -z "${ext}" ] ; then
-  module load petsc/%{version}
-else
-  module load petsc/%{version}-${ext}
-  export architecture=${architecture}-${ext}
-fi
-
-echo "What do we currently have loaded"
-module list
-
-pwd
-# export SLEPC_DIR=`pwd`
-./configure # ${arpackline}
-make SLEPC_DIR=$PWD || /bin/true
-
-module unload petsc
-
+  cp -rp bin $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  chmod -Rf u+rwX,g+rwX,o=rX  $RPM_BUILD_ROOT%{INSTALL_DIR}
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -208,83 +175,54 @@ module unload petsc
   ########### Do Not Remove #############
   #######################################
   
-if [ -z "${ext}" ] ; then
-  export moduleversion=%{version}
-else
-  export moduleversion=%{version}-${ext}
-fi
-
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/${moduleversion}.lua << EOF
-help( [[
-The SLEPC modulefile defines the following environment variables:
-TACC_SLEPC_DIR, TACC_SLEPC_LIB, and TACC_SLEPC_INC 
-for the location of the SLEPC %{version} distribution, 
-libraries, and include files, respectively.
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
+local help_msg=[[
+The %{MODULE_VAR} module defines the following environment variables:
+TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
+TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
+include files, and tools respectively.
+]]
 
-Usage:
-    include \$(SLEPC_DIR)/conf/slepc_common
-Alternatively:
-    include \$(SLEPC_DIR)/conf/slepc_variables
-    include \$(SLEPC_DIR)/conf/slepc_rules
-in your makefile, then compile
-    \$(CC) -c yourfile.c \$(PETSC_INCLUDE)
-and link with
-    \$(CLINKER) -o yourprog yourfile.o \$(SLEPC_LIB)
+--help(help_msg)
+help(help_msg)
 
-Version ${moduleversion}
-]] )
+whatis("Name: IRODS")
+whatis("Version: %{pkg_version}%{dbg}")
+%if "%{is_debug}" == "1"
+setenv("TACC_%{MODULE_VAR}_DEBUG","1")
+%endif
 
-whatis( "Name: SLEPc" )
-whatis( "Version: %{version}-${ext}" )
-whatis( "Version-notes: ${moduleversion}" )
-whatis( "Category: library, mathematics" )
-whatis( "URL: http://www.grycap.upv.es/slepc/" )
-whatis( "Description: Scalable Library for Eigen Problem Computations: Library of eigensolvers" )
+-- Create environment variables.
+local bar_dir           = "%{INSTALL_DIR}"
 
-local             petsc_arch =    "${architecture}"
-local             slepc_dir =     "%{INSTALL_DIR}"
-
-prepend_path("LD_LIBRARY_PATH", pathJoin(slepc_dir,petsc_arch,"lib") )
-
-setenv(          "SLEPC_DIR",             slepc_dir)
-setenv(          "TACC_SLEPC_DIR",        slepc_dir)
-setenv(          "TACC_SLEPC_LIB",        pathJoin(slepc_dir,petsc_arch,"lib"))
-setenv(          "TACC_SLEPC_INC",        pathJoin(slepc_dir,petsc_arch,"include"))
-setenv(          "SLEPC_VERSION",         "${moduleversion}")
-setenv(          "TACC_SLEPC_VERSION",    "${moduleversion}")
-
-always_load("petsc/${moduleversion}")
+family("bar")
+prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "lib"))
+prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/bar1_1/modulefiles")
+setenv( "TACC_%{MODULE_VAR}_DIR",                bar_dir)
+setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(bar_dir, "include"))
+setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(bar_dir, "lib"))
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(bar_dir, "bin"))
 EOF
   
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${moduleversion} << EOF
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
 ## version file for %{BASENAME}%{version}
 ##
 
-set     ModulesVersion      "${moduleversion}"
+set     ModulesVersion      "%{version}"
 EOF
   
   # Check the syntax of the generated lua modulefile only if a visible module
   %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/${moduleversion}.lua
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
   %endif
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-
-done # end of for ext loop
-
-#------------------------
-%if %{?BUILD_PACKAGE}
-#------------------------
-  # Copy everything from tarball over to the installation directory
-  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
-#-----------------------  
-%endif # BUILD_PACKAGE |
-#-----------------------
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -332,12 +270,3 @@ export PACKAGE_PREUN=1
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
 
-%changelog
-* Mon Aug 14 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 4 : change petsc prereq to always_load
-* Tue Jan 17 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: modulefile fix, update to 3.7.3
-* Tue Jul 05 2016 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: made non-relocatable
-* Thu Dec 10 2015 eijkhout <eijkhout@tacc.utexas.edu>
-- release 1: first attempt

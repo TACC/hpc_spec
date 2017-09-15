@@ -28,6 +28,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 %define minor_version 1
 
 %define pkg_version %{major_version}.%{minor_version}
+%define pkgi_und_version %{major_version}_%{minor_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -50,7 +51,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2
+Release:   3
 License:   Freely Distributable
 Group:     MPI
 URL:       http://mvapich.cse.ohio-state.edu
@@ -296,7 +297,7 @@ setenv("MV2_USE_OLD_BCAST","0")
 setenv("MV2_USE_UD_HYBRID","0")
 family("MPI")
 
--- prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/bar1_1/modulefiles")
+prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/mvapich2-largemem_%{pkg_und_version}/modulefiles")
 
 setenv( "TACC_%{MODULE_VAR}_DIR",                base )
 setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(base, "include"))

@@ -16,32 +16,26 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: SLEPc rpm build scxript
+Summary: P4est rpm build script
 
 # Give the package a base name
-%define pkg_base_name slepc
-%define MODULE_VAR    SLEPC
+%define pkg_base_name p4est
+%define MODULE_VAR    P4EST
 
 # Create some macros (spec file variables)
-%define major_version 3
-%define minor_version 7
-%define micro_version 3
+%define major_version 1
+%define minor_version 1
 
 %define pkg_version %{major_version}.%{minor_version}
-%define pkg_full_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
 %include compiler-defines.inc
 %include mpi-defines.inc
-
 ########################################
 ### Construct name based on includes ###
 ########################################
-#%include name-defines.inc
 %include name-defines-noreloc.inc
-#%include name-defines-hidden.inc
-#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -52,12 +46,12 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4
+Release:   2
 License:   GPL
-Group:     Development/Tools
-URL:       http://www.gnu.org/software/bar
+Vendor: https://github.com/cburstedde/p4est
+Group: Carsten Burstedde
+Source: p4est-%{pkg_version}.tar.gz
 Packager:  TACC - eijkhout@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_full_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -65,21 +59,18 @@ Source:    %{pkg_base_name}-%{pkg_full_version}.tar.gz
 
 
 %package %{PACKAGE}
-Summary: SLEPCc rpm building
-Group: HPC/libraries
-%description package
-Simple Linear Eigenvalue Problem solvers
+Summary: P4est local binary install
+Group: Numerical library
 
 %package %{MODULEFILE}
-Summary: The modulefile RPM
-Group: Lmod/Modulefiles
-%description modulefile
-This is the long description for the modulefile RPM...
+Summary: P4est local binary install
+Group: Numerical library
 
 %description
-The longer-winded description of the package that will 
-end in up inside the rpm and is queryable if installed via:
-rpm -qi <rpm-name>
+%description package
+P4EST has octree forest support for dealii
+%description modulefile
+P4EST has octree forest support for dealii
 
 
 #---------------------------------------
@@ -92,7 +83,7 @@ rpm -qi <rpm-name>
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%setup -n %{pkg_base_name}-%{pkg_full_version}
+%setup -n %{pkg_base_name}-%{pkg_version}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -108,7 +99,6 @@ rpm -qi <rpm-name>
 #--------------------------
 
 
-
 #---------------------------------------
 %build
 #---------------------------------------
@@ -120,12 +110,14 @@ rpm -qi <rpm-name>
 
 # Setup modules
 %include system-load.inc
-module purge
 %include compiler-load.inc
 %include mpi-load.inc
 
-# Insert further module commands
-module load cmake
+export modulefilename=%{pkg_version}
+
+# Insert necessary module commands
+module load boost cmake phdf5 parallel-netcdf python swig
+# python
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -135,7 +127,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -144,55 +136,23 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   ########### Do Not Remove #############
   #######################################
 
+export P4EST_DIR=`pwd`
+mkdir -p %{INSTALL_DIR}
+mount -t tmpfs tmpfs %{INSTALL_DIR}
+
+cd /admin/rpms/SOURCES
+CC=mpicc CXX=mpicxx sh ./p4est-setup.sh p4est-%{pkg_version}.tar.gz %{INSTALL_DIR}
+cp -r %{INSTALL_DIR}/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+
+umount %{INSTALL_DIR}
+
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
   
-  # Create some dummy directories and files for fun
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
-#-----------------------  
+#-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
-
-# same as in petsc
-export dynamiccc="debug uni unidebug i64 i64debug"
-export dynamiccxx="cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug cxxi64 cxxi64debug"
-
-echo "See what petsc versions there are"
-module spider petsc
-module spider petsc/3.7
-
-for ext in \
-  "" \
-  ${dynamiccc} ${dynamiccxx} ; do
-
-#------------------------
-%if %{?BUILD_PACKAGE}
-#------------------------
-
-export architecture=haswell
-if [ -z "${ext}" ] ; then
-  module load petsc/%{version}
-else
-  module load petsc/%{version}-${ext}
-  export architecture=${architecture}-${ext}
-fi
-
-echo "What do we currently have loaded"
-module list
-
-pwd
-# export SLEPC_DIR=`pwd`
-./configure # ${arpackline}
-make SLEPC_DIR=$PWD || /bin/true
-
-module unload petsc
-
-#-----------------------  
-%endif # BUILD_PACKAGE |
-#-----------------------
-
 
 #---------------------------
 %if %{?BUILD_MODULEFILE}
@@ -208,83 +168,51 @@ module unload petsc
   ########### Do Not Remove #############
   #######################################
   
-if [ -z "${ext}" ] ; then
-  export moduleversion=%{version}
-else
-  export moduleversion=%{version}-${ext}
-fi
-
-# Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/${moduleversion}.lua << EOF
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{pkg_version}.lua << EOF
 help( [[
-The SLEPC modulefile defines the following environment variables:
-TACC_SLEPC_DIR, TACC_SLEPC_LIB, and TACC_SLEPC_INC 
-for the location of the SLEPC %{version} distribution, 
-libraries, and include files, respectively.
+The P4EST modulefile defines the following environment variables:
+TACC_P4EST_DIR, TACC_P4EST_LIB, and TACC_P4EST_INC 
+for the location of the P4EST %{version} distribution, 
+libraries, and include files, respectively.\n
 
-Usage:
-    include \$(SLEPC_DIR)/conf/slepc_common
-Alternatively:
-    include \$(SLEPC_DIR)/conf/slepc_variables
-    include \$(SLEPC_DIR)/conf/slepc_rules
-in your makefile, then compile
-    \$(CC) -c yourfile.c \$(PETSC_INCLUDE)
-and link with
-    \$(CLINKER) -o yourprog yourfile.o \$(SLEPC_LIB)
-
-Version ${moduleversion}
+Version %{pkg_version}
 ]] )
 
-whatis( "Name: SLEPc" )
+whatis( "Name: P4est 'p4-est of octrees'" )
 whatis( "Version: %{version}-${ext}" )
-whatis( "Version-notes: ${moduleversion}" )
+whatis( "Version-notes: ${pkg_version}" )
 whatis( "Category: library, mathematics" )
-whatis( "URL: http://www.grycap.upv.es/slepc/" )
-whatis( "Description: Scalable Library for Eigen Problem Computations: Library of eigensolvers" )
+whatis( "URL: https://github.com/cburstedde/p4est" )
+whatis( "Description: octree support for dealii" )
 
-local             petsc_arch =    "${architecture}"
-local             slepc_dir =     "%{INSTALL_DIR}"
+local             p4est_dir =     "%{INSTALL_DIR}/FAST"
 
-prepend_path("LD_LIBRARY_PATH", pathJoin(slepc_dir,petsc_arch,"lib") )
+prepend_path("LD_LIBRARY_PATH", pathJoin(p4est_dir,petsc_arch,"lib") )
 
-setenv(          "SLEPC_DIR",             slepc_dir)
-setenv(          "TACC_SLEPC_DIR",        slepc_dir)
-setenv(          "TACC_SLEPC_LIB",        pathJoin(slepc_dir,petsc_arch,"lib"))
-setenv(          "TACC_SLEPC_INC",        pathJoin(slepc_dir,petsc_arch,"include"))
-setenv(          "SLEPC_VERSION",         "${moduleversion}")
-setenv(          "TACC_SLEPC_VERSION",    "${moduleversion}")
+setenv(          "P4EST_DIR",             p4est_dir)
+setenv(          "TACC_P4EST_DIR",        p4est_dir)
+setenv(          "TACC_P4EST_BIN",        pathJoin(p4est_dir,"bin"))
+setenv(          "TACC_P4EST_LIB",        pathJoin(p4est_dir,petsc_arch,"lib"))
+setenv(          "TACC_P4EST_INC",        pathJoin(p4est_dir,petsc_arch,"include"))
 
-always_load("petsc/${moduleversion}")
 EOF
-  
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${moduleversion} << EOF
-#%Module3.1.1#################################################
-##
-## version file for %{BASENAME}%{version}
-##
 
-set     ModulesVersion      "${moduleversion}"
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{pkg_version} << EOF
+#%Module1.0##################################################
+##
+## version file for p4est
+##
+ 
+set     ModulesVersion      "%{pkg_version}"
 EOF
-  
-  # Check the syntax of the generated lua modulefile only if a visible module
-  %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/${moduleversion}.lua
-  %endif
+
+  # Check the syntax of the generated lua modulefile
+  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua
+
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-
-done # end of for ext loop
-
-#------------------------
-%if %{?BUILD_PACKAGE}
-#------------------------
-  # Copy everything from tarball over to the installation directory
-  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
-#-----------------------  
-%endif # BUILD_PACKAGE |
-#-----------------------
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -311,6 +239,7 @@ done # end of for ext loop
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
+
 ########################################
 ## Fix Modulefile During Post Install ##
 ########################################
@@ -333,11 +262,8 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Mon Aug 14 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 4 : change petsc prereq to always_load
-* Tue Jan 17 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: modulefile fix, update to 3.7.3
-* Tue Jul 05 2016 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: made non-relocatable
-* Thu Dec 10 2015 eijkhout <eijkhout@tacc.utexas.edu>
-- release 1: first attempt
+#
+* Sat Aug 19 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: adding bin to modulefile
+* Wed Jun 21 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial release

@@ -56,7 +56,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2
+Release:   3
 License:   GPL
 Group:     Applications/Chemistry
 URL:       http://www.nwchem-sw.org/
@@ -140,8 +140,27 @@ export USE_PYTHONCONFIG=Y
 
 export USE_INTERNALBLAS=y
 
-mv $NWCHEM_TOP/src/config/makefile.h makefile.h.orig
-cp $NWCHEM_TOP/makefile.h.6.6.fat $NWCHEM_TOP/src/config/makefile.h
+#mv $NWCHEM_TOP/src/config/makefile.h makefile.h.orig
+#cp $NWCHEM_TOP/makefile.h.6.6.fat $NWCHEM_TOP/src/config/makefile.h
+
+# apply official patches
+function patch_me() {
+        patches=(Tddft_mxvec20.patch Tools_lib64.patch Config_libs66.patch \
+                 Cosmo_meminit.patch Sym_abelian.patch Xccvs98.patch Dplot_tolrho.patch \
+                 Driver_smalleig.patch Ga_argv.patch Raman_displ.patch Ga_defs.patch \
+                 Zgesvd.patch Cosmo_dftprint.patch Txs_gcc6.patch Gcc6_optfix.patch \
+                 Util_gnumakefile.patch Util_getppn.patch Gcc6_macs_optfix.patch Notdir_fc.patch \
+                 Xatom_vdw.patch Hfmke.patch)
+        for ptch in ${patches[*]}; do
+                if [ ! -e $NWCHEM_TOP/$ptch ]; then
+                        wget -O $NWCHEM_TOP/${ptch}.gz "http://www.nwchem-sw.org/download.php?f=${ptch}.gz"
+                        cd $NWCHEM_TOP/
+                        gzip -d $ptch.gz
+                        patch -p0 < $ptch
+                fi
+        done
+}
+patch_me
 
 cd $NWCHEM_TOP/src
 make nwchem_config

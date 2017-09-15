@@ -52,7 +52,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   5
+Release:   7
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.mcs.anl.gov/petsc/
@@ -220,6 +220,7 @@ export MPI_EXTRA_OPTIONS="--with-mpiexec=mpirun_rsh"
 
 export PETSC_CONFIGURE_OPTIONS="\
   --with-x=0 -with-pic \
+  --with-np=8 \
   --with-external-packages-dir=%{INSTALL_DIR}/externalpackages \
   "
 mkdir -p %{INSTALL_DIR}/externalpackages
@@ -307,10 +308,12 @@ export hdf5download=
 export hdf5versionextra=
 
 %if "%{comp_fam}" == "intel"
+%if "%{is_cmpich}" == "1"
     module load phdf5
     export hdf5download="--with-hdf5=1 --with-hdf5-dir=${TACC_HDF5_DIR}"
     export hdf5versionextra="; hdf5 support"
     export hdf5string="hdf5"
+%endif
 %endif
 
 export versionextra="${versionextra}${hdf5versionextra}"
@@ -355,6 +358,12 @@ export SPOOLES_OPTIONS="--with-spooles=1 --download-spooles"
 export SPOOLES_STRING=spooles
 
 #
+# Suitesparse
+#
+export SUITESPARSE_OPTIONS="--with-suitesparse=1 --download-suitesparse"
+export SUITESPARSE_STRING=suitesparse
+
+#
 # Sundials
 #
 export SUNDIALS_OPTIONS="--with-sundials=1 --download-sundials"
@@ -381,6 +390,7 @@ case "${ext}" in
 	SPOOLES_OPTIONS= ; SPOOLES_STRING= ;
 	SUNDIALS_OPTIONS= ; SUNDIALS_STRING= ;
 	SUPERLU_OPTIONS= ; SUPERLU_STRING= ;
+        SUITESPARSE_OPTIONS= ; SUITESPARSE_STRING= ;
                 ;;
 esac
 
@@ -392,21 +402,21 @@ esac
 #  export ML_STRING=
   export PLAPACK_OPTIONS=
   export PLAPACK_STRING=
-  export SUNDIALS_OPTIONS=
-  export SUNDIALS_STRING=
-  export SUPERLU_OPTIONS= 
-  export SUPERLU_STRING=
+#  export SUNDIALS_OPTIONS=
+#  export SUNDIALS_STRING=
+#  export SUPERLU_OPTIONS= 
+#  export SUPERLU_STRING=
 %endif
 
 ##
 ## define packages; some are real & complex, others real only.
 ##
-%define complexpackages ${hdf5string} ${MUMPS_STRING} scalapack ${SPOOLES_STRING} ${SUPERLU_STRING}
+%define complexpackages ${hdf5string} ${MUMPS_STRING} scalapack ${SPOOLES_STRING} ${SUITESPARSE_STRING} ${SUPERLU_STRING}
 export PETSC_COMPLEX_PACKAGES="\
   ${hdf5download} \
   ${MUMPS_OPTIONS}\
   ${SCALAPACK_OPTIONS} ${SPOOLES_OPTIONS} \
-  ${SUPERLU_OPTIONS} \
+  ${SUITESPARSE_OPTIONS} ${SUPERLU_OPTIONS} \
   "
 %define realonlypackages \
 ${CHACO_STRING} ${HYPRE_STRING} ${ML_STRING} parmetis spai \
@@ -462,15 +472,12 @@ export FPIC_OPTIONS=
 %if "%{is_impi}" == "1"
   export PETSC_MPICH_HOME="${MPICH_HOME}/intel64"
 #  export mpi="--with-cc=/opt/apps/intel15/impi/5.0.2.044/intel64/bin/mpicc
+  export PETSC_MPICH_HOME=/opt/cray/mpt/7.3.0/gni/mpich-intel/14.0
 %else
   export PETSC_MPICH_HOME="${MPICH_HOME}"
 %endif
 
-export PETSC_MPICH_HOME=/opt/cray/mpt/7.2.4/gni/mpich2-intel/14.0
-export PETSC_MPICH_HOME=/opt/cray/mpt/7.3.0/gni/mpich-intel/14.0
-#/opt/apps/intel16/cray_mpich/7.2.4
 export mpi="--with-mpi-compilers=1 --with-mpi-dir=${PETSC_MPICH_HOME}"
-# --with-cc=/opt/apps/intel/16/compilers_and_libraries_2016.0.109/linux/bin/intel64/icc"
 echo "Finding mpi in ${PETSC_MPICH_HOME}"
 
 case "${ext}" in
@@ -519,12 +526,14 @@ fi
 
 ##
 ## Make!
-PETSC_DIR=`pwd` PETSC_ARCH=${architecture} make MAKE_NP=4
+PETSC_DIR=`pwd` PETSC_ARCH=${architecture} make MAKE_NP=8 V=1
 ##
 ##
 
 # as of 3.6 the object files are kept. I don't think we need them
 /bin/rm -rf $PETSC_ARCH/obj/src
+/bin/rm -rf ./externalpackages/${architecture}/git.{metis,mumps,parmetis,superlu,superlu_dist}
+/bin/rm -rf ./externalpackages/${architecture}/*/.git
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -593,6 +602,7 @@ done
 
 # this contains binary crap that messes up the packaging
 find . -name git.hypre -exec pwd \; -exec ls -ld {} \;
+#find . -name .git -exec rm -rf {} \;
 
 cp -r bin config externalpackages include lib makefile src    \
                     $RPM_BUILD_ROOT/%{INSTALL_DIR}
@@ -650,8 +660,12 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Mon Aug 14 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 7: point update to 3.7.6; suitesparse
+* Mon Jul 10 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- relase 6: re-enabling superlu & sundials for gcc
 * Tue Apr 18 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 5: superlu is actually complex
+- release 5: superlu is actually complex, no suitesparse yet
 * Fri Apr 07 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 4: restoring "-g" option
 * Tue Feb 07 2017 eijkhout <eijkhout@tacc.utexas.edu>

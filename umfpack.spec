@@ -1,6 +1,6 @@
 #
-# Mumps spec file by piggy-backing on petsc
-# Victor Eijkhout 2016
+# Umfpack spec file by piggy-backing on petsc
+# Victor Eijkhout 2017
 #
 # Inspired by Bar.spec; W. Cyrus Proctor Antonio Gomez 2015-08-25
 #
@@ -19,16 +19,16 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: Mumps spec file by piggy-backing on PETSc
+Summary: Umfpack spec file by piggy-backing on PETSc
 
 # Give the package a base name
-%define pkg_base_name mumps
-%define MODULE_VAR    MUMPS
+%define pkg_base_name umfpack
+%define MODULE_VAR    UMFPACK
 
 # Create some macros (spec file variables)
 %define major_version 5
-%define minor_version 0
-%define micro_version 2
+%define minor_version 7
+%define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 %define petscversion 3.7
@@ -55,11 +55,11 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:  2
-License:  BSD-like; see src/docs/website/documentation/copyright.html
+Release:  1
+License:  BSD-like
 Group:    Development/Numerial-Libraries
-Vendor:   ENS-Lyon
-URL:      http://graal.ens-lyon.fr/MUMPS/
+Vendor:   Lawrence Berkeley Lab
+URL:       http://faculty.cse.tamu.edu/davis/suitesparse.html
 Packager: TACC - eijkhout@tacc.utexas.edu
 # no Source
 
@@ -69,19 +69,19 @@ Packager: TACC - eijkhout@tacc.utexas.edu
 
 
 %package %{PACKAGE}
-Summary: The MUMPS package RPM
+Summary: The UMFPACK package RPM
 Group: Development/Numerical-libraries
 %description package
-Mumps is a direct solver for distributed sparse linear system.
+Umfpack is a direct solver for distributed sparse linear system.
 
 %package %{MODULEFILE}
-Summary: The MUMPS modulefile RPM
+Summary: The UMFPACK modulefile RPM
 Group: Lmod/Numerical-libraries
 %description modulefile
-Mumps is a direct solver for distributed sparse linear system.
+Umfpack is a direct solver for distributed sparse linear system.
 
 %description
-Mumps is a direct solver for distributed sparse linear system.
+Umfpack is a direct solver for distributed sparse linear system.
 
 #---------------------------------------
 %prep
@@ -199,19 +199,20 @@ TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libra
 include files, and tools respectively.
 ]] )
 
-whatis("Name: mumps")
+whatis("Name: umfpack")
 whatis("Version: %{pkg_version}")
+whatis( "URL: http://faculty.cse.tamu.edu/davis/suitesparse.html" )
 
 -- Create environment variables.
-local mumps_dir           = "${TACC_PETSC_DIR}"
-local mumps_arch          = "${PETSC_ARCH}"
-local mumps_inc           = pathJoin(mumps_dir,mumps_arch,"include")
-local mumps_lib           = pathJoin(mumps_dir,mumps_arch,"lib")
+local umfpack_dir           = "${TACC_PETSC_DIR}"
+local umfpack_arch          = "${PETSC_ARCH}"
+local umfpack_inc           = pathJoin(umfpack_dir,umfpack_arch,"include")
+local umfpack_lib           = pathJoin(umfpack_dir,umfpack_arch,"lib")
 
-family("mumps")
-prepend_path("LD_LIBRARY_PATH", mumps_lib)
-setenv("TACC_MUMPS_INC",        mumps_inc )
-setenv("TACC_MUMPS_LIB",        mumps_lib)
+family("umfpack")
+prepend_path("LD_LIBRARY_PATH", umfpack_lib)
+setenv("TACC_UMFPACK_INC",        umfpack_inc )
+setenv("TACC_UMFPACK_LIB",        umfpack_lib)
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
@@ -281,7 +282,5 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Thu Jun 01 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: update to petsc 3.7
-* Wed Feb 03 2016 eijkhout <eijkhout@tacc.utexas.edu>
+* Mon Aug 14 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: first release
