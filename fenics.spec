@@ -116,16 +116,32 @@ FENICS_X_COMPILER=icpc
 %endif
 
 export LOG_DIR=%{_topdir}/SPECS
-export SRC_DIR=%{_topdir}/BUILD/fenics
-export BUILD_DIR=%{_topdir}/BUILD/fenics
-export FENICS_DIR=%{INSTALL_DIR}
-export PYTHON_EXTRA_PATHS=
+
+##
+## download sources in /tmp
+##
+export FENICS_DIR=/tmp/fenics-stuff
+# from the commandline:
+# ./fenics.download /tmp/fenics-stuff/
+
+# for some reason we can't do it here:
+# ( cd ${FENICS_DIR} ; . %{_topdir}/SPECS/fenics.download )
+
+#export BUILD_DIR=%{_topdir}/BUILD/fenics
+#export FENICS_DIR=%{INSTALL_DIR}
+#export PYTHON_EXTRA_PATHS=
 
 rm -f ${LOG_DIR}/fenics_install.log
-. %{_topdir}/SPECS/fenics.install
+( cd ${FENICS_DIR} ; %{_topdir}/SPECS/fenics.install %{INSTALL_DIR} %{_topdir}/SPECS )
 
 cp -r %{INSTALL_DIR}/{fiat,instant,dijitso,ufl,ffc,eigen,dolfin,mshr} ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
-cp -r %{INSTALL_DIR}/python ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
+#cp -r %{INSTALL_DIR}/python ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
+
+##
+## extra python paths have been written out:
+##
+export PYTHON_EXTRA_PATHS=`cat ${LOG_DIR}/fenics.pythonpath | sed 's/.//'`
+echo "Deduced extra python paths: ${PYTHON_EXTRA_PATHS}"
 
 umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 
@@ -144,18 +160,29 @@ whatis( "Category: library, mathematics" )
 whatis( "URL: https://fenicsproject.org/" )
 whatis( "Description: Fenics, finite element package" )
 
-local             fenics_dir =     "%{INSTALL_DIR}/"
-local             python_dir =     "${PYTHON_EXTRA_PATHS}"
+local             fenics_dir   = "%{INSTALL_DIR}/"
 
-prepend_path("PYTHONPATH",      python_dir )
-prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"ufl","bin" )
-prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"python","bin" )
-prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"mshr","bin" )
-prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"instant","bin" )
-prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"fiat","bin" )
-prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"ffc","bin" )
-prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"dolfin","bin" )
-prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"dijitso","bin" )
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"ufl","bin" ) )
+prepend_path("PYTHONPATH",      pathJoin(fenicsdir,"ufl","lib/python3.6/site-packages") )
+
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"mshr","bin" ) )
+prepend_path("PYTHONPATH",      pathJoin(fenicsdir,"mshr","lib/python3.6/site-packages") )
+
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"instant","bin" ) )
+prepend_path("PYTHONPATH",      pathJoin(fenicsdir,"instant","lib/python3.6/site-packages") )
+
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"fiat","bin" ) )
+prepend_path("PYTHONPATH",      pathJoin(fenicsdir,"fiat","lib/python3.6/site-packages") )
+
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"ffc","bin" ) )
+prepend_path("PYTHONPATH",      pathJoin(fenicsdir,"ffc","lib/python3.6/site-packages") )
+
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"dolfin","bin" ) )
+prepend_path("PYTHONPATH",      pathJoin(fenicsdir,"dolfin","lib/python3.6/site-packages") )
+
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"dijitso","bin" ) )
+prepend_path("PYTHONPATH",      pathJoin(fenicsdir,"dijitso","lib/python3.6/site-packages") )
+
 setenv("TACC_FENICS_DIR",        fenics_dir)
 EOF
 

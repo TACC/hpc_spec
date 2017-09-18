@@ -5,11 +5,10 @@ Summary: Trilinos install
 %define MODULE_VAR    TRILINOS
 
 # Create some macros (spec file variables)
-%define major_version 12
-%define minor_version 10
-%define micro_version 1
+%define major_version git
+%define minor_version 20170906
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{major_version}.%{minor_version}
 
 %include rpm-dir.inc
 %include compiler-defines.inc
@@ -31,10 +30,10 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 4%{?dist}
+Release: 1%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
-Source: %{pkg_base_name}-%{pkg_version}.tar.gz
+Source: %{pkg_base_name}-git.tar.gz
 URL: http://trilinos.sandia.gov/
 Vendor: Sandia National Labs
 Packager: TACC -- eijkhout@tacc.utexas.edu
@@ -88,7 +87,7 @@ varies with each package.
 
 %prep
 
-%setup -n trilinos-%{version}
+%setup -n trilinos-git
 
 #---------------------------------------
 %build
@@ -136,7 +135,7 @@ export COPTFLAGS="-g %{TACC_OPT} -O2"
   export HAS_NETCDF=ON
   export HAS_PYTHON=ON
   export HAS_MUELU=ON
-  export HAS_STK=OFF
+  export HAS_STK=ON
 %else
   export HAS_HDF5=ON
   export HAS_NETCDF=ON
@@ -166,6 +165,7 @@ rm -rf /tmp/trilinos-build
 mkdir -p /tmp/trilinos-build
 pushd /tmp/trilinos-build
 
+export VERSION=git
 export TRILINOS_LOCATION=%{_topdir}/BUILD/
 
 %if "%{comp_fam}" == "gcc"
@@ -175,7 +175,6 @@ export TRILINOS_LOCATION=%{_topdir}/BUILD/
   export VERBOSE=1
 %endif
 
-export SOURCEVERSION=${VERSION}
 %include trilinos.cmake
 
 ####
@@ -283,12 +282,5 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
-* Wed Aug 16 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 4: adding FEI
-* Mon Jul 31 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: disable STK for gcc
-* Fri Jun 30 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: fix broken stuff that trips up dealII
-             also enabling python for gcc
-* Fri May 12 2017 eijkhout <eijkhout@tacc.utexas.edu>
+* Fri Sep 01 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

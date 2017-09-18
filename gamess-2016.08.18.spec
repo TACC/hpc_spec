@@ -21,6 +21,12 @@
 # RPM_DBPATH      -> Path To Non-Standard RPM Database Location
 #
 
+# define system; if macro relocate or env variable RELOCATE is 1, use relocation
+%define SYS sp2
+%define use_relocate %{?relocate}%{!?relocate:0}
+%define USE_RELOCATE %( if [[ ${RELOCATE:=0} == 0 ]]; then echo "0"; else echo "1"; fi )
+
+
 # Give the package a base name and cap name for module env var
 %define pkg_base_name gamess
 %define MODULE_VAR    GAMESS
@@ -39,8 +45,13 @@
 
 
  %include name-defines.inc
-#%include name-defines-noreloc.inc
 
+
+%if %{?USE_RELOCATE} || %{?use_relocate}
+   %include name-defines.inc
+%else
+   %include name-defines-noreloc.inc
+%endif
 
 Summary:   Spec file for gamess
 Name:      %{pkg_name}
@@ -53,7 +64,7 @@ License:   GPL
 Vendor:    Ames Lab
 Group:     applications/chemistry
 Packager:  TACC - milfeld@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Source:    %{pkg_base_name}-%{pkg_version}.tar
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -70,7 +81,7 @@ Quantum Chemistry Application
 Summary: GAMESS QM Application 
 Group:     applications/chemistry
 %description modulefile
-Modulefile includes gamess bin in directory PATH; defines GMSPATH, and TACC_GAMESS_DIR/BIN/DOC/DATA
+Modulefile includes gamess executable an rungms in directory PATH; defines GMSPATH, and TACC_GAMESS_DIR/BIN/DOC/DATA
   
 
 %description
@@ -80,7 +91,6 @@ GAMESS can compute SCF wavefunctions ranging from RHF, ROHF, UHF, GVB, and MCSCF
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
-
 
 # do %%dump to get all the variable names then exit (but exit didn't work, did others, prep,...
 
@@ -97,15 +107,18 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   cd TACC_FILES
 
-  cp                  lked_${SYS}    ../lked
-  cp                  comp_${SYS}    ../comp
-  cp                rungms_${SYS}    ../machines/unix/rungms
-  cp               compall_${SYS}    ../compall
-  cp               compddi_${SYS}    ../ddi/compddi
-  cp     Makefile.template_${SYS}    ../Makefile.template
-  cp install.info.template_${SYS}    ../install.info.template
+  cp                  lked_%{SYS}    ../lked
+  cp                  comp_%{SYS}    ../comp
+  cp               compall_%{SYS}    ../compall
+  cp               compddi_%{SYS}    ../ddi/compddi
+  cp     Makefile.template_%{SYS}    ../Makefile.template
+  cp install.info.template_%{SYS}    ../install.info.template
 
   cd ..
+
+  sed -i s'@^\s*setenv\s*GMS_PATH\s*$@setenv GMS_PATH $GMS_PATH@' install.info.template
+  sed -i s'@^\s*setenv\s*GMS_BUILD_DIR\s*$@setenv GMS_BUILD_DIR $GMS_BUILD@' install.info.template
+  cp install.info.template install.info
 
   sed -i s'@^\s*GMS_PATH\s*=\s*$@GMS_PATH = ${GMS_BUILD}@' Makefile.template
   sed -i s'@^\s*GMS_BUILD_PATH\s*=\s*$@GMS_BUILD_PATH = ${GMS_BUILD}@' Makefile.template
@@ -119,6 +132,9 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
 %if %{?BUILD_PACKAGE}
 %build
+
+   export  GMS_PATH=`pwd`
+   export  GMS_BUILD=`pwd`
              # I really don't want to see the details of modules loading compiler and mpi!
    set +x
    %include system-load.inc
@@ -126,31 +142,68 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
    %include mpi-load.inc
    set -x
 
+   %define intel_lib_dir $TACC_INTEL_LIB
+
    ifort -o tools/actvte.x actvte.f
    make -j 4
 
 %endif # BUILD_PACKAGE |
 
 
+%if %{?BUILD_PACKAGE}
 %install
 
-%if %{?BUILD_PACKAGE}
   rm   -rf $RPM_BUILD_ROOT/%{INSTALL_DIR} # Delete the package installation directory.
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/auxdata
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/doc
   
+
+%if %{?USE_RELOCATE} || %{?use_relocate}
   touch $RPM_BUILD_ROOT/%{INSTALL_DIR}/.tacc_install_canary
+%endif
 
   echo "TACC_OPT %{TACC_OPT}"
                               # This puts everything in INSTALL_DIR 
-                              #into the RPM_BUILD_ROOT/INSTALL_DIR dir
+                              # into the RPM_BUILD_ROOT/INSTALL_DIR dir
 
                               # we are in %%{_topdir}/BUILD = /admin/build/rpms
                               # we are in %%{_builddir}/%%{pkg_basename}-%%{version}   where things are made
 
+  #                       #Move files to rpm build directories
+  
+  cp -p         gms-files.csh    $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  cp gamess.*                    $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  cp -p TACC_FILES/rungms_%{SYS} $RPM_BUILD_ROOT/%{INSTALL_DIR}/rungms
+
+  cp -pr              auxdata    $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  rm -rf                         $RPM_BUILD_ROOT/%{INSTALL_DIR}/auxdata/QUANPOL/RXNFLD3840.DAT
+
+  cp -pr                tools    $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+  cp                    *.DOC    $RPM_BUILD_ROOT/%{INSTALL_DIR}/doc
+
+  chmod a+rX                     $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  chmod a+rx                     $RPM_BUILD_ROOT/%{INSTALL_DIR}/gms-files.csh
+  chmod a+rx                     $RPM_BUILD_ROOT/%{INSTALL_DIR}/gamess.*
+  chmod a+rx                     $RPM_BUILD_ROOT/%{INSTALL_DIR}/rungms
+
+ # Extend user permissions to other and group, but remove w on other
+  chmod -R g=u                   $RPM_BUILD_ROOT/%{INSTALL_DIR}/auxdata
+  chmod -R o=u                   $RPM_BUILD_ROOT/%{INSTALL_DIR}/auxdata
+  chmod -R o-w                   $RPM_BUILD_ROOT/%{INSTALL_DIR}/auxdata
+
+ # Extend user permissions to other and group, but remove w on other
+  chmod -R g=u                   $RPM_BUILD_ROOT/%{INSTALL_DIR}/tools
+  chmod -R o=u                   $RPM_BUILD_ROOT/%{INSTALL_DIR}/tools
+  chmod -R o-w                   $RPM_BUILD_ROOT/%{INSTALL_DIR}/tools
+
+  chmod a+rx                     $RPM_BUILD_ROOT/%{INSTALL_DIR}/doc
+  chmod a+r                      $RPM_BUILD_ROOT/%{INSTALL_DIR}/doc/*
+
+
+ #cp -r tests $RPM_BUILD_ROOT/%{INSTALL_DIR}
                 
-  cp -r bin $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  cp -r lib $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  cp -r doc $RPM_BUILD_ROOT/%{INSTALL_DIR}
   
 %endif # BUILD_PACKAGE |
 
@@ -160,14 +213,18 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   rm   -rf $RPM_BUILD_ROOT/%{MODULE_DIR} #Delete the module installation directory.
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
   
-  touch $RPM_BUILD_ROOT/%{MODULE_DIR}/.tacc_module_canary
-  
+  %if %{?USE_RELOCATE} || %{?use_relocate}
+     touch $RPM_BUILD_ROOT/%{MODULE_DIR}/.tacc_module_canary
+  %endif
+
+echo "gms_dir=%{INSTALL_DIR}"  
+echo "intel_lib_dir=$TACC_INTEL_LIB"
                               # Write out the modulefile
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_message=[[
 The %{MODULE_VAR} modulefile defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR/DOC/BIN/DATA for the location of the Gamess home,
+TACC_%{MODULE_VAR}_DIR/BIN/DOC/DATA/TOOLS for the location of the Gamess home,
 documentation, binaries and aux data directories, respectively.
 The modulefile defines GMSPATH (Gamess dir) used in rungms.
 
@@ -211,7 +268,7 @@ whatis("URL: http://www.msg.ameslab.gov/GAMESS/")
 whatis("Description: General ab initio quantum chemistry package")
 
 local gms_dir="%{INSTALL_DIR}"
-local intel_lib_dir = os.getenv("TACC_INTEL_LIB")
+local intel_dir="%{intel_lib_dir}"
 --
 -- TACC Variables
 
@@ -228,19 +285,19 @@ local gms_dir           = "%{INSTALL_DIR}"
 family("APP")
 
 setenv("TACC_%{MODULE_VAR}_DIR",  gms_dir)
-setenv("TACC_%{MODULE_VAR}_BIN",  pathJoin(gms_dir,"bin" ) )
-setenv("TACC_%{MODULE_VAR}_DOC",  pathJoin(gms_dir,"doc" ) )
+setenv("TACC_%{MODULE_VAR}_BIN",  gms_dir)
+setenv("TACC_%{MODULE_VAR}_DOC",  pathJoin(gms_dir,"doc")     )
+setenv("TACC_%{MODULE_VAR}_TOOLS",pathJoin(gms_dir,"tools")   )
 setenv("TACC_%{MODULE_VAR}_DATA", pathJoin(gms_dir,"auxdata") )
 
 --
 -- GMS Variables and PATH append
 --
 
-setenv( "VERNO",           "00"                   )
-setenv("GMSPATH",          gms_dir                )
-prepend_path("PATH",       pathJoin(gms_dir,"bin"))
-prepend_path("LD_LIBRARY_PATH",     intel_lib_dir)
---prepend_path("LD_LIBRARY_PATH", "/opt/intel/compilers_and_libraries_2017.4.196/linux/compiler/lib/intel64_lin/")
+setenv("VERNO",                 "00"      )
+setenv("GMSPATH",               gms_dir   )
+prepend_path("PATH",            gms_dir   )
+prepend_path("LD_LIBRARY_PATH", intel_dir )
 
 EOF
   
@@ -282,6 +339,8 @@ EOF
 
 ## Fix Modulefile During Post Install ##
 
+%if %{?USE_RELOCATE} || %{?use_relocate}
+
 %post %{PACKAGE}
 export PACKAGE_POST=1
 %include post-defines.inc
@@ -291,6 +350,8 @@ export MODULEFILE_POST=1
 %preun %{PACKAGE}
 export PACKAGE_PREUN=1
 %include post-defines.inc
+
+%endif
 
 ############ Do Not Remove #############
 

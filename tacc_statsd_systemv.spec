@@ -40,8 +40,15 @@ install -m 0664 taccstats.service %{buildroot}/%{_sysconfdir}/taccstats.service
 systemctl enable taccstats
 sed -i 's/localhost/%{rmqserver}/' %{_sysconfdir}/taccstats.service
 sed -i 's/default/%{system}/' %{_sysconfdir}/taccstats.service
+
+if [ $1 == 1 ]; then
 systemctl daemon-reload
 systemctl start taccstats
+fi
+if [ $1 == 2 ]; then
+systemctl daemon-reload
+systemctl restart taccstats
+fi
 
 %preun
 if [ $1 == 0 ]; then

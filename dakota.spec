@@ -369,10 +369,10 @@ export PACKAGE_POST=1
 %include post-defines.inc
 # $RPM_INSTALL_PREFIX0 /tmpmod -> /opt/apps
 # $RPM_INSTALL_PREFIX1 /tmprpm -> /opt/apps
-sed -i "s:%{INSTALL_DIR}:$RPM_INSTALL_PREFIX1/%{INSTALL_SUFFIX}:g" $RPM_INSTALL_PREFIX1/%{INSTALL_SUFFIX}/examples/TACC_parallelism/Case1-MassivelySerial/text_book_driver
-sed -i "s:%{INSTALL_DIR}:$RPM_INSTALL_PREFIX1/%{INSTALL_SUFFIX}:g" $RPM_INSTALL_PREFIX1/%{INSTALL_SUFFIX}/examples/TACC_parallelism/Case2-SequentialParallel/text_book_par_driver
-sed -i "s:%{INSTALL_DIR}:$RPM_INSTALL_PREFIX1/%{INSTALL_SUFFIX}:g" $RPM_INSTALL_PREFIX1/%{INSTALL_SUFFIX}/examples/TACC_parallelism/Case3-EvaluationTiling/text_book_par_driver
-sed -i "s:%{INSTALL_DIR}:$RPM_INSTALL_PREFIX1/%{INSTALL_SUFFIX}:g" $RPM_INSTALL_PREFIX1/%{INSTALL_SUFFIX}/examples/TACC_parallelism/Case4-EvaluationSubmission/text_book_par_driver
+#sed -i "s:%{INSTALL_DIR}:$RPM_INSTALL_PREFIX1/%{INSTALL_SUFFIX}:g" $RPM_INSTALL_PREFIX1/%{INSTALL_SUFFIX}/examples/TACC_parallelism/Case1-MassivelySerial/text_book_driver
+#sed -i "s:%{INSTALL_DIR}:$RPM_INSTALL_PREFIX1/%{INSTALL_SUFFIX}:g" $RPM_INSTALL_PREFIX1/%{INSTALL_SUFFIX}/examples/TACC_parallelism/Case2-SequentialParallel/text_book_par_driver
+#sed -i "s:%{INSTALL_DIR}:$RPM_INSTALL_PREFIX1/%{INSTALL_SUFFIX}:g" $RPM_INSTALL_PREFIX1/%{INSTALL_SUFFIX}/examples/TACC_parallelism/Case3-EvaluationTiling/text_book_par_driver
+#sed -i "s:%{INSTALL_DIR}:$RPM_INSTALL_PREFIX1/%{INSTALL_SUFFIX}:g" $RPM_INSTALL_PREFIX1/%{INSTALL_SUFFIX}/examples/TACC_parallelism/Case4-EvaluationSubmission/text_book_par_driver
 %post %{MODULEFILE}
 export MODULEFILE_POST=1
 %include post-defines.inc

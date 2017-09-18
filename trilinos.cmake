@@ -3,6 +3,7 @@ cmake -VV \
   -D Trilinos_VERBOSE_CONFIGURE=OFF \
   -D CMAKE_VERBOSE_MAKEFILE=ON \
   -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
+  -D Trilinos_ASSERT_MISSING_PACKAGES=OFF \
   -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
   -D Trilinos_ENABLE_TESTS:BOOL=OFF \
   -D Trilinos_ENABLE_EXAMPLES:BOOL=ON \
@@ -68,6 +69,7 @@ cmake -VV \
   -D Trilinos_ENABLE_Panzer:Bool=ON \
   -D Trilinos_ENABLE_Phalanx:BOOL=ON \
   -D Phalanx_EXPLICIT_TEMPLATE_INSTANTIATION=ON \
+  -D Phalanx_ENABLE_EXAMPLES=OFF \
   -D Trilinos_ENABLE_Rythmos:BOOL=ON \
   -D Trilinos_ENABLE_Sacado:Bool=ON \
   -D Trilinos_ENABLE_SEACAS:BOOL=${HAS_SEACAS} \

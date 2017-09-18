@@ -52,7 +52,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   4%{?dist}
 License:   BSD-2
 Group:     Data/Deep Learning
 URL:       https://github.com/intel/caffe
@@ -205,7 +205,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Zhao: After make distribute, simply copy distribute/ to $RPM_BUILD_ROOT/%{INSTALL_DIR}
   cp -r external/mkl/mklml_lnx_2018.0.20170425 caffe-stampede2/libraries/mklml
   cp -r external/mkldnn/install caffe-stampede2/libraries/mkldnn
-  cp -r external/mlsl/l_mlsl_2017.1.016/intel64 caffe-stampede2/libraries/mlsl
+  mkdir caffe-stampede2/libraries/mlsl
+  cp -r external/mlsl/l_mlsl_2017.1.016/intel64 caffe-stampede2/libraries/mlsl/
   cp -r caffe-stampede2/libraries distribute/
   rm -rf distribute/libraries/protocol-buffer-build
 
@@ -257,12 +258,12 @@ local bar_dir           = "%{INSTALL_DIR}"
 family("caffe")
 prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
 prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "lib"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/boost/lib"))
+prepend_path(    "PYTHONPATH",          pathJoin(bar_dir, "python"))
 prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/gflags/lib"))
 prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/glog/lib"))
 prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/leveldb/lib"))
 prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/lmdb/lib"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/mlsl/lib"))
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/mlsl/intel64/lib"))
 prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/opencv/lib"))
 prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/protocol-buffer/lib"))
 prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/snappy/lib"))
@@ -276,6 +277,7 @@ setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(bar_dir, "bin"))
 setenv( "MLSL_ROOT",       pathJoin(bar_dir, "libraries/mlsl"))
 load("hdf5")
 load("boost")
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "libraries/boost/lib"))
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'

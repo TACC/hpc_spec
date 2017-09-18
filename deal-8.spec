@@ -34,7 +34,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tar.gz
@@ -117,16 +117,16 @@ mount -t tmpfs tmpfs %{INSTALL_DIR}
 
 module list
 for m in boost cmake \
-    mumps p4est phdf5 \
+    metis mumps p4est phdf5 \
     petsc/%{dealiipetscversion} slepc/%{dealiipetscversion} \
-    trilinos ; do
+    trilinos/git.20170906 ; do
   module --ignore_cache load $m ; 
 done
+
 %if "%{comp_fam}" == "intel"
   module load netcdf
 %endif
 
-#export TACC_METIS_DIR=$PETSC_DIR/$PETSC_ARCH
 ls $TACC_P4EST_DIR
 ls $TACC_TRILINOS_DIR
 
@@ -149,14 +149,19 @@ rm -f CMakeCache.txt
 
 echo "Installing deal with Petsc: ${PETSC_DIR}/${PETSC_ARCH}"
 
+%if "%{comp_fam}" == "gcc"
+export TBBROOT=/opt/intel/compilers_and_libraries_2017.4.196/linux/tbb
+%endif
+export BASIC_FLAGS="-std=c++14 -g %{TACC_OPT} -I${TBBROOT}/include"
+
   cmake -VV \
     -DCMAKE_INSTALL_PREFIX=%{INSTALL_DIR} \
     -DCMAKE_C_COMPILER="mpicc" \
     -DCMAKE_CXX_COMPILER="mpicxx" \
     -DDEAL_II_WITH_CXX11=ON \
     -DCMAKE_Fortran_COMPILER=mpif90 \
-    -DDEAL_II_CXX_FLAGS_DEBUG="-std=c++14 -g %{TACC_OPT} -O0" \
-    -DDEAL_II_CXX_FLAGS_RELEASE="-std=c++14 %{TACC_OPT} -O2" \
+    -DDEAL_II_CXX_FLAGS_DEBUG="${BASIC_FLAGS} -O0" \
+    -DDEAL_II_CXX_FLAGS_RELEASE="${BASIC_FLAGS} -O2" \
     -DDEAL_II_WITH_MPI=ON \
     ` if [ ${TACC_FAMILY_COMPILER} = "gcc" ] ; then echo " \
         -DMPI_CXX_INCLUDE_PATH=${MPICH_HOME}/intel64/include \
@@ -180,6 +185,9 @@ echo "Installing deal with Petsc: ${PETSC_DIR}/${PETSC_ARCH}"
     \
     %{_topdir}/BUILD/dealii-%{version} \
     2>&1 | tee ${LOGDIR}/dealii_cmake.log
+
+export nocmake="\
+    "
 
 ##
 ## abort if cmake fails
@@ -274,5 +282,7 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Mon Aug 28 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: adding metis
 * Fri Apr 07 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release
