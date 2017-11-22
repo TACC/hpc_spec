@@ -1,5 +1,7 @@
 Collection of spec files.
 
+Each branch represents a different TACC system. Check out a specific branch to browse spec files used to build staff-supported software.
+
 Directory                 | Content
 ------------------------- | -------------
 [examples](examples)      | Template spec file and link to tutorial
