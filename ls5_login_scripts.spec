@@ -4,7 +4,7 @@
 Summary:   Standard LS5 TACC Login scripts
 Name:      %{name_prefix}-%{base_name}
 Version:   1.0
-Release:   26
+Release:   28
 License:   Proprietary
 Group:     System Environment/Base
 Source0:   %{base_name}-%{version}.tar.gz
@@ -71,9 +71,11 @@ find ./profile.d $PROFILE_D_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT%{P
 
 SHELL_STARTUP_FILES="
          bash.bashrc
+         bash_logout
          profile
          tacc_functions
          csh.login
+         csh.logout
          csh.cshrc
 "
 
@@ -133,9 +135,11 @@ done
 %{PROFILE_D_PATH}/zzz90_compute_modules.csh
 %{PROFILE_D_PATH}/zzz90_compute_modules.sh
 /etc/tacc/bash.bashrc
+/etc/tacc/bash_logout
 /etc/tacc/profile
 /etc/tacc/csh.cshrc
 /etc/tacc/csh.login
+/etc/tacc/csh.logout
 /etc/tacc/tacc_functions
 /etc/tacc/archive
 /etc/tacc/fsMounted
@@ -146,7 +150,6 @@ done
 /etc/tacc/zsh/zprofile
 /etc/tacc/zsh/zshenv
 /etc/tacc/zsh/zshrc
-
 
 %files -n %{name}-login
 %defattr(755,root,root,)
@@ -165,9 +168,11 @@ done
 %{PROFILE_D_PATH}/zzz90_login_modules.sh
 %{PROFILE_D_PATH}/zzz90_login_modules.csh
 /etc/tacc/bash.bashrc
+/etc/tacc/bash_logout
 /etc/tacc/profile
 /etc/tacc/csh.cshrc
 /etc/tacc/csh.login
+/etc/tacc/csh.logout
 /etc/tacc/tacc_functions
 /etc/tacc/archive
 /etc/tacc/fsMounted

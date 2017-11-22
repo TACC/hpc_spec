@@ -143,9 +143,9 @@ if [ ! -f "%{INSTALL_DIR_COMP}/bin/python3" ]; then
     
     %{INSTALL_DIR_COMP}/bin/pip3 install --trusted-host pypi.python.org jsonpickle
     %{INSTALL_DIR_COMP}/bin/pip3 install --trusted-host pypi.python.org meld3
-    %{INSTALL_DIR_COMP}/bin/pip3 install --trusted-host pypi.python.org supervisor
+    #%{INSTALL_DIR_COMP}/bin/pip3 install --trusted-host pypi.python.org supervisor
     %{INSTALL_DIR_COMP}/bin/pip3 install --trusted-host pypi.python.org paramiko
-    %{INSTALL_DIR_COMP}/bin/pip3 install --trusted-host pypi.python.org egenix-mx-base
+    #%{INSTALL_DIR_COMP}/bin/pip3 install --trusted-host pypi.python.org egenix-mx-base
 
 fi
 %endif
@@ -241,6 +241,7 @@ lapack_libs = mkl_def, mkl_intel_lp64, mkl_core, mkl_gnu_thread, mkl_avx, gomp" 
 #    %{INSTALL_DIR_COMP}/bin/pip3 install --trusted-host pypi.python.org --no-binary :all: mercurial
     %{INSTALL_DIR_COMP}/bin/pip3 install --trusted-host pypi.python.org --no-binary :all: yt
     %{INSTALL_DIR_COMP}/bin/pip3 install --trusted-host pypi.python.org --no-binary :all: theano
+    %{INSTALL_DIR_COMP}/bin/pip3 install --no-binary :all: --trusted-host pypi.python.org ply
     CFLAGS="-O2" %{INSTALL_DIR_COMP}/bin/pip3 install --trusted-host pypi.python.org --no-binary :all: scikit_learn
 
     if module load hdf5; then

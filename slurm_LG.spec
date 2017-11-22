@@ -41,7 +41,7 @@
 %slurm_without_opt auth_none
 %slurm_without_opt bluegene
 ##%slurm_without_opt cray
-%slurm_with_opt cray
+%slurm_without_opt cray
 %slurm_without_opt cray_alps
 #%slurm_without_opt cray_network
 %slurm_with_opt cray_network
@@ -74,7 +74,7 @@
 %endif
 
 %slurm_without_opt sgijob
-##%slurm_without_opt lua
+#%slurm_without_opt lua
 %slurm_with_opt lua
 %slurm_without_opt partial-attach
 

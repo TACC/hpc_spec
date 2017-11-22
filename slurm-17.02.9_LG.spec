@@ -41,7 +41,7 @@
 %slurm_without_opt auth_none
 %slurm_without_opt bluegene
 ##%slurm_without_opt cray
-%slurm_with_opt cray
+%slurm_without_opt cray
 %slurm_without_opt cray_alps
 #%slurm_without_opt cray_network
 %slurm_with_opt cray_network
@@ -83,23 +83,27 @@
 %endif
 
 %define rel 1
-%define ver 17-02-6
+%define ver 17.02.9
 %include rpm-dir.inc
+%define _prefix /opt/slurm/%{ver}
+%define _slurm_sysconfdir /etc/opt/slurm
+%define pkgbasename slurm
+%define suf _LG
 
-Name:    slurm
-Version: 17.02.6
+Name:    %{pkgbasename}%{suf}
+Version: 17.02.9
 Release: %{rel}%{?dist}
 
 Summary: Slurm Workload Manager
 Packager: TACC - cproctor@tacc.utexas.edu
 License: GPL
 Group: System Environment/Base
-Source: %{name}-%{ver}-%{rel}.tar.gz
-Patch100: slurm-17.02.6.patch
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}
+Source: %{pkgbasename}-%{ver}.tar.bz2
+Patch100: slurm-17.02.9.patch
+BuildRoot: %{_tmppath}/%{pkgbasename}-%{version}-%{release}
 URL: https://slurm.schedmd.com/
 
-Requires: slurm-plugins
+Requires: %{name}-plugins
 
 %ifos linux
 BuildRequires: python
@@ -236,7 +240,7 @@ scheduling and accounting modules
 %package perlapi
 Summary: Perl API to Slurm
 Group: Development/System
-Requires: slurm
+Requires: %{name} 
 %description perlapi
 Perl API package for Slurm.  This package includes the perl API to provide a
 helpful interface to Slurm through Perl
@@ -244,7 +248,7 @@ helpful interface to Slurm through Perl
 %package devel
 Summary: Development package for Slurm
 Group: Development/System
-Requires: slurm
+Requires: %{name} 
 %description devel
 Development package for Slurm.  This package includes the header files
 and static libraries for the Slurm API
@@ -253,7 +257,7 @@ and static libraries for the Slurm API
 %package auth-none
 Summary: Slurm auth NULL implementation (no authentication)
 Group: System Environment/Base
-Requires: slurm
+Requires: %{name} 
 %description auth-none
 Slurm NULL authentication module
 %endif
@@ -264,9 +268,9 @@ Slurm NULL authentication module
 %package munge
 Summary: Slurm authentication and crypto implementation using Munge
 Group: System Environment/Base
-Requires: slurm munge
+Requires: %{name} munge
 BuildRequires: munge-devel munge-libs
-Obsoletes: slurm-auth-munge
+Obsoletes: %{name}-auth-munge
 %description munge
 Slurm authentication and crypto implementation using Munge. Used to
 authenticate user originating an RPC, digitally sign and/or encrypt messages
@@ -276,7 +280,7 @@ authenticate user originating an RPC, digitally sign and/or encrypt messages
 %package bluegene
 Summary: Slurm interfaces to IBM Blue Gene system
 Group: System Environment/Base
-Requires: slurm
+Requires: %{name} 
 %description bluegene
 Slurm plugin interfaces to IBM Blue Gene system
 %endif
@@ -284,7 +288,7 @@ Slurm plugin interfaces to IBM Blue Gene system
 %package slurmdbd
 Summary: Slurm database daemon
 Group: System Environment/Base
-Requires: slurm-plugins slurm-sql
+Requires: %{name}-plugins %{name}-sql
 %description slurmdbd
 Slurm database daemon. Used to accept and process database RPCs and upload
 database changes to slurmctld daemons on each cluster
@@ -307,14 +311,14 @@ are in other packages
 %package torque
 Summary: Torque/PBS wrappers for transitition from Torque/PBS to Slurm
 Group: Development/System
-Requires: slurm-perlapi
+Requires: %{name}-perlapi
 %description torque
 Torque wrapper scripts used for helping migrate from Torque/PBS to Slurm
 
 %package openlava
 Summary: openlava/LSF wrappers for transitition from OpenLava/LSF to Slurm
 Group: Development/System
-Requires: slurm-perlapi
+Requires: %{name}-perlapi
 %description openlava
 OpenLava wrapper scripts used for helping migrate from OpenLava/LSF to Slurm
 
@@ -322,7 +326,7 @@ OpenLava wrapper scripts used for helping migrate from OpenLava/LSF to Slurm
 %package percs
 Summary: Slurm plugins to run on an IBM PERCS system
 Group: System Environment/Base
-Requires: slurm nrt
+Requires: %{name} nrt
 BuildRequires: nrt
 %description percs
 Slurm plugins to run on an IBM PERCS system, POE interface and NRT switch plugin
@@ -332,7 +336,7 @@ Slurm plugins to run on an IBM PERCS system, POE interface and NRT switch plugin
 %package proctrack-sgi-job
 Summary: Slurm process tracking plugin for SGI job containers
 Group: System Environment/Base
-Requires: slurm
+Requires: %{name} 
 BuildRequires: job
 %description proctrack-sgi-job
 Slurm process tracking plugin for SGI job containers
@@ -343,7 +347,7 @@ Slurm process tracking plugin for SGI job containers
 %package lua
 Summary: Slurm lua bindings
 Group: System Environment/Base
-Requires: slurm lua
+Requires: %{name} lua
 BuildRequires: lua-devel
 %description lua
 Slurm lua bindings
@@ -353,8 +357,8 @@ Includes the Slurm proctrack/lua and job_submit/lua plugin
 %package contribs
 Summary: Perl tool to print Slurm job state information
 Group: Development/System
-Requires: slurm
-Obsoletes: slurm-sjobexit slurm-sjstat slurm-seff
+Requires: %{name} 
+Obsoletes: %{name}-sjobexit %{name}-sjstat %{name}-seff
 %description contribs
 seff is a mail program used directly by the Slurm daemons. On completion of a
 job, wait for it's accounting information to be available and include that
@@ -371,9 +375,9 @@ utilities will provide more information and greater depth of understanding.
 %package pam_slurm
 Summary: PAM module for restricting access to compute nodes via Slurm
 Group: System Environment/Base
-Requires: slurm
+Requires: %{name} 
 BuildRequires: pam-devel
-Obsoletes: pam_slurm
+Obsoletes: pam_%{name}
 %description pam_slurm
 This module restricts access to compute nodes in a cluster where Slurm is in
 use.  Access is granted to root, any user with an Slurm-launched job currently
@@ -384,7 +388,8 @@ according to the Slurm
 #############################################################################
 
 %prep
-%setup -n %{name}-%{name}-%{ver}-%{rel}
+echo %{pkgbasename}-%{ver}
+%setup -n %{pkgbasename}-%{ver}
 %patch100 -p1
 
 %build
@@ -597,7 +602,7 @@ libdir=%{_libdir}
 Cflags: -I\${includedir}
 Libs: -L\${libdir} -lslurm
 Description: Slurm API
-Name: %{name}
+Name: %{pkgbasename}
 Version: %{version}
 EOF
 

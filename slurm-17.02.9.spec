@@ -83,19 +83,21 @@
 %endif
 
 %define rel 1
-%define ver 17-02-6
+%define ver 17.02.9
 %include rpm-dir.inc
+%define _prefix /opt/slurm/%{ver}
+%define _slurm_sysconfdir /etc/opt/slurm
 
 Name:    slurm
-Version: 17.02.6
+Version: 17.02.9
 Release: %{rel}%{?dist}
 
 Summary: Slurm Workload Manager
 Packager: TACC - cproctor@tacc.utexas.edu
 License: GPL
 Group: System Environment/Base
-Source: %{name}-%{ver}-%{rel}.tar.gz
-Patch100: slurm-17.02.6.patch
+Source: %{name}-%{ver}.tar.bz2
+Patch100: slurm-17.02.9.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}
 URL: https://slurm.schedmd.com/
 
@@ -384,7 +386,7 @@ according to the Slurm
 #############################################################################
 
 %prep
-%setup -n %{name}-%{name}-%{ver}-%{rel}
+%setup -n %{name}-%{ver}
 %patch100 -p1
 
 %build

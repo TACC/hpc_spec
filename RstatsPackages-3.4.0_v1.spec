@@ -51,7 +51,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1 
+Release:   2 
 License:   GPLv2
 Group:     Applications/Statistics 
 URL:       http://cran.r-project.org/ 
@@ -450,7 +450,8 @@ Rscript optional.R
 #        devtools::install_url("https://github.com/stan-dev/rstan/releases/download/v2.6.0/rstan_2.6.0.tar.gz",dependencies = TRUE)
 #' > rstan_install.R
 
-echo '  Sys.setenv(MAKEFLAGS = "-j10") 
+echo '  options("repos" = c(CRAN="http://cran.fhcrc.org"))
+	Sys.setenv(MAKEFLAGS = "-j10") 
         install.packages("BH", type="source") 
 	install.packages("rstan", type="source")
 ' > rstan_install.R
@@ -540,6 +541,16 @@ whatis("Description: R statistics package")
 --
 -- Create environment variables.
 --
+
+--We want to ensure the users ~/R dir is always first, but also add these custom package locations
+local r_libs   = "%{INSTALL_DIR}/packages" 
+append_path("R_LIBS_SITE", r_libs)
+
+
+local nlopt_lib = "%{INSTALL_DIR}/nlopt-2.4.2/lib"
+prepend_path("LD_LIBRARY_PATH", nlopt_lib)
+
+
 local r_dir   = "%{INSTALL_DIR}"
 local r_bin   = "%{INSTALL_DIR}/bin"
 local r_inc   = "%{INSTALL_DIR}/include"

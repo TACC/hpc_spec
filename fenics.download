@@ -1,0 +1,24 @@
+#!/bin/bash
+
+if [ $# -eq 1 ] ; then
+  mkdir -p $1
+  cd $1
+fi
+
+echo "Installing in: `pwd`"
+
+rm -rf fiat* instant* dijitso* ufl* ffc* dolfin* mshr* eigen*
+
+# using https on st2
+git clone https://bitbucket.org/fenics-project/fiat
+git clone https://bitbucket.org/fenics-project/instant
+git clone https://bitbucket.org/fenics-project/dijitso
+git clone https://bitbucket.org/fenics-project/ufl
+git clone https://bitbucket.org/fenics-project/ffc
+git clone https://bitbucket.org/fenics-project/dolfin
+git clone https://bitbucket.org/fenics-project/mshr
+#module unload python3
+#module load python
+hg clone https://bitbucket.org/eigen/eigen
+#module unload python
+#module load python3

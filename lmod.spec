@@ -7,7 +7,7 @@
 Prefix:    /opt/apps
 Summary:   lmod: Lua based Modules
 Name:      %{name_prefix}-%{base_name}
-Version:   7.4.5
+Version:   7.7.13
 Release:   1
 License:   MIT
 Vendor:    Robert McLay
@@ -69,7 +69,7 @@ fi
 # system be in place to install lmod.  So we search for lua
 # the old fashion way
 
-for i in /usr/bin /opt/apps/lua/lua/bin /usr/local/bin /opt/local/bin ; do
+for i in /opt/apps/lua/lua/bin /usr/bin /usr/local/bin /opt/local/bin ; do
   if [ -x $i/lua ]; then
     luaPath=$i
     break
