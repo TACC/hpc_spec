@@ -32,7 +32,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tgz
@@ -162,26 +162,30 @@ whatis( "Description: Fenics, finite element package" )
 
 local             fenics_dir   = "%{INSTALL_DIR}/"
 
-prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"ufl","bin" ) )
-prepend_path("PYTHONPATH",      pathJoin(fenicsdir,"ufl","lib/python3.6/site-packages") )
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenics_dir,"ufl","lib" ) )
+prepend_path("PYTHONPATH",      pathJoin(fenics_dir,"ufl","lib/python3.6/site-packages") )
 
-prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"mshr","bin" ) )
-prepend_path("PYTHONPATH",      pathJoin(fenicsdir,"mshr","lib/python3.6/site-packages") )
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenics_dir,"mshr","lib" ) )
+prepend_path("PYTHONPATH",      pathJoin(fenics_dir,"mshr","lib/python3.6/site-packages") )
 
-prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"instant","bin" ) )
-prepend_path("PYTHONPATH",      pathJoin(fenicsdir,"instant","lib/python3.6/site-packages") )
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenics_dir,"instant","lib" ) )
+prepend_path("PYTHONPATH",      pathJoin(fenics_dir,"instant","lib/python3.6/site-packages") )
 
-prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"fiat","bin" ) )
-prepend_path("PYTHONPATH",      pathJoin(fenicsdir,"fiat","lib/python3.6/site-packages") )
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenics_dir,"fiat","lib" ) )
+prepend_path("PYTHONPATH",      pathJoin(fenics_dir,"fiat","lib/python3.6/site-packages") )
 
-prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"ffc","bin" ) )
-prepend_path("PYTHONPATH",      pathJoin(fenicsdir,"ffc","lib/python3.6/site-packages") )
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenics_dir,"ffc","lib" ) )
+prepend_path("PYTHONPATH",      pathJoin(fenics_dir,"ffc","lib/python3.6/site-packages") )
 
-prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"dolfin","bin" ) )
-prepend_path("PYTHONPATH",      pathJoin(fenicsdir,"dolfin","lib/python3.6/site-packages") )
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenics_dir,"dolfin","lib" ) )
+prepend_path("PYTHONPATH",      pathJoin(fenics_dir,"dolfin","lib/python3.6/site-packages") )
+prepend_path("CMAKE_PREFIX_PATH", pathJoin(fenics_dir,"dolfin","share","dolfin","cmake" ) )
+prepend_path("CMAKE_MODULE_PATH", pathJoin(fenics_dir,"dolfin","share","dolfin","cmake" ) )
+setenv("DOLFIN_DIR", pathJoin(fenics_dir,"dolfin","share","dolfin","cmake" ) )
+setenv("DOLFIN", pathJoin(fenics_dir,"dolfin","share","dolfin","cmake","DOLFINConfig.cmake" ) )
 
-prepend_path("LD_LIBRARY_PATH", pathJoin(fenicsdir,"dijitso","bin" ) )
-prepend_path("PYTHONPATH",      pathJoin(fenicsdir,"dijitso","lib/python3.6/site-packages") )
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenics_dir,"dijitso","lib" ) )
+prepend_path("PYTHONPATH",      pathJoin(fenics_dir,"dijitso","lib/python3.6/site-packages") )
 
 setenv("TACC_FENICS_DIR",        fenics_dir)
 EOF
@@ -212,6 +216,8 @@ EOF
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Thu Sep 21 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: more variables thanks to David Kamensky (ticket 40339)
 * Fri Aug 25 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: much LD_LIBRARY_PATH
 * Fri Jul 28 2017 eijkhout <eijkhout@tacc.utexas.edu>

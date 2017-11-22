@@ -1,47 +1,33 @@
 #
-# W. Cyrus Proctor
-# Antonio Gomez
-# 2015-08-25
+# Si Liu
+# 2017-10-31
 #
-# Important Build-Time Environment Variables (see name-defines.inc)
-# NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
-# NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
-#
-# Important Install-Time Environment Variables (see post-defines.inc)
-# VERBOSE=1       -> Print detailed information at install time
-# RPM_DBPATH      -> Path To Non-Standard RPM Database Location
-#
-# Typical Command-Line Example:
-# ./build_rpm.sh Bar.spec
-# cd ../RPMS/x86_64
-# rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
-# rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
-# rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
-
-Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name Bar
-%define MODULE_VAR    BAR
+%define pkg_base_name matlab
+%define MODULE_VAR    MATLAB
 
 # Create some macros (spec file variables)
-%define major_version 1
-%define minor_version 1
-%define micro_version 0
+%define major_version 2017b
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}
+
+Summary: Matlab spec file
+Release: 1%{?dist}
+License: Mathworks License
+Vendor: Mathworks
+Group: Utility
+Source: %{name}-%{version}.tar.gz
+Packager:  TACC - siliu@tacc.utexas.edu
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-%include compiler-defines.inc
+#%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
-#%include name-defines-noreloc.inc
-#%include name-defines-hidden.inc
-#%include name-defines-hidden-noreloc.inc
+%include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -52,34 +38,25 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
-License:   GPL
-Group:     Development/Tools
-URL:       http://www.gnu.org/software/bar
-Packager:  TACC - agomez@tacc.utexas.edu, cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
-
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
 
-
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: Matlab package RPM
+Group: Applications
 %description package
-This is the long description for the package RPM...
+MATLAB is a high-level language and interactive environment that enables you to perform computationally intensive tasks faster than with traditional programming languages such as C, C++, and Fortran.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...
+MATLAB is a high-level language and interactive environment that enables you to perform computationally intensive tasks faster than with traditional programming languages such as C, C++, and Fortran.
 
 %description
-The longer-winded description of the package that will 
-end in up inside the rpm and is queryable if installed via:
-rpm -qi <rpm-name>
+MATLAB is a high-level language and interactive environment that enables you to perform computationally intensive tasks faster than with traditional programming languages such as C, C++, and Fortran.
+
 
 
 #---------------------------------------
@@ -91,9 +68,6 @@ rpm -qi <rpm-name>
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-%setup -n %{pkg_base_name}-%{pkg_version}
-
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -108,7 +82,6 @@ rpm -qi <rpm-name>
 #--------------------------
 
 
-
 #---------------------------------------
 %build
 #---------------------------------------
@@ -120,13 +93,9 @@ rpm -qi <rpm-name>
 
 # Setup modules
 %include system-load.inc
-module purge
-# Load Compiler
-#%include compiler-load.inc
-# Load MPI Library
-#%include mpi-load.inc
 
-# Insert further module commands
+# Insert necessary module commands
+module purge
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -136,6 +105,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  mkdir -p %{INSTALL_DIR}
+# mount -t tmpfs tmpfs %{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -149,19 +120,11 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
   
-  # Create some dummy directories and files for fun
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
-
-  echo "TACC_OPT %{TACC_OPT}"
-  
-  # Copy everything from tarball over to the installation directory
-  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
+
+
 
 
 #---------------------------
@@ -179,36 +142,56 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
-The %{MODULE_VAR} module defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
-TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
-include files, and tools respectively.
+
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
+
+help(
+[[
+MATLAB interpreter and compiler MATLAB is a high-level language
+and interactive environment that enables you to perform computationally
+intensive tasks faster than with traditional programming languages
+such as C, C++, and Fortran.
+ 
+Unless you are supplying your own MATLAB license file,
+you are using a license owned by University of Texas at Austin.
+
+The UT license is for ACADEMIC USE ONLY!
+
+Version 2017b
 ]]
+)
 
---help(help_msg)
-help(help_msg)
+whatis("Name: MATLAB")
+whatis("Version: 2017b")
+whatis("Category: library, mathematics")
+whatis("Keywords: Library, Mathematics, Tools")
+whatis("URL: http://www.mathworks.com/")
+whatis("Description: Matlab 2017b from MathWorks")
 
-whatis("Name: bar")
-whatis("Version: %{pkg_version}%{dbg}")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
+prepend_path("PATH", "/home1/apps/matlab/2017b/bin")
 
--- Create environment variables.
-local bar_dir           = "%{INSTALL_DIR}"
+append_path("LD_LIBRARY_PATH", "/home1/apps/matlab/2017b/bin/glnxa64")
+append_path("LD_LIBRARY_PATH", "/home1/apps/matlab/2017b/runtime/glnxa64")
+append_path("LD_LIBRARY_PATH", "/home1/apps/matlab/2017b/sys/java/jre/glnxa64/jre/lib/amd64/server/")
 
-family("bar")
-prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "lib"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/bar1_1/modulefiles")
-setenv( "TACC_%{MODULE_VAR}_DIR",                bar_dir)
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(bar_dir, "include"))
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(bar_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(bar_dir, "bin"))
+setenv ("TACC_MATLAB_DIR", "/home1/apps/matlab/2017b")
+setenv ("DVS_CACHE","off")
+
+--Set MKLROOT, BLAS_VERSION, and LAPACK_VERSION for matlab
+local mklroot=os.getenv("MKLROOT")
+
+if mklroot then
+  setenv("BLAS_VERSION", pathJoin(mklroot,"lib/intel64/libmkl_rt.so") )
+  setenv("LAPACK_VERSION", pathJoin(mklroot,"lib/intel64/libmkl_rt.so") )
+  setenv("MKL_INTERFACE_LAYER","ILP64")
+end
+
+--License file
+local UserHome=os.getenv("HOME")
+append_path("LM_LICENSE_FILE", pathJoin(UserHome,".tacc_matlab_license") )
+
 EOF
-  
+
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -217,11 +200,12 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 
 set     ModulesVersion      "%{version}"
 EOF
+
   
-  # Check the syntax of the generated lua modulefile only if a visible module
-  %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-  %endif
+
+# Check the syntax of the generated lua modulefile
+%{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -251,6 +235,7 @@ EOF
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
+
 
 ########################################
 ## Fix Modulefile During Post Install ##

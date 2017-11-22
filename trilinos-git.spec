@@ -6,7 +6,7 @@ Summary: Trilinos install
 
 # Create some macros (spec file variables)
 %define major_version git
-%define minor_version 20170906
+%define minor_version 20171108
 
 %define pkg_version %{major_version}.%{minor_version}
 
@@ -30,7 +30,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-git.tar.gz
@@ -118,6 +118,8 @@ mount -t tmpfs tmpfs %{INSTALL_DIR}
 ##cp -r * %{INSTALL_DIR}
 ##pushd %{INSTALL_DIR}
 
+module use -a /opt/apps/intel17/impi17_0/modulefiles
+module use -a /opt/apps/intel17/modulefiles
 module load cmake boost swig
 ## VLE stopgap!
 export BOOST_ROOT=${TACC_BOOST_DIR}
@@ -130,19 +132,17 @@ export BOOST_ROOT=${TACC_BOOST_DIR}
 %endif
 
 export COPTFLAGS="-g %{TACC_OPT} -O2"
+
+export HAS_HDF5=ON
+export HAS_NETCDF=ON
+export HAS_MUELU=ON
+export HAS_PYTHON=ON
+export HAS_STK=ON
+export HAS_SUPERLU=ON
+
 %if "%{comp_fam}" == "gcc"
-  export HAS_HDF5=ON
-  export HAS_NETCDF=ON
-  export HAS_PYTHON=ON
-  export HAS_MUELU=ON
-  export HAS_STK=ON
-%else
-  export HAS_HDF5=ON
-  export HAS_NETCDF=ON
-  export HAS_PYTHON=ON
-  export HAS_MUELU=ON
-  export HAS_STK=ON
 %endif
+
 export HAS_SEACAS=${HAS_NETCDF}
 if [ "${HAS_HDF5}" = "ON" ] ; then
   module load phdf5
@@ -152,6 +152,9 @@ if [ "${HAS_NETCDF}" = "ON" ] ; then
 fi
 if [ "${HAS_PYTHON}" = "ON" ] ; then
   module load python
+fi
+if [ "${HAS_SUPERLU}" = "ON" ] ; then
+  module load superlu
 fi
 
 ##
@@ -168,13 +171,7 @@ pushd /tmp/trilinos-build
 export VERSION=git
 export TRILINOS_LOCATION=%{_topdir}/BUILD/
 
-%if "%{comp_fam}" == "gcc"
-  echo "%%%% MueLu stats %%%%"
-  gcc -v
-  uname -a
-  export VERBOSE=1
-%endif
-
+##  export VERBOSE=1
 %include trilinos.cmake
 
 ####
@@ -282,5 +279,7 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Sat Nov 04 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: adding superlu
 * Fri Sep 01 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

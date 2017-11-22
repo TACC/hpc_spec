@@ -139,7 +139,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #  cd silo-4.10.2
   export CC=icc;
   export CXX=icpc;
-  ./configure --prefix=%{INSTALL_DIR} --enable-static --enable-shared --with-hdf5=/opt/apps/intel17/hdf5/1.8.16/x86_64/include,/opt/apps/intel17/hdf5/1.8.16/x86_64/lib
+  export CXXFLAGS="-xCORE-AVX2 -axCORE-AVX512,MIC-AVX512";
+  ./configure --prefix=%{INSTALL_DIR} --enable-static --enable-shared --with-hdf5=/opt/apps/intel18/hdf5/1.8.16/x86_64/include,/opt/apps/intel18/hdf5/1.8.16/x86_64/lib
   make -j8
   make install
 

@@ -6,9 +6,9 @@ Summary: PETSc install
 
 # Create some macros (spec file variables)
 %define major_version 3
-%define minor_version 7
-%define micro_version 6
-%define versionpatch 3.7.6
+%define minor_version 8
+%define micro_version 1
+%define versionpatch 3.8.1
 
 %define pkg_version %{major_version}.%{minor_version}
 
@@ -32,7 +32,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 3%{?dist}
+Release: 1%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -140,14 +140,6 @@ export HYPRESTRING=hypre
 %if "%{is_intel}" == "1"
 export LOCALCC=icc
 export LOCALFC=ifort
-export XOPTFLAGS="%{TACC_OPT} -O2" 
-# "-xCORE-AVX2 -axMIC-AVX512 -O2"
-export COPTFLAGS=${XOPTFLAGS}
-export CXXOPTFLAGS=${XOPTFLAGS}
-export FOPTFLAGS=${XOPTFLAGS}
-
-export CNOOPTFLAGS="-O0 -g" ; export CXXNOOPTFLAGS="-O0 -g" ; export FNOOPTFLAGS="-O0 -g"
-%endif
 
 %if "%{is_mvapich2}" == "1"
 export MPI_EXTRA_OPTIONS="--with-mpiexec=mpirun_rsh"
@@ -200,13 +192,27 @@ echo "configure install for ${ext}"
 export versionextra=
 
 if [ -z "${ext}" ] ; then
-  export architecture=knightslanding
+  export architecture=skylake
 else
-  export architecture=knightslanding-${ext}
+  export architecture=skylake-${ext}
 fi
 
 ##
-## C compiler flags
+## Compiler flags
+##
+#export XOPTFLAGS="%{TACC_OPT} -O2" 
+export XOPTFLAGS="-xCORE-AVX2 -axMIC-AVX512,COMMON-AVX512 -O2" 
+case "${ext}" in 
+  *complex* )
+  export XOPTFLAGS="-xCORE-AVX2 -axMIC-AVX512,COMMON-AVX512 -O1"
+  ;;
+esac
+export COPTFLAGS=${XOPTFLAGS}
+export CXXOPTFLAGS=${XOPTFLAGS}
+export FOPTFLAGS=${XOPTFLAGS}
+export CNOOPTFLAGS="-O0 -g" ; export CXXNOOPTFLAGS="-O0 -g" ; export FNOOPTFLAGS="-O0 -g"
+%endif
+
 export usedebug=no
 export CFLAGS=${COPTFLAGS}
 export CXXFLAGS=${CXXOPTFLAGS}
@@ -238,17 +244,24 @@ esac
 
 ##
 ## hdf5
-# not available with gcc right now
-export hdf5string=
-export hdf5download=
-export hdf5versionextra=
+##
 
-%if "%{comp_fam}" == "intel" && "%{comp_fam_ver}" != "intel15" && "%{mpi_label}" != "2_3"
+if [ "%{comp_fam}" = "intel" -a  "%{comp_fam_ver}" != "intel18" ] ; then 
+  export HAS_HDF5=1
+else
+  export HAS_HDF5=0
+fi
+
+if [ ${HAS_HDF5} -eq 1 ] ; then
     module load phdf5
     export hdf5string="hdf5"
     export hdf5download="--with-hdf5=1 --with-hdf5-dir=${TACC_HDF5_DIR}"
     export hdf5versionextra="; hdf5 support"
-%endif
+else
+  export hdf5string=
+  export hdf5download=
+  export hdf5versionextra=
+fi
 
 export versionextra="${versionextra}${hdf5versionextra}"
 
@@ -448,11 +461,12 @@ for f in ./lib/petsc/conf/configure.log \
     ./include/petscmachineinfo.h ; do
   sed -i -e "s/debug-mt/release_mt/" $f
 done
-#grep dependency /home1/apps/intel17/impi17_0/petsc/3.7/knightslanding/lib/libsundials_nvecparallel.la
-#dependency_libs=' -lmpi. /opt/apps/gcc/5.4.0/lib/../lib64/libstdc++.la'
-for f in ./lib/libsundials*.la ; do
-  sed -i -e "/dependency_libs/s/lmpi./lmpi/" $f
-done
+
+# VLE no longer working or needed in 3.8?
+# for f in ./lib/libsundials*.la ; do
+#   sed -i -e "/dependency_libs/s/lmpi./lmpi/" $f
+# done
+
 popd
 ####
 #### >>>>>>>>>>>>>>>>
@@ -541,7 +555,7 @@ find externalpackages -name \*.o -exec rm -f {} \;
 
 cp -r bin config externalpackages include lib makefile src \
     $RPM_BUILD_ROOT/%{INSTALL_DIR}
-cp -r knightslanding* \
+cp -r skylake* \
     $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 popd
@@ -567,33 +581,28 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 %files %{PACKAGE}
   %defattr(-,root,install,)
-  %{INSTALL_DIR}/knightslanding
-  %{INSTALL_DIR}/knightslanding-single
-  %{INSTALL_DIR}/knightslanding-i64
-  %{INSTALL_DIR}/knightslanding-debug
-  %{INSTALL_DIR}/knightslanding-i64debug
-  %{INSTALL_DIR}/knightslanding-uni
-  %{INSTALL_DIR}/knightslanding-unidebug
+  %{INSTALL_DIR}/skylake
+  %{INSTALL_DIR}/skylake-single
+  %{INSTALL_DIR}/skylake-i64
+  %{INSTALL_DIR}/skylake-debug
+  %{INSTALL_DIR}/skylake-i64debug
+  %{INSTALL_DIR}/skylake-uni
+  %{INSTALL_DIR}/skylake-unidebug
 
 %files %{PACKAGE}-xx
   %defattr(-,root,install,)
-  %{INSTALL_DIR}/knightslanding-cxx
-  %{INSTALL_DIR}/knightslanding-complex
-  %{INSTALL_DIR}/knightslanding-cxxcomplex
-  %{INSTALL_DIR}/knightslanding-cxxi64
+  %{INSTALL_DIR}/skylake-cxx
+  %{INSTALL_DIR}/skylake-complex
+  %{INSTALL_DIR}/skylake-cxxcomplex
+  %{INSTALL_DIR}/skylake-cxxi64
   # and debug variants
-  %{INSTALL_DIR}/knightslanding-cxxdebug
-  %{INSTALL_DIR}/knightslanding-complexdebug
-  %{INSTALL_DIR}/knightslanding-cxxcomplexdebug
-  %{INSTALL_DIR}/knightslanding-cxxi64debug
+  %{INSTALL_DIR}/skylake-cxxdebug
+  %{INSTALL_DIR}/skylake-complexdebug
+  %{INSTALL_DIR}/skylake-cxxcomplexdebug
+  %{INSTALL_DIR}/skylake-cxxi64debug
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
-* Mon Jul 17 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: post-processing sundials
-* Mon Jun 05 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: trying to get hold of release_mt version of libmpi
--            adding hdf5
-* Mon May 08 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 1: initial release
+* Mon Nov 06 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial release, with O1 for complex, and no hdf5.

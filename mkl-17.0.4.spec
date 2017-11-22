@@ -1,7 +1,6 @@
 #
 # W. Cyrus Proctor
-# Antonio Gomez
-# 2015-08-25
+# 2015-12-11
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -21,15 +20,15 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name Bar
-%define MODULE_VAR    BAR
+%define pkg_base_name mkl
+%define MODULE_VAR    MKL
 
 # Create some macros (spec file variables)
-%define major_version 1
-%define minor_version 1
-%define micro_version 0
+%define major_version 17
+%define minor_version 0
+%define patch_version 4
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{patch_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -39,9 +38,6 @@ Summary: A Nice little relocatable skeleton spec file example.
 ### Construct name based on includes ###
 ########################################
 %include name-defines.inc
-#%include name-defines-noreloc.inc
-#%include name-defines-hidden.inc
-#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -52,11 +48,11 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
-License:   GPL
-Group:     Development/Tools
-URL:       http://www.gnu.org/software/bar
-Packager:  TACC - agomez@tacc.utexas.edu, cproctor@tacc.utexas.edu
+Release:   2%{?dist}
+License:   proprietary
+Group:     Compiler
+URL:       https://software.intel.com/en-us/intel-compilers
+Packager:  TACC - cproctor@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -69,18 +65,20 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
+This is specifically an rpm for the Intel MKL modulefile
+used on Stampede 2 for GCC.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
+This is specifically an rpm for the Intel MKL modulefile
+used on Stampede 2 for GCC.
 
 %description
-The longer-winded description of the package that will 
-end in up inside the rpm and is queryable if installed via:
-rpm -qi <rpm-name>
-
+This is specifically an rpm for the Intel MKL modulefile
+used on Stampede 2 for GCC.
 
 #---------------------------------------
 %prep
@@ -91,9 +89,6 @@ rpm -qi <rpm-name>
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-%setup -n %{pkg_base_name}-%{pkg_version}
-
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -108,7 +103,6 @@ rpm -qi <rpm-name>
 #--------------------------
 
 
-
 #---------------------------------------
 %build
 #---------------------------------------
@@ -120,13 +114,9 @@ rpm -qi <rpm-name>
 
 # Setup modules
 %include system-load.inc
-module purge
-# Load Compiler
-#%include compiler-load.inc
-# Load MPI Library
-#%include mpi-load.inc
 
-# Insert further module commands
+# Insert necessary module commands
+module purge
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -148,16 +138,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-  
-  # Create some dummy directories and files for fun
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
-
-  echo "TACC_OPT %{TACC_OPT}"
-  
-  # Copy everything from tarball over to the installation directory
-  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+ 
+  # Nothing to do!
   
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -181,35 +163,61 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_msg=[[
-The %{MODULE_VAR} module defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
-TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
-include files, and tools respectively.
+The Intel Math Kernel Library (Intel MKL) improves performance with math
+routines for software applications that solve large computational problems.
+Intel MKL provides BLAS and LAPACK linear algebra routines, fast Fourier
+transforms, vectorized math functions, random number generation functions, and
+other functionality.
+
+The Intel MKL module enables the use of the MKL with the GNU GCC compilers by
+updating the $LD_LIBRARY_PATH, $INCLUDE, and $MANPATH environment variables to
+access the MKL libraries, include files, and available man pages, respectively.
+
+The following additional environment variables are also defined:
+
+$TACC_MKL_DIR           (path to Math Kernel Library root         )
+$TACC_MKL_LIB           (path to Math Kernel Library libs         )
+$TACC_MKL_INC           (path to Math Kernel Library includes     )
+$TACC_MKL_DOC           (path to Math Kernel Library documentation)
+
+To use the MKL with Intel compilers, please see the Intel module help
+by issuing a "module help intel".
+
+Version %{version}
 ]]
 
 --help(help_msg)
 help(help_msg)
 
-whatis("Name: bar")
-whatis("Version: %{pkg_version}%{dbg}")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
+whatis("Name: Intel MKL"                                                    )
+whatis("Version: %{version}"                                                )
+whatis("Category: Library, Runtime Support"                                 )
+whatis("Description: Intel Math Kernel Library"                             )
+whatis("URL: https://software.intel.com/en-us/intel-mkl"                    )
 
 -- Create environment variables.
-local bar_dir           = "%{INSTALL_DIR}"
+local base         = "/opt/intel"
+local full_xe      = "compilers_and_libraries_2017.4.196/linux"
+local installDir   = pathJoin(base,full_xe)
+local mklRoot      = pathJoin(installDir,"mkl")
 
-family("bar")
-prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "lib"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/bar1_1/modulefiles")
-setenv( "TACC_%{MODULE_VAR}_DIR",                bar_dir)
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(bar_dir, "include"))
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(bar_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(bar_dir, "bin"))
+setenv( "MKLROOT"      ,              mklRoot )
+setenv( "TACC_MKL_DIR" ,              mklRoot )
+setenv( "TACC_MKL_LIB" ,              pathJoin( mklRoot    , "lib/intel64" ) )
+setenv( "TACC_MKL_INC" ,              pathJoin( mklRoot    , "include" ) )
+setenv( "TACC_MKL_DOC" ,              pathJoin( base       , "documentation_2017/en/mkl/ps2017" ) )
+
+prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( mklRoot    , "lib/intel64" ) )
+
+prepend_path( "INCLUDE" ,             pathJoin( mklRoot    , "include" ) )
+
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2017/en/debugger/gdb-ia/man" ) )
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2017/en/debugger/gdb-igfx/man" ) )
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2017/en/man/common" ) )
+
 EOF
   
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version << 'EOF'
 #%Module3.1.1#################################################
 ##
 ## version file for %{BASENAME}%{version}
@@ -218,10 +226,9 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 set     ModulesVersion      "%{version}"
 EOF
   
-  # Check the syntax of the generated lua modulefile only if a visible module
-  %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-  %endif
+  # Check the syntax of the generated lua modulefile
+  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -251,6 +258,7 @@ EOF
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
+
 
 ########################################
 ## Fix Modulefile During Post Install ##

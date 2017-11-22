@@ -24,9 +24,9 @@ Summary: A Nice little relocatable skeleton spec file example.
 %define MODULE_VAR    MKL
 
 # Create some macros (spec file variables)
-%define major_version 17
+%define major_version 18
 %define minor_version 0
-%define patch_version 4
+%define patch_version 0
 
 %define pkg_version %{major_version}.%{minor_version}.%{patch_version}
 
@@ -183,6 +183,9 @@ $TACC_MKL_DOC           (path to Math Kernel Library documentation)
 To use the MKL with Intel compilers, please see the Intel module help
 by issuing a "module help intel".
 
+Also see the Intel MKL Link Line Advisor:
+https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor
+
 Version %{version}
 ]]
 
@@ -197,7 +200,7 @@ whatis("URL: https://software.intel.com/en-us/intel-mkl"                    )
 
 -- Create environment variables.
 local base         = "/opt/intel"
-local full_xe      = "compilers_and_libraries/linux"
+local full_xe      = "compilers_and_libraries_2018.0.128/linux"
 local installDir   = pathJoin(base,full_xe)
 local mklRoot      = pathJoin(installDir,"mkl")
 
@@ -205,15 +208,15 @@ setenv( "MKLROOT"      ,              mklRoot )
 setenv( "TACC_MKL_DIR" ,              mklRoot )
 setenv( "TACC_MKL_LIB" ,              pathJoin( mklRoot    , "lib/intel64" ) )
 setenv( "TACC_MKL_INC" ,              pathJoin( mklRoot    , "include" ) )
-setenv( "TACC_MKL_DOC" ,              pathJoin( base       , "documentation_2017/en/mkl/ps2017" ) )
+setenv( "TACC_MKL_DOC" ,              pathJoin( base       , "documentation_2018/en/mkl/ps2018" ) )
 
 prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( mklRoot    , "lib/intel64" ) )
 
 prepend_path( "INCLUDE" ,             pathJoin( mklRoot    , "include" ) )
 
-prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2017/en/debugger/gdb-ia/man" ) )
-prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2017/en/debugger/gdb-igfx/man" ) )
-prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2017/en/man/common" ) )
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2018/en/debugger/gdb-ia/man" ) )
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2018/en/debugger/gdb-igfx/man" ) )
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2018/en/man/common" ) )
 
 EOF
   

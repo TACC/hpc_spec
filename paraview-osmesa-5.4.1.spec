@@ -163,11 +163,9 @@ family("paraview")
 prereq("swr", "qt5")
 
 prepend_path("PATH",              pathJoin(paraview_dir, "bin"))
-prepend_path("LD_LIBRARY_PATH",   pathJoin(paraview_dir, "lib"))
-prepend_path("LD_LIBRARY_PATH",   pathJoin(paraview_dir, "ospray", "lib64"))
-prepend_path("LD_LIBRARY_PATH",   pathJoin(paraview_dir, "embree", "lib64"))
-prepend_path("PYTHONPATH",        pathJoin(paraview_dir, "lib", "paraview-5.1", "site-packages"))
-prepend_path("PYTHONPATH",        pathJoin(paraview_dir, "lib", "paraview-5.1", "site-packages", "vtk"))
+prepend_path("LD_LIBRARY_PATH",   pathJoin(paraview_dir, "lib", "paraview-5.4"))
+prepend_path("PYTHONPATH",        pathJoin(paraview_dir, "lib", "paraview-5.4", "site-packages"))
+prepend_path("PYTHONPATH",        pathJoin(paraview_dir, "lib", "paraview-5.4", "site-packages", "vtk"))
 
 prepend_path("MODULEPATH",        "%{MODULE_PREFIX}/paraview5_4/modulefiles")
 

@@ -36,6 +36,10 @@ rm -rf ${INSTALL_DIR} && mkdir -p ${INSTALL_DIR}
 export PYTHONPATH=$PYTHONPATH:${INSTALL_DIR}/lib/python3.6/site-packages/
 export EXTRA_PYTHONPATH=$EXTRA_PYTHONPATH:${INSTALL_DIR}/lib/python3.6/site-packages/
 export CMAKE_MODULE_PATH=${INSTALL_DIR}:${CMAKE_MODULE_PATH}
+##
+## VLE why is this fix needed?
+##
+chmod o+rX,g+rX -R ${INSTALL_DIR}/lib/python3.6/site-packages/
 
 export INSTALL_DIR=${INSTALLATION}/instant
 rm -rf ${INSTALL_DIR} && mkdir -p ${INSTALL_DIR}
@@ -45,6 +49,10 @@ rm -rf ${INSTALL_DIR} && mkdir -p ${INSTALL_DIR}
 export PYTHONPATH=$PYTHONPATH:${INSTALL_DIR}/lib/python3.6/site-packages/
 export EXTRA_PYTHONPATH=$EXTRA_PYTHONPATH:${INSTALL_DIR}/lib/python3.6/site-packages/
 export CMAKE_MODULE_PATH=${INSTALL_DIR}:${CMAKE_MODULE_PATH}
+##
+## VLE why is this fix needed?
+##
+chmod o+rX,g+rX -R ${INSTALL_DIR}/lib/python3.6/site-packages/
 
 export INSTALL_DIR=${INSTALLATION}/dijitso
 rm -rf ${INSTALL_DIR} && mkdir -p ${INSTALL_DIR}
@@ -54,6 +62,10 @@ rm -rf ${INSTALL_DIR} && mkdir -p ${INSTALL_DIR}
 export PYTHONPATH=$PYTHONPATH:${INSTALL_DIR}/lib/python3.6/site-packages/
 export EXTRA_PYTHONPATH=$EXTRA_PYTHONPATH:${INSTALL_DIR}/lib/python3.6/site-packages/
 export CMAKE_MODULE_PATH=${INSTALL_DIR}:${CMAKE_MODULE_PATH}
+##
+## VLE why is this fix needed?
+##
+chmod o+rX,g+rX -R ${INSTALL_DIR}/lib/python3.6/site-packages/
 
 export INSTALL_DIR=${INSTALLATION}/ufl
 rm -rf ${INSTALL_DIR} && mkdir -p ${INSTALL_DIR}
@@ -63,6 +75,10 @@ rm -rf ${INSTALL_DIR} && mkdir -p ${INSTALL_DIR}
 export PYTHONPATH=$PYTHONPATH:${INSTALL_DIR}/lib/python3.6/site-packages/
 export EXTRA_PYTHONPATH=$EXTRA_PYTHONPATH:${INSTALL_DIR}/lib/python3.6/site-packages/
 export CMAKE_MODULE_PATH=${INSTALL_DIR}:${CMAKE_MODULE_PATH}
+##
+## VLE why is this fix needed?
+##
+chmod o+rX,g+rX -R ${INSTALL_DIR}/lib/python3.6/site-packages/
 
 export INSTALL_DIR=${INSTALLATION}/ffc
 rm -rf ${INSTALL_DIR} && mkdir -p ${INSTALL_DIR}
@@ -72,6 +88,10 @@ rm -rf ${INSTALL_DIR} && mkdir -p ${INSTALL_DIR}
 export PYTHONPATH=$PYTHONPATH:${INSTALL_DIR}/lib/python3.6/site-packages/
 export EXTRA_PYTHONPATH=$EXTRA_PYTHONPATH:${INSTALL_DIR}/lib/python3.6/site-packages/
 export CMAKE_MODULE_PATH=${INSTALL_DIR}:${CMAKE_MODULE_PATH}
+##
+## VLE why is this fix needed?
+##
+chmod o+rX,g+rX -R ${INSTALL_DIR}/lib/python3.6/site-packages/
 
 #
 # the next two are cmake-based
@@ -113,6 +133,10 @@ export PYTHONPATH=$PYTHONPATH:${INSTALLATION}/dolfin/lib/python3.6/site-packages
 export EXTRA_PYTHONPATH=$EXTRA_PYTHONPATH:${INSTALLATION}/dolfin/lib/python3.6/site-packages/
 export CMAKE_MODULE_PATH=${INSTALL_DIR}:${CMAKE_MODULE_PATH}
 export CMAKE_PREFIX_PATH=${INSTALL_DIR}:${CMAKE_PREFIX_PATH}
+##
+## VLE why is this fix needed?
+##
+chmod o+rX,g+rX -R ${INSTALL_DIR}/lib/python3.6/site-packages/
 
 export nocmake="\
         -D DOLFIN_ENABLE_MPI=true \
@@ -136,6 +160,10 @@ export CMAKE_MODULE_PATH=${INSTALL_DIR}:${CMAKE_MODULE_PATH}
     2>&1 | tee -a $logdir/install.log
 export PYTHONPATH=$PYTHONPATH:${INSTALL_DIR}/lib/python3.6/site-packages/
 export EXTRA_PYTHONPATH=$EXTRA_PYTHONPATH:${INSTALL_DIR}/lib/python3.6/site-packages/
+##
+## VLE why is this fix needed?
+##
+chmod o+rX,g+rX -R ${INSTALL_DIR}/dolfin/lib/python3.6/site-packages/
 
 echo ${EXTRA_PYTHONPATH} > $logdir/fenics.pythonpath
 

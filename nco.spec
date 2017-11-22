@@ -3,10 +3,10 @@
 #
 Summary: NetCDF operators
 Name: nco
-Version: 4.6.3
+Version: 4.6.9
 Release: 1%{?dist}
 License: GPL 3
-Source: nco-4.6.3.tar.gz
+Source: nco-4.6.9.tar.gz
 Source1: antlr-2.7.7.tar.gz
 # Udunits is installed as a module
 #  Source2: udunits-2.1.20.tar.gz
@@ -70,8 +70,8 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 #This untars antlr-2.7.7
 %setup -T -D -a 1
 
-# We should now have a ../BUILD/nco-4.5.4 and, within that, a
-# ../BUILD/nco-4.5.4/antlr-2.7.7 directory.
+# We should now have a ../BUILD/nco-4.6.9 and, within that, a
+# ../BUILD/nco-4.6.9/antlr-2.7.7 directory.
 
 #Use udunits module
 # Third call to setup, untar the third source (udunits-2.1.20) in a subdirectory
@@ -207,7 +207,7 @@ Version %{version}
 
 help(help_message,"\n")
 
-whatis("Version: 4.6.3")
+whatis("Version: 4.6.9")
 whatis("Category: utility, runtime support")
 whatis("Description: Programs for manipulating and analyzing NetCDF files")
 whatis("URL: http://nco.sourceforge.net")

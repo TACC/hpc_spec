@@ -1,7 +1,6 @@
-#
-# W. Cyrus Proctor
-# Antonio Gomez
-# 2015-08-25
+# NWCHEM Hang Liu
+# 2017-10-25
+# Modified for KNL deployment.
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -21,20 +20,20 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name Bar
-%define MODULE_VAR    BAR
+%define pkg_base_name nwchem
+%define MODULE_VAR    NWCHEM
 
 # Create some macros (spec file variables)
-%define major_version 1
-%define minor_version 1
-%define micro_version 0
+%define major_version 6
+%define minor_version 6
+%define micro_version 
 
 %define pkg_version %{major_version}.%{minor_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
 %include compiler-defines.inc
-#%include mpi-defines.inc
+%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
@@ -52,12 +51,12 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GPL
-Group:     Development/Tools
-URL:       http://www.gnu.org/software/bar
-Packager:  TACC - agomez@tacc.utexas.edu, cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Group:     Applications/Chemistry
+URL:       http://www.nwchem-sw.org/
+Packager:  TACC - hliu@tacc.utexas.edu
+Source:    %{pkg_base_name}-%{pkg_version}.revision27746-src.2015-10-20-fat.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -65,22 +64,17 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: Open Source High-Performance Computational Chemistry
+Group: Applications/Chemistry
 %description package
-This is the long description for the package RPM...
-
+Open Source High-Performance Computational Chemistry
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...
-
+Open Source High-Performance Computational Chemistry
 %description
-The longer-winded description of the package that will 
-end in up inside the rpm and is queryable if installed via:
-rpm -qi <rpm-name>
-
+Open Source High-Performance Computational Chemistry
 
 #---------------------------------------
 %prep
@@ -92,8 +86,8 @@ rpm -qi <rpm-name>
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
+#%setup -n nwchem-%{pkg_version}
 %setup -n %{pkg_base_name}-%{pkg_version}
-
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -122,9 +116,9 @@ rpm -qi <rpm-name>
 %include system-load.inc
 module purge
 # Load Compiler
-#%include compiler-load.inc
+%include compiler-load.inc
 # Load MPI Library
-#%include mpi-load.inc
+%include mpi-load.inc
 
 # Insert further module commands
 
@@ -148,17 +142,80 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-  
-  # Create some dummy directories and files for fun
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
 
-  echo "TACC_OPT %{TACC_OPT}"
-  
-  # Copy everything from tarball over to the installation directory
-  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
+#module load python
+export NWCHEM_TOP=$RPM_BUILD_DIR/%{pkg_base_name}-%{pkg_version}/
+export NWCHEM_MODULES="all python"
+export NWCHEM_TARGET="LINUX64"
+export TARGET="LINUX64"
+ 
+export ARMCI_NETWORK="MPI-PR" 
+export USE_MPI="y"
+ 
+export LARGE_FILES="TRUE"
+export LIB_DEFINES="-DDFLT_TOT_MEM=16777216"
+export USE_NOIO="TRUE"
+export USE_NOFSCHECK="TRUE"
+export MA_USE_ARMCI_MEM="1"
+ 
+#export PYTHONHOME="/opt/apps/intel17/python/2.7.12/"
+export PYTHONHOME="/usr/"
+export PYTHONVERSION=2.7
+export USE_PYTHON=y
+export USE_PYTHONCONFIG=Y
+ 
+#export USE_INTERNALBLAS=y
+export USE_64TO32=y
+export USE_SCALAPACK=y
+export SCALAPACK="-L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lmkl_blacs_intelmpi_lp64 -lpthread -lm -ldl"
+export BLASOPT="-L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lmkl_blacs_intelmpi_lp64 -lpthread -lm -ldl"
+
+
+# apply offical patches
+function patch_me() {
+        patches=(Tddft_mxvec20.patch Tools_lib64.patch Config_libs66.patch \
+                 Cosmo_meminit.patch Sym_abelian.patch Xccvs98.patch Dplot_tolrho.patch \
+                 Driver_smalleig.patch Ga_argv.patch Raman_displ.patch Ga_defs.patch \
+                 Zgesvd.patch Cosmo_dftprint.patch Txs_gcc6.patch Gcc6_optfix.patch \
+                 Util_gnumakefile.patch Util_getppn.patch Gcc6_macs_optfix.patch Notdir_fc.patch \
+                 Xatom_vdw.patch Hfmke.patch Cdfti2nw66.patch)
+        for ptch in ${patches[*]}; do
+                if [ ! -e $NWCHEM_TOP/$ptch ]; then
+                        wget -O $NWCHEM_TOP/${ptch}.gz "http://www.nwchem-sw.org/download.php?f=${ptch}.gz"
+                        cd $NWCHEM_TOP/
+                        gzip -d $ptch.gz
+                        patch -p0 < $ptch
+                fi
+        done
+}
+
+patch_me
+
+cd $NWCHEM_TOP/
+cp makefile.h.66.patched.fat512 ./src/config/makefile.h
+
+cd $NWCHEM_TOP/src
+make nwchem_config
+make 64_to_32 FC=ifort CC=icc
+make FC=ifort CC=icc
+
+
+
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/data
+ 
+cp -r $RPM_BUILD_DIR/%{pkg_base_name}-%{pkg_version}/src/basis/libraries             $RPM_BUILD_ROOT/%{INSTALL_DIR}/data
+cp -r $RPM_BUILD_DIR/%{pkg_base_name}-%{pkg_version}/src/data                        $RPM_BUILD_ROOT/%{INSTALL_DIR}
+cp -r $RPM_BUILD_DIR/%{pkg_base_name}-%{pkg_version}/src/nwpw/libraryps/pspw_default $RPM_BUILD_ROOT/%{INSTALL_DIR}/data
+cp -r $RPM_BUILD_DIR/%{pkg_base_name}-%{pkg_version}/src/nwpw/libraryps/paw_default  $RPM_BUILD_ROOT/%{INSTALL_DIR}/data
+cp -r $RPM_BUILD_DIR/%{pkg_base_name}-%{pkg_version}/src/nwpw/libraryps/TM           $RPM_BUILD_ROOT/%{INSTALL_DIR}/data
+cp -r $RPM_BUILD_DIR/%{pkg_base_name}-%{pkg_version}/src/nwpw/libraryps/HGH_LDA      $RPM_BUILD_ROOT/%{INSTALL_DIR}/data
+ 
+cp    $RPM_BUILD_DIR/%{pkg_base_name}-%{pkg_version}/bin/LINUX64/nwchem              $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+ 
+chmod -Rf u+rwX,g+rwX,o=rX                                                           $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -180,35 +237,44 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
-The %{MODULE_VAR} module defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
-TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
-include files, and tools respectively.
+local help_message=[[
+The default envs of the installed NWCHEM
+NWCHEM_TOP  %{INSTALL_DIR}/
+NWCHEM_NWPW_LIBRARY  %{INSTALL_DIR}/data/
+NWCHEM_BASIS_LIBRARY %{INSTALL_DIR}/data/libraries/
+ 
+To run NWChem, please include the following lines in
+your job script, using the appropriate input file name:
+module load nwchem
+ibrun nwchem input.nw
+ 
+You need to reset envs BY YOUR OWN if your calculation needs configuration
+and input beyond the above defaults
+
+Version %{version}
 ]]
 
---help(help_msg)
-help(help_msg)
+help(help_message,"\n")
 
-whatis("Name: bar")
-whatis("Version: %{pkg_version}%{dbg}")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
+whatis("Name: NWCHEM")
+whatis("Version: %{version}")
+whatis("Category: Application, Chemistry")
+whatis("Keywords: Chemistry, Open Souece")
+whatis("URL: http://www.nwchem-sw.org/")
+whatis("Description: NWChem aims to provide its users with computational chemistry tools that are scalable both in their ability to treat large scientific computational chemistry problems efficiently, and in their use of available parallel computing resources from high-performance parallel supercomputers to conventional workstation clusters.")
 
--- Create environment variables.
-local bar_dir           = "%{INSTALL_DIR}"
+local nwchem_dir="%{INSTALL_DIR}"
 
-family("bar")
-prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "lib"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/bar1_1/modulefiles")
-setenv( "TACC_%{MODULE_VAR}_DIR",                bar_dir)
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(bar_dir, "include"))
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(bar_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(bar_dir, "bin"))
+prepend_path(    "PATH",                pathJoin(nwchem_dir, "bin"))
+ 
+setenv("NWCHEM_TOP",nwchem_dir)
+setenv("TACC_NWCHEM_DIR",nwchem_dir)
+setenv("TACC_NWCHEM_BIN",pathJoin(nwchem_dir,"bin"))
+setenv("NWCHEM_NWPW_LIBRARY",pathJoin(nwchem_dir,"data/")..'/')
+setenv("NWCHEM_BASIS_LIBRARY",pathJoin(nwchem_dir,"data/libraries/")..'/')
+
 EOF
-  
+
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##

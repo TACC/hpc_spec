@@ -1,7 +1,7 @@
-#
-# W. Cyrus Proctor
-# Antonio Gomez
-# 2015-08-25
+# SUPERLU specfile
+# Victor Eijkhout 2017
+# the version 3.8 corresponds to the petsc version
+# that this inherits from
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -18,30 +18,33 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: A Nice little relocatable skeleton spec file example.
+Summary: Superlu, piggybacking on the PETSc install
 
 # Give the package a base name
-%define pkg_base_name Bar
-%define MODULE_VAR    BAR
+%define pkg_base_name superlu
+%define MODULE_VAR    SUPERLU
 
 # Create some macros (spec file variables)
-%define major_version 1
+%define major_version 5
 %define minor_version 1
-%define micro_version 0
+%define micro_version 3
 
 %define pkg_version %{major_version}.%{minor_version}
+%define petscversion 3.8
+###%define NO_PACKAGE 0
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
 %include compiler-defines.inc
-#%include mpi-defines.inc
+%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
-#%include name-defines-noreloc.inc
+#%include name-defines.inc
+%include name-defines-noreloc-home1.inc
 #%include name-defines-hidden.inc
 #%include name-defines-hidden-noreloc.inc
+
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -53,11 +56,11 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1%{?dist}
-License:   GPL
-Group:     Development/Tools
-URL:       http://www.gnu.org/software/bar
-Packager:  TACC - agomez@tacc.utexas.edu, cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+License:   BSD-like
+Group:     Development/Numerical-Libraries
+URL:       http://graal.ens-lyon.fr/SUPERLU/
+Packager:  TACC - eijkhout@tacc.utexas.edu
+#Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -71,32 +74,17 @@ Group: Development/Tools
 This is the long description for the package RPM...
 
 %package %{MODULEFILE}
-Summary: The modulefile RPM
-Group: Lmod/Modulefiles
+Summary: Superlu local binary install
+Group: System Environment/Base
 %description modulefile
 This is the long description for the modulefile RPM...
 
 %description
-The longer-winded description of the package that will 
-end in up inside the rpm and is queryable if installed via:
-rpm -qi <rpm-name>
-
+Superlu is a solver library for distributed sparse linear system.
 
 #---------------------------------------
 %prep
 #---------------------------------------
-
-#------------------------
-%if %{?BUILD_PACKAGE}
-#------------------------
-  # Delete the package installation directory.
-  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-%setup -n %{pkg_base_name}-%{pkg_version}
-
-#-----------------------
-%endif # BUILD_PACKAGE |
-#-----------------------
 
 #---------------------------
 %if %{?BUILD_MODULEFILE}
@@ -106,8 +94,6 @@ rpm -qi <rpm-name>
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
-
 
 #---------------------------------------
 %build
@@ -121,48 +107,12 @@ rpm -qi <rpm-name>
 # Setup modules
 %include system-load.inc
 module purge
-# Load Compiler
-#%include compiler-load.inc
-# Load MPI Library
-#%include mpi-load.inc
 
-# Insert further module commands
+%include compiler-load.inc
+%include mpi-load.inc
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
-
-#------------------------
-%if %{?BUILD_PACKAGE}
-#------------------------
-
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
-  #######################################
-  ##### Create TACC Canary Files ########
-  #######################################
-  touch $RPM_BUILD_ROOT/%{INSTALL_DIR}/.tacc_install_canary
-  #######################################
-  ########### Do Not Remove #############
-  #######################################
-
-  #========================================
-  # Insert Build/Install Instructions Here
-  #========================================
-  
-  # Create some dummy directories and files for fun
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
-
-  echo "TACC_OPT %{TACC_OPT}"
-  
-  # Copy everything from tarball over to the installation directory
-  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
-#-----------------------  
-%endif # BUILD_PACKAGE |
-#-----------------------
-
 
 #---------------------------
 %if %{?BUILD_MODULEFILE}
@@ -178,67 +128,90 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   ########### Do Not Remove #############
   #######################################
   
-# Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
-The %{MODULE_VAR} module defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
-TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
-include files, and tools respectively.
-]]
-
---help(help_msg)
-help(help_msg)
-
-whatis("Name: bar")
-whatis("Version: %{pkg_version}%{dbg}")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
-
--- Create environment variables.
-local bar_dir           = "%{INSTALL_DIR}"
-
-family("bar")
-prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "lib"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/bar1_1/modulefiles")
-setenv( "TACC_%{MODULE_VAR}_DIR",                bar_dir)
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(bar_dir, "include"))
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(bar_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(bar_dir, "bin"))
-EOF
-  
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module3.1.1#################################################
 ##
-## version file for %{BASENAME}%{version}
+## configure install loop
+##
+export dynamic="debug cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug "
+
+for ext in \
+  "" \
+  ${dynamic} \
+  ; do
+
+echo "module file for ${ext}"
+
+module unload petsc
+if [ -z "${ext}" ] ; then
+  export architecture=knightslanding
+  module load petsc/%{petscversion}
+else
+  export architecture=knightslanding-${ext}
+  module load petsc/%{petscversion}-${ext}
+fi
+
+
+##
+## modulefile part of the configure install loop
+##
+if [ -z "${ext}" ] ; then
+  export modulefilename=%{version}
+else
+  export modulefilename=%{version}-${ext}
+fi
+
+echo 
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua << EOF
+help( [[
+The Superlu module defines the following environment variables:
+TACC_SUPERLU_INC and TACC_SUPERLU_LIB for the location
+of the Superlu include files and libraries.
+
+Version %{version}
+]] )
+
+whatis( "Name: Superlu" )
+whatis( "Version: %{version}" )
+whatis( "Category: library, mathematics" )
+whatis( "URL: http://graal.ens-lyon.fr/SUPERLU/" )
+whatis( "Description: Numerical library for sparse solvers" )
+
+local             superlu_arch =    "${architecture}"
+local             superlu_dir  =     "${TACC_PETSC_DIR}"
+local             superlu_inc  = pathJoin(superlu_dir,superlu_arch,"include")
+local             superlu_lib  = pathJoin(superlu_dir,superlu_arch,"lib")
+
+prepend_path("LD_LIBRARY_PATH", superlu_lib)
+
+setenv("TACC_SUPERLU_INC",        superlu_inc )
+setenv("TACC_SUPERLU_LIB",        superlu_lib)
+EOF
+
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
+#%Module1.0#################################################
+##
+## version file for Superlu %version
 ##
 
-set     ModulesVersion      "%{version}"
+set     ModulesVersion      "${modulefilename}"
 EOF
-  
+
+## %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua 
+
   # Check the syntax of the generated lua modulefile only if a visible module
   %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua
   %endif
+
+##
+## end of module file loop
+##
+done
+
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
 
-#------------------------
-%if %{?BUILD_PACKAGE}
-%files package
-#------------------------
-
-  %defattr(-,root,install,)
-  # RPM package contains files within these directories
-  %{INSTALL_DIR}
-
-#-----------------------
-%endif # BUILD_PACKAGE |
-#-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
 %files modulefile 
@@ -273,3 +246,6 @@ export PACKAGE_PREUN=1
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
 
+%changelog
+* Tue Nov 07 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial release

@@ -1,17 +1,12 @@
 # Antia Lamas-Linares
-# 2017-11-08
-# Building for phase 2 of Stampede2 deployment - SKX
-# Now using the standard TACC_VEC_OPT flags
-#---
-# 2017-07-10 
-# User ticket TUP:38819 pointed out incorrect files in libtool files
-# It appears this will not work as a relocatable
-# ---
 # 2017-05-17
 # Modified for Stampede 2 deployment and avx512
 # This version is patch 2 with the missing fortran hearders
-# ---
-
+# 
+# 2017-07-10 
+# User ticket TUP:38819 pointed out incorrect files in libtool files
+# It appears this will not work as a relocatable
+#
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
 # NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
@@ -30,7 +25,7 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name fftw3
+%define pkg_base_name fftw3-%{suf}
 %define MODULE_VAR    FFTW3
 
 # Create some macros (spec file variables)
@@ -48,7 +43,8 @@ Summary: A Nice little relocatable skeleton spec file example.
 ### Construct name based on includes ###
 ########################################
 #%include name-defines.inc
-%include name-defines-noreloc.inc
+#%include name-defines-noreloc.inc
+%include name-defines-scratch-noreloc.inc
 #%include name-defines-hidden.inc
 #%include name-defines-hidden-noreloc.inc
 ########################################
@@ -61,7 +57,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3%{?dist}
+Release:   2%{?dist}
 License:   GPL
 Group:     System Environment/Base
 URL:       http://www.fftw.org
@@ -94,6 +90,16 @@ cosine/sine transforms or DCT/DST).
 #---------------------------------------
 %prep
 #---------------------------------------
+
+echo %{dovec}
+echo %{suf}
+
+%if "%{suf}" == "default"
+  echo "Define suf please."
+  exit -1
+%endif
+
+
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -130,6 +136,7 @@ cosine/sine transforms or DCT/DST).
 # Setup modules
 %include system-load.inc
 module purge
+ml use /scratch/projects/compilers/modulefiles
 # Load Compiler
 %include compiler-load.inc
 # Load MPI Library
@@ -207,8 +214,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 %if "%is_intel" == "1"
   #export CFLAGS="-O3 -xAVX -axCORE-AVX2"
   #export LDFLAGS="-xAVX -axCORE-AVX2"
-  #export CFLAGS="-O3 -xCORE-AVX2 -axMIC-AVX512"
-  #export LDFLAGS="-xCORE-AVX2 -axMIC-AVX512"
   export CFLAGS="-O3 %{TACC_VEC_OPT}"
   export LDFLAGS="%{TACC_VEC_OPT}"
   echo "I'm intelling"
@@ -218,14 +223,14 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #export CFLAGS="-O3 -march=sandybridge -mtune=haswell"
   #export LDFLAGS="-march=sandybridge -mtune=haswell"
   #per Todd's prescription for gcc KNL fat binaries
-  #export CFLAGS="-O3 -march=haswell -mtune=knl"
-  #export LDFLAGS="-march=haswell -mtune=knl"
   export CFLAGS="-O3 %{TACC_VEC_OPT}"
   export LDFLAGS="%{TACC_VEC_OPT}"
 %endif
 
 ### Antia adding --enable-avx512 line for the KNL build
-./configure --with-pic \
+./configure --prefix=%{INSTALL_DIR} \
+            --host=x86_64 \
+            --with-pic \
             --enable-shared \
             --enable-openmp \
             --enable-threads \
@@ -234,15 +239,20 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
             --enable-sse2 \
             --enable-avx \
             --enable-avx2 \
-            --enable-avx512 \
-            --prefix=%{INSTALL_DIR}
-make -j 16
+%if %{dovec}
+	    --enable-avx512
+%endif
+
+
+make -j 28
 make DESTDIR=$RPM_BUILD_ROOT install
 
 ## Make single-precision version w/ mpi support
 ### Antia adding --enable-avx2 line for the KNL build
 make clean
-./configure --with-pic \
+./configure --prefix=%{INSTALL_DIR} \
+            --host=x86_64 \
+            --with-pic \
             --enable-single \
             --enable-shared \
             --enable-openmp \
@@ -253,9 +263,12 @@ make clean
             --enable-sse2 \
             --enable-avx \
             --enable-avx2 \
-	    --enable-avx512 \
-            --prefix=%{INSTALL_DIR}
-make -j 16
+%if %{dovec}
+	    --enable-avx512
+%endif
+
+
+make -j 28
 make DESTDIR=$RPM_BUILD_ROOT install
 
   # Copy everything from tarball over to the installation directory
@@ -331,6 +344,8 @@ append_path("LD_LIBRARY_PATH",pathJoin(fftw_dir,"lib"))
 append_path("PATH",pathJoin(fftw_dir,"bin"))
 append_path("MANPATH",pathJoin(fftw_dir,"man"))
 append_path("PKG_CONFIG_PATH",pathJoin(fftw_dir,"lib/pkgconfig"))
+
+family("fftw3")
 
 EOF
 

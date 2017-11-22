@@ -1,6 +1,6 @@
 #
 # Si Liu
-# 2017-06-06
+# 2017-11-01
 #
 
 # Give the package a base name
@@ -9,7 +9,7 @@
 
 # Create some macros (spec file variables)
 %define major_version 1
-%define minor_version 4
+%define minor_version 5
 %define pkg_version %{major_version}.%{minor_version}
 
 Summary: SanityTool
@@ -49,7 +49,8 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 Summary: The package RPM
 Group: TACC-HPC-TOOL
 %description package
-SanityTool 1.4 by Si Liu and Robert McLay
+SanityTool 1.5 by Si Liu and Robert McLay
+Texas Advanced Computing Center
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
@@ -149,7 +150,7 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help(
 [[
 The module loads TACC SanityTool for you.
-Version: 1.4
+Version: 1.5
 
 You can run the command "sanitycheck" to examine your current environment settings on Stampede2.
 If you encounter any problems, please send an email to siliu@tacc.utexas.edu with your user id and error messages.
@@ -160,12 +161,12 @@ Please also contact siliu@tacc.utexas.edu, if you have any other concerns or req
 )
 
 whatis("Name: SanityTool")
-whatis("Version: 1.4")
+whatis("Version: 1.5")
 whatis("Category: TACC HPC Tools")
 
-local sanitypath = "/home1/apps/sanitytool/1.4"
+local sanitypath = "/home1/apps/sanitytool/1.5"
 append_path("PATH",sanitypath)
-setenv("TACC_SANITYTOOL_DIR", "/home1/apps/sanitytool/1.4")
+setenv("TACC_SANITYTOOL_DIR", "/home1/apps/sanitytool/1.5")
 
 EOF
 

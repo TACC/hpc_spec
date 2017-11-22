@@ -15,12 +15,12 @@ Summary: OSU MVAPICH2 MPI implementation
 Name:    mvapich2
 Version: 2.3b
 Release: 2%{?dist}
-License: freely distributable
+License: BSD License
 Group:   Development/Libraries
 Packager: TACC - viennej@tacc.utexas.edu
 Source: http://mvapich.cse.ohio-state.edu/download/mvapich/mv2/mvapich2-2.3b.tar.gz 
-
-BuildRoot: %{_tmppath}/%{name}-%{version}-root
+Patch1: binding-1.patch
+BuildRoot: /var/tmp/%{name}-%{version}-root
 
 #---------------------------------------------------------------------------
 # Changelog
@@ -62,7 +62,7 @@ MVAPICH is developed at the Ohio State University. See whttp://mvapich.cse.ohio-
 %prep
 
 %setup -n mvapich2-%{version}  mvapich2-%{version}
-
+%patch1 -p1
 ##
 ## BUILD
 ##
@@ -74,7 +74,7 @@ echo dbg:         -%{dbg}-
 
 %include compiler-defines.inc
 %include compiler-load.inc
-module load intel/17.0.0
+module load intel/17.0.4
 module list
 
 export MPIINSTALL_OPTS="-noman"
@@ -152,7 +152,7 @@ make -j 16
 %install
 
 %include compiler-load.inc
-module load intel/17.0.0
+module load intel/17.0.4
 
 make DESTDIR=$RPM_BUILD_ROOT install
 
