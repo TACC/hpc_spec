@@ -36,11 +36,11 @@
 %if "%{is_impi}" == "1"
   %if %{undefined mpiV}
     %define mpi_label 5_1
-    %define mpi_module_version 5.1.1
+    %define mpi_module_version 5.1.2
   %endif
   %if "%{mpiV}" == "5_1"
     %define mpi_label 5_1
-    %define mpi_module_version 5.1.1
+    %define mpi_module_version 5.1.2
   %endif
   %define mpi_fam     impi
   %define mpi_fam_ver impi_%{mpi_label}

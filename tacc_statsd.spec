@@ -8,10 +8,9 @@ Group: System Environment/Base
 Packager: TACC - rtevans@tacc.utexas.edu
 Source: tacc_stats-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
-Requires: librabbitmq-devel
 
 %include rpm-dir.inc
-
+%define debug_package %{nil}
 %{!?rmqserver: %{error: define rmqserver!} exit 1 }
 %{!?system:    %{error: define system name!} exit 1}
 
