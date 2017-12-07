@@ -54,7 +54,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tgz
@@ -225,39 +225,57 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua << EOF
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
 help( [[
-The fenics module defines the following environment variables:
-TACC_FENICS_DIR, TACC_FENICS_BIN, and
-TACC_FENICS_LIB for the location
-of the Fenics distribution, documentation, binaries,
-and libraries.
+The fenics module defines the environment variables:
+TACC_FENICS_DIR for the location of the Fenics distribution, 
+and PYTHONPATH. Fenics requires python3.
 
-Version %{version}${versionextra}
-external packages installed: ${packageslisting}
+Version %{version}
 ]] )
 
 whatis( "Name: Fenics" )
-whatis( "Version: %{version}${versionextra}${dynamicextra}" )
-whatis( "Version-notes: external packages installed: ${packages}" )
+whatis( "Version: %{version}" )
 whatis( "Category: library, mathematics" )
-whatis( "URL: http://www-unix.mcs.anl.gov/fenics/fenics-as/" )
-whatis( "Description: Numerical library for sparse linear algebra" )
+whatis( "URL: https://fenicsproject.org/" )
+whatis( "Description: Fenics, finite element package" )
 
-local             fenics_arch =    "${architecture}"
-local             fenics_dir =     "%{INSTALL_DIR}/"
+local             fenics_dir   = "%{INSTALL_DIR}/"
 
-prepend_path("PATH",            pathJoin(fenics_dir,fenics_arch,"bin") )
-prepend_path("LD_LIBRARY_PATH", pathJoin(fenics_dir,fenics_arch,"lib") )
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenics_dir,"ufl","lib" ) )
+prepend_path("PYTHONPATH",      pathJoin(fenics_dir,"ufl","lib/python3.5/site-packages") )
 
-setenv("FENICS_ARCH",            fenics_arch)
-setenv("FENICS_DIR",             fenics_dir)
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenics_dir,"mshr","lib" ) )
+prepend_path("PYTHONPATH",      pathJoin(fenics_dir,"mshr","lib/python3.5/site-packages") )
+
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenics_dir,"instant","lib" ) )
+prepend_path("PYTHONPATH",      pathJoin(fenics_dir,"instant","lib/python3.5/site-packages") )
+
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenics_dir,"fiat","lib" ) )
+prepend_path("PYTHONPATH",      pathJoin(fenics_dir,"fiat","lib/python3.5/site-packages") )
+
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenics_dir,"ffc","lib" ) )
+prepend_path("PYTHONPATH",      pathJoin(fenics_dir,"ffc","lib/python3.5/site-packages") )
+
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenics_dir,"dolfin","lib" ) )
+prepend_path("PYTHONPATH",      pathJoin(fenics_dir,"dolfin","lib/python3.5/site-packages") )
+prepend_path("CMAKE_PREFIX_PATH", pathJoin(fenics_dir,"dolfin","share","dolfin","cmake" ) )
+prepend_path("CMAKE_MODULE_PATH", pathJoin(fenics_dir,"dolfin","share","dolfin","cmake" ) )
+setenv("DOLFIN_DIR", pathJoin(fenics_dir,"dolfin","share","dolfin","cmake" ) )
+setenv("DOLFIN", pathJoin(fenics_dir,"dolfin","share","dolfin","cmake","DOLFINConfig.cmake" ) )
+
+prepend_path("LD_LIBRARY_PATH", pathJoin(fenics_dir,"dijitso","lib" ) )
+prepend_path("PYTHONPATH",      pathJoin(fenics_dir,"dijitso","lib/python3.5/site-packages") )
+
 setenv("TACC_FENICS_DIR",        fenics_dir)
-setenv("TACC_FENICS_BIN",        pathJoin(fenics_dir,fenics_arch,"bin") )
-setenv("TACC_FENICS_LIB",        pathJoin(fenics_dir,fenics_arch,"lib") )
+
+setenv( "CC",    "/opt/apps/gcc/5.2.0/bin/gcc" )
+setenv( "CXX",   "/opt/apps/gcc/5.2.0/bin/g++" )
+setenv( "FC",    "/opt/apps/gcc/5.2.0/bin/gfortran" )
+
 EOF
 
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << EOF
 #%Module1.0#################################################
 ##
 ## version file for Fenics %version
@@ -267,31 +285,11 @@ set     ModulesVersion      "${modulefilename}"
 EOF
 
   # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua
+  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
-rm -rf ${architecture}/obj
-rm -rf externalpackages/${architecture}/git.hypre
-
-##
-## end of for ext loop
-##
-done 
-
-# this contains binary crap that messes up the packaging
-find . -name git.hypre -exec pwd \; -exec ls -ld {} \;
-#find . -name .git -exec rm -rf {} \;
-
-cp -r bin config externalpackages include lib makefile src    \
-                    $RPM_BUILD_ROOT/%{INSTALL_DIR}
-cp -r haswell*      $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-popd
-
-umount %{INSTALL_DIR}  
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -341,5 +339,7 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Wed Dec 06 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: adding CXX and such flags
 * Mon Oct 16 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

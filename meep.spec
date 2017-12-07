@@ -3,7 +3,7 @@
 Summary: Meep is a free finite-difference time-domain simulation software package
 Name: meep
 Version: 1.3
-Release: 2
+Release: 3
 License: GPL
 URL: http://ab-initio.mit.edu/wiki/index.php/Meep
 Group: applications/electromagnetics
@@ -178,6 +178,8 @@ puts stderr "The meep executable is \$TACC_MEEP_BIN/meep-mpi"
 puts stderr ""
 puts stderr "Version %{version}"
 }
+-- Prerequisites
+prereq("gsl")
 
 module-whatis "Name: Meep"
 module-whatis "Version: %{version}"
