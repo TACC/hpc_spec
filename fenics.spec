@@ -5,7 +5,7 @@ Summary: Fenics install
 %define MODULE_VAR    FENICS
 
 # Create some macros (spec file variables)
-%define major_version 2017july
+%define major_version 2017dec
 #%define minor_version 10
 #%define micro_version 1
 
@@ -32,7 +32,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tgz
@@ -188,6 +188,13 @@ prepend_path("LD_LIBRARY_PATH", pathJoin(fenics_dir,"dijitso","lib" ) )
 prepend_path("PYTHONPATH",      pathJoin(fenics_dir,"dijitso","lib/python3.6/site-packages") )
 
 setenv("TACC_FENICS_DIR",        fenics_dir)
+
+setenv( "CC",    "/opt/apps/gcc/7.1.0/bin/gcc" )
+setenv( "CXX",   "/opt/apps/gcc/7.1.0/bin/g++" )
+setenv( "FC",    "/opt/apps/gcc/7.1.0/bin/gfortran" )
+
+always_load("boost")
+
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
@@ -216,6 +223,8 @@ EOF
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Sun Dec 03 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 4: load boost, redefine compiler macros damn-the-torpedoes
 * Thu Sep 21 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 3: more variables thanks to David Kamensky (ticket 40339)
 * Fri Aug 25 2017 eijkhout <eijkhout@tacc.utexas.edu>
