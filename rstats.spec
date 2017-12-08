@@ -1,1 +1,1 @@
-Rstats-3.2.1_intel15_mvapich2_2_1_el7_v3.spec
+Rstats-3.4.0_intel15_mvapich2_2_1_el7_v1.spec
