@@ -1,3 +1,7 @@
+# W. Cyrus Proctor
+# Heavily modified for SLES 11 SP3
+# 2017-12-08
+
 %define _unpackaged_files_terminate_build 0
 %define debug_package %{nil}
 
@@ -17,6 +21,8 @@ Provides: SSL
 URL: http://www.openssl.org/
 Packager: Damien Miller <djm@mindrot.org>
 BuildRoot:   /var/tmp/%{name}-%{version}-root
+%define INSTALL_DIR /opt/%{name}/%{version}
+%define _defaultdocdir %{INSTALL_DIR}/usr/doc/packages
 
 %description
 The OpenSSL Project is a collaborative effort to develop a robust,
@@ -83,7 +89,7 @@ documentation and POD files from which the man pages were produced.
 
 %build 
 
-%define CONFIG_FLAGS -DSSL_ALLOW_ADH --prefix=%{_exec_prefix} --openssldir=%{openssldir}
+%define CONFIG_FLAGS -DSSL_ALLOW_ADH --prefix=%{INSTALL_DIR}/%{_exec_prefix} --openssldir=%{INSTALL_DIR}/%{openssldir}
 
 perl util/perlpath.pl /usr/bin/perl
 
@@ -105,10 +111,14 @@ LD_LIBRARY_PATH=`pwd` make test
 
 %install
 rm -rf $RPM_BUILD_ROOT
-make MANDIR=%{_mandir} MANSUFFIX=ssl INSTALL_PREFIX="$RPM_BUILD_ROOT" install
+make MANDIR=%{INSTALL_DIR}/%{_mandir} MANSUFFIX=ssl INSTALL_PREFIX="$RPM_BUILD_ROOT" install
+
+# WCP add 2017-12-07
+mkdir -p "$RPM_BUILD_ROOT"/usr/lib64
+ln -sf %{INSTALL_DIR}/usr/lib/libcrypto.so.1.0.0 "$RPM_BUILD_ROOT"/usr/lib64/libcrypto.so.1.0.0
 
 # Make backwards-compatibility symlink to ssleay
-ln -sf /usr/bin/openssl $RPM_BUILD_ROOT/usr/bin/ssleay
+#ln -sf %{INSTALL_DIR}/usr/bin/openssl $RPM_BUILD_ROOT/%{INSTALL_DIR}/usr/bin/ssleay
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -117,26 +127,28 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(0644,root,root,0755)
 %doc CHANGES CHANGES.SSLeay LICENSE NEWS README
 
-%attr(0755,root,root) %{_bindir}/*
-%attr(0755,root,root) %{_libdir}/*.so*
-%attr(0755,root,root) %{_libdir}/engines/*.so*
-%attr(0755,root,root) %{_libdir}/pkgconfig/*
-%attr(0755,root,root) %{openssldir}/misc/*
-%attr(0644,root,root) %{_mandir}/man[157]/*
+# WCP added
+%attr(0755,root,root) /usr/lib64/libcrypto.so.1.0.0
+%attr(0755,root,root) %{INSTALL_DIR}/%{_bindir}/*
+%attr(0755,root,root) %{INSTALL_DIR}/usr/lib/*.so*
+%attr(0755,root,root) %{INSTALL_DIR}/usr/lib/engines/*.so*
+%attr(0755,root,root) %{INSTALL_DIR}/usr/lib/pkgconfig/*
+%attr(0755,root,root) %{INSTALL_DIR}/%{openssldir}/misc/*
+%attr(0644,root,root) %{INSTALL_DIR}/%{_mandir}/man[157]/*
 
-%config %attr(0644,root,root) %{openssldir}/openssl.cnf 
-%dir %attr(0755,root,root) %{openssldir}/certs
-%dir %attr(0755,root,root) %{openssldir}/misc
-%dir %attr(0750,root,root) %{openssldir}/private
+%config %attr(0644,root,root) %{INSTALL_DIR}/%{openssldir}/openssl.cnf 
+%dir %attr(0755,root,root) %{INSTALL_DIR}/%{openssldir}/certs
+%dir %attr(0755,root,root) %{INSTALL_DIR}/%{openssldir}/misc
+%dir %attr(0750,root,root) %{INSTALL_DIR}/%{openssldir}/private
 
 %files devel
 %defattr(0644,root,root,0755)
 %doc CHANGES CHANGES.SSLeay LICENSE NEWS README
 
-%attr(0644,root,root) %{_libdir}/*.a
-%attr(0644,root,root) %{_libdir}/pkgconfig/openssl.pc
-%attr(0644,root,root) %{_includedir}/openssl/*
-%attr(0644,root,root) %{_mandir}/man[3]/*
+%attr(0644,root,root) %{INSTALL_DIR}/usr/lib/*.a
+%attr(0644,root,root) %{INSTALL_DIR}/usr/lib/pkgconfig/openssl.pc
+%attr(0644,root,root) %{INSTALL_DIR}/%{_includedir}/openssl/*
+%attr(0644,root,root) %{INSTALL_DIR}/%{_mandir}/man[3]/*
 
 %files doc
 %defattr(0644,root,root,0755)

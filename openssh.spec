@@ -1,5 +1,8 @@
+# W. Cyrus Proctor
+# 2017-12-08
+
 # TACC tag version
-%define tacc_tag v3.19.1-tacc-2
+%define tacc_tag v3.19.1-tacc-5
 
 # Default values for additional componentsi
 %define build_x11_askpass	0
@@ -20,9 +23,9 @@
 
 Summary:	OpenSSH, a free Secure Shell (SSH) protocol implementation
 Name:		openssh
-Version:	7.1p2
+Version:	7.5p1
 URL:		http://www.openssh.com
-Release:	3%{?dist}
+Release:	1%{?dist}
 Source0:        tacc-openssh-hpn-isshd-%{tacc_tag}.tar.gz
 Source1:	x11-ssh-askpass-%{xversion}.tar.gz
 #Patch100:       taccpass.auth_c.patch
@@ -143,12 +146,14 @@ This package contains an X Window System passphrase dialog for OpenSSH.
 
 %build
 autoreconf
+export PATH=/opt/openssl/1.0.2m/usr/bin:$PATH
+export LD_LIBRARY_PATH=/opt/openssl/1.0.2m/usr/lib:$LD_LIBRARY_PATH
+CPPFLAGS="-I/opt/openssl/1.0.2m/usr/include" \
 CFLAGS="$RPM_OPT_FLAGS" \
 %configure	--prefix=/usr \
                 --sysconfdir=%{_sysconfdir}/ssh \
                 --libexecdir=%{_libexecdir}/openssh \
                 --datadir=%{_datadir}/openssh \
-                --with-rsh=%{_bindir}/rsh \
                 --with-default-path=/usr/local/bin:/bin:/usr/bin \
                 --with-superuser-path=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin \
                 --with-privsep-path=%{_var}/empty/sshd \
@@ -159,7 +164,8 @@ CFLAGS="$RPM_OPT_FLAGS" \
                 --with-ssl-engine            \
                 --with-ipaddr-display        \
                 --with-libedit               \
-                --with-nerscmod              
+                --with-nerscmod              \
+                --with-ssl-dir=/opt/openssl/1.0.2m/usr
 make
 
 %if %{build_x11_askpass}
@@ -171,7 +177,7 @@ make
 cd ..
 %endif
 
-%install
+
 rm -rf $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT/
 install -d $RPM_BUILD_ROOT/etc/pam.d/
@@ -223,7 +229,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/ssh-keygen
 %attr(0755,root,root) %{_bindir}/scp
 %attr(0755,root,root) %{_bindir}/ssh
-%attr(-,root,root) %{_bindir}/slogin
+#%attr(-,root,root) %{_bindir}/slogin
 %attr(0755,root,root) %{_bindir}/ssh-agent
 %attr(0755,root,root) %{_bindir}/ssh-add
 %attr(0755,root,root) %{_bindir}/ssh-keyscan
@@ -235,7 +241,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_libexecdir}/openssh/ssh-pkcs11-helper
 %attr(0644,root,root) %doc %{_mandir}/man1/scp.1*
 %attr(0644,root,root) %doc %{_mandir}/man1/sftp.1*
-%attr(-,root,root) %doc %{_mandir}/man1/slogin.1*
+#%attr(-,root,root) %doc %{_mandir}/man1/slogin.1*
 %attr(0644,root,root) %doc %{_mandir}/man1/ssh.1*
 %attr(0644,root,root) %doc %{_mandir}/man1/ssh-add.1*
 %attr(0644,root,root) %doc %{_mandir}/man1/ssh-agent.1*
