@@ -5,7 +5,7 @@
 #-------------------------------------------------------------------
 
 Buildroot:       /var/tmp/%{name}-%{version}-buildroot
-%define _topdir  /admin/build/rpms
+%define _topdir  /admin/build/admin/rpms/maverick2
 %define APPS     /opt/apps
 %define MODULES  modulefiles
 %define SPEC_DIR %{_topdir}/SPECS

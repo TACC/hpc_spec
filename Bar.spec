@@ -33,7 +33,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-%include compiler-defines.inc
+#%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
