@@ -134,11 +134,11 @@ tar -zxvf $RPM_SOURCE_DIR/tcl8.5.9-linux-x86_64-threaded.tar.gz
 tar -xvf charm-6.8.1.tar
 cd charm-6.8.1/
 
-env MPICXX=mpicxx CC=icc CXX=icpc ./build charm++ mpi-linux-x86_64 mpicxx --incdir $TACC_IMPI_INC --libdir $TACC_IMPI_LIB --no-build-shared --with-production -j16 -xCORE-AVX2
+env MPICXX=mpicxx CC=icc CXX=icpc ./build charm++ mpi-linux-x86_64-smp-iccstatic --incdir $TACC_IMPI_INC --libdir $TACC_IMPI_LIB --no-build-shared --with-production -j16 -xCORE-AVX2
 cd ..
 
 sed -i 's/xMIC-AVX512/xCORE-AVX2/' arch/Linux-KNL-icc.arch
-./config Linux-KNL-icc --charm-arch mpi-linux-x86_64-mpicxx --with-mkl --mkl-prefix $TACC_MKL_DIR --with-tcl --tcl-prefix `pwd`/tcl8.5.9-linux-x86_64-threaded
+./config Linux-KNL-icc --charm-arch mpi-linux-x86_64-smp-iccstatic --with-mkl --mkl-prefix $TACC_MKL_DIR --with-tcl --tcl-prefix `pwd`/tcl8.5.9-linux-x86_64-threaded
 cd Linux-KNL-icc
 make -j 16
 
@@ -148,18 +148,15 @@ cd .. ; rm -Rf Linux-KNL-icc
 
 
 sed -i 's/xCORE-AVX2/xCORE-AVX512/' arch/Linux-KNL-icc.arch
-./config Linux-KNL-icc --charm-arch mpi-linux-x86_64-mpicxx --with-mkl --mkl-prefix $TACC_MKL_DIR --with-tcl --tcl-prefix `pwd`/tcl8.5.9-linux-x86_64-threaded
+./config Linux-KNL-icc --charm-arch mpi-linux-x86_64-smp-iccstatic --with-mkl --mkl-prefix $TACC_MKL_DIR --with-tcl --tcl-prefix `pwd`/tcl8.5.9-linux-x86_64-threaded
 cd Linux-KNL-icc
 make -j 16
 mv namd2 ../bin/namd2_skx
 
 cd .. ; rm -Rf Linux-KNL-icc
 
-cd charm-6.8.1/
-env MPICXX=mpicxx CC=icc CXX=icpc ./build charm++ mpi-linux-x86_64-smp-iccstatic --incdir $TACC_IMPI_INC --libdir $TACC_IMPI_LIB --no-build-shared --with-production --suffix knl -j16 -xCORE-AVX2
-cd ..
 sed -i 's/xCORE-AVX512/xMIC-AVX512/' arch/Linux-KNL-icc.arch
-./config Linux-KNL-icc --charm-arch mpi-linux-x86_64-smp-iccstatic-knl --with-mkl --mkl-prefix $TACC_MKL_DIR --with-tcl --tcl-prefix `pwd`/tcl8.5.9-linux-x86_64-threaded
+./config Linux-KNL-icc --charm-arch mpi-linux-x86_64-smp-iccstatic --with-mkl --mkl-prefix $TACC_MKL_DIR --with-tcl --tcl-prefix `pwd`/tcl8.5.9-linux-x86_64-threaded
 cd Linux-KNL-icc
 make -j 16
 
@@ -201,7 +198,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
 
-  cp -p Linux-KNL-icc/{namd2,psfgen,flipbinpdb,flipdcd,sortreplicas} $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
+  cp -p bin/{namd2_knl,namd2_skx,psfgen,flipbinpdb,flipdcd,sortreplicas} $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
   cp -r lib $RPM_BUILD_ROOT/%{INSTALL_DIR}
   chmod -Rf u+rwX,g+rwX,o=rX                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
@@ -237,8 +234,13 @@ TACC_NAMD_BIN, and TACC_NAMD_LIB are set to NAMD home
 bin, and lib directories; lib directory contains information for
 ABF, random acceleration MD(RAMD), replica exchange MD(REMD).
 
+
+Note: The way to run NAMD on KNL and SKX are different. Please read 
+the following instructions carefully. 
+
+## On KNL 
 Two recommended settings are shown in the following example slurm 
-scripts. 
+scripts for KNL nodes. 
 
 #  Example for one or two nodes. four tasks per node
 #SBATCH -J test # Job Name
@@ -249,9 +251,9 @@ scripts.
 #SBATCH -t 24:00:00 # Run time (hh:mm:ss) - 24 hours
 
 module load intel/16.0.3 impi namd/2017_12_05
-ibrun namd2 +ppn 32 +pemap 0-63+68 +commap 64-67 input &> output
+ibrun namd2_knl +ppn 32 +pemap 0-63+68 +commap 64-67 input &> output
 
-For two nodes,
+For two nodes, you only to change node number and task number. 
 #SBATCH -N 2    # Total number of nodes
 #SBATCH -n 8    # Total number of mpi tasks
 
@@ -265,7 +267,7 @@ For two nodes,
 #SBATCH -t 24:00:00 # Run time (hh:mm:ss) - 24 hours
 
 module load intel/16.0.3 impi namd/2017_12_05
-ibrun namd2 +ppn 8 +pemap 0-51+68 +commap 52-67 input &> output
+ibrun namd2_knl +ppn 8 +pemap 0-51+68 +commap 52-67 input &> output
 
 For four nodes,
 #SBATCH -N 4    # Total number of nodes
@@ -273,10 +275,28 @@ For four nodes,
 
 
 You may need to change some parameters if necessary. You can try 
-both settings then use the optimal one. You do not need to change 
-"+ppn 32 +pemap 0-63+68 +commap 64-67" or "+ppn 8 +pemap 0-51+68 
-+commap 52-67". "run_namd" is NOT provided any more.
+both settings then use the optimal one. If your system is small 
+or the number of nodes are large, you can try "+ppn 16 +pemap 
+0-63 +commap 64-67" for 4 tasks per node or "+ppn 4 +pemap 0-51 
++commap 52-67" for 13 tasks per node.
 
+
+## For jobs on SKX nodes
+#SBATCH -J test # Job Name
+#SBATCH -o test.o%j
+#SBATCH -N 2     # Total number of nodes
+#SBATCH -n 8    # Total number of mpi tasks
+#SBATCH -p skx-normal # Queue (partition) name -- skx-normal, skx-dev, etc.
+#SBATCH -t 24:00:00 # Run time (hh:mm:ss) - 24 hours
+
+module load intel/16.0.3 impi namd/2017_12_05
+ibrun namd2_skx +ppn 11 +pemap 2-22:2,26-46:2,3-23:2,27-47:2 +commap 0,24,1,25 input &> output
+
+4 tasks per node is recommended on SKX nodes. 
+You may also try other settings if necessary. 
+6 tasks per node, ibrun namd2_skx +ppn 7 +pemap 2-14:2,18-30:2,34-46:2,3-15:2,19-31:2,35-47:2 +commap 0,16,32,1,17,33 input &> output
+2 tasks per node, ibrun namd2_skx +ppn 23 +pemap 2-47:2,3-47:2 +commap 0,1 input &> output
+1 tasks per node, ibrun namd2_skx +ppn 47 +pemap 2-47:2,1-47:2 +commap 0 input &> output
 
 Version %{version}
 ]]
@@ -300,23 +320,23 @@ local namd_dir           = "%{INSTALL_DIR}"
 
 family("namd")
 prepend_path(    "PATH",                pathJoin(namd_dir, "bin"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/namd_2.10/modulefiles")
+prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/namd_2017_12_05/modulefiles")
 setenv( "TACC_%{MODULE_VAR}_DIR",                namd_dir)
 setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(namd_dir, "bin"))
 
 local nag_message = [[
-Warning: 
+Note: 
 
   Please note that the way to run NAMD on Stampede 2 has been changed. 
-The executable file for KNL and SKX nodes are different for best performance. 
-Please check instructions as well as example scripts with, 
+The executable files for KNL and SKX nodes are different to get best 
+performance. For more information please execute:
 
-module load intel/16.0.3 namd
+module load intel/16.0.3 namd/2017_12_05
 module help namd
 
 ]]
 
-LmodWarning(nag_message,"\n")
+LmodMessage(nag_message,"\n")
 
 
 

@@ -55,7 +55,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   BSD-like
 Group:     Development/Numerical-Libraries
 URL:       http://graal.ens-lyon.fr/MUMPS/
@@ -142,13 +142,13 @@ echo "module file for ${ext}"
 
 module unload petsc
 if [ -z "${ext}" ] ; then
-  export architecture=knightslanding
+#  export architecture=knightslanding
   module load petsc/%{petscversion}
 else
-  export architecture=knightslanding-${ext}
+#  export architecture=knightslanding-${ext}
   module load petsc/%{petscversion}-${ext}
 fi
-
+export architecture=${PETSC_ARCH}
 
 ##
 ## modulefile part of the configure install loop
@@ -177,13 +177,17 @@ whatis( "Description: Numerical library for sparse solvers" )
 
 local             mumps_arch =    "${architecture}"
 local             mumps_dir  =     "${TACC_PETSC_DIR}"
+local             mumps_bin  = pathJoin(mumps_dir,"bin")
 local             mumps_inc  = pathJoin(mumps_dir,mumps_arch,"include")
 local             mumps_lib  = pathJoin(mumps_dir,mumps_arch,"lib")
 
-prepend_path("LD_LIBRARY_PATH", mumps_lib)
-
+setenv("TACC_MUMPS_DIR",        mumps_dir )
+setenv("TACC_MUMPS_BIN",        mumps_bin )
 setenv("TACC_MUMPS_INC",        mumps_inc )
 setenv("TACC_MUMPS_LIB",        mumps_lib)
+
+prepend_path("LD_LIBRARY_PATH", mumps_lib)
+
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
@@ -247,5 +251,7 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Thu Dec 21 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: architecture fix
 * Tue Nov 07 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

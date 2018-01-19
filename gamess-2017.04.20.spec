@@ -59,7 +59,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
 
-Release:   2%{?dist}
+Release:   3%{?dist}
 License:   GPL
 Vendor:    Ames Lab
 Group:     applications/chemistry
@@ -95,7 +95,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 # do %%dump to get all the variable names then exit (but exit didn't work, did others, prep,...
 
 
-%define verbose
+
 %prep
 
 

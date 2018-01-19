@@ -28,7 +28,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   0%{?dist}
+Release:   1%{?dist}
 License:   GPL
 Group:     Visualization
 URL:       //www.kitware.com

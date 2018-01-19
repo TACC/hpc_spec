@@ -6,9 +6,9 @@
 %define MODULE_VAR    ddt
 
 # Create some macros (spec file variables)
-%define major_version 7
+%define major_version 18
 %define minor_version 0
-%define micro_version 3
+%define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -25,7 +25,7 @@
 
 ############ Do Not Change #############
 # Name: ddt
-# Version: 7.0.3
+# Version: 18.0.1
 Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}_%{pkg_version}-buildroot
@@ -157,8 +157,8 @@ local help_message = [[
 For detailed instructions, go to:
    https://portal.tacc.utexas.edu/software/ddt
 
-0.  Login to Stampede with X11 enabled:
-        ssh -Y knl-login1.stampede.tacc.utexas.edu
+0.  Login to Stampede2 with X11 enabled:
+        ssh -Y stampede2.tacc.utexas.edu
 
 1.  Load the ddt module:
         module load ddt

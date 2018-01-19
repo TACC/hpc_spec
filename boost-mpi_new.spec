@@ -1,6 +1,6 @@
 #
 # Si Liu
-# 2017-11-01
+# 2018-01-01
 #
 
 Summary: Boost spec file (www.boost.org)
@@ -11,8 +11,8 @@ Summary: Boost spec file (www.boost.org)
 
 # Create some macros (spec file variables)
 %define major_version 1
-%define minor_version 65
-%define micro_version 1
+%define minor_version 66
+%define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}
 
@@ -42,7 +42,7 @@ License:   GPL
 Group:     Utility
 URL:       http://www.boost.org
 Packager:  TACC - siliu@tacc.utexas.edu
-Source0:   boost_1_65_1.tar.gz
+Source0:   boost_1_66_0.tar.gz
 Source1:   icu4c-59_1-src.tgz
 
 # Turn off debug package mode
@@ -119,7 +119,7 @@ proposed for the upcoming TR2.
 %include mpi-defines.inc
 module purge
 %include compiler-load.inc
-module load intel
+module load intel/18.0.0
 module load impi
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
@@ -162,8 +162,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   WD=`pwd`
   
- TACC_OPT="-xCORE-AVX2 -axCORE-AVX512,MIC-AVX512"
- 
+  TACC_OPT="-xCORE-AVX2 -axCORE-AVX512,MIC-AVX512"
+  
   cd icu/source
   CXXFLAGS="%{TACC_OPT}" CFLAGS="%{TACC_OPT}" ./runConfigureICU  $ICU_MODE --prefix=%{INSTALL_DIR}
   make -j 28
@@ -172,9 +172,13 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   cd $WD
   EXTRA="-sICU_PATH=%{INSTALL_DIR}"
-  CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all --with-libraries=mpi"
+  CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all"
+
+  CC=mpicxx
+  CXX=mpicxx
 
   ./bootstrap.sh --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
+  echo "using mpi : /opt/apps/intel18/impi/18.0.0/bin/mpicxx ;" >> ~/projet-config.jam
 
   ./b2 -j 28 --prefix=%{INSTALL_DIR} $EXTRA cxxflags="%{TACC_OPT}" cflags="%{TACC_OPT}" linkflags="%{TACC_OPT}" install
   
@@ -212,8 +216,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help([[
-The boost module file defines the following environment variables:"
-BOOST_ROOT, TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC for"
+The boost module file defines the following environment variables:
+BOOST_ROOT, TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC for
 the location of the boost distribution."
 
 Version %{version}"

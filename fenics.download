@@ -1,13 +1,16 @@
 #!/bin/bash
 
+DOWNLOAD_DIR=/tmp/fenics-stuff
 if [ $# -eq 1 ] ; then
-  if [ ! -d "$1" ] ; then
-    echo "Make download directory: $1"
-    mkdir -p "$1"
-  fi
-  cd $1
+  DOWNLOAD_DIR=$1
 fi
+echo "Downloading in ${DOWNLOAD_DIR}"
 
+if [ ! -d "${DOWNLOAD_DIR}" ] ; then
+  echo "Make download directory: ${DOWNLOAD_DIR}"
+  mkdir -p "${DOWNLOAD_DIR}"
+fi
+cd ${DOWNLOAD_DIR}
 echo "Installing in: `pwd`"
 
 rm -rf fiat* instant* dijitso* ufl* ffc* dolfin* mshr* eigen*

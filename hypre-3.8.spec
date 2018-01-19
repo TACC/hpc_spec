@@ -55,7 +55,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   LGPL
 Group:     Development/Numerical-Libraries
 URL:       llnl.gov
@@ -142,12 +142,14 @@ echo "module file for ${ext}"
 
 module unload petsc
 if [ -z "${ext}" ] ; then
-  export architecture=knightslanding
+#  export architecture=knightslanding
   module load petsc/%{petscversion}
+  export architecture=${PETSC_ARCH}
 else
-  export architecture=knightslanding-${ext}
+#  export architecture=knightslanding-${ext}
   module load petsc/%{petscversion}-${ext}
 fi
+export architecture=${PETSC_ARCH}
 
 
 ##
@@ -177,11 +179,14 @@ whatis( "Description: Numerical library for sparse solvers" )
 
 local             hypre_arch =    "${architecture}"
 local             hypre_dir  =     "${TACC_PETSC_DIR}"
+local             hypre_bin  = pathJoin(hypre_dir,"bin")
 local             hypre_inc  = pathJoin(hypre_dir,hypre_arch,"include")
 local             hypre_lib  = pathJoin(hypre_dir,hypre_arch,"lib")
 
 prepend_path("LD_LIBRARY_PATH", hypre_lib)
 
+setenv("TACC_HYPRE_DIR",        hypre_dir )
+setenv("TACC_HYPRE_BIN",        hypre_bin )
 setenv("TACC_HYPRE_INC",        hypre_inc )
 setenv("TACC_HYPRE_LIB",        hypre_lib)
 EOF
@@ -195,12 +200,10 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
 set     ModulesVersion      "${modulefilename}"
 EOF
 
-## %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua 
-
-  # Check the syntax of the generated lua modulefile only if a visible module
-  %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua
-  %endif
+# Check the syntax of the generated lua modulefile only if a visible module
+%if %{?VISIBLE}
+  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua
+%endif
 
 ##
 ## end of module file loop
@@ -247,5 +250,7 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Thu Dec 21 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: petsc architecture fix
 * Tue May 30 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

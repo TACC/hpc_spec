@@ -118,8 +118,8 @@ mount -t tmpfs tmpfs %{INSTALL_DIR}
 ##cp -r * %{INSTALL_DIR}
 ##pushd %{INSTALL_DIR}
 
-module use -a /opt/apps/intel17/impi17_0/modulefiles
-module use -a /opt/apps/intel17/modulefiles
+#module use -a /opt/apps/intel17/impi17_0/modulefiles
+#module use -a /opt/apps/intel17/modulefiles
 module load cmake boost swig
 ## VLE stopgap!
 export BOOST_ROOT=${TACC_BOOST_DIR}
@@ -170,15 +170,21 @@ pushd /tmp/trilinos-build
 
 export VERSION=git
 export TRILINOS_LOCATION=%{_topdir}/BUILD/
-
 ##  export VERBOSE=1
-%include trilinos.cmake
+export SOURCEVERSION=%{version}
+## export VERSION=%{version}
+source %{SPEC_DIR}/trilinos-git.cmake
+echo ${trilinos_extra_libs}
 
 ####
 #### Compilation
 ####
-make -j 8             # Trilinos can compile in parallel
-# make -j 4 tests           # (takes forever...)
+
+make -j 1             # debug mode....
+#make -j 8             # Trilinos can compile in parallel
+
+#make -j 4 tests           # (takes forever...)
+
 #make runtests-serial # (requires queue submission)
 #make runtests-mpi    # (requires queue submission)
 

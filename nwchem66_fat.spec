@@ -158,11 +158,12 @@ export USE_NOIO="TRUE"
 export USE_NOFSCHECK="TRUE"
 export MA_USE_ARMCI_MEM="1"
  
-#export PYTHONHOME="/opt/apps/intel17/python/2.7.12/"
-export PYTHONHOME="/usr/"
+export PYTHONHOME="/opt/apps/intel17/python/2.7.13/"
+#export PYTHONHOME="/usr/"
 export PYTHONVERSION=2.7
 export USE_PYTHON=y
 export USE_PYTHONCONFIG=Y
+module load python/2.7.13
  
 #export USE_INTERNALBLAS=y
 export USE_64TO32=y

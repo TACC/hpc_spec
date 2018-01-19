@@ -31,7 +31,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tar.gz
@@ -175,8 +175,10 @@ export TRILINOS_LOCATION=%{_topdir}/BUILD/
   export VERBOSE=1
 %endif
 
-export SOURCEVERSION=${VERSION}
-%include trilinos.cmake
+export SOURCEVERSION=%{version}
+export VERSION=%{version}
+source %{SPEC_DIR}/trilinos.cmake
+echo ${trilinos_extra_libs}
 
 ####
 #### Compilation
@@ -283,6 +285,8 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Wed Jan 17 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 5: giving up on SuperLU for now, fixed module help
 * Wed Aug 16 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 4: adding FEI
 * Mon Jul 31 2017 eijkhout <eijkhout@tacc.utexas.edu>

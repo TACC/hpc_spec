@@ -171,16 +171,15 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 cat >    $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 local err_message = [[
 
-   NAMD 2017_12_05 is not available under Intel 17 at this time. 
+   NAMD 2017_12_05 is not available under Intel 17 and 18 at this time. 
 Please load NAMD/2017_12_05 using the following command, 
 
 module load intel/16.0.3 impi namd/2017_12_05
-
 module help namd 
-for usage. 
+for more information about running NAMD jobs. 
 
   Please note that the way to run NAMD on Stampede 2 has been changed. 
-The executable file for KNL and SKX nodes are different for best performance.
+The executable files for KNL and SKX nodes are different to get best performance.
 
 ]]
 

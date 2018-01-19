@@ -80,6 +80,9 @@ cmake -VV \
   -D Trilinos_ENABLE_Shards:BOOL=ON \
   -D Trilinos_ENABLE_ShyLU:BOOL=ON \
   -D Trilinos_ENABLE_STK:BOOL=${HAS_STK} \
+  -D TPL_ENABLE_SuperLU:BOOL=ON \
+      -D SuperLU_INCLUDE_DIRS:PATH="${TACC_SUPERLU_INC}" \
+      -D SuperLU_LIBRARY_DIRS:PATH="${TACC_SUPERLU_LIB}" \
   -D Trilinos_ENABLE_Stokhos:BOOL=ON \
   -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
   -D Trilinos_ENABLE_Teko:BOOL=ON \
@@ -102,4 +105,4 @@ cmake -VV \
 
 # seems like a bug: https://github.com/trilinos/Trilinos/issues/169
 
-export trilinos_extra_libs="Amesos,Basker,Anasazi,AztecOO,Belos,Epetra,EpetraExt,FEI,Ifpack,Intrepid,ML,MOOCHO,MueLu,NOX,Pamgen,Phalanx,Rhythmos,Sacado,SEACASIoss,SEACAS,SEACASBlot,Shards,ShyLU,Stokhos,Stratimikos,Teko,Teuchos,TriKota,Zoltan; also support enabled for Bool,Hdf5,Netcdf"
+export trilinos_extra_libs="Amesos,Basker,Anasazi,AztecOO,Belos,Epetra,EpetraExt,FEI,Ifpack,Intrepid,ML,MOOCHO,MueLu,NOX,Pamgen,Phalanx,Rhythmos,Sacado,SEACASIoss,SEACAS,SEACASBlot,Shards,ShyLU,Stokhos,Stratimikos,Superlu,Teko,Teuchos,TriKota,Zoltan; also support enabled for Bool,Hdf5,Netcdf"

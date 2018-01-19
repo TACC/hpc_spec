@@ -55,7 +55,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   BSD-like
 Group:     Development/Numerical-Libraries
 URL:       http://graal.ens-lyon.fr/SUPERLU/
@@ -142,13 +142,11 @@ echo "module file for ${ext}"
 
 module unload petsc
 if [ -z "${ext}" ] ; then
-  export architecture=knightslanding
   module load petsc/%{petscversion}
 else
-  export architecture=knightslanding-${ext}
   module load petsc/%{petscversion}-${ext}
 fi
-
+export architecture=${PETSC_ARCH}
 
 ##
 ## modulefile part of the configure install loop
@@ -177,13 +175,17 @@ whatis( "Description: Numerical library for sparse solvers" )
 
 local             superlu_arch =    "${architecture}"
 local             superlu_dir  =     "${TACC_PETSC_DIR}"
+local             superlu_bin  = pathJoin(superlu_dir,"bin")
 local             superlu_inc  = pathJoin(superlu_dir,superlu_arch,"include")
 local             superlu_lib  = pathJoin(superlu_dir,superlu_arch,"lib")
 
-prepend_path("LD_LIBRARY_PATH", superlu_lib)
-
+setenv("TACC_SUPERLU_DIR",        superlu_dir )
+setenv("TACC_SUPERLU_BIN",        superlu_bin )
 setenv("TACC_SUPERLU_INC",        superlu_inc )
 setenv("TACC_SUPERLU_LIB",        superlu_lib)
+
+prepend_path("LD_LIBRARY_PATH", superlu_lib)
+
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
@@ -247,5 +249,7 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Thu Dec 21 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: fix architecture names
 * Tue Nov 07 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release
