@@ -26,9 +26,9 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 # Create some macros (spec file variables)
 %define major_version 9
-%define minor_version 1
-%define patch_version 85
-%define driver_version 387.26
+%define minor_version 0
+%define patch_version 176
+%define driver_version 384.81
 %define local_release 1
 
 %define pkg_version %{major_version}.%{minor_version}

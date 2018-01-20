@@ -1,6 +1,6 @@
 #
 # W. Cyrus Proctor
-# 2016-08-07
+# 2015-12-11
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -20,28 +20,24 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name cudnn
-%define MODULE_VAR    CUDNN
+%define pkg_base_name mkl
+%define MODULE_VAR    MKL
 
 # Create some macros (spec file variables)
-%define major_version 7
+%define major_version 18
 %define minor_version 0
-%define cuda_version  9.0
-%define cuda_fam_ver  cuda9_0
+%define patch_version 1
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{patch_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
+%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines-cuda.inc
-#%include name-defines-noreloc.inc
-#%include name-defines-hidden.inc
-#%include name-defines-hidden-noreloc.inc
+%include name-defines.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -53,12 +49,11 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1%{?dist}
-License:   NVIDIA Proprietary
-Group:     Development/Tools
-URL:       https://developer.nvidia.com/rdp/cudnn-download
+License:   proprietary
+Group:     Compiler
+URL:       https://software.intel.com/en-us/intel-compilers
 Packager:  TACC - cproctor@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
-Requires:  cuda = %{cuda_version}
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -70,31 +65,20 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
-The NVIDIA CUDA Deep Neural Network library (cuDNN) is a GPU-accelerated
-library of primitives for deep neural networks. cuDNN provides highly tuned
-implementations for standard routines such as forward and backward convolution,
-pooling, normalization, and activation layers. cuDNN is part of the NVIDIA Deep
-Learning SDK.
+This is specifically an rpm for the Intel MKL modulefile
+used on Maverick2 for GCC.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
-The NVIDIA CUDA Deep Neural Network library (cuDNN) is a GPU-accelerated
-library of primitives for deep neural networks. cuDNN provides highly tuned
-implementations for standard routines such as forward and backward convolution,
-pooling, normalization, and activation layers. cuDNN is part of the NVIDIA Deep
-Learning SDK.
+This is specifically an rpm for the Intel MKL modulefile
+used on Maverick2 for GCC.
 
 %description
-The NVIDIA CUDA Deep Neural Network library (cuDNN) is a GPU-accelerated
-library of primitives for deep neural networks. cuDNN provides highly tuned
-implementations for standard routines such as forward and backward convolution,
-pooling, normalization, and activation layers. cuDNN is part of the NVIDIA Deep
-Learning SDK.
-
-
+This is specifically an rpm for the Intel MKL modulefile
+used on Maverick2 for GCC.
 
 #---------------------------------------
 %prep
@@ -105,7 +89,6 @@ Learning SDK.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -120,7 +103,6 @@ Learning SDK.
 #--------------------------
 
 
-
 #---------------------------------------
 %build
 #---------------------------------------
@@ -132,13 +114,9 @@ Learning SDK.
 
 # Setup modules
 %include system-load.inc
-module purge
-# Load Compiler
-#%include compiler-load.inc
-# Load MPI Library
-#%include mpi-load.inc
 
-# Insert further module commands
+# Insert necessary module commands
+module purge
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -160,15 +138,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-  
-  # Create some dummy directories and files for fun
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib64
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
-  
-  tar xvfz %{_sourcedir}/cudnn-%{cuda_version}-linux-x64-v%{major_version}*.tgz
-  cd cuda
-  # Copy everything from tarball over to the installation directory
-  cp -rp * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+ 
+  # Nothing to do!
   
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -192,16 +163,28 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_msg=[[
-The NVIDIA CUDA Deep Neural Network library (cuDNN) is a GPU-accelerated
-library of primitives for deep neural networks. cuDNN provides highly tuned
-implementations for standard routines such as forward and backward convolution,
-pooling, normalization, and activation layers. cuDNN is part of the NVIDIA Deep
-Learning SDK.
+The Intel Math Kernel Library (Intel MKL) improves performance with math
+routines for software applications that solve large computational problems.
+Intel MKL provides BLAS and LAPACK linear algebra routines, fast Fourier
+transforms, vectorized math functions, random number generation functions, and
+other functionality.
 
-The %{MODULE_VAR} module defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and 
-for the location of the %{MODULE_VAR} distribution, libraries,
-include files, and libraries respectively.
+The Intel MKL module enables the use of the MKL with the GNU GCC compilers by
+updating the $LD_LIBRARY_PATH, $INCLUDE, and $MANPATH environment variables to
+access the MKL libraries, include files, and available man pages, respectively.
+
+The following additional environment variables are also defined:
+
+$TACC_MKL_DIR           (path to Math Kernel Library root         )
+$TACC_MKL_LIB           (path to Math Kernel Library libs         )
+$TACC_MKL_INC           (path to Math Kernel Library includes     )
+$TACC_MKL_DOC           (path to Math Kernel Library documentation)
+
+To use the MKL with Intel compilers, please see the Intel module help
+by issuing a "module help intel".
+
+Also see the Intel MKL Link Line Advisor:
+https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor
 
 Version %{version}
 ]]
@@ -209,16 +192,32 @@ Version %{version}
 --help(help_msg)
 help(help_msg)
 
-whatis("Name: %{pkg_base_name}")
--- Create environment variables.
-local base_dir           = "%{INSTALL_DIR}"
+whatis("Name: Intel MKL"                                                    )
+whatis("Version: %{version}"                                                )
+whatis("Category: Library, Runtime Support"                                 )
+whatis("Description: Intel Math Kernel Library"                             )
+whatis("URL: https://software.intel.com/en-us/intel-mkl"                    )
 
-family("%{pkg_base_name}")
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(base_dir, "lib64"))
-setenv( "TACC_%{MODULE_VAR}_DIR",                base_dir)
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(base_dir, "include"))
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(base_dir, "lib64"))
-add_property("arch","gpu")
+-- Create environment variables.
+local base         = "/home1/apps/intel"
+local full_xe      = "compilers_and_libraries_2018.1.163/linux"
+local installDir   = pathJoin(base,full_xe)
+local mklRoot      = pathJoin(installDir,"mkl")
+
+setenv( "MKLROOT"      ,              mklRoot )
+setenv( "TACC_MKL_DIR" ,              mklRoot )
+setenv( "TACC_MKL_LIB" ,              pathJoin( mklRoot    , "lib/intel64" ) )
+setenv( "TACC_MKL_INC" ,              pathJoin( mklRoot    , "include" ) )
+setenv( "TACC_MKL_DOC" ,              pathJoin( base       , "documentation_2018/en/mkl/ps2018" ) )
+
+prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( mklRoot    , "lib/intel64" ) )
+
+prepend_path( "INCLUDE" ,             pathJoin( mklRoot    , "include" ) )
+
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2018/en/debugger/gdb-ia/man" ) )
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2018/en/debugger/gdb-igfx/man" ) )
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2018/en/man/common" ) )
+
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
@@ -230,10 +229,9 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 set     ModulesVersion      "%{version}"
 EOF
   
-  # Check the syntax of the generated lua modulefile only if a visible module
-  %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-  %endif
+  # Check the syntax of the generated lua modulefile
+  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -263,6 +261,7 @@ EOF
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
+
 
 ########################################
 ## Fix Modulefile During Post Install ##
