@@ -29,13 +29,10 @@ Summary: HPCToolkit
 %define MODULE_VAR    HPCTOOLKIT
 
 # Create some macros (spec file variables)
-%define major_version          2017
-%define external_major_version 2017
-%define minor_version          10
-%define external_minor_version 06
+%define major_version 2016
+%define minor_version 12
 
-%define pkg_version          %{major_version}.%{minor_version}
-%define external_pkg_version %{external_major_version}.%{external_minor_version}
+%define pkg_version %{major_version}.%{minor_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -62,11 +59,11 @@ Release:   1%{?dist}
 License:   BSD
 Group:     Applications/HPC
 URL:       www.hpctoolkit.org 
-Packager:  TACC - dmcdougall@tacc.utexas.edu, cproctor@tacc.utexas.edu
+Packager:  TACC - agomez@tacc.utexas.edu, cproctor@tacc.utexas.edu, dmcdougall@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
-Source1:   %{pkg_base_name}-externals-%{external_pkg_version}.tar.gz
-Source2:   hpcviewer-linux.gtk.x86_64.tgz
-Source3:   hpctraceviewer-linux.gtk.x86_64.tgz
+Source1:   %{pkg_base_name}-externals-%{pkg_version}.tar.gz
+Source2:   hpcviewer-2017.01-linux.gtk.x86_64.tgz
+Source3:   hpctraceviewer-2017.01-linux.gtk.x86_64.tgz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -76,14 +73,12 @@ Source3:   hpctraceviewer-linux.gtk.x86_64.tgz
 Summary: The package RPM
 Group: Applications/HPC
 %description package
-This is the package RPM...
 HPCToolkit is an integrated suite of tools for measurement and analysis of program performance on computers ranging from multicore desktop systems to the nation's largest supercomputers. By using statistical sampling of timers and hardware performance counters, HPCToolkit collects accurate measurements of a program's work, resource consumption, and inefficiency and attributes them to the full calling context in which they occur.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-This is the modulefile RPM...
 HPCToolkit is an integrated suite of tools for measurement and analysis of program performance on computers ranging from multicore desktop systems to the nation's largest supercomputers. By using statistical sampling of timers and hardware performance counters, HPCToolkit collects accurate measurements of a program's work, resource consumption, and inefficiency and attributes them to the full calling context in which they occur.
 
 %description
@@ -100,10 +95,10 @@ HPCToolkit is an integrated suite of tools for measurement and analysis of progr
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%setup -n %{pkg_base_name}-%{pkg_version}
-%setup -D -T -n %{pkg_base_name}-%{pkg_version} -a 1
-%setup -D -T -n %{pkg_base_name}-%{pkg_version} -a 2
-%setup -D -T -n %{pkg_base_name}-%{pkg_version} -a 3
+%setup -n %{pkg_base_name}-release-%{pkg_version}
+%setup -D -T -n %{pkg_base_name}-release-%{pkg_version} -a 1
+%setup -D -T -n %{pkg_base_name}-release-%{pkg_version} -a 2
+%setup -D -T -n %{pkg_base_name}-release-%{pkg_version} -a 3
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -135,7 +130,6 @@ module purge
 %include mpi-load.inc
 
 # Insert further module commands
-ml papi/5.6.0
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -159,43 +153,40 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
 
+# DM: Commenting out papi support for now
+#module load papi
+
 ## Notes on hpctoolkit configure options
 ## --without-libunwind   Identify correct source lines in optimized code 
 ## --enable-demangling   I don't think this has any effect
 ## --with-papi           Top lelvel PAPI directory
 
-pwd
-cd %{pkg_base_name}-externals-%{external_pkg_version}
-pwd
-mkdir -p BUILD
-mkdir -p INSTALL
+cd %{pkg_base_name}-externals-release-%{pkg_version}
+mkdir BUILD
+mkdir INSTALL
 cd BUILD
+export current=`pwd`
+../configure CC=gcc CXX=g++ \
+             --without-libunwind \
+             --enable-demangling \
+             --prefix=%{INSTALL_DIR}
+#             --prefix=$current/../INSTALL \
 
-export CC=gcc
-export CXX=g++
-export ncores=28
-
-../configure            \
---prefix=%{INSTALL_DIR} \
---without-libunwind     \
---enable-demangling
-
-make -j ${ncores}
+make -j56
 make DESTDIR=$RPM_BUILD_ROOT install
 
-cd ../../  # Now in the dir: hpctoolkit-%{pkg_version}
+cd ../../  # Now in the dir: hpctoolkit-release-%{pkg_version}
 mkdir BUILD
 cd BUILD
-../configure                    \
---prefix=%{INSTALL_DIR}         \
---without-libunwind             \
---enable-demangling             \
---with-externals=%{INSTALL_DIR} \
---with-papi="${TACC_PAPI_DIR}"
+../configure CC=gcc CXX=g++ \
+             --without-libunwind \
+             --enable-demangling \
+             --prefix=%{INSTALL_DIR} \
+             --with-externals=%{INSTALL_DIR}
+#              --with-externals=../%{pkg_base_name}-externals-release-%{pkg_version}/INSTALL \
+#             --with-papi=$TACC_PAPI_DIR \
 
-
-#--with-externals=../%{pkg_base_name}-externals-%{pkg_version}/INSTALL \
-make -j ${ncores}
+make -j56
 make DESTDIR=$RPM_BUILD_ROOT install
 
 cd ../hpcviewer
@@ -250,7 +241,7 @@ Once the run is complete obtain the static structure of the program :
 
 hpcstruct <executable>
 
-Then form the database from the measurements:
+Then form the databasei form the measurements:
 
 (serial/threaded): hpcprof     -S <executable.hpcstruct> <measurementDirName>
 (mpi/hybrid):      hpcprof-mpi -S <executable.hpcstruct> <measurementDirName>
@@ -273,6 +264,9 @@ whatis("Category: application,HPC ")
 whatis("Keywords: HPC, profiling, parallel, performance")
 whatis("URL: http://www.hpctoolkit.org")
 whatis("Description: Profiler")
+%if "%{is_debug}" == "1"
+setenv("TACC_%{MODULE_VAR}_DEBUG","1")
+%endif
 
 -- Create environment variables.
 local hpct_dir          = "%{INSTALL_DIR}"
