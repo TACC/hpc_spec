@@ -59,11 +59,11 @@ Summary: A Nice little relocatable skeleton spec file example.
 %define python_minor_version      7
 %define python_patch_version      13
 %define major_version             1
-%define minor_version             5
-%define micro_version             0
-%define tensorboard_major_version 1
-%define tensorboard_minor_version 5
-%define tensorboard_micro_version 0
+%define minor_version             4
+%define micro_version             1
+%define tensorboard_major_version 0
+%define tensorboard_minor_version 4
+%define tensorboard_micro_version 0rc3
 
 
 %define bazel_base_version   %{bazel_base_major_version}.%{bazel_base_minor_version}.%{bazel_base_micro_version}
@@ -304,9 +304,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 # Installed on stampede c560-901
 #export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.111-0.b15.el6_8.x86_64
 # Installed on Stampede2 jail
-#export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-3.b12.el7_3.x86_64
 export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.151-1.b12.el7_4.x86_64
-#export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.161-0.b14.el7_4.x86_64
 # Upgrade pip
 export PATH=%{_builddir}/tensorflow_pip/bin:$PATH
 export LD_LIBRARY_PATH=%{_builddir}/tensorflow_pip/lib:${LD_LIBRARY_PATH}
@@ -415,12 +413,9 @@ cd ${tensorflow}
 git clone --recurse-submodules https://github.com/tensorflow/tensorflow
 cd %{pkg_base_name}
 git checkout tags/v%{pkg_version}
-#patch -p0 < %{_sourcedir}/CROSSTOOL_nvcc.tpl-v%{pkg_version}.patch
-#patch -p0 < %{_sourcedir}/CROSSTOOL.toolchain.cpus-v%{pkg_version}.patch
+patch -p0 < %{_sourcedir}/CROSSTOOL_nvcc.tpl-v%{pkg_version}.patch
+patch -p0 < %{_sourcedir}/CROSSTOOL.toolchain.cpus-v%{pkg_version}.patch
 patch -p0 < %{_sourcedir}/tensorflow.bzl-v%{pkg_version}.patch
-patch -p0 < %{_sourcedir}/BUILD.contrib.v%{pkg_version}.patch
-patch -p0 < %{_sourcedir}/BUILD.tensorflow.v%{pkg_version}.patch
-patch -p0 < %{_sourcedir}/__init__.contrib.v%{pkg_version}.patch
 #patch -p0 < %{_sourcedir}/BUILD.mpi-v%{pkg_version}.patch
 #patch -p0 < %{_sourcedir}/BUILD.mkl-v%{pkg_version}.patch
 #patch -p0 < %{_sourcedir}/mkl.BUILD-v%{pkg_version}.patch
@@ -441,8 +436,7 @@ ${tensorflow}/%{bazel_base_name}/bazel-bin/src/bazel build -c opt --copt="-mavx2
 #export TF_NEED_MKL=1 
 #export TF_DOWNLOAD_MKL=1
 #export TF_MKL_ROOT=/opt/intel/compilers_and_libraries_2017.4.196/linux/mkl
-#${tensorflow}/%{bazel_base_name}/bazel-bin/src/bazel build -c opt --copt="-mavx2" --copt="-march=broadwell" --copt="-mtune=broadwell" --copt="-O3" --copt="-flto" --linkopt '-lrt' --genrule_strategy=standalone --spawn_strategy=standalone -s --verbose_failures //tensorflow/tools/pip_package:build_pip_package
-${tensorflow}/%{bazel_base_name}/bazel-bin/src/bazel build -c opt --copt="-mavx2" --copt="-march=broadwell" --copt="-mtune=broadwell" --copt="-O3" --config=opt --linkopt '-lrt' --genrule_strategy=standalone --spawn_strategy=standalone -s --verbose_failures //tensorflow/tools/pip_package:build_pip_package
+${tensorflow}/%{bazel_base_name}/bazel-bin/src/bazel build -c opt --copt="-mavx2" --copt="-march=broadwell" --copt="-mtune=broadwell" --copt="-O3" --copt="-flto" --linkopt '-lrt' --genrule_strategy=standalone --spawn_strategy=standalone -s --verbose_failures //tensorflow/tools/pip_package:build_pip_package
 %endif
 cd ${tensorflow}/%{pkg_base_name}
 bazel-bin/tensorflow/tools/pip_package/build_pip_package ${tensorflow}/%{pkg_base_name}/tensorflow_pkg 

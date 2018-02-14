@@ -293,7 +293,7 @@ setenv("TACC_%{MODULE_VAR}_DEBUG","1")
 -- Create environment variables.
 local gms_dir           = "%{INSTALL_DIR}"
 
-family("APP")
+family("GAMESS")
 
 setenv("TACC_%{MODULE_VAR}_DIR",  gms_dir)
 setenv("TACC_%{MODULE_VAR}_BIN",  gms_dir)

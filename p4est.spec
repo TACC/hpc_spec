@@ -103,7 +103,8 @@ mount -t tmpfs tmpfs %{INSTALL_DIR}
 %if "%{comp_fam}" == "gcc"
   module load mkl
 #  export MKLROOT=/opt/intel/compilers_and_libraries_2017.2.174/linux/mkl
-  export BLASOPTIONS="-Wl,--start-group $MKLROOT/lib/intel64/libmkl_intel_lp64.a $MKLROOT/lib/intel64/libmkl_sequential.a $MKLROOT/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread -lm"
+  #VLE complaint about .a not being portable. I haven't tried this .so version yet.
+  export BLASOPTIONS="-Wl,--start-group $MKLROOT/lib/intel64/libmkl_intel_lp64.so $MKLROOT/lib/intel64/libmkl_sequential.so $MKLROOT/lib/intel64/libmkl_core.so -Wl,--end-group -lpthread -lm"
   export BLASFLAG=
 %else
   export BLASOPTIONS=

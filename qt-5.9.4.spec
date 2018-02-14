@@ -1,12 +1,4 @@
 #
-# Spec file for SUPERLU_SEQ:
-# Sequential version of SuperLU
-# (needed for Trilinos, as opposed to PETSc which needs distributed.)
-#
-# Victor Eijkhout, 2017
-# based on:
-#
-# Bar.spec, 
 # W. Cyrus Proctor
 # Antonio Gomez
 # 2015-08-25
@@ -26,29 +18,28 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary:    Set of tools for manipulating geographic and Cartesian data sets
+Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name superlu_seq
-%define MODULE_VAR    SUPERLUSEQ
+%define pkg_base_name qt5
+%define MODULE_VAR    QT5
 
 # Create some macros (spec file variables)
 %define major_version 5
-%define minor_version 2
-%define micro_version 1
+%define minor_version 9
+%define micro_version 4
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-%include compiler-defines.inc
-## being sequential this does not use MPI
+#%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-#%include name-defines.inc
-%include name-defines-noreloc-home1.inc
+%include name-defines.inc
+#%include name-defines-noreloc.inc
 #%include name-defines-hidden.inc
 #%include name-defines-hidden-noreloc.inc
 ########################################
@@ -61,35 +52,33 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
-License:   GNU
-Group: Development/Numerical-Libraries
-Vendor:     Argonne National Lab
-Group:      Libraries/maps
-Source:	    superlu_seq-%{version}.tar.gz
-URL:	    http://crd-legacy.lbl.gov/~xiaoye/SuperLU/
-Packager:   eijkhout@tacc.utexas.edu
+Release:   4%{?dist}
+License:   GPL
+Group:     X11/Application
+URL:       http://qt.io
+Packager:  TACC - jbarbosa@tacc.utexas.edu
+Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
-%global _python_bytecompile_errors_terminate_build 0
+
 
 %package %{PACKAGE}
-Summary: SUPERLUSEQ is a single processor sparse direct solver
-Group: Libraries
+Summary: The package RPM
+Group: X11/Application
 %description package
-This is the long description for the package RPM...
 
 %package %{MODULEFILE}
-Summary: SUPERLUSEQ is a single processor sparse direct solver
-Group: Libraries
+Summary: The modulefile RPM
+Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
 
 %description
-Summary: SUPERLUSEQ is a single processor sparse direct solver
-Group: Libraries
+The longer-winded description of the package that will 
+end in up inside the rpm and is queryable if installed via:
+rpm -qi <rpm-name>
 
 
 #---------------------------------------
@@ -102,7 +91,7 @@ Group: Libraries
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%setup -n %{pkg_base_name}-%{pkg_version}
+#%setup -n %{pkg_base_name}-%{pkg_version}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -132,7 +121,7 @@ Group: Libraries
 %include system-load.inc
 module purge
 # Load Compiler
-%include compiler-load.inc
+#%include compiler-load.inc
 # Load MPI Library
 #%include mpi-load.inc
 
@@ -144,6 +133,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 %if %{?BUILD_PACKAGE}
 #------------------------
+
+  export QA_SKIP_BUILD_ROOT=1
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
   
@@ -159,47 +150,44 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
   
-#
-# Use mount temp trick
-#
-mkdir -p             %{INSTALL_DIR}
-mount -t tmpfs tmpfs %{INSTALL_DIR}
-mkdir -p %{INSTALL_DIR}/{lib,include}
-mkdir -p ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/{lib,include}
-export SLU_SRC=%{INSTALL_DIR}
-export SLU_INSTALLATION=${RPM_BUILD_ROOT}/%{INSTALL_DIR}
-mkdir -p ${SLU_INSTALLATION}
+  # Create some dummy directories and files for fun
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
+  
+  # Copy everything from tarball over to the installation directory
+  # cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  export WORK_DIR=`pwd`
+  export WORK_INSTALL_DIR=$RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-cp -r * ${SLU_SRC}
-cp %{SPEC_DIR}/superlu_seq-%{version}.inc ${SLU_SRC}/make.inc
-pushd ${SLU_SRC}
+  # 2) Required modules
+  #module load intel python cmake
+  
+  module load swr
 
-#
-# config/make
-#
-%if "%{is_intel}" == "1"
-  export CC=icc
-  export CXX=icpc
-  export FC=ifort
-  export CFLAGS="-mkl -fPIC"
-  export LOADOPTS=-mkl
-%endif
-%if "%{is_gcc}" == "1"
-  export CC=gcc
-  export CXX=g++
-  export FC=gfort
-  export CFLAGS=-fPIC
-%endif
+  # 3) Build LLVM
+  cd ${WORK_DIR}
 
-make CC=${CC} FORTRAN=${FC} CFLAGS="${CFLAGS}" LOADOPTS=${LOADOPTS} NOOPS=-O0 \
-          ARCH=ar RANLIB=ranlib \
-          SuperLUroot=${SLU_BUILD} SUPERLULIB=${SLU_INSTALLATION}/lib/libsuperlu.a \
-          clean install lib
-cp SRC/*.h ${SLU_INSTALLATION}/include
+  git clone https://code.qt.io/qt/qt5.git
+  cd qt5/
+  git checkout %{major_version}.%{minor_version}.%{micro_version}
+  perl init-repository -f --module-subset=default,-qtwebkit,-qtwebkit-examples,-qtwebengine,-qtandroidextras,-qtmacextras
+ ./configure -developer-build -confirm-license --prefix=$WORK_INSTALL_DIR -opensource -avx2 -avx512 -qt-xcb -release -nomake examples -nomake tests
 
-#cp -r %{INSTALL_DIR}/* ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
-popd # from tmps back to BUILD
-umount %{INSTALL_DIR}
+  make -j8
+  make install
+ 
+cat > $WORK_INSTALL_DIR/bin/qt.conf << "EOF"
+[Paths]
+Prefix = /opt/apps/qt5/%{major_version}.%{minor_version}.%{micro_version}
+Plugins = /opt/apps/qt5/%{major_version}.%{minor_version}.%{micro_version}/plugins
+EOF
+   
+
+# Remove buildroot
+#find $RPM_BUILD_ROOT%{INSTALL_DIR} -type f -print0 | 
+#    xargs -0 sed -i -e s,$RPM_BUILD_ROOT,,g
+
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -221,49 +209,52 @@ umount %{INSTALL_DIR}
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
-help( [[
-Module %{name} loads environmental variables defining
-the location of SUPERLUSEQ directory, libraries, and binaries:
-TACC_SUPERLUSEQ_DIR TACC_SUPERLUSEQ_LIB TACC_SUPERLUSEQ_BIN
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
+local help_msg=[[
+The %{MODULE_VAR} module defines the following environment variables:
+TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
+TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
+include files, and tools respectively.
+]]
 
-Version: %{version}
-]] )
+--help(help_msg)
+help(help_msg)
 
-whatis( "SUPERLUSEQ" )
-whatis( "Version: %{version}" )
-whatis( "Category: system, development" )
-whatis( "Keywords: System, Cartesian Grids" )
-whatis( "Description: Generic Mapping Tools: Tools for manipulating geographic and Cartesian data sets" )
-whatis( "URL: http://crd-legacy.lbl.gov/~xiaoye/SuperLU/" )
+whatis("Name: qt5")
+whatis("Version: %{pkg_version}%{dbg}")
+%if "%{is_debug}" == "1"
+setenv("TACC_%{MODULE_VAR}_DEBUG","1")
+%endif
 
-local version =  "%{version}"
-local superlu_seq_dir =  "%{INSTALL_DIR}"
+-- Create environment variables.
+local qt_dir           = "%{INSTALL_DIR}"
 
-setenv("TACC_SUPERLUSEQ_DIR",superlu_seq_dir)
--- setenv("TACC_SUPERLUSEQ_BIN",pathJoin( superlu_seq_dir,"bin" ) )
-setenv("TACC_SUPERLUSEQ_INC",pathJoin( superlu_seq_dir,"include" ) )
-setenv("TACC_SUPERLUSEQ_LIB",pathJoin( superlu_seq_dir,"lib" ) )
-setenv("TACC_SUPERLUSEQ_SHARE",pathJoin( superlu_seq_dir,"share" ) )
+family("qt")
+prepend_path(    "PATH",                pathJoin(qt_dir, "bin"))
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(qt_dir, "lib"))
+prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/qt%{pkg_version}/modulefiles")
+prepend_path(    "QT_QPA_PLATFORM_PLUGIN_PATH", pathJoin(qt_dir, "plugins"))
+setenv( "QTDIR",                qt_dir)
+setenv( "TACC_%{MODULE_VAR}_DIR",                qt_dir)
+setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(qt_dir, "include"))
+setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(qt_dir, "lib"))
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(qt_dir, "bin"))
 
-prepend_path ("PATH",pathJoin( superlu_seq_dir,"share" ) )
--- prepend_path ("PATH",pathJoin( superlu_seq_dir,"bin" ) )
-prepend_path ("LD_LIBRARY_PATH",pathJoin( superlu_seq_dir, "lib" ) )
 EOF
-
+  
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module1.0####################################################################
+#%Module3.1.1#################################################
 ##
-## Version file for %{name} version %{version}
+## version file for %{BASENAME}%{version}
 ##
-set ModulesVersion "%version"
-EOF
 
+set     ModulesVersion      "%{version}"
+EOF
+  
   # Check the syntax of the generated lua modulefile only if a visible module
   %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
   %endif
-
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -315,8 +306,3 @@ export PACKAGE_PREUN=1
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
 
-%changelog
-* Tue Feb 13 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: fPIC option
-* Sat Jan 20 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 1: initial release

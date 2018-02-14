@@ -1,6 +1,6 @@
-Summary:  ParaView 5.4.1 OSMESA local binary install
+Summary:  ParaView 5.4.1 local binary install
 
-%define pkg_base_name paraview-osmesa
+%define pkg_base_name paraview
 %define MODULE_VAR    PARAVIEW
 
 %define major_version 5
@@ -28,12 +28,12 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
+Release:   1%{?dist}
 License:   GPL
 Group:     Visualization
 URL:       //www.kitware.com
 Packager:  TACC - gda@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}-2.tar.gz
+Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -66,7 +66,7 @@ python scripting for batch use
 %if %{?BUILD_PACKAGE}
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%setup -n paraview-5.4.1/pv-osmesa
+%setup -n %{pkg_base_name}-%{pkg_version}/pv
 
 %endif
 

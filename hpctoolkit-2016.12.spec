@@ -55,7 +55,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   BSD
 Group:     Applications/HPC
 URL:       www.hpctoolkit.org 
@@ -130,6 +130,7 @@ module purge
 %include mpi-load.inc
 
 # Insert further module commands
+module load papi
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -152,9 +153,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-
-# DM: Commenting out papi support for now
-#module load papi
 
 ## Notes on hpctoolkit configure options
 ## --without-libunwind   Identify correct source lines in optimized code 
@@ -182,9 +180,9 @@ cd BUILD
              --without-libunwind \
              --enable-demangling \
              --prefix=%{INSTALL_DIR} \
-             --with-externals=%{INSTALL_DIR}
+             --with-externals=%{INSTALL_DIR} \
+             --with-papi=${TACC_PAPI_DIR}
 #              --with-externals=../%{pkg_base_name}-externals-release-%{pkg_version}/INSTALL \
-#             --with-papi=$TACC_PAPI_DIR \
 
 make -j56
 make DESTDIR=$RPM_BUILD_ROOT install

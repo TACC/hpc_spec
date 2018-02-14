@@ -61,7 +61,7 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 Release:   1%{?dist}
 License:   BSD-like
 Group:     Development/Numerical-Libraries
-URL:       http://graal.ens-lyon.fr/MUMPS/
+URL:       http://crd-legacy.lbl.gov/~xiaoye/SuperLU/
 Packager:  TACC - eijkhout@tacc.utexas.edu
 #Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
@@ -175,7 +175,7 @@ Version %{version}
 whatis( "Name: Mumps" )
 whatis( "Version: %{version}" )
 whatis( "Category: library, mathematics" )
-whatis( "URL: http://graal.ens-lyon.fr/MUMPS/" )
+whatis( "URL: http://crd-legacy.lbl.gov/~xiaoye/SuperLU/" )
 whatis( "Description: Numerical library for sparse solvers" )
 
 local             mumps_arch =    "${architecture}"

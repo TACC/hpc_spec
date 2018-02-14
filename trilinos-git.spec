@@ -6,7 +6,8 @@ Summary: Trilinos install
 
 # Create some macros (spec file variables)
 %define major_version git
-%define minor_version 20171108
+%define minor_version 20180209
+#20171108
 
 %define pkg_version %{major_version}.%{minor_version}
 
@@ -33,7 +34,7 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 Release: 2%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
-Source: %{pkg_base_name}-git.tar.gz
+Source: %{pkg_base_name}-git%{minor_version}.tar.gz
 URL: http://trilinos.sandia.gov/
 Vendor: Sandia National Labs
 Packager: TACC -- eijkhout@tacc.utexas.edu
@@ -115,11 +116,7 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 mkdir -p %{INSTALL_DIR}
 mount -t tmpfs tmpfs %{INSTALL_DIR}
-##cp -r * %{INSTALL_DIR}
-##pushd %{INSTALL_DIR}
 
-#module use -a /opt/apps/intel17/impi17_0/modulefiles
-#module use -a /opt/apps/intel17/modulefiles
 module load cmake boost swig
 ## VLE stopgap!
 export BOOST_ROOT=${TACC_BOOST_DIR}
@@ -154,7 +151,7 @@ if [ "${HAS_PYTHON}" = "ON" ] ; then
   module load python
 fi
 if [ "${HAS_SUPERLU}" = "ON" ] ; then
-  module load superlu
+  module load superlu_seq
 fi
 
 ##
@@ -180,8 +177,8 @@ echo ${trilinos_extra_libs}
 #### Compilation
 ####
 
-make -j 1             # debug mode....
-#make -j 8             # Trilinos can compile in parallel
+#make -j 1             # debug mode....
+make -j 8             # Trilinos can compile in parallel
 
 #make -j 4 tests           # (takes forever...)
 

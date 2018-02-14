@@ -1,6 +1,6 @@
 # VASP beta Hang Liu
-# 2017-05-09
-# Modified for KNL deployment.
+# 2018-02-07
+# Modified for Steampede2 deployment, for both KNL and SKX nodes.
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -169,16 +169,16 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 rm   -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}/*
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/elpa-2016.05.004
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/samples
 
 #cd vasp.5.4.1/bin/
-cd psxe17.2/vasp.v6.elpa/bin
+cd ./bin
 cp vasp_std $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
 cp vasp_gam $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
 cp vasp_ncl $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
 
-cd ../../elpa-2016.05.004
-cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}/elpa-2016.05.004/.
+cd ../samples
+cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}/samples/.
 
 #cd ../../vasp.5.4.1.vtst/bin
 #cp vasp_std_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
@@ -219,30 +219,34 @@ vasp_std: compiled with pre processing flag: -DNGZhalf
 vasp_gam: compiled with pre processing flag: -DNGZhalf -DwNGZhalf
 vasp_ncl: compiled without above pre processing flags
 
-This is the VASP Beta release built by developers
+This is the VASP Beta release built by Intel and VASP developers 
+for beta testing purpose. The documentation is not very extensive yet. 
+This link may be a good start
+http://www.nersc.gov/users/software/applications/materials-science/vasp/#toc-anchor-8
+It has a part "MPI+OpenMP Hybrid VASP Beta Testing Program"
 
-Due to linkage against to ELPA-2016.05.004, you need to
- 
-export LD_LIBRARY_PATH=/opt/apps/intel17/impi17_0/vasp/6b/elpa-2016.05.004/lib:$LD_LIBRARY_PATH
-
-to setup the proper runtime environment. Here is a sample job script
+Here is a sample job script to run this VASP via hybrid way on Stampede2
 
 =============================
 #!/bin/bash
-#SBATCH -J vasp
-#SBATCH -o vasp.%j.out
-#SBATCH -e vasp.%j.err
-#SBATCH -n 128
-#SBATCH -N 2
-#SBATCH -p normal
-#SBATCH -t 1:30:00
+#SBATCH -J test_vasp 
+#SBATCH -p development
+#SBATCH -N 1 
+#SBATCH -n 8
+#SBATCH -t 30:00
+#SBATCH -o test_vasp.o%j
 
-export LD_LIBRARY_PATH=/opt/apps/intel17/impi17_0/vasp/6b/elpa-2016.05.004/lib:$LD_LIBRARY_PATH
-
-ibrun vasp_std > vasp_test.out
+# a test run on 1 KNL node, 8 MPI tasks, 8 threads per task
+module load vasp/6b
+export OMP_NUM_THREADS=8
+ibrun vasp_std > test_vasp.out
 ================================
 
-You are encouraged to try this version, especailly if your cases have issues with vasp.5.4.4
+You can try this beta version to run the two demo samples from
+
+http://www.nersc.gov/users/software/applications/materials-science/vasp/example-input-files/
+
+in the samples folder by using above script.
 
 Let us know if you have questions/issues through the ticket system on TACC user portal.
 

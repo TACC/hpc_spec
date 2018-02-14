@@ -1,6 +1,6 @@
 #
-# Antonio Gomez
-# 2015-02-02
+# Damon McDougall
+# 2018-02-12
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM

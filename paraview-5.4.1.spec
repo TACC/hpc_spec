@@ -28,12 +28,12 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GPL
 Group:     Visualization
 URL:       //www.kitware.com
 Packager:  TACC - gda@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Source:    %{pkg_base_name}-%{pkg_version}-2.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}

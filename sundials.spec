@@ -55,7 +55,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   BSD-like
 Group:     Development/Numerical-Libraries
 URL:       http://crd-legacy.lbl.gov/~xiaoye/Sundials/
@@ -142,10 +142,10 @@ echo "module file for ${ext}"
 
 module unload petsc
 if [ -z "${ext}" ] ; then
-  export architecture=knightslanding
+  export architecture=skylake
   module load petsc/%{petscversion}
 else
-  export architecture=knightslanding-${ext}
+  export architecture=skylake-${ext}
   module load petsc/%{petscversion}-${ext}
 fi
 
@@ -247,5 +247,7 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Mon Jan 29 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: knightslanding -> skylake
 * Tue Nov 07 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

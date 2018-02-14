@@ -7,9 +7,9 @@ Summary: Dealii install
 # Create some macros (spec file variables)
 %define major_version 8
 %define minor_version 5
-%define micro_version 0
+%define micro_version 1
 
-%define dealiipetscversion 3.7
+%define dealiipetscversion 3.8
 
 ### %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 %define pkg_version git20170615

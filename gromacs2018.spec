@@ -22,10 +22,10 @@ Summary: A Nice little relocatable skeleton spec file for Gromacs.
 %define MODULE_VAR    GROMACS
 %define name_prefix tacc
 # Create some macros (spec file variables)
-%define major_version 2016
-%define minor_version 4 
+%define major_version 2018
+%define minor_version  
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}
 %define dbg %{nil}
 
 ### Toggle On/Off ###

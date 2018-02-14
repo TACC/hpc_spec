@@ -51,7 +51,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
+Release:   3%{?dist}
 License:   VASP
 Group:     Applications/Chemistry
 URL:       https://www.vasp.at/
@@ -179,7 +179,7 @@ cp vasp_ncl_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
 cd ../../beef/bin
 cp bee $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
 cd ../../
-cp -r vtstscripts-930 $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp -r vtstscripts-933 $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -218,7 +218,7 @@ vasp_ncl: compiled without above pre processing flags
 vasp_std_vtst: vasp_std with VTST
 vasp_gam_vtst: vasp_gam with VTST
 vasp_ncl_vtst: vasp_ncl with VTST
-vtstscripts-930/: utility scripts of VTST
+vtstscripts-933/: utility scripts of VTST
 bee: BEEF analysis code
 
 This the VASP.5.4.4 release.
