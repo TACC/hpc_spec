@@ -9,7 +9,7 @@ Summary: Trilinos install
 %define minor_version 20180209
 #20171108
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}%{minor_version}
 
 %include rpm-dir.inc
 %include compiler-defines.inc
@@ -31,7 +31,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-git%{minor_version}.tar.gz
@@ -136,8 +136,9 @@ export HAS_MUELU=ON
 export HAS_PYTHON=ON
 export HAS_STK=ON
 export HAS_SUPERLU=ON
-
 %if "%{comp_fam}" == "gcc"
+  export HAS_HDF5=OFF
+  export HAS_NETCDF=OFF
 %endif
 
 export HAS_SEACAS=${HAS_NETCDF}
@@ -154,6 +155,10 @@ if [ "${HAS_SUPERLU}" = "ON" ] ; then
   module load superlu_seq
 fi
 
+#------------------------
+%if %{?BUILD_PACKAGE}
+#------------------------
+
 ##
 ## start of configure install loop
 ##
@@ -161,15 +166,20 @@ fi
 rm -rf CMakeCache.txt CMakeFiles
 echo "cmaking in" `pwd`
 
+####
+#### Cmake
+####
+
+export VERSION=git
+export TRILINOS_LOCATION=%{_topdir}/BUILD/
+
 rm -rf /tmp/trilinos-build
 mkdir -p /tmp/trilinos-build
 pushd /tmp/trilinos-build
 
-export VERSION=git
-export TRILINOS_LOCATION=%{_topdir}/BUILD/
 ##  export VERBOSE=1
 export SOURCEVERSION=%{version}
-## export VERSION=%{version}
+export PREFIXPATH=%{INSTALL_DIR}
 source %{SPEC_DIR}/trilinos-git.cmake
 echo ${trilinos_extra_libs}
 
@@ -178,7 +188,8 @@ echo ${trilinos_extra_libs}
 ####
 
 #make -j 1             # debug mode....
-make -j 8             # Trilinos can compile in parallel
+## parallel make; "j 8" seems to run out of memory
+make -j 4             # Trilinos can compile in parallel
 
 #make -j 4 tests           # (takes forever...)
 
@@ -209,14 +220,26 @@ make install
 ## SET(Zoltan_TPL_LIBRARIES "")
 export nosed="\
     "
-#SET(Trilinos_CXX_COMPILER_FLAGS " -mkl -DMPICH_SKIP_MPICXX -std=c++11 -O3 -DNDEBUG")
-#SET(Trilinos_C_COMPILER_FLAGS " -mkl -O3 -DNDEBUG")
 
 echo "are we still in /tmp/trilinos-build?"
 pwd
 popd
 
 cp -r demos packages %{INSTALL_DIR}
+echo "contents of the tmpfs INSTALL_DIR:"
+ls %{INSTALL_DIR}
+cp -r %{INSTALL_DIR}/* ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
+
+# VLE why?
+# module unload python 
+
+#-----------------------
+%endif # BUILD_PACKAGE |
+#-----------------------
+
+#---------------------------
+%if %{?BUILD_MODULEFILE}
+#---------------------------
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
 help( [[
@@ -251,37 +274,56 @@ setenv("TACC_TRILINOS_INC",        pathJoin(trilinos_dir,trilinos_arch,"include"
 setenv("TACC_TRILINOS_LIB",        pathJoin(trilinos_dir,trilinos_arch,"lib") )
 EOF
 
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << EOF
 #%Module1.0#################################################
 ##
 ## version file for Trilinos %version
 ##
 
-set     ModulesVersion      "${modulefilename}"
+set     ModulesVersion      "%{version}"
 EOF
 
 %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua 
+
+#--------------------------
+%endif # BUILD_MODULEFILE |
+#--------------------------
 
 ##
 ## end of configure install section
 ##
 
-module unload python
-cp -r %{INSTALL_DIR}/* ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
-
 umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
+
+#------------------------
+%if %{?BUILD_PACKAGE}
+#------------------------
 
 %files %{PACKAGE}
   %defattr(-,root,install,)
   %{INSTALL_DIR}
 
+#-----------------------
+%endif # BUILD_PACKAGE |
+#-----------------------
+
+#---------------------------
+%if %{?BUILD_MODULEFILE}
+#---------------------------
+
 %files %{MODULEFILE}
   %defattr(-,root,install,)
   %{MODULE_DIR}
 
+#--------------------------
+%endif # BUILD_MODULEFILE |
+#--------------------------
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Mon Feb 26 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: just to satisfy losf
 * Sat Nov 04 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: adding superlu
 * Fri Sep 01 2017 eijkhout <eijkhout@tacc.utexas.edu>

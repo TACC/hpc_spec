@@ -7,8 +7,8 @@ Summary: PETSc install
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 8
-%define micro_version 1
-%define versionpatch 3.8.1
+%define micro_version 3
+%define versionpatch 3.8.3
 
 %define pkg_version %{major_version}.%{minor_version}
 
@@ -32,7 +32,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -140,6 +140,7 @@ export HYPRESTRING=hypre
 %if "%{is_intel}" == "1"
 export LOCALCC=icc
 export LOCALFC=ifort
+%endif
 
 %if "%{is_mvapich2}" == "1"
 export MPI_EXTRA_OPTIONS="--with-mpiexec=mpirun_rsh"
@@ -200,18 +201,23 @@ fi
 ##
 ## Compiler flags
 ##
-#export XOPTFLAGS="%{TACC_OPT} -O2" 
-export XOPTFLAGS="-xCORE-AVX2 -axMIC-AVX512,COMMON-AVX512 -O2" 
+%if "%{comp_fam}" == "gcc"
+export XOPTFLAGS="%{TACC_OPT} -O2" 
+%endif
+
+%if "%{is_intel}" == "1"
+export XOPTFLAGS="-xCORE-AVX2 -axMIC-AVX512,COMMON-AVX512 -O2 -g -sox"
 case "${ext}" in 
   *complex* )
-  export XOPTFLAGS="-xCORE-AVX2 -axMIC-AVX512,COMMON-AVX512 -O1"
+  export XOPTFLAGS="-xCORE-AVX2 -axMIC-AVX512,COMMON-AVX512 -O1 -g -sox"
   ;;
 esac
+%endif
+
 export COPTFLAGS=${XOPTFLAGS}
 export CXXOPTFLAGS=${XOPTFLAGS}
 export FOPTFLAGS=${XOPTFLAGS}
-export CNOOPTFLAGS="-O0 -g" ; export CXXNOOPTFLAGS="-O0 -g" ; export FNOOPTFLAGS="-O0 -g"
-%endif
+export CNOOPTFLAGS="-O0 -g -sox" ; export CXXNOOPTFLAGS="-O0 -g -sox" ; export FNOOPTFLAGS="-O0 -g -sox"
 
 export usedebug=no
 export CFLAGS=${COPTFLAGS}
@@ -604,5 +610,7 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Tue Mar 06 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: UNRELEASED adding "-sox", point update to 3.8.3
 * Mon Nov 06 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release, with O1 for complex, and no hdf5.

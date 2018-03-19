@@ -1,6 +1,5 @@
-# 2017-06-29 cproctor stewarding
-# Carlos Rosales-Fernandez (carlos@tacc.utexas.edu)
-# 2017-05-22
+# Quantum Espresso 6.2.1SPEC
+# 10/2017
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -17,29 +16,33 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: A Nice little relocatable skeleton spec file example.
+Summary: Quantum Espresso
 
 # Give the package a base name
-%define pkg_base_name siesta
-%define MODULE_VAR    SIESTA
+%define pkg_base_name qe
+%define MODULE_VAR    QE
 
 # Create some macros (spec file variables)
-%define major_version 4
-%define minor_version 0
+%define major_version 6
+%define minor_version 2
+%define micro_version 1 
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
+
 %include compiler-defines.inc
 %include mpi-defines.inc
+
+#%include name-defines-noreloc.inc
+
 ########################################
 ### Construct name based on includes ###
 ########################################
 %include name-defines.inc
-#%include name-defines-noreloc.inc
-#%include name-defines-hidden.inc
-#%include name-defines-hidden-noreloc.inc
+
+
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -50,12 +53,15 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3%{?dist}
+Release:   1
 License:   GPL
 Group:     Applications/Chemistry
-URL:       http://www.icmab.es/siesta/
-Packager:  TACC - cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+URL:       http://www.quantum-espresso.org
+Packager:  TACC - hliu@tacc.utexas.edu
+Source:    %{pkg_base_name}-%{pkg_version}-TACC-fat.tar.gz
+#Source0:   %{pkg_base_name}-%{pkg_version}.tar.bz2
+#Source1:   libint-1.1.5.tar.gz
+#Source2:   libxc-2.0.1.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -63,30 +69,24 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale.
+Group: Applications/Chemistry
 %description package
-This is the long description for the package RPM...
-Siesta (Spanish Initiative for Electronic Simulations with Thousands of Atoms)
-is both a method and its computer program implementation, to perform electronic
-structure calculations and ab initio molecular dynamics simulations of
-molecules and solids.
-
+Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
+It is based on density-functional theory, plane waves, and pseudopotentials.
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...
-Siesta (Spanish Initiative for Electronic Simulations with Thousands of Atoms)
-is both a method and its computer program implementation, to perform electronic
-structure calculations and ab initio molecular dynamics simulations of
-molecules and solids.
-
+Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
+It is based on density-functional theory, plane waves, and pseudopotentials.
 %description
-Siesta (Spanish Initiative for Electronic Simulations with Thousands of Atoms)
-is both a method and its computer program implementation, to perform electronic
-structure calculations and ab initio molecular dynamics simulations of
-molecules and solids.
+Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
+It is based on density-functional theory, plane waves, and pseudopotentials.
+
+# install package at /home1/apps, install module file at /opt/apps 
+%define HOME1 /home1/apps
+%define INSTALL_DIR %{HOME1}/%{comp_fam_ver}/%{mpi_fam_ver}/%{pkg_base_name}/%{pkg_version}
 
 #---------------------------------------
 %prep
@@ -97,9 +97,6 @@ molecules and solids.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-%setup -n %{pkg_base_name}-%{pkg_version}
-
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -113,11 +110,40 @@ molecules and solids.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-
+%setup -n %{pkg_base_name}-%{pkg_version}-TACC-fat
 
 #---------------------------------------
 %build
 #---------------------------------------
+%include compiler-load.inc
+%include mpi-load.inc
+
+export VERSION=6.2.1
+
+export ARCH=x86_64
+export F77=ifort
+export CC=icc
+export LD_LIBS="-Wl,--as-needed -liomp5 -Wl,--no-as-needed"
+export LDFLAGS="-Wl,--as-needed -liomp5 -Wl,--no-as-needed"
+export DFLAGS="-D__OPENMP -D__INTEL -D__DFTI -D__MPI -D__PARA -D__SCALAPACK -D__ELPA_2016 -D__USE_MANY_FFT -D__NON_BLOCKING_SCATTER -D__EXX_ACE"
+export FFLAGS="-O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -fp-model precise -assume byterecl -qopenmp"
+export IFLAGS="-I../include/ -I${MKLROOT}/include/fftw/"
+export ELPAPATH=$PWD
+export ELPAPATH=$ELPAPATH/elpa-2016.11.001.pre/ELPA_201611001pre
+export IFLAGS="-I../include/ -I${MKLROOT}/include -I../FoX/finclude -I../../FoX/finclude -I${ELPAPATH}/include/elpa_openmp-2016.11.001.pre/modules/"
+
+export BLAS_LIBS=" -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl"
+export LAPACK_LIBS="${BLAS_LIBS}"
+export SCALAPACK_LIBS="${ELPAPATH}/lib/libelpa_openmp.a -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64"
+export FFT_LIBS="${BLAS_LIBS}"
+
+./build_hliu_201611001pre_fat
+./configure
+make all
+
+# Remove non active symbolic links in packages
+rm S3DE/iotk/iotk
+rm -rf Doc
 
 
 #---------------------------------------
@@ -126,13 +152,9 @@ molecules and solids.
 
 # Setup modules
 %include system-load.inc
-module purge
-# Load Compiler
-%include compiler-load.inc
-# Load MPI Library
-%include mpi-load.inc
 
-# Insert further module commands
+# Insert necessary module commands
+module purge
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -154,51 +176,14 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-
-
-# Mount temp trick
- mkdir -p             %{INSTALL_DIR}
- mount -t tmpfs tmpfs %{INSTALL_DIR}
-
-# Prepare the build directory
-cd ./Obj
-sh ../Src/obj_setup.sh
-cp ../Src/Sys/stampede_intel_mkl.make ./arch.make
-
-# Build siesta
-CC=icc CXX=icpc make
-mkdir %{INSTALL_DIR}/bin
-cp siesta %{INSTALL_DIR}/bin
-
-# Build transiesta
-make clean
-CC=icc CXX=icpc make transiesta
-cp transiesta %{INSTALL_DIR}/bin
-
-mkdir -p                 $RPM_BUILD_ROOT/%{INSTALL_DIR}
-cp -r ../Examples %{INSTALL_DIR}
-cp -r ../Tutorials %{INSTALL_DIR}
-cp -r ../Docs %{INSTALL_DIR}
-
-# Build Utilities
-cd ../Util
-sh ./build_all.sh
-cp ./COOP/dm_creator      %{INSTALL_DIR}/bin
-cp ./COOP/mprop           %{INSTALL_DIR}/bin
-cp ./TBTrans/tbtrans      %{INSTALL_DIR}/bin/tbtrans
-cp ./TBTrans_rep/tbtrans  %{INSTALL_DIR}/bin/tbtrans_rep
-cp ./Denchar/Src/denchar  %{INSTALL_DIR}/bin
-cp ./STM/ol-stm/Src/stm   %{INSTALL_DIR}/bin
-cp ./STM/simple-stm/plstm %{INSTALL_DIR}/bin
-cp ./Gen-basis/gen-basis  %{INSTALL_DIR}/bin
-cp ./Gen-basis/ioncat     %{INSTALL_DIR}/bin
-cp ./Gen-basis/ionplot.sh %{INSTALL_DIR}/bin
-
-mkdir -p                 $RPM_BUILD_ROOT/%{INSTALL_DIR}
-cp    -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-umount                                   %{INSTALL_DIR}
-
   
+  # Create some dummy directories and files for fun
+#  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+#  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+
+cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+chmod -Rf u+rwX,g+rwX,o=rX  $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -220,58 +205,51 @@ umount                                   %{INSTALL_DIR}
   
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_message=[[
-This module loads Siesta built with Intel 17 and Intel MPI 17.
-This module makes available the following executables:
+local help_msg=[[
 
-siesta
-transiesta
 
-as well as the following utilities:
+To run codes in quantum espresso, e.g. pw.x, include the following lines in
+your job script, using the appropriate input file name:
+module load qe/6.2.1
+ibrun pw.x -input input.scf
 
-tbtrans
-tbtrans_rep
-denchar
-dm_creator
-mprop
-stm
-plstm
-gen-basis
-ioncat
+IMPORTANT NOTES:
 
-In order to run siesta, please create a link to the binary inside the execution
-directory, and make sure your submission script contains the lines:
+1. Run your jobs on $SCRATCH rather than $WORK. The $SCRATCH file system is better able to handle these kinds of loads.
 
-module load siesta
-ibrun ./siesta < input.fdf
+2. Especially when running pw.x, set the keyword disk_io to low or none in input so that wavefunction
+will not be written to file at each scf iteration step, but stored in memory.
 
-As of version 4.0 Siesta no longer provides the Atom program to generate 
-pseudopotentials. Please go to this addresss in order to obtain one:
-
-http://nninc.cnf.cornell.edu
+3. When running ph.x, set the  reduced_io to .true. and run it and redirect its IO to $SCRATCH.
+Do not run multiple ph.x jobs at given time.
 
 Version %{version}
 ]]
 
-help(help_message,"\n")
+--help(help_msg)
+help(help_msg)
 
-whatis("Siesta")
-whatis("Version: %{version}")
-whatis("Category: application, chemistry")
-whatis("Keywords: Chemistry, Molecular Dynamics, Application")
-whatis("Description: Spanish Initiative for Electronic Simulations with Thousands of Atoms")
-whatis("URL: http://www.icmab.es/siesta")
+whatis("Name: Quantum Espresso")
+whatis("Version: %{pkg_version}%{dbg}")
+%if "%{is_debug}" == "1"
+setenv("TACC_%{MODULE_VAR}_DEBUG","1")
+%endif
+whatis "Category: application, chemistry"
+whatis "Keywords: Chemistry, Density Functional Theory, Plane Wave, Peudo potentials"
+whatis "URL: http://www.quantum-espresso.org"
+whatis "Description: Integrated suite of computer codes for electronic structure calculations and material modeling at the nanoscale."
 
-help(help_message,"\n")
+-- Create environment variables.
+local qe_dir="%{INSTALL_DIR}"
 
-local siesta_dir="%{INSTALL_DIR}"
-setenv("TACC_SIESTA_DIR", siesta_dir)
-setenv("TACC_SIESTA_BIN", pathJoin(siesta_dir, "bin"))
-prepend_path("PATH",      pathJoin(siesta_dir, "bin"))
+prepend_path(    "PATH",                pathJoin(qe_dir, "bin"))
+
+setenv( "TACC_%{MODULE_VAR}_DIR",                qe_dir)
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(qe_dir, "bin"))
+setenv("TACC_%{MODULE_VAR}_PSEUDO",pathJoin(qe_dir,"pseudo"))
 
 EOF
-
-# Version File
+  
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -280,12 +258,10 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 
 set     ModulesVersion      "%{version}"
 EOF
- 
- 
-  # Check the syntax of the generated lua modulefile only if a visible module
-  %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-  %endif
+  
+  # Check the syntax of the generated lua modulefile
+  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -315,6 +291,7 @@ EOF
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
+
 
 ########################################
 ## Fix Modulefile During Post Install ##

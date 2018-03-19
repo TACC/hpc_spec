@@ -1,7 +1,6 @@
 # build rpm
 
-# rpmbuild -bb --define 'is_intel18 1' --define 'is_impi 1' --define 'mpiV 18_0' gamess-2017.04.20.spec   2>&1 | tee gamess-2017.04.20.log
-# rpmbuild -bb --define 'is_intel18 1' --define 'is_impi 1' --define 'mpiV 18_0' gamess-2017.04.20-x.spec 2>&1 | tee gamess-2017.04.20-x.log
+# rpmbuild -bb --clean  --define 'is_intel18 1' --define 'is_impi 1' --define 'mpiV 18_0' gamess-2017.04.20.spec   2>&1 | tee gamess-2017.04.20.r#_x.log
 #
 # Build only PACKAGE or MODULE -- set variable.  E.g. NO_PACKAGE=1 rpmbuild -bb ... only build modulefile
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -113,6 +112,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   cp               compddi_%{SYS}    ../ddi/compddi
   cp     Makefile.template_%{SYS}    ../Makefile.template
   cp install.info.template_%{SYS}    ../install.info.template
+  cp                rungms_%{SYS}    ../rungms
 
   cd ..
 

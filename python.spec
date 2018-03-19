@@ -1,7 +1,7 @@
 Summary:    Python is a high-level general-purpose programming language.
-Name:       tacc-python 
-Version:    2.7.13
-Release:    4%{?dist}
+Name:       tacc-python2 
+Version:    2.7.14
+Release:    1%{?dist}
 License:    GPLv2
 Vendor:     Python Software Foundation
 Group:      Applications
@@ -11,7 +11,7 @@ Packager:   TACC - rtevans@tacc.utexas.edu
 # Either Python package or mpi4py will be built 
 # based on this switch
 #------------------------------------------------
-%define build_mpi4py     0
+%define build_mpi4py     1
 %global _python_bytecompile_errors_terminate_build 0
 #------------------------------------------------
 # BASIC DEFINITIONS
@@ -26,8 +26,9 @@ Packager:   TACC - rtevans@tacc.utexas.edu
 %include compiler-defines.inc
 %include mpi-defines.inc	
 
-%define PNAME python
-%define MODULE_VAR TACC_PYTHON
+%define MAJOR_MINOR 2.7
+%define MAJOR 2
+%define PNAME python%{MAJOR}
 
 %define INSTALL_DIR_COMP %{APPS}/%{comp_fam_ver}/%{PNAME}/%{version}
 %define MODULE_DIR_COMP %{APPS}/%{comp_fam_ver}/%{MODULES}/%{PNAME}
@@ -49,7 +50,6 @@ This is intended to be a core Python
 interpreter for TACC systems.
 
 %prep
-
 rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR_COMP}
 rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR_MPI}
 rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR_COMP}
@@ -71,7 +71,7 @@ export BASH_ENV=/etc/tacc/tacc_functions
 
 export PATH=%{INSTALL_DIR_COMP}/bin:$PATH
 export LD_LIBRARY_PATH=%{INSTALL_DIR_COMP}/lib64:%{INSTALL_DIR_COMP}/lib:$LD_LIBRARY_PATH
-export PIP=%{INSTALL_DIR_COMP}/bin/pip
+export PIP=%{INSTALL_DIR_COMP}/bin/pip%{MAJOR}
 ############################################################
 # System Specific Libraries
 ############################################################
@@ -99,24 +99,23 @@ if [ ! -f "%{INSTALL_DIR_COMP}/bin/%{PNAME}" ]; then
         mount -t tmpfs tmpfs %{INSTALL_DIR_COMP}
     fi
 
-    if [ ! -f "%{_topdir}/SOURCES/Python-%{version}.tgz" ]; then
+    if [ ! -f "%{_topdir}/BUILD/Python-%{version}.tgz" ]; then
      	wget http://www.python.org/ftp/python/%{version}/Python-%{version}.tgz
     fi	
     rm -rf %{_topdir}/SOURCES/Python-%{version}
-    tar -xzf %{_topdir}/SOURCES/Python-%{version}.tgz -C %{_topdir}/SOURCES
+    tar -xzf %{_topdir}/BUILD/Python-%{version}.tgz -C %{_topdir}/SOURCES
     cd %{_topdir}/SOURCES/Python-%{version}
     export LD_LIBRARY_PATH=`pwd`:$LD_LIBRARY_PATH
     ls
 
     %if "%{comp_fam_name}" == "Intel"
-    #./configure --prefix=%{INSTALL_DIR_COMP} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc' CFLAGS="-O3 -fp-model strict -fp-model source -ipo -prec-div -prec-sqrt %{TACC_OPT}" LDFLAGS="-ipo -Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth --without-gcc --with-libm=-limf --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip --enable-unicode=ucs4    
     ./configure --prefix=%{INSTALL_DIR_COMP} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc -lssp' CFLAGS="-Wformat -Wformat-security -D_FORTIFY_SOURCE=2 -fstack-protector -fwrapv -fpic -O3" LDFLAGS="-Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth --without-gcc --with-libm=-limf --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip --enable-unicode=ucs4    
     %endif
     %if "%{comp_fam_name}" == "GNU"
-    ./configure --prefix=%{INSTALL_DIR_COMP} CFLAGS="-flto -ffat-lto-objects -fuse-linker-plugin %{TACC_OPT}" LDFLAGS="-fPIC -flto -ffat-lto-objects -fuse-linker-plugin -rdynamic" --with-system-ffi --enable-shared --with-pth --with-threads --with-lto --with-computed-gotos --with-ensurepip --enable-unicode=ucs4          
+    ./configure --prefix=%{INSTALL_DIR_COMP} CFLAGS="-O2 -fwrapv -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches" LDFLAGS="-fpic -Xlinker -export-dynamic" --enable-shared --with-system-ffi --with-pth --with-threads --with-computed-gotos --with-ensurepip --with-lto --enable-unicode=ucs4
     %endif
 
-    make -j 1
+    make -j 16
     make sharedinstall
     make -i install
 fi
@@ -124,7 +123,7 @@ fi
 ############################################################
 # core python modules
 ############################################################
-if [ ! -f "%{INSTALL_DIR_COMP}/bin/pip" ]; then
+if [ ! -f "%{INSTALL_DIR_COMP}/bin/pip%{MAJOR}" ]; then
     wget https://bootstrap.pypa.io/get-pip.py
     %{INSTALL_DIR_COMP}/bin/%{PNAME} get-pip.py
 fi
@@ -138,10 +137,10 @@ ${PIP} install futures
 ${PIP} install simpy    
 ${PIP} install jsonpickle
 ${PIP} install meld3
-${PIP} install supervisor
+#${PIP} install supervisor
 ${PIP} install paramiko
 ${PIP} install readline
-${PIP} install egenix-mx-base
+#${PIP} install egenix-mx-base
 
 #############################################################
 # scipy stack: use INSTALL_DIR_COMP . 
@@ -152,13 +151,13 @@ ${PIP} install egenix-mx-base
 ### Numpy
 if ! $(%{INSTALL_DIR_COMP}/bin/%{PNAME} -c "import numpy"); then
     cd %{_topdir}/SOURCES	
-    if [ ! -f "%{_topdir}/SOURCES/numpy-1.12.1.tar.gz" ]; then	
-	wget https://github.com/numpy/numpy/releases/download/v1.12.1/numpy-1.12.1.tar.gz
+    if [ ! -f "%{_topdir}/SOURCES/numpy-1.14.0.tar.gz" ]; then	
+	wget https://github.com/numpy/numpy/releases/download/v1.14.0/numpy-1.14.0.tar.gz
     fi	   
     
-    rm -rf %{_topdir}/SOURCES/numpy-1.12.1 	   
-    tar -xzvf %{_topdir}/SOURCES/numpy-1.12.1.tar.gz -C %{_topdir}/SOURCES	
-    cd %{_topdir}/SOURCES/numpy-1.12.1
+    rm -rf %{_topdir}/SOURCES/numpy-1.14.0 	   
+    tar -xzvf %{_topdir}/SOURCES/numpy-1.14.0.tar.gz -C %{_topdir}/SOURCES	
+    cd %{_topdir}/SOURCES/numpy-1.14.0
 
     sed -i 's/-openmp/-fopenmp '"%{TACC_OPT}"'/' numpy/distutils/intelccompiler.py
     sed -i 's/-openmp/-fopenmp '"%{TACC_OPT}"'/' numpy/distutils/fcompiler/intel.py
@@ -179,13 +178,13 @@ fi
 ### Scipy
 if ! $(%{INSTALL_DIR_COMP}/bin/%{PNAME} -c "import scipy"); then
     cd %{_topdir}/SOURCES	
-    if [ ! -f "%{_topdir}/SOURCES/scipy-0.19.0.tar.gz" ]; then	
-	wget -O scipy-0.19.0.tar.gz https://github.com/scipy/scipy/releases/download/v0.19.0/scipy-0.19.0.tar.gz
+    if [ ! -f "%{_topdir}/SOURCES/scipy-1.0.0.tar.gz" ]; then	
+	wget -O scipy-1.0.0.tar.gz https://github.com/scipy/scipy/releases/download/v1.0.0/scipy-1.0.0.tar.gz
     fi	   
 
-    rm -rf %{_topdir}/SOURCES/scipy-0.19.0
-    tar -xzvf scipy-0.19.0.tar.gz -C %{_topdir}/SOURCES	 
-    cd %{_topdir}/SOURCES/scipy-0.19.0
+    rm -rf %{_topdir}/SOURCES/scipy-1.0.0
+    tar -xzvf scipy-1.0.0.tar.gz -C %{_topdir}/SOURCES	 
+    cd %{_topdir}/SOURCES/scipy-1.0.0
 
     %if "%{comp_fam_name}" == "Intel"
     %{INSTALL_DIR_COMP}/bin/%{PNAME} setup.py config --compiler=intelem --fcompiler=intelem build_clib --compiler=intelem --fcompiler=intelem build_ext --compiler=intelem --fcompiler=intelem install
@@ -197,25 +196,29 @@ fi
 
 ### pycairo
 if ! $(%{INSTALL_DIR_COMP}/bin/%{PNAME} -c "import cairo"); then
-    if [ ! -f "%{_topdir}/SOURCES/pycairo-1.15.0.tar.gz" ]; then		
-	wget -O pycairo-1.15.0.tar.gz https://github.com/pygobject/pycairo/releases/download/v1.15.0/pycairo-1.15.0.tar.gz
+    if [ ! -f "%{_topdir}/SOURCES/pycairo-1.15.1.tar.gz" ]; then		
+	wget -O pycairo-1.15.1.tar.gz https://github.com/pygobject/pycairo/releases/download/v1.15.1/pycairo-1.15.1.tar.gz
     fi
-    rm -rf %{_topdir}/SOURCES/pycairo-1.15.0.tar.gz
-    tar -xzvf pycairo-1.15.0.tar.gz -C %{_topdir}/SOURCES	 
-    cd %{_topdir}/SOURCES/pycairo-1.15.0
-    python setup.py install --prefix=%{INSTALL_DIR_COMP}
+    rm -rf %{_topdir}/SOURCES/pycairo-1.15.1
+    tar -xzvf pycairo-1.15.1.tar.gz -C %{_topdir}/SOURCES	 
+    cd %{_topdir}/SOURCES/pycairo-1.15.1
+    %{INSTALL_DIR_COMP}/bin/%{PNAME} setup.py install --prefix=%{INSTALL_DIR_COMP}
 fi	   
 
-### pygobject
+### pygobject 2.28.6
 if ! $(%{INSTALL_DIR_COMP}/bin/%{PNAME} -c "import gobject"); then
-    if [ ! -f "%{_topdir}/SOURCES/" ]; then		
-	wget -O pygobject-2.28.6.tar.xz http://ftp.gnome.org/pub/GNOME/sources/pygobject/2.28/pygobject-2.28.6.tar.xz
+    if [ ! -f "%{_topdir}/SOURCES/pygobject-2.28.6.tar.gz" ]; then	
+	wget -O pygobject-2.28.6.tar.gz http://ftp.gnome.org/pub/gnome/sources/pygobject/2.28/pygobject-2.28.6.tar.xz	     
+	wget -O pygobject-2.28.6-fixes-1.patch http://www.linuxfromscratch.org/patches/blfs/8.1/pygobject-2.28.6-fixes-1.patch
     fi
     rm -rf %{_topdir}/SOURCES/pygobject-2.28.6
-    tar xvf pygobject-2.28.6.tar.xz -C %{_topdir}/SOURCES	 
+    tar xvf pygobject-2.28.6.tar.gz -C %{_topdir}/SOURCES	 
+    mv  pygobject-2.28.6-fixes-1.patch %{_topdir}/SOURCES/	 
     cd %{_topdir}/SOURCES/pygobject-2.28.6
-    sed -i 's/case GI_INFO_TYPE_ERROR_DOMAIN:/ /' gi/pygi-info.c
-    ./configure --prefix=%{INSTALL_DIR_COMP}; make; make install   
+    
+    patch -Np1 -i ../pygobject-2.28.6-fixes-1.patch
+
+    CPPFLAGS=-I%{INSTALL_DIR_COMP}/include PYTHON=%{INSTALL_DIR_COMP}/bin/%{PNAME} ./configure --prefix=%{INSTALL_DIR_COMP}; make; make install   
 fi	   
 
 ### pygtk
@@ -226,11 +229,10 @@ if ! $(%{INSTALL_DIR_COMP}/bin/%{PNAME} -c "import pygtk"); then
     rm -rf %{_topdir}/SOURCES/pygtk-2.24.0
     tar -xzvf pygtk-2.24.0.tar.gz -C %{_topdir}/SOURCES	 
     cd %{_topdir}/SOURCES/pygtk-2.24.0
-    ./configure --prefix=%{INSTALL_DIR_COMP}; make; make install   
+    PYTHON=%{INSTALL_DIR_COMP}/bin/%{PNAME} ./configure --prefix=%{INSTALL_DIR_COMP}; make; make install   
 fi	   
 
-
-${PIP} install --no-binary :all: matplotlib	
+${PIP} install --no-binary :all: matplotlib
 CFLAGS="-O2" ${PIP} install --no-binary :all: cython	
 ${PIP} install --no-binary :all: cffi	
 CFLAGS="-O2" ${PIP} install --no-binary :all: pandas
@@ -242,13 +244,13 @@ ${PIP} install jupyter
 ${PIP} install --no-binary :all: mako
 CFLAGS="-O2" ${PIP} install --no-binary :all: lxml
 ${PIP} install --no-binary :all: pystuck
-${PIP} install --no-binary :all: fortran-magic
-${PIP} install --no-binary :all: MySQL
+${PIP} install --no-binary :all: PyMySQL
 ${PIP} install --no-binary :all: psycopg2
 ${PIP} install --no-binary :all: mercurial
 #CFLAGS="-O0" ${PIP} install --no-binary :all: yt
 ${PIP} install --no-binary :all: theano
 ${PIP} install --no-binary :all: ply
+${PIP} install --no-binary :all: PyYAML
 CFLAGS="-O2" ${PIP} install --no-binary :all: scikit_learn
 
 #if module load hdf5; then
@@ -268,7 +270,7 @@ CFLAGS="-O2" ${PIP} install --no-binary :all: scikit_learn
   ${PIP} install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_MPI}" mpi4py
 
   if module load phdf5; then
-      export PYTHONPATH=%{INSTALL_DIR_MPI}/lib/python2.7/site-packages
+      export PYTHONPATH=%{INSTALL_DIR_MPI}/lib/python%{MAJOR_MINOR}/site-packages
       CC="mpicc -ip-no-inlining" HDF5_MPI="ON" HDF5_DIR=$TACC_HDF5_DIR ${PIP} install --no-binary=h5py --no-deps --install-option="--prefix=%{INSTALL_DIR_MPI}" --ignore-installed h5py
       ${PIP} install tables
   fi
@@ -311,18 +313,18 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR_COMP}
 cat >    $RPM_BUILD_ROOT/%{MODULE_DIR_COMP}/%{version}.lua << EOF
 help(
 [[
-This is the Python package built on %(date +'%B %d, %Y').
+This is the Python%{MAJOR} package built on %(date +'%B %d, %Y').
 
 You can install your own modules (choose one method):
-        1. python setup.py install --user
-        2. python setup.py install --home=<dir>
-        3. pip install --user module-name
+        1. python%{MAJOR} setup.py install --user
+        2. python%{MAJOR} setup.py install --home=<dir>
+        3. pip%{MAJOR} install --user module-name
 
 Version %{version}
 ]]
 )
 
-whatis("Name: Python")
+whatis("Name: Python%{MAJOR}")
 whatis("Version: %{version}")
 whatis("Version-notes: Compiler:%{comp_fam_ver}")
 whatis("Category: Applications, Scientific, Graphics")
@@ -344,11 +346,12 @@ local mkl_lib      = "${MKL_LIB}"
 local omp_lib      = "${OMP_LIB}"
 %endif
 
-setenv("TACC_PYTHON_DIR", python_dir)
-setenv("TACC_PYTHON_BIN", python_bin)
-setenv("TACC_PYTHON_INC", python_inc)
-setenv("TACC_PYTHON_LIB", python_lib)
-setenv("TACC_PYTHON_MAN", python_man)
+setenv("TACC_PYTHON%{MAJOR}_DIR", python_dir)
+setenv("TACC_PYTHON%{MAJOR}_BIN", python_bin)
+setenv("TACC_PYTHON%{MAJOR}_INC", python_inc)
+setenv("TACC_PYTHON%{MAJOR}_LIB", python_lib)
+setenv("TACC_PYTHON%{MAJOR}_MAN", python_man)
+setenv("TACC_PYTHON_VER", "%{MAJOR_MINOR}")
 
 prepend_path("PATH", python_bin)
 prepend_path("MANPATH", python_man)
@@ -365,7 +368,7 @@ EOF
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR_COMP}/.version.%{version} << 'EOF'
 #%Module1.0####################################################################
 ##
-## Version file for Python Compiler version %{version}
+## Version file for Python %{MAJOR} Compiler version %{version}
 ##
 set ModulesVersion "%version"
 EOF
@@ -376,13 +379,13 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}
 cat >    $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}/%{version}.lua << 'EOF'
 inherit()
 whatis("Version-notes: Compiler:%{comp_fam_ver}. MPI:%{mpi_fam_ver}")
-prepend_path("PYTHONPATH", "%{INSTALL_DIR_MPI}/lib/python2.7/site-packages")
+prepend_path("PYTHONPATH", "%{INSTALL_DIR_MPI}/lib/python%{MAJOR_MINOR}/site-packages")
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}/.version.%{version} << 'EOF'
 #%Module1.0####################################################################
 ##
-## Version file for Python MPI version %{version}
+## Version file for Python %{MAJOR} MPI version %{version}
 ##
 set ModulesVersion "%version"
 EOF

@@ -11,3 +11,4 @@ tacctmpfs*
 *.cmake-cache
 *.orig
 s1victor
+.victor

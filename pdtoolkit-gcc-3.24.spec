@@ -1,5 +1,8 @@
-## rpmbuild -bb --define 'is_gcc71 1'   --define 'is_impi 1' pdtoolkit-3.24.spec 2>&1 | tee log_gcc_pdt-3.24-2.x
-## rpmbuild -bb --define 'is_intel17 1' --define 'is_impi 1' pdtoolkit-3.24.spec 2>&1 | tee log_intel17_pdt-3.24-2.x
+## rpmbuild -bb --define 'is_gcc71 1'  pdtoolkit-gcc-3.24.spec 2>&1 | tee log_pdt-gcc-3.24-R_x
+## rpmbuild -bb --define 'is_intel17 1' --define 'is_impi 1' pdtoolkit-3.24.spec 2>&1 | tee log_intel17_pdt-3.24-R.x
+
+## rpm -hiv --nodeps $r/tacc-pdtoolkit-gcc7_1-package-3.24-R*
+## rpm -hiv --nodeps $r/tacc-pdtoolkit-gcc7_1-modulefile-3.24-R*
 #
 
 # Give the package a base name
@@ -15,7 +18,7 @@
 
 %include rpm-dir.inc
 %include compiler-defines.inc
-%include mpi-defines.inc
+#include mpi-defines.inc
 
 %include name-defines-noreloc.inc
 

@@ -52,15 +52,15 @@ Summary: A Nice little relocatable skeleton spec file example.
 %define bazel_six_minor_version   5
 %define bazel_six_micro_version   4
 %define bazel_major_version       0
-%define bazel_minor_version       11
-%define bazel_micro_version       1
+%define bazel_minor_version       6
+%define bazel_micro_version       0
 %define cuda_major_version        8
 %define cuda_minor_version        0
 %define cudnn_major_version       5
 %define cudnn_minor_version       1
 %define python_major_version      2
 %define python_minor_version      7
-%define python_patch_version      14
+%define python_patch_version      13
 %define major_version             1
 %define minor_version             6
 %define micro_version             0
@@ -89,9 +89,9 @@ Summary: A Nice little relocatable skeleton spec file example.
 %define python_fam_ver       python%{python_und_version}
 
 %if "%{python_major_version}" == "2"
-  %define python_pkg_name   python2
+  %define python_pkg_name   python
   %define pip_name          pip
-  %define python_pkg_date   March 9, 2018
+  %define python_pkg_date   August 01, 2017
 %else
   %define python_pkg_name   python3
   %define pip_name          pip3
@@ -317,7 +317,7 @@ export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64
 # Upgrade pip
 export PATH=%{_builddir}/tensorflow_pip/bin:$PATH
 export LD_LIBRARY_PATH=%{_builddir}/tensorflow_pip/lib:${LD_LIBRARY_PATH}
-export PYTHONPATH=%{_builddir}/tensorflow_pip/lib/python%{python_sht_version}/site-packages:${PYTHONPATH}:${PYTHONPATH}
+export PYTHONPATH=%{_builddir}/tensorflow_pip/lib/python%{python_sht_version}/site-packages:${PYTHONPATH}
 %{pip_name} install pip --upgrade --ignore-installed --install-option="--prefix=%{_builddir}/tensorflow_pip"
 %{pip_name} install wheel --upgrade --ignore-installed --install-option="--prefix=%{_builddir}/tensorflow_pip"
 %{pip_name} --version
@@ -329,132 +329,123 @@ echo $LD_LIBRARY_PATH
 
 export tensorflow=`pwd`
 
-# # First, boostrap with earlier base version of bazel
-# cd ${tensorflow}
-# pgrep -f bazel | xargs --no-run-if-empty kill # Kill any bazel daemons
-# git clone https://github.com/bazelbuild/bazel.git
-# mv %{bazel_base_name} %{bazel_base_name}-%{bazel_base_version}
-# cd %{bazel_base_name}-%{bazel_base_version}
-# git checkout tags/%{bazel_base_version}
-# patch -p0 < %{_sourcedir}/CROSSTOOL-%{bazel_base_version}.patch
-# ./compile.sh
-# ./output/bazel # Start bazel java daemon
-# export PATH=%{_builddir}/%{bazel_base_name}-%{bazel_base_version}/output:${PATH} # Put base bazel on path for tensorflow configure script
-# which bazel
-# bazel info
-# bazel shutdown
-# pgrep -f bazel | xargs --no-run-if-empty kill # Kill the bazel daemon
-# 
-# 
-# # Second, boostrap with earlier mid version of bazel
-# cd ${tensorflow}
-# pgrep -f bazel | xargs --no-run-if-empty kill # Kill any bazel daemons
-# git clone https://github.com/bazelbuild/bazel.git
-# mv %{bazel_base_name} %{bazel_base_name}-%{bazel_two_version}
-# cd %{bazel_base_name}-%{bazel_two_version}
-# git checkout tags/%{bazel_two_version}
-# patch -p0 < %{_sourcedir}/CROSSTOOL-%{bazel_two_version}.patch
-# bazel build //src:bazel --verbose_failures --sandbox_debug --genrule_strategy=standalone --spawn_strategy=standalone
-# ./bazel-bin/src/bazel # Start bazel java daemon
-# export PATH=%{_builddir}/%{bazel_base_name}-%{bazel_two_version}/bazel-bin/src:${PATH} # Put mid bazel on path for tensorflow configure script
-# which bazel
-# bazel info
-# bazel shutdown
-# pgrep -f bazel | xargs --no-run-if-empty kill # Kill the bazel daemon
-# 
-# 
-# # Third, boostrap with earlier mid version of bazel
-# cd ${tensorflow}
-# pgrep -f bazel | xargs --no-run-if-empty kill # Kill any bazel daemons
-# git clone https://github.com/bazelbuild/bazel.git
-# mv %{bazel_base_name} %{bazel_base_name}-%{bazel_thr_version}
-# cd %{bazel_base_name}-%{bazel_thr_version}
-# git checkout tags/%{bazel_thr_version}
-# patch -p0 < %{_sourcedir}/CROSSTOOL-%{bazel_thr_version}.patch
-# bazel build //src:bazel --verbose_failures --sandbox_debug --genrule_strategy=standalone --spawn_strategy=standalone
-# ./bazel-bin/src/bazel # Start bazel java daemon
-# export PATH=%{_builddir}/%{bazel_base_name}-%{bazel_thr_version}/bazel-bin/src:${PATH} # Put mid bazel on path for tensorflow configure script
-# which bazel
-# bazel info
-# bazel shutdown
-# pgrep -f bazel | xargs --no-run-if-empty kill # Kill the bazel daemon
-# 
-# 
-# # Fourth, boostrap with earlier mid version of bazel
-# cd ${tensorflow}
-# pgrep -f bazel | xargs --no-run-if-empty kill # Kill any bazel daemons
-# git clone https://github.com/bazelbuild/bazel.git
-# mv %{bazel_base_name} %{bazel_base_name}-%{bazel_fou_version}
-# cd %{bazel_base_name}-%{bazel_fou_version}
-# git checkout tags/%{bazel_fou_version}
-# patch -p0 < %{_sourcedir}/CROSSTOOL-%{bazel_fou_version}.patch
-# bazel build //src:bazel --verbose_failures --sandbox_debug --genrule_strategy=standalone --spawn_strategy=standalone
-# ./bazel-bin/src/bazel # Start bazel java daemon
-# export PATH=%{_builddir}/%{bazel_base_name}-%{bazel_fou_version}/bazel-bin/src:${PATH} # Put mid bazel on path for tensorflow configure script
-# which bazel
-# bazel info
-# bazel shutdown
-# pgrep -f bazel | xargs --no-run-if-empty kill # Kill the bazel daemon
-# 
-# 
-# # Fifth, boostrap with earlier mid version of bazel
-# cd ${tensorflow}
-# pgrep -f bazel | xargs --no-run-if-empty kill # Kill any bazel daemons
-# git clone https://github.com/bazelbuild/bazel.git
-# mv %{bazel_base_name} %{bazel_base_name}-%{bazel_fiv_version}
-# cd %{bazel_base_name}-%{bazel_fiv_version}
-# git checkout tags/%{bazel_fiv_version}
-# patch -p0 < %{_sourcedir}/CROSSTOOL-%{bazel_fiv_version}.patch
-# bazel build //src:bazel --verbose_failures --sandbox_debug --genrule_strategy=standalone --spawn_strategy=standalone
-# ./bazel-bin/src/bazel # Start bazel java daemon
-# export PATH=%{_builddir}/%{bazel_base_name}-%{bazel_fiv_version}/bazel-bin/src:${PATH} # Put mid bazel on path for tensorflow configure script
-# which bazel
-# bazel info
-# bazel shutdown
-# pgrep -f bazel | xargs --no-run-if-empty kill # Kill the bazel daemon
-# 
-# # Sixth, boostrap with earlier mid version of bazel
-# cd ${tensorflow}
-# pgrep -f bazel | xargs --no-run-if-empty kill # Kill any bazel daemons
-# git clone https://github.com/bazelbuild/bazel.git
-# mv %{bazel_base_name} %{bazel_base_name}-%{bazel_six_version}
-# cd %{bazel_base_name}-%{bazel_six_version}
-# git checkout tags/%{bazel_six_version}
-# patch -p0 < %{_sourcedir}/CROSSTOOL-%{bazel_six_version}.patch
-# bazel build //src:bazel --verbose_failures --sandbox_debug --genrule_strategy=standalone --spawn_strategy=standalone
-# ./bazel-bin/src/bazel # Start bazel java daemon
-# export PATH=%{_builddir}/%{bazel_base_name}-%{bazel_six_version}/bazel-bin/src:${PATH} # Put mid bazel on path for tensorflow configure script
-# which bazel
-# bazel info
-# bazel shutdown
-# pgrep -f bazel | xargs --no-run-if-empty kill # Kill the bazel daemon
-# 
-# 
-# # Now, use earlier version of bazel to build mid version of bazel
-# which bazel
-# bazel info
-# cd ${tensorflow}
-# git clone https://github.com/bazelbuild/bazel.git
-# cd %{bazel_base_name}
-# git checkout tags/%{bazel_pkg_version}
-# patch -p0 < %{_sourcedir}/CROSSTOOL-%{bazel_pkg_version}.patch
-# bazel build //src:bazel --verbose_failures --sandbox_debug --genrule_strategy=standalone --spawn_strategy=standalone
-# pgrep -f bazel | xargs --no-run-if-empty kill # Kill the bazel daemon
-# ./bazel-bin/src/bazel # Start bazel java daemon
-# export PATH=%{_builddir}/bazel/bazel-bin/src:${PATH} # Put bazel on path for tensorflow configure script
-# which bazel
-# bazel info
-
-pgrep -f bazel | xargs --no-run-if-empty kill # Kill the bazel daemon
+# First, boostrap with earlier base version of bazel
 cd ${tensorflow}
-mkdir -p %{bazel_base_name}
-cd %{bazel_base_name}
-cp %{_sourcedir}/bazel-%{bazel_pkg_version}-installer-linux-x86_64.sh ./
-bash ./bazel-%{bazel_pkg_version}-installer-linux-x86_64.sh --prefix=`pwd`
- 
-export PATH=`pwd`/bin:${PATH} # Put bazel on path for tensorflow configure script
+pgrep -f bazel | xargs --no-run-if-empty kill # Kill any bazel daemons
+git clone https://github.com/bazelbuild/bazel.git
+mv %{bazel_base_name} %{bazel_base_name}-%{bazel_base_version}
+cd %{bazel_base_name}-%{bazel_base_version}
+git checkout tags/%{bazel_base_version}
+patch -p0 < %{_sourcedir}/CROSSTOOL-%{bazel_base_version}.patch
+./compile.sh
+./output/bazel # Start bazel java daemon
+export PATH=%{_builddir}/%{bazel_base_name}-%{bazel_base_version}/output:${PATH} # Put base bazel on path for tensorflow configure script
 which bazel
-bazel
+bazel info
+bazel shutdown
+pgrep -f bazel | xargs --no-run-if-empty kill # Kill the bazel daemon
+
+
+# Second, boostrap with earlier mid version of bazel
+cd ${tensorflow}
+pgrep -f bazel | xargs --no-run-if-empty kill # Kill any bazel daemons
+git clone https://github.com/bazelbuild/bazel.git
+mv %{bazel_base_name} %{bazel_base_name}-%{bazel_two_version}
+cd %{bazel_base_name}-%{bazel_two_version}
+git checkout tags/%{bazel_two_version}
+patch -p0 < %{_sourcedir}/CROSSTOOL-%{bazel_two_version}.patch
+bazel build //src:bazel --verbose_failures --sandbox_debug --genrule_strategy=standalone --spawn_strategy=standalone
+./bazel-bin/src/bazel # Start bazel java daemon
+export PATH=%{_builddir}/%{bazel_base_name}-%{bazel_two_version}/bazel-bin/src:${PATH} # Put mid bazel on path for tensorflow configure script
+which bazel
+bazel info
+bazel shutdown
+pgrep -f bazel | xargs --no-run-if-empty kill # Kill the bazel daemon
+
+
+# Third, boostrap with earlier mid version of bazel
+cd ${tensorflow}
+pgrep -f bazel | xargs --no-run-if-empty kill # Kill any bazel daemons
+git clone https://github.com/bazelbuild/bazel.git
+mv %{bazel_base_name} %{bazel_base_name}-%{bazel_thr_version}
+cd %{bazel_base_name}-%{bazel_thr_version}
+git checkout tags/%{bazel_thr_version}
+patch -p0 < %{_sourcedir}/CROSSTOOL-%{bazel_thr_version}.patch
+bazel build //src:bazel --verbose_failures --sandbox_debug --genrule_strategy=standalone --spawn_strategy=standalone
+./bazel-bin/src/bazel # Start bazel java daemon
+export PATH=%{_builddir}/%{bazel_base_name}-%{bazel_thr_version}/bazel-bin/src:${PATH} # Put mid bazel on path for tensorflow configure script
+which bazel
+bazel info
+bazel shutdown
+pgrep -f bazel | xargs --no-run-if-empty kill # Kill the bazel daemon
+
+
+# Fourth, boostrap with earlier mid version of bazel
+cd ${tensorflow}
+pgrep -f bazel | xargs --no-run-if-empty kill # Kill any bazel daemons
+git clone https://github.com/bazelbuild/bazel.git
+mv %{bazel_base_name} %{bazel_base_name}-%{bazel_fou_version}
+cd %{bazel_base_name}-%{bazel_fou_version}
+git checkout tags/%{bazel_fou_version}
+patch -p0 < %{_sourcedir}/CROSSTOOL-%{bazel_fou_version}.patch
+bazel build //src:bazel --verbose_failures --sandbox_debug --genrule_strategy=standalone --spawn_strategy=standalone
+./bazel-bin/src/bazel # Start bazel java daemon
+export PATH=%{_builddir}/%{bazel_base_name}-%{bazel_fou_version}/bazel-bin/src:${PATH} # Put mid bazel on path for tensorflow configure script
+which bazel
+bazel info
+bazel shutdown
+pgrep -f bazel | xargs --no-run-if-empty kill # Kill the bazel daemon
+
+
+# Fifth, boostrap with earlier mid version of bazel
+cd ${tensorflow}
+pgrep -f bazel | xargs --no-run-if-empty kill # Kill any bazel daemons
+git clone https://github.com/bazelbuild/bazel.git
+mv %{bazel_base_name} %{bazel_base_name}-%{bazel_fiv_version}
+cd %{bazel_base_name}-%{bazel_fiv_version}
+git checkout tags/%{bazel_fiv_version}
+patch -p0 < %{_sourcedir}/CROSSTOOL-%{bazel_fiv_version}.patch
+bazel build //src:bazel --verbose_failures --sandbox_debug --genrule_strategy=standalone --spawn_strategy=standalone
+./bazel-bin/src/bazel # Start bazel java daemon
+export PATH=%{_builddir}/%{bazel_base_name}-%{bazel_fiv_version}/bazel-bin/src:${PATH} # Put mid bazel on path for tensorflow configure script
+which bazel
+bazel info
+bazel shutdown
+pgrep -f bazel | xargs --no-run-if-empty kill # Kill the bazel daemon
+
+
+# Sixth, boostrap with earlier mid version of bazel
+cd ${tensorflow}
+pgrep -f bazel | xargs --no-run-if-empty kill # Kill any bazel daemons
+git clone https://github.com/bazelbuild/bazel.git
+mv %{bazel_base_name} %{bazel_base_name}-%{bazel_six_version}
+cd %{bazel_base_name}-%{bazel_six_version}
+git checkout tags/%{bazel_six_version}
+patch -p0 < %{_sourcedir}/CROSSTOOL-%{bazel_six_version}.patch
+bazel build //src:bazel --verbose_failures --sandbox_debug --genrule_strategy=standalone --spawn_strategy=standalone
+./bazel-bin/src/bazel # Start bazel java daemon
+export PATH=%{_builddir}/%{bazel_base_name}-%{bazel_six_version}/bazel-bin/src:${PATH} # Put mid bazel on path for tensorflow configure script
+which bazel
+bazel info
+bazel shutdown
+pgrep -f bazel | xargs --no-run-if-empty kill # Kill the bazel daemon
+
+
+# Now, use earlier version of bazel to build mid version of bazel
+which bazel
+bazel info
+cd ${tensorflow}
+git clone https://github.com/bazelbuild/bazel.git
+cd %{bazel_base_name}
+git checkout tags/%{bazel_pkg_version}
+patch -p0 < %{_sourcedir}/CROSSTOOL-%{bazel_pkg_version}.patch
+bazel build //src:bazel --verbose_failures --sandbox_debug --genrule_strategy=standalone --spawn_strategy=standalone
+pgrep -f bazel | xargs --no-run-if-empty kill # Kill the bazel daemon
+./bazel-bin/src/bazel # Start bazel java daemon
+export PATH=%{_builddir}/bazel/bazel-bin/src:${PATH} # Put bazel on path for tensorflow configure script
+which bazel
+bazel info
+
 
 # Tensorflow time!
 cd ${tensorflow}
@@ -488,9 +479,7 @@ ${tensorflow}/%{bazel_base_name}/bazel-bin/src/bazel build -c opt --copt="-mavx2
 #export TF_DOWNLOAD_MKL=1
 #export TF_MKL_ROOT=/opt/intel/compilers_and_libraries_2017.4.196/linux/mkl
 #${tensorflow}/%{bazel_base_name}/bazel-bin/src/bazel build -c opt --copt="-mavx2" --copt="-march=broadwell" --copt="-mtune=broadwell" --copt="-O3" --copt="-flto" --linkopt '-lrt' --genrule_strategy=standalone --spawn_strategy=standalone -s --verbose_failures //tensorflow/tools/pip_package:build_pip_package
-#${tensorflow}/%{bazel_base_name}/bazel-bin/src/bazel build -c opt --copt="-mavx2" --copt="-march=broadwell" --copt="-mtune=broadwell" --copt="-O3" --copt="-mavx512f" --copt="-mavx512cd" --copt="-ftree-vectorize" --copt="-funsafe_math_optimizations" --copt="-flto" --cxxopt="-std=c++11" --config=opt --linkopt '-lrt' --genrule_strategy=standalone --spawn_strategy=standalone -s --verbose_failures //tensorflow/tools/pip_package:build_pip_package
-#bazel build -c opt --copt="-mavx2" --copt="-march=broadwell" --copt="-mtune=broadwell" --copt="-Ofast" --copt="-mavx512f" --copt="-mavx512cd" --copt="-ftree-vectorize" --copt="-fuse-ld=gold" --cxxopt="-std=c++11" --config=opt --linkopt '-lrt' --genrule_strategy=standalone --spawn_strategy=standalone -s --verbose_failures //tensorflow/tools/pip_package:build_pip_package
-bazel build -c opt --copt="-mavx2" --copt="-march=skylake-avx512" --copt="-mtune=skylake-avx512" --copt="-Ofast" --copt="-ftree-vectorize" --copt="-fuse-ld=gold" --cxxopt="-std=c++11" --config=opt --linkopt '-lrt' --genrule_strategy=standalone --spawn_strategy=standalone -s --verbose_failures //tensorflow/tools/pip_package:build_pip_package
+${tensorflow}/%{bazel_base_name}/bazel-bin/src/bazel build -c opt --copt="-mavx2" --copt="-march=broadwell" --copt="-mtune=broadwell" --copt="-O3" --copt="-mavx512f" --copt="-mavx512cd" --copt="-ftree-vectorize" --copt="-funsafe_math_optimizations" --copt="-flto" --cxxopt="-std=c++11" --config=opt --linkopt '-lrt' --genrule_strategy=standalone --spawn_strategy=standalone -s --verbose_failures //tensorflow/tools/pip_package:build_pip_package
 %endif
 cd ${tensorflow}/%{pkg_base_name}
 bazel-bin/tensorflow/tools/pip_package/build_pip_package ${tensorflow}/%{pkg_base_name}/tensorflow_pkg 

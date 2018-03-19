@@ -9,10 +9,10 @@ Summary: Dealii install
 %define minor_version 5
 %define micro_version 1
 
-%define dealiipetscversion 3.8
-
 ### %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 %define pkg_version git20170615
+
+%define dealiipetscversion 3.8
 
 %include rpm-dir.inc
 %include compiler-defines.inc
@@ -117,14 +117,15 @@ mount -t tmpfs tmpfs %{INSTALL_DIR}
 
 module list
 for m in boost cmake \
-    metis mumps p4est phdf5 \
+    metis p4est \
     petsc/%{dealiipetscversion} slepc/%{dealiipetscversion} \
-    trilinos/git.20170906 ; do
+    trilinos/git20180209 \
+    ; do
   module --ignore_cache load $m ; 
 done
 
 %if "%{comp_fam}" == "intel"
-  module load netcdf
+  module load mumps netcdf phdf5
 %endif
 
 ls $TACC_P4EST_DIR
@@ -141,6 +142,9 @@ ls $TACC_TRILINOS_DIR
 ##
 
 export LOGDIR=`pwd`
+export DEALDIR=`pwd`
+export DEALVERSION=%{pkg_version}
+
 rm -rf /tmp/dealii-build
 mkdir -p /tmp/dealii-build
 pushd /tmp/dealii-build
@@ -156,24 +160,23 @@ export BASIC_FLAGS="-std=c++14 -g %{TACC_OPT} -I${TBBROOT}/include"
 
   cmake -VV \
     -DCMAKE_INSTALL_PREFIX=%{INSTALL_DIR} \
+    \
     -DCMAKE_C_COMPILER="mpicc" \
     -DCMAKE_CXX_COMPILER="mpicxx" \
     -DDEAL_II_WITH_CXX11=ON \
     -DCMAKE_Fortran_COMPILER=mpif90 \
     -DDEAL_II_CXX_FLAGS_DEBUG="${BASIC_FLAGS} -O0" \
     -DDEAL_II_CXX_FLAGS_RELEASE="${BASIC_FLAGS} -O2" \
+    \
     -DDEAL_II_WITH_MPI=ON \
-    ` if [ ${TACC_FAMILY_COMPILER} = "gcc" ] ; then echo " \
-        -DMPI_CXX_INCLUDE_PATH=${MPICH_HOME}/intel64/include \
-        -DMPI_CXX_LIBRARIES=${MPICH_HOME}/intel64/lib \
-    " ; fi ` \
+        -DMPI_FOUND=TRUE \
     -DDEAL_II_COMPONENT_MESH_CONVERTER=ON \
     -DBOOST_DIR=${TACC_BOOST_DIR} \
     -DHDF5_DIR=${TACC_HDF5_DIR} \
     ` if [ ${TACC_FAMILY_COMPILER} = "intel" ] ; then echo " \
-    -DMUMPS_DIR=${TACC_MUMPS_DIR} \
-    -DMETIS_DIR=${TACC_METIS_DIR} \
-    -DSLEPC_DIR=${TACC_SLEPC_DIR} \
+        -DMUMPS_DIR=${TACC_MUMPS_DIR} \
+        -DMETIS_DIR=${TACC_METIS_DIR} \
+        -DSLEPC_DIR=${TACC_SLEPC_DIR} \
     " ; fi ` \
     -DDEAL_II_WITH_PETSC=ON -DDEAL_II_WITH_SLEPC=ON \
         -DPETSC_DIR=${PETSC_DIR} -DPETSC_ARCH=${PETSC_ARCH} \
@@ -187,6 +190,13 @@ export BASIC_FLAGS="-std=c++14 -g %{TACC_OPT} -I${TBBROOT}/include"
     2>&1 | tee ${LOGDIR}/dealii_cmake.log
 
 export nocmake="\
+    ` if [ ${TACC_FAMILY_COMPILER} = "gcc" ] ; then echo " \
+        this was around the MPI_CXX_ variables \
+    " ; fi ` \
+    this was replaced by -DMPI_FOUND=TRUE : \
+        -DMPI_CXX_INCLUDE_PATH=${MPICH_HOME}/intel64/include \
+        -DMPI_CXX_LIBRARIES=${MPICH_HOME}/intel64/lib/libmpicxx.so \
+        -DMPI_LIBRARIES=${MPICH_HOME}/intel64/lib/libmpicxx.so \
     "
 
 ##

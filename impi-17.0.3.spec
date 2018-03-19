@@ -51,7 +51,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3%{?dist}
+Release:   4%{?dist}
 License:   proprietary
 Group:     MPI
 URL:       https://software.intel.com/en-us/intel-mpi-library
@@ -247,10 +247,16 @@ setenv(       "I_MPI_CXX"              , "%{myCXX}"                             
 setenv(       "I_MPI_FC"               , "%{myFC}"                               )
 setenv(       "I_MPI_F77"              , "%{myFC}"                               )
 setenv(       "I_MPI_F90"              , "%{myFC}"                               )
-setenv(       "I_MPI_FABRICS"          , "shm:tmi"                               )
-setenv(       "I_MPI_TMI_PROVIDER"     , "psm2"                                  )
-setenv(       "I_MPI_HYDRA_PMI_CONNECT", "alltoall"                              )
 family(       "MPI"                                                              )
+
+
+if (os.getenv("TACC_SYSTEM") == "stampede2") then
+  setenv(       "I_MPI_FABRICS"          , "shm:tmi"                               )
+  setenv(       "I_MPI_TMI_PROVIDER"     , "psm2"                                  )
+  setenv(       "I_MPI_HYDRA_PMI_CONNECT", "alltoall"                              )
+end
+
+
 EOF
 
  

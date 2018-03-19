@@ -1,10 +1,15 @@
-## rpmbuild -bb --define 'is_gcc71 1'   --define 'is_impi 1' tau-2.26.2p1.spec 2>&1 | tee log_gcc_tau-2.26.2p1-2.x
-## rpmbuild -bb --define 'is_intel17 1' --define 'is_impi 1' tau-2.26.2p1.spec 2>&1 | tee log_intel_tau-2.26.2p1-2.x
+## rpmbuild -bb --define 'is_gcc71 1'   --define 'is_impi 1' tau-gcc-2.26.2p1.spec 2>&1 | tee log_tau-gcc-2.26.2p1-2.x
+## rpmbuild -bb --define 'is_intel17 1' --define 'is_impi 1' tau-2.26.2p1.spec     2>&1 | tee log_tau-intel-2.26.2p1-2.x
 #
 # rpm -hiv --nodeps $r/tacc-tau-intel17-impi17_0-package-2.26.2p1-2.el7.centos.x86_64.rpm
 # rpm -hiv --nodeps $r/tacc-tau-intel17-impi17_0-modulefile-2.26.2p1-2.el7.centos.x86_64.rpm
 #  rpm -e   tacc-tau-intel17-impi17_0-package-2.26.2p1-2
 #  rpm -e   tacc-tau-intel17-impi17_0-modulefile-2.26.2p1-2
+
+# rpm -hiv --nodeps $r/tacc-tau-gcc7_1-impi17_0-package-2.26.2p1-2.el7.centos.x86_64.rpm
+# rpm -hiv --nodeps $r/tacc-tau-gcc7_1-impi17_0-modulefile-2.26.2p1-2.el7.centos.x86_64.rpm
+#  rpm -e   tacc-tau-gcc7_1-impi17_0-package-2.26.2p1
+#  rpm -e   tacc-tau-gcc7_1-impi17_0-modulefile-2.26.2p1
 
 # Give the package a base name
 %define pkg_base_name tau
@@ -63,16 +68,17 @@ URL:       http://www.cs.uoregon.edu/research/tau/
 
   %define PDT_name      pdtoolkit
   %define PDT_version   3.24
-  %define PDT_dir       %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{PDT_name}/%{PDT_version}
+  %define PDT_dir       %{APPS}/%{comp_fam_ver}/%{PDT_name}/%{PDT_version}
 
-  %define PAPI_version  5.5.1
+  %define PAPI_version  5.6.0
   %define PAPI_dir      /opt/apps/papi/%{PAPI_version}
   %define PAPI_events              %{PAPI_dir}/share/papi/papi_events.csv
   %define PAPI_avail               %{PAPI_dir}/bin/papi_avail
   %define PAPI_component_avail     %{PAPI_dir}/bin/papi_component_avail
   %define TAU_metrics   GET_TIME_OF_DAY:PAPI_TOT_CYC:PAPI_L2_LDM
   
-  %define TAU_makefile Makefile.tau-intelmpi-icpc-papi-ompt-mpi-pdt-openmp
+  %define TAU_mpi_makefile Makefile.tau-intelmpi-papi-ompt-mpi-pdt-openmp
+  #define TAU_omp_makefile Makefile.tau-intelomp-papi-ompt-pdt-openmp
   
 #                                               Configure Options
   %define  PREFIX     "-prefix=%{INSTALL_DIR}"
@@ -127,12 +133,12 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
      module load papi/%{PAPI_version}
      module load cmake
 
-     ./configure -tag=intelmpi %{PREFIX} -c++=mpicxx -cc=mpicc -fortran=mpif90 \
+     ./configure -tag=gcc_impi %{PREFIX} -c++=mpicxx -cc=mpicc -fortran=mpif90 \
                  %{PDT} %{PAPI} -ompt=download \
                  -bfd=download -iowrapper -unwind=download
      make clean install -j 10
 
-     ./configure -tag=intelomp %{PREFIX} -c++=icpc   -cc=icc   -fortran=ifort \
+     ./configure -tag=gcc_omp %{PREFIX} -c++=g++   -cc=gcc   -fortran=gfortran \
                  %{PDT} %{PAPI} -ompt=download \
                  -bfd=download -iowrapper -unwind=download
      make clean install -j 10
@@ -167,7 +173,7 @@ TACC_TAU_DIR and TAU, TACC_TAU_BIN, TACC_TAU_LIB, and TACC_TAU_DOC
 for the location of the TAU distribution, binaries, libraries, and
 documents, respectively.  
 
-It also defines defaults: TAU_PROFILE=1, TAU_MAKEFILE=%{TAU_makefile},
+It also defines defaults: TAU_PROFILE=1, TAU_MAKEFILE=%{TAU_mpi_makefile},
    TAU_METRICS=%{TAU_metrics}.
 
 TAU_MAKEFILE sets the tools (pdt), compilers (intel) and parallel 
@@ -197,12 +203,12 @@ TAU_MAKEFILE environement variable. The syntax for makefile name is:
     <path>/Makefile.tau-<hyphen_separated_component_list>\n
 
 and the components are:
-    Intel Compilers (icpc)
-    MPI             (mpi)    also has intelmpi tag name
+    GNU Compilers   (icpc)
+    MPI             (impi)    also has intelmpi tag name
     OMP             (openmp)
-    OpenMP Tool     (ompt)   openmp events
-    PAPI            (papi)   now included by default
-    PDtoolkit       (pdt)    now included by default
+    OpenMP Tool     (ompt)    openmp events
+    PAPI            (papi)    now included by default
+    PDtoolkit       (pdt)     now included by default
 
 The default TAU Makefile is set for MPI and hybrid applications.
 It has the intelmpi tag in its name.
@@ -211,9 +217,13 @@ intelomp tag (and no mpi component).
 
 The default for the Make file variable TAU_MAKEFILE is:
 
-    $TACC_TAU_LIB/%{TAU_makefile}
+    $TACC_TAU_LIB/%{TAU_mpi_makefile}
 
 (Makefiles are stored in the $TACC_TAU_LIB directory.)
+However, for a pure OpenMP code you will have to manually
+set TAU_MAKEFILE:
+
+   export  TAU_MAKEFILE=$TACC_TAU_LIB/%{TAU_omp_makefile}
 
 To compile your code with TAU, use one of the TAU compiler wrappers:
 
@@ -268,7 +278,7 @@ setenv(           "TACC_TAU_BIN",            tau_bin        )
 setenv(           "TACC_TAU_LIB",            tau_lib        )
 setenv(           "TACC_TAU_DOC",   pathJoin(tau_dir,"docs"))
 setenv(                "TAU",                tau_lib        )
-setenv(           "TAU_MAKEFILE", pathJoin(tau_lib,"%{TAU_makefile}") )
+setenv(           "TAU_MAKEFILE", pathJoin(tau_lib,"%{TAU_mpi_makefile}") )
 setenv("PAPI_PERFMON_EVENT_FILE",   "%{PAPI_events}"        )
 setenv(            "TAU_METRICS",   "%{TAU_metrics}"        )
 setenv(            "TAU_PROFILE",            "1"            )
