@@ -6,8 +6,8 @@ Summary: PETSc install
 
 # Create some macros (spec file variables)
 %define major_version 3
-%define minor_version 8
-%define micro_version 4
+%define minor_version 9
+%define micro_version pre
 %define versionpatch 3.8.4-pz
 
 %define pkg_version %{major_version}.%{minor_version}
@@ -32,7 +32,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 3%{?dist}
+Release: 1%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -73,7 +73,8 @@ It contains solvers and tools mostly for PDE solving.
 
 %prep
 
-%setup -n petsc-%{major_version}.%{minor_version}.%{micro_version}
+#%setup -n petsc-%{major_version}.%{minor_version}.%{micro_version}
+%setup -n petsc-3.8.4
 
 #---------------------------------------
 %build
@@ -150,7 +151,6 @@ export MPI_EXTRA_OPTIONS="--with-mpiexec=mpirun_rsh"
 export PETSC_CONFIGURE_OPTIONS="\
   --with-x=0 -with-pic \
   --with-make-np=12 \
-  --with-external-packages-dir=%{INSTALL_DIR}/externalpackages \
   "
 mkdir -p %{INSTALL_DIR}/externalpackages
 mkdir -p %{MODULE_DIR}
@@ -438,6 +438,9 @@ esac
 ## here we go
 ##
 export PETSC_ARCH=${architecture}
+export EXTERNAL_PACKAGES_DIR=/tmp/petsc-build/externalpackages/${architecture}
+rm -rf ${EXTERNAL_PACKAGES_DIR}
+mkdir -p ${EXTERNAL_PACKAGES_DIR}
 noprefix=--prefix=%{INSTALL_DIR}/${architecture}
 # export packages=
 if [ "${ext}" = "tau" ] ; then
@@ -453,6 +456,7 @@ else
   # python config/configure.py
   RPM_BUILD_ROOT=tmpfs PETSC_DIR=`pwd` ./configure \
     ${PETSC_CONFIGURE_OPTIONS} \
+    --with-external-packages-dir=${EXTERNAL_PACKAGES_DIR} \
     ${mpi} ${clanguage} ${scalar} ${dynamicshared} ${precision} ${packages} \
     --with-debugging=${usedebug} \
     ${BLAS_LAPACK_OPTIONS} ${MPI_EXTRA_OPTIONS} ${CUDA_OPTIONS} ${INDEX_OPTIONS} \
@@ -486,6 +490,7 @@ popd
 ## Make!
 
 # lower optimization for intel complex
+# this is the petsc 3.8 location. no longer works in 3.9
 %if "%{is_intel}" == "1"
 case "${ext}" in 
   ( *pomplex* )
@@ -576,10 +581,10 @@ done
 #
 # more cleanup
 #
-/bin/rm -rf externalpackages/git.*
-find externalpackages -name \*.o -exec rm -f {} \;
+#/bin/rm -rf externalpackages/git.*
+#find externalpackages -name \*.o -exec rm -f {} \;
 
-cp -r bin config externalpackages include lib makefile src \
+cp -r config include lib makefile src \
     $RPM_BUILD_ROOT/%{INSTALL_DIR}
 cp -r skylake* \
     $RPM_BUILD_ROOT/%{INSTALL_DIR}
@@ -593,9 +598,7 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 %files %{PACKAGE}-sources
   %defattr(-,root,install,)
-  %{INSTALL_DIR}/bin 
   %{INSTALL_DIR}/config
-  %{INSTALL_DIR}/externalpackages
   %{INSTALL_DIR}/include
   %{INSTALL_DIR}/lib
   %{INSTALL_DIR}/makefile
@@ -629,10 +632,5 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
-* Thu Mar 29 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: update to 3.8.4, zoltan added
-* Tue Mar 06 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: point update to 3.8.3,
-        eliminated the xx package, phdf5 now for intel18
-* Mon Nov 06 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 1: initial release, with O1 for complex, and no hdf5.
+* Sun Apr 01 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial release

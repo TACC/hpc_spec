@@ -26,7 +26,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 # Create some macros (spec file variables)
 %define major_version 18
 %define minor_version 0
-%define micro_version 0
+%define micro_version 2
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -50,7 +50,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
+Release:   1%{?dist}
 License:   proprietary
 Group:     Compiler
 URL:       https://software.intel.com/en-us/intel-compilers
@@ -68,7 +68,7 @@ Group: Development/Tools
 %description package
 This is the long description for the package RPM...
 This is specifically an rpm for the Intel Compiler modulefile
-used on Stampede KNL Update .
+used on Stampede2.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
@@ -76,11 +76,11 @@ Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
 This is specifically an rpm for the Intel Compiler modulefile
-used on Stampede KNL Update .
+used on Stampede2.
 
 %description
 This is specifically an rpm for the Intel Compiler modulefile
-used on Stampede KNL Update .
+used on Stampede2.
 
 #---------------------------------------
 %prep
@@ -221,13 +221,14 @@ whatis("URL: http://software.intel.com/en-us/articles/intel-compilers"      )
 -- Create environment variables.
 local base         = "/opt/intel"
 local gcc_base     = "/opt/apps/gcc/6.3.0"
-local full_xe      = "compilers_and_libraries_2018.0.128/linux"
+local full_xe      = "compilers_and_libraries_2018.2.199/linux"
 local arch         = "intel64"
 local installDir   = pathJoin(base,full_xe)
 local tbbRoot      = pathJoin(installDir,"tbb")
 local mklRoot      = pathJoin(installDir,"mkl")
 local ippRoot      = pathJoin(installDir,"ipp")
 local daalRoot     = pathJoin(installDir,"daal")
+local pstlRoot     = pathJoin(installDir,"pstl")
 
 
 setenv( "MKLROOT"      ,                  mklRoot )
@@ -236,16 +237,16 @@ setenv( "TACC_MKL_LIB" ,              pathJoin( mklRoot , "lib/intel64" ) )
 setenv( "TACC_MKL_INC" ,              pathJoin( mklRoot , "include"     ) )
 
 --MKLROOT=
---/opt/intel/compilers_and_libraries_2018.0.128/linux/mkl
+--/home1/apps/intel/compilers_and_libraries_2018.0.128/linux/mkl
 
 prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_%{year}/en/debugger/gdb-ia/man"   ) )
 prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_%{year}/en/debugger/gdb-igfx/man" ) )
 prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_%{year}/en/man/common"            ) )
 
 --MANPATH=
--- /opt/intel/documentation_2018/en/debugger//gdb-ia/man
--- /opt/intel/documentation_2018/en/debugger//gdb-igfx/man
--- /opt/intel/documentation_2018/en/man/common
+-- /home1/apps/intel/documentation_2018/en/debugger//gdb-ia/man
+-- /home1/apps/intel/documentation_2018/en/debugger//gdb-igfx/man
+-- /home1/apps/intel/documentation_2018/en/man/common
 
 local home = os.getenv("HOME")
 
@@ -254,13 +255,13 @@ prepend_path( "INTEL_LICENSE_FILE" ,  pathJoin( base       , "licenses"       ) 
 prepend_path( "INTEL_LICENSE_FILE" ,  pathJoin( home       , "intel/licenses" ) )
 
 --INTEL_LICENSE_FILE=
--- /opt/intel/compilers_and_libraries_2018.0.128/linux/licenses
--- /opt/intel/licenses
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/licenses
+-- /home1/apps/intel/licenses
 -- ${HOME}/intel/licenses
 
 setenv( "IPPROOT" ,                   ippRoot )
 --IPPROOT=
--- /opt/intel/compilers_and_libraries_2018.0.128/linux/ipp
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/ipp
 
 prepend_path( "LIBRARY_PATH" ,        pathJoin( installDir , "ipp/lib/intel64"                    ) )
 prepend_path( "LIBRARY_PATH" ,        pathJoin( installDir , "compiler/lib/intel64_lin"           ) )
@@ -270,12 +271,12 @@ prepend_path( "LIBRARY_PATH" ,        pathJoin( installDir , "daal/lib/intel64_l
 prepend_path( "LIBRARY_PATH" ,        pathJoin( installDir , "daal/../tbb/lib/intel64_lin/gcc4.4" ) )
 
 --LIBRARY_PATH=
--- /opt/intel/compilers_and_libraries_2018.0.128/linux/ipp/lib/intel64
--- /opt/intel/compilers_and_libraries_2018.0.128/linux/compiler/lib/intel64_lin
--- /opt/intel/compilers_and_libraries_2018.0.128/linux/mkl/lib/intel64_lin
--- /opt/intel/compilers_and_libraries_2018.0.128/linux/tbb/lib/intel64/gcc4.7
--- /opt/intel/compilers_and_libraries_2018.0.128/linux/daal/lib/intel64_lin
--- /opt/intel/compilers_and_libraries_2018.0.128/linux/daal/../tbb/lib/intel64_lin/gcc4.4
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/ipp/lib/intel64
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/compiler/lib/intel64_lin
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/mkl/lib/intel64_lin
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/tbb/lib/intel64/gcc4.7
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/daal/lib/intel64_lin
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/daal/../tbb/lib/intel64_lin/gcc4.4
 
 prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( gcc_base , "lib" ) )
 prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( gcc_base , "lib64" ) )
@@ -294,53 +295,65 @@ prepend_path( "LD_LIBRARY_PATH" ,        pathJoin( base       , "debugger_%{year
 --LD_LIBRARY_PATH=
 --/opt/apps/gcc/6.3.0/lib64
 --/opt/apps/gcc/6.3.0/lib
--- /opt/intel/compilers_and_libraries_2018.0.128/linux/compiler/lib/intel64
--- /opt/intel/compilers_and_libraries_2018.0.128/linux/compiler/lib/intel64_lin
--- /opt/intel/compilers_and_libraries_2018.0.128/linux/ipp/lib/intel64
--- /opt/intel/compilers_and_libraries_2018.0.128/linux/compiler/lib/intel64_lin
--- /opt/intel/compilers_and_libraries_2018.0.128/linux/mkl/lib/intel64_lin
--- /opt/intel/compilers_and_libraries_2018.0.128/linux/tbb/lib/intel64/gcc4.7
--- /opt/intel/compilers_and_libraries_2018.0.128/linux/daal/lib/intel64_lin
--- /opt/intel/compilers_and_libraries_2018.0.128/linux/daal/../tbb/lib/intel64_lin/gcc4.4
--- /opt/intel/debugger_2018/iga/lib
--- /opt/intel/debugger_2018/libipt/intel64/lib
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/compiler/lib/intel64
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/compiler/lib/intel64_lin
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/ipp/lib/intel64
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/compiler/lib/intel64_lin
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/mkl/lib/intel64_lin
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/tbb/lib/intel64/gcc4.7
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/daal/lib/intel64_lin
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/daal/../tbb/lib/intel64_lin/gcc4.4
+-- /home1/apps/intel/debugger_2018/iga/lib
+-- /home1/apps/intel/debugger_2018/libipt/intel64/lib
 
 prepend_path( "CPATH" ,     pathJoin( installDir , "ipp/include"  ) )
 prepend_path( "CPATH" ,     pathJoin( installDir , "mkl/include"  ) )
 prepend_path( "CPATH" ,     pathJoin( installDir , "tbb/include"  ) )
 prepend_path( "CPATH" ,     pathJoin( installDir , "daal/include" ) )
+prepend_path( "CPATH" ,     pathJoin( installDir , "pstl/include" ) )
 
 --CPATH=
--- /opt/intel/compilers_and_libraries_2018.0.128/linux/ipp/include
--- /opt/intel/compilers_and_libraries_2018.0.128/linux/mkl/include
--- /opt/intel/compilers_and_libraries_2018.0.128/linux/tbb/include
--- /opt/intel/compilers_and_libraries_2018.0.128/linux/daal/include
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/ipp/include
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/mkl/include
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/tbb/include
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/daal/include
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/pstl/include
 
 prepend_path( "NLSPATH" ,     pathJoin( installDir , "compiler/lib/intel64/locale/%l_%t/%N"               ) )
 prepend_path( "NLSPATH" ,     pathJoin( installDir , "mkl/lib/intel64/locale/%l_%t/%N"                    ) )
 prepend_path( "NLSPATH" ,     pathJoin( base       , "debugger_%{year}/gdb/intel64/share/locale/%l_%t/%N" ) )
 
 --NLSPATH=
--- /opt/intel/compilers_and_libraries_2018.0.128/linux/compiler/lib/intel64/locale/%l_%t/%N
--- /opt/intel/compilers_and_libraries_2018.0.128/linux/mkl/lib/intel64/locale/%l_%t/%N
--- /opt/intel/debugger_2018/gdb/intel64/share/locale/%l_%t/%N
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/compiler/lib/intel64/locale/%l_%t/%N
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/mkl/lib/intel64/locale/%l_%t/%N
+-- /home1/apps/intel/debugger_2018/gdb/intel64/share/locale/%l_%t/%N
 
 prepend_path( "PATH" ,        pathJoin( gcc_base   , "bin"         ) )
 prepend_path( "PATH" ,        pathJoin( installDir , "bin/intel64" ) )
 
 --PATH=
 -- /opt/apps/gcc/6.3.0/bin
--- /opt/intel/compilers_and_libraries_2018.0.128/linux/bin/intel64
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/bin/intel64
 
 setenv( "TBBROOT" ,           tbbRoot )
 
 --TBBROOT=
--- /opt/intel/compilers_and_libraries_2018.0.128/linux/tbb
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/tbb
 
 setenv( "DAALROOT" ,          daalRoot )
 
---TBBROOT=
--- /opt/intel/compilers_and_libraries_2018.0.128/linux/daal
+--DAALROOT=
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/daal
+
+setenv( "PSTLROOT" ,          pstlRoot )
+
+--PSTLROOT=
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/pstl
+
+setenv("PKG_CONFIG_PATH",     pathJoin(mklRoot, "bin/pkgconfig") )
+
+--PKG_CONFIG_PATH=
+-- /home1/apps/intel/compilers_and_libraries_2018.0.128/linux/mkl/bin/pkgconfig
 
 setenv( "ICC_BIN" ,             pathJoin(installDir , "bin" , arch               ) )
 setenv( "IFC_BIN" ,             pathJoin(installDir , "bin" , arch               ) )
@@ -350,7 +363,14 @@ setenv( "TACC_INTEL_DIR" ,      installDir                                      
 setenv( "TACC_INTEL_BIN" ,      pathJoin(installDir , "bin/intel64"              ) )
 setenv( "TACC_INTEL_LIB" ,      pathJoin(installDir , "compiler/lib/intel64"     ) )
 setenv( "TACC_INTEL_INC" ,      pathJoin(installDir , "compiler/include/intel64" ) )
-setenv( "TACC_VEC_FLAGS" ,      "-xCORE-AVX2 -axCORE-AVX512,MIC-AVX512" )
+
+if (os.getenv("TACC_SYSTEM") == "stampede2") then
+  setenv( "TACC_VEC_FLAGS" ,      "-xCORE-AVX2 -axCORE-AVX512,MIC-AVX512" )
+elseif (os.getenv("TACC_SYSTEM") == "ls5") then
+  setenv( "TACC_VEC_FLAGS" ,      "-xCORE-AVX-I -axCORE-AVX2" )
+else
+  setenv( "TACC_VEC_FLAGS" ,      "-xCORE-AVX2" )
+end
 
 prepend_path( "MODULEPATH" , "/opt/apps/intel18/modulefiles" )
 family("compiler")

@@ -61,7 +61,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3%{?dist}
+Release:   4%{?dist}
 License:   GNU
 Group: Development/Numerical-Libraries
 Vendor:     Argonne National Lab
@@ -163,16 +163,22 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 # Use mount temp trick
 #
 mkdir -p             %{INSTALL_DIR}
+mkdir -p ${RPM_BUILD_ROOT}/%{INSTALL_DIR}
 mount -t tmpfs tmpfs %{INSTALL_DIR}
-mkdir -p %{INSTALL_DIR}/{lib,include}
-mkdir -p ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/{lib,include}
-export SLU_SRC=%{INSTALL_DIR}
-export SLU_INSTALLATION=${RPM_BUILD_ROOT}/%{INSTALL_DIR}
-mkdir -p ${SLU_INSTALLATION}
+export SLU_INSTALLATION=%{INSTALL_DIR}
 
+#
+# make a copy of the source tree in which to build
+# (later try doing everything in BUILD?)
+#
+export SLU_SRC=/tmp/superlu-build
+rm -rf ${SLU_SRC}
+mkdir -p ${SLU_SRC}
 cp -r * ${SLU_SRC}
 cp %{SPEC_DIR}/superlu_seq-%{version}.inc ${SLU_SRC}/make.inc
-pushd ${SLU_SRC}
+pushd ${SLU_SRC} # place for cmake crap
+mkdir build
+cd build
 
 #
 # config/make
@@ -185,22 +191,39 @@ pushd ${SLU_SRC}
   export LOADOPTS=-mkl
 %endif
 %if "%{is_gcc}" == "1"
-  export CC="gcc -fPIC"
+  module load mkl
+  # /opt/intel/compilers_and_libraries_2017.4.196/linux/mkl/lib/intel64
+  export CC="gcc"
   export CXX=g++
-  export FC="gfort -fPIC"
+  export FC="gfortran"
   export CFLAGS=-O2
 %endif
 
-make CC="${CC}" FORTRAN="${FC}" CFLAGS="${CFLAGS}" \
-          LOADOPTS=${LOADOPTS} NOOPTS="-O0 -fPIC" \
-          ARCH=ar RANLIB=ranlib \
-          SuperLUroot=${SLU_BUILD} SUPERLULIB=${SLU_INSTALLATION}/lib/libsuperlu.a \
-          clean install lib
-cp SRC/*.h ${SLU_INSTALLATION}/include
+cmake \
+    -D CMAKE_INSTALL_PREFIX:PATH="${SLU_INSTALLATION}" \
+    -D CMAKE_BUILD_TYPE:STRING=RELEASE \
+    -D CMAKE_C_COMPILER:FILEPATH=`which ${CC}` \
+    -D CMAKE_Fortran_COMPILER:FILEPATH="`which ${FC}`" \
+    -D CMAKE_C_FLAGS:STRING="-g -std=c99 -DNDEBUG -fPIC" \
+    -D CMAKE_Fortran_FLAGS:STRING="-g -shared -fPIC" \
+    -D enable_blaslib:BOOL=OFF \
+    -D TPL_BLAS_LIBRARIES="-L${TACC_MKL_LIB} -lmkl_core -lmkl_sequential -lmkl_rt" \
+    ${SLU_SRC}
 
-#cp -r %{INSTALL_DIR}/* ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
-popd # from tmps back to BUILD
+make && make install
+
+popd # from /tmp back to BUILD
+cp -r %{INSTALL_DIR}/* ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
 umount %{INSTALL_DIR}
+
+#/opt/apps/gcc/7.1.0/bin/gcc  -DUSE_VENDOR_BLAS -DPRNTlevel=0 -DAdd_ -g -std=c99 -DNDEBUG -fPIC -O3 -DNDEBUG    CMakeFiles/z_test.dir/sp_ienv.c.o CMakeFiles/z_test.dir/zdrive.c.o CMakeFiles/z_test.dir/sp_zconvert.c.o CMakeFiles/z_test.dir/zgst01.c.o CMakeFiles/z_test.dir/zgst02.c.o CMakeFiles/z_test.dir/zgst04.c.o CMakeFiles/z_test.dir/zgst07.c.o  -o z_test  -L"/opt/intel/compilers_and_libraries_2017.4.196/linux/mkl/lib/intel64/libmkl_sequential.so /opt/intel/compilers_and_libraries_2017.4.196/linux/mkl/lib/intel64" -rdynamic ../SRC/libsuperlu.a MATGEN/libmatgen.a -lmkl_core -lm -Wl,-rpath,"/opt/intel/compilers_and_libraries_2017.4.196/linux/mkl/lib/intel64/libmkl_sequential.so /opt/intel/compilers_and_libraries_2017.4.196/linux/mkl/lib/intel64"
+#../build/TESTING/CMakeFiles/z_test.dir/link.txt
+
+# make CC="${CC}" FORTRAN="${FC}" CFLAGS="${CFLAGS}" \
+#           LOADOPTS=${LOADOPTS} NOOPTS="-O0 -fPIC" \
+#           ARCH=ar RANLIB=ranlib \
+#           SuperLUroot=${SLU_BUILD} SUPERLULIB=${SLU_INSTALLATION}/lib/libsuperlu.a \
+#           clean install lib
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -317,6 +340,8 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Tue Apr 03 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 4: using cmake
 * Mon Mar 12 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 3: fPIC really fixed
 * Tue Feb 13 2018 eijkhout <eijkhout@tacc.utexas.edu>

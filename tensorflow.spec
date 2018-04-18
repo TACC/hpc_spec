@@ -32,6 +32,9 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 
 # Create some macros (spec file variables)
+%define arch                      knl
+%define ARCH                      KNL
+%define garch                     knl
 %define gpu_build                 0
 %define bazel_base_major_version  0
 %define bazel_base_minor_version  3
@@ -62,10 +65,10 @@ Summary: A Nice little relocatable skeleton spec file example.
 %define python_minor_version      7
 %define python_patch_version      14
 %define major_version             1
-%define minor_version             6
+%define minor_version             7
 %define micro_version             0
 %define tensorboard_major_version 1
-%define tensorboard_minor_version 6
+%define tensorboard_minor_version 7
 %define tensorboard_micro_version 0
 
 
@@ -103,8 +106,8 @@ Summary: A Nice little relocatable skeleton spec file example.
   %define build_type gpu
   %define BUILD_TYPE GPU
 %else
-  %define build_type cpu
-  %define BUILD_TYPE CPU
+  %define build_type cpu-%{arch}
+  %define BUILD_TYPE CPU-%{ARCH}
 %endif
 
 %define pkg_version         %{major_version}.%{minor_version}.%{micro_version}
@@ -125,7 +128,7 @@ Summary: A Nice little relocatable skeleton spec file example.
   %define INSTALL_SUFFIX  %{comp_fam_ver}/%{cuda_fam_ver}/%{cudnn_fam_ver}/%{python_fam_ver}/%{pkg_base_name}-%{build_type}/%{pkg_version}
   %define MODULE_SUFFIX   %{comp_fam_ver}/%{cuda_fam_ver}/%{cudnn_fam_ver}/%{python_fam_ver}/modulefiles/%{pkg_base_name}-%{build_type}
 %endif
-%if "%{build_type}" == "cpu"
+%if "%{build_type}" == "cpu-%{arch}"
   %define pkg_name        %{name_prefix}-%{pkg_base_name}-%{build_type}-%{comp_fam_ver}-%{python_fam_ver}
   %define INSTALL_SUFFIX  %{comp_fam_ver}/%{python_fam_ver}/%{pkg_base_name}-%{build_type}/%{pkg_version}
   %define MODULE_SUFFIX   %{comp_fam_ver}/%{python_fam_ver}/modulefiles/%{pkg_base_name}-%{build_type}
@@ -272,7 +275,7 @@ ml TACC
 ml git cuda/%{cuda_pkg_version} cudnn/%{cudnn_pkg_version} %{python_pkg_name}/%{python_pkg_version}
 %endif
 
-%if "%{build_type}" == "cpu"
+%if "%{build_type}" == "cpu-%{arch}"
 ml git %{python_pkg_name}/%{python_pkg_version}
 %endif
 
@@ -464,10 +467,11 @@ git checkout tags/v%{pkg_version}
 #patch -p0 < %{_sourcedir}/CROSSTOOL_nvcc.tpl-v%{pkg_version}.patch
 #patch -p0 < %{_sourcedir}/CROSSTOOL.toolchain.cpus-v%{pkg_version}.patch
 patch -p0 < %{_sourcedir}/tensorflow.bzl-v%{pkg_version}.patch
-patch -p0 < %{_sourcedir}/BUILD.contrib.v%{pkg_version}.patch
+#patch -p0 < %{_sourcedir}/BUILD.contrib.v%{pkg_version}.patch
 patch -p0 < %{_sourcedir}/BUILD.tensorflow.v%{pkg_version}.patch
-patch -p0 < %{_sourcedir}/__init__.contrib.v%{pkg_version}.patch
-#patch -p0 < %{_sourcedir}/BUILD.mpi-v%{pkg_version}.patch
+#patch -p0 < %{_sourcedir}/__init__.contrib.v%{pkg_version}.patch
+patch -p0 < %{_sourcedir}/BUILD.mpi-v%{pkg_version}.patch
+patch -p0 < %{_sourcedir}/BUILD.mpi_collectives-v%{pkg_version}.patch
 #patch -p0 < %{_sourcedir}/BUILD.mkl-v%{pkg_version}.patch
 #patch -p0 < %{_sourcedir}/mkl.BUILD-v%{pkg_version}.patch
 ##patch -p0 < %{_sourcedir}/CROSSTOOL-v%{pkg_version}.patch
@@ -480,7 +484,7 @@ patch -p0 < %{_sourcedir}/__init__.contrib.v%{pkg_version}.patch
 %if "%{build_type}" == "gpu"
 ${tensorflow}/%{bazel_base_name}/bazel-bin/src/bazel build -c opt --copt="-mavx2" --copt="-march=broadwell" --copt="-mtune=broadwell" --copt="-O3" --copt="-flto" --linkopt '-lrt' --genrule_strategy=standalone --spawn_strategy=standalone --config=cuda -s --verbose_failures //tensorflow/tools/pip_package:build_pip_package
 %endif
-%if "%{build_type}" == "cpu"
+%if "%{build_type}" == "cpu-%{arch}"
 #export TF_MKL_ROOT=/opt/apps/intel/15/composer_xe_2015.3.187/mkl
 #${tensorflow}/%{bazel_base_name}/bazel-bin/src/bazel build -c opt --copt=-mavx --linkopt '-lrt' --genrule_strategy=standalone --spawn_strategy=standalone --config=mkl --copt="-DEIGEN_USE_MKL_VML" -s --verbose_failures //tensorflow/tools/pip_package:build_pip_package
 #export TF_MKL_ENABLED="true"
@@ -490,7 +494,7 @@ ${tensorflow}/%{bazel_base_name}/bazel-bin/src/bazel build -c opt --copt="-mavx2
 #${tensorflow}/%{bazel_base_name}/bazel-bin/src/bazel build -c opt --copt="-mavx2" --copt="-march=broadwell" --copt="-mtune=broadwell" --copt="-O3" --copt="-flto" --linkopt '-lrt' --genrule_strategy=standalone --spawn_strategy=standalone -s --verbose_failures //tensorflow/tools/pip_package:build_pip_package
 #${tensorflow}/%{bazel_base_name}/bazel-bin/src/bazel build -c opt --copt="-mavx2" --copt="-march=broadwell" --copt="-mtune=broadwell" --copt="-O3" --copt="-mavx512f" --copt="-mavx512cd" --copt="-ftree-vectorize" --copt="-funsafe_math_optimizations" --copt="-flto" --cxxopt="-std=c++11" --config=opt --linkopt '-lrt' --genrule_strategy=standalone --spawn_strategy=standalone -s --verbose_failures //tensorflow/tools/pip_package:build_pip_package
 #bazel build -c opt --copt="-mavx2" --copt="-march=broadwell" --copt="-mtune=broadwell" --copt="-Ofast" --copt="-mavx512f" --copt="-mavx512cd" --copt="-ftree-vectorize" --copt="-fuse-ld=gold" --cxxopt="-std=c++11" --config=opt --linkopt '-lrt' --genrule_strategy=standalone --spawn_strategy=standalone -s --verbose_failures //tensorflow/tools/pip_package:build_pip_package
-bazel build -c opt --copt="-mavx2" --copt="-march=skylake-avx512" --copt="-mtune=skylake-avx512" --copt="-Ofast" --copt="-ftree-vectorize" --copt="-fuse-ld=gold" --cxxopt="-std=c++11" --config=opt --linkopt '-lrt' --genrule_strategy=standalone --spawn_strategy=standalone -s --verbose_failures //tensorflow/tools/pip_package:build_pip_package
+bazel build --jobs=68 -c opt --copt="-march=%{garch}" --copt="-mtune=%{garch}" --copt="-Ofast" --copt="-ftree-vectorize" --copt="-mfma" --copt="-fuse-ld=gold" --cxxopt="-std=c++11" --config=opt --config=mkl --linkopt '-lrt' --genrule_strategy=standalone --spawn_strategy=standalone -s --verbose_failures //tensorflow/tools/pip_package:build_pip_package
 %endif
 cd ${tensorflow}/%{pkg_base_name}
 bazel-bin/tensorflow/tools/pip_package/build_pip_package ${tensorflow}/%{pkg_base_name}/tensorflow_pkg 
@@ -602,7 +606,7 @@ EOF
 %endif 
 
 
-%if "%{build_type}" == "cpu"
+%if "%{build_type}" == "cpu-%{arch}"
 
 
 %define python_inherit       %( if [ ! -f "%{MODULE_PREFIX}/%{comp_fam_ver}/modulefiles/%{python_pkg_name}/%{python_pkg_version}.lua" ]; then echo "%{MODULE_PREFIX}/%{comp_fam_ver}/modulefiles/%{python_pkg_name}/%{python_pkg_version}.lua"; else echo ""; fi )
@@ -745,7 +749,7 @@ EOF
   %{cudnn_inherit}
   %{python_inherit}
 %endif
-%if "%{build_type}" == "cpu"
+%if "%{build_type}" == "cpu-%{arch}"
   %{python_inherit}
   %{python_mv2_inherit}
 %endif
