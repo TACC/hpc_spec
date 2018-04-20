@@ -13,11 +13,12 @@ Release: 1
 
 Summary: Secure Sockets Layer and cryptography libraries and tools
 Name: openssl
-Version: 1.0.2m
+Version: 1.0.2o
 Source0: ftp://ftp.openssl.org/source/%{name}-%{version}.tar.gz
 License: OpenSSL
 Group: System Environment/Libraries
 Provides: SSL
+Provides: tacc-openssl
 URL: http://www.openssl.org/
 Packager: Damien Miller <djm@mindrot.org>
 BuildRoot:   /var/tmp/%{name}-%{version}-root
@@ -114,8 +115,9 @@ rm -rf $RPM_BUILD_ROOT
 make MANDIR=%{INSTALL_DIR}/%{_mandir} MANSUFFIX=ssl INSTALL_PREFIX="$RPM_BUILD_ROOT" install
 
 # WCP add 2017-12-07
-mkdir -p "$RPM_BUILD_ROOT"/usr/lib64
-ln -sf %{INSTALL_DIR}/usr/lib/libcrypto.so.1.0.0 "$RPM_BUILD_ROOT"/usr/lib64/libcrypto.so.1.0.0
+# WCP doesn't work on shared /opt/apps
+#mkdir -p "$RPM_BUILD_ROOT"/usr/lib64
+#ln -sf %{INSTALL_DIR}/usr/lib/libcrypto.so.1.0.0 "$RPM_BUILD_ROOT"/usr/lib64/libcrypto.so.1.0.0
 
 # Make backwards-compatibility symlink to ssleay
 #ln -sf %{INSTALL_DIR}/usr/bin/openssl $RPM_BUILD_ROOT/%{INSTALL_DIR}/usr/bin/ssleay
@@ -128,7 +130,8 @@ rm -rf $RPM_BUILD_ROOT
 %doc CHANGES CHANGES.SSLeay LICENSE NEWS README
 
 # WCP added
-%attr(0755,root,root) /usr/lib64/libcrypto.so.1.0.0
+# WCP doesn't work on shared /opt/apps
+#%attr(0755,root,root) /usr/lib64/libcrypto.so.1.0.0
 %attr(0755,root,root) %{INSTALL_DIR}/%{_bindir}/*
 %attr(0755,root,root) %{INSTALL_DIR}/usr/lib/*.so*
 %attr(0755,root,root) %{INSTALL_DIR}/usr/lib/engines/*.so*

@@ -13,7 +13,7 @@ Summary: Local ParMETIS binary install
 
 Name: %{name_prefix}-%{base_name}
 Version: 4.0.2
-Release: 3
+Release: 4
 License: GPL
 Vendor: George Karypis
 Group: System Environment/Base
@@ -104,6 +104,10 @@ METIS_H=metis/include/metis.h
 cp  $METIS_H ${METIS_H}.orig
 cat ${METIS_H}.orig | sed -e 's/REALTYPEWIDTH 32/REALTYPEWIDTH 64/' > $METIS_H
 
+make config cc=$CC prefix=%{INSTALL_DIR}
+make
+make install DESTDIR=$RPM_BUILD_ROOT
+make distclean
 make config shared=1 cc=$CC prefix=%{INSTALL_DIR} 
 make
 

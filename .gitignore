@@ -12,3 +12,4 @@ CHROOT_ONLY*
 *.cmake-cache
 *.orig
 *.install
+*.rpm

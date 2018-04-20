@@ -173,6 +173,7 @@ pushd %{INSTALL_DIR}
 echo "contents of install-dir before installation"
 ls
 export PETSC_DIR=`pwd`
+export SRC_DIR=%{_topdir}/SOURCES
 
 module load cmake valgrind
 %if "%{comp_fam}" == "gcc"
@@ -197,7 +198,7 @@ export ML_STRING=
 ##
 ## Hypre
 ##
-export HYPRE_OPTIONS="--with-hypre=1 --download-hypre"
+export HYPRE_OPTIONS="--with-hypre=1 --download-hypre=${SRC_DIR}/git.hypre.tgz"
 export HYPRE_STRING=hypre
 
 %if "%{is_intel}" == "1"
@@ -240,8 +241,8 @@ export logdir=%{_topdir}/../apps/petsc/logs
 mkdir -p ${logdir}; rm -rf ${logdir}/*
 export dynamiccc="i64 debug i64debug uni unidebug"
 export dynamiccxx="cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug cxxi64 cxxi64debug"
+
 #export static="cxxstatic cxxstaticdebug static staticdebug complexstatic complexstaticdebug cxxcomplexstatic cxxcomplexstaticdebug"
-#module load python
 
 export EXTENSIONS="single ${dynamiccc} ${dynamiccxx}"
 export noext="\
@@ -372,8 +373,10 @@ export SUNDIALS_STRING="sundials"
 #
 # SuperLU
 #
-export SUPERLU_OPTIONS="--with-superlu_dist=1 --download-superlu_dist \
-   --with-superlu=1 --download-superlu ${PARMETIS_OPTIONS}"
+export SUPERLU_OPTIONS="\
+    --with-superlu_dist=1 --download-superlu_dist=${SRC_DIR}/git.superlu_dist.tgz \
+    --with-superlu=1 --download-superlu=${SRC_DIR}/git.superlu.tgz \
+    ${PARMETIS_OPTIONS}"
 export SUPERLU_STRING="superlu and superlu_dist"
 
 ##

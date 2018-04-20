@@ -1,6 +1,6 @@
-#
-# W. Cyrus Proctor
-# 2015-11-07
+# 2017-06-29 cproctor stewarding
+# Carlos Rosales-Fernandez (carlos@tacc.utexas.edu)
+# 2017-05-22
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -20,24 +20,26 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name cmake
-%define MODULE_VAR    CMAKE
+%define pkg_base_name siesta
+%define MODULE_VAR    SIESTA
 
 # Create some macros (spec file variables)
-%define major_version 3
-%define minor_version 10
-%define micro_version 2
+%define major_version 4
+%define minor_version 0
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{major_version}.%{minor_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
-#%include mpi-defines.inc
+%include compiler-defines.inc
+%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
 %include name-defines.inc
+#%include name-defines-noreloc.inc
+#%include name-defines-hidden.inc
+#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -49,9 +51,9 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1%{?dist}
-License:   BSD
-Group:     System/Utils
-URL:       http://www.cmake.org
+License:   GPL
+Group:     Applications/Chemistry
+URL:       http://www.icmab.es/siesta/
 Packager:  TACC - cproctor@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
@@ -73,14 +75,10 @@ Group: Lmod/Modulefiles
 This is the long description for the modulefile RPM...
 
 %description
-CMake  is an extensible, open-source system that manages the build process in
-an operating system and in a compiler-independent manner. Unlike many cross-
-platform systems, CMake is designed to be used in conjunction with the native
-build environment. Simple configuration files placed in each source directory
-(called CMakeLists.txt files) are used to generate standard build files (e.g.,
-makefiles on Unix and projects/workspaces in Windows MSVC) which are used in
-the usual way.
-
+Siesta (Spanish Initiative for Electronic Simulations with Thousands of Atoms)
+is both a method and its computer program implementation, to perform electronic
+structure calculations and ab initio molecular dynamics simulations of
+molecules and solids.
 
 #---------------------------------------
 %prep
@@ -91,6 +89,9 @@ the usual way.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+%setup -n %{pkg_base_name}-%{pkg_version}
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -104,7 +105,6 @@ the usual way.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n %{pkg_base_name}-%{pkg_version}
 
 
 #---------------------------------------
@@ -118,12 +118,13 @@ the usual way.
 
 # Setup modules
 %include system-load.inc
-#%include compiler-load.inc
-
-# Insert necessary module commands
 module purge
-# For bootstrapping
-ml gcc/4.9.3
+# Load Compiler
+%include compiler-load.inc
+# Load MPI Library
+%include mpi-load.inc
+
+# Insert further module commands
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -146,25 +147,48 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
 
-# OpenSSL Hack
-#export PATH=/opt/openssl/1.0.2m/usr/bin:$PATH
-#export LD_LIBRARY_PATH=/opt/openssl/1.0.2m/usr/lib:$LD_LIBRARY_PATH
-#export CPPFLAGS="-I/opt/openssl/1.0.2m/usr/include"
- 
-  export CC=gcc
-  export CXX=g++
-  export CFLAGS="-mtune=generic"
-  export CXXFLAGS="-mtune=generic -std=c++1y"
-  #export LDFLAGS="-Wl,-rpath,${GCC_LIB} -march=core-avx -mtune=core-avx2" # Location of correct libstdc++.so.6
-  #export LDFLAGS="-mtune=generic /opt/openssl/1.0.2m/usr/lib/libssl.a" # Location of correct libstdc++.so.6
-  export LDFLAGS="-mtune=generic -L/opt/apps/gcc/4.9.3/lib64 -lstdc++ -Wl,-rpath,/opt/apps/gcc/4.9.3/lib64" # Location of correct libstdc++.so.6
-  echo ${LD_LIBRARY_PATH}
-  echo ${LDFLAGS}
-  # DO NOT preppend $RPM_BUILD_ROOT in prefix
-  ./bootstrap --prefix=%{INSTALL_DIR} --system-curl --parallel=8
-  #cmake .
-  make -j 8
-  make DESTDIR=$RPM_BUILD_ROOT install -j 8
+
+# Mount temp trick
+ mkdir -p             %{INSTALL_DIR}
+ mount -t tmpfs tmpfs %{INSTALL_DIR}
+
+# Prepare the build directory
+cd ./Obj
+sh ../Src/obj_setup.sh
+cp ../Src/Sys/ls5_intel_mkl.make ./arch.make
+
+# Build siesta
+CC=icc CXX=icpc make
+mkdir %{INSTALL_DIR}/bin
+cp siesta %{INSTALL_DIR}/bin
+
+# Build transiesta
+make clean
+CC=icc CXX=icpc make transiesta
+cp transiesta %{INSTALL_DIR}/bin
+
+mkdir -p                 $RPM_BUILD_ROOT/%{INSTALL_DIR}
+cp -r ../Examples %{INSTALL_DIR}
+cp -r ../Tutorials %{INSTALL_DIR}
+cp -r ../Docs %{INSTALL_DIR}
+
+# Build Utilities
+cd ../Util
+sh ./build_all.sh
+cp ./COOP/dm_creator %{INSTALL_DIR}/bin
+cp ./COOP/mprop %{INSTALL_DIR}/bin
+cp ./TBTrans/tbtrans %{INSTALL_DIR}/bin
+cp ./Denchar/Src/denchar %{INSTALL_DIR}/bin
+cp ./STM/ol-stm/Src/stm %{INSTALL_DIR}/bin
+cp ./STM/simple-stm/plstm %{INSTALL_DIR}/bin
+cp ./Gen-basis/gen-basis %{INSTALL_DIR}/bin
+cp ./Gen-basis/ioncat %{INSTALL_DIR}/bin
+cp ./Gen-basis/ionplot.sh %{INSTALL_DIR}/bin
+
+mkdir -p                 $RPM_BUILD_ROOT/%{INSTALL_DIR}
+cp    -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+umount                                   %{INSTALL_DIR}
+
   
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -187,38 +211,57 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_message = [[
-This module defines the environmental variables TACC_%{MODULE_VAR}_BIN
-and TACC_%{MODULE_VAR}_DIR for the location of the main CMake directory
-and the binaries.
+local help_message=[[
+This module loads Siesta built with Intel 17 and Intel MPI 17.
+This module makes available the following executables:
 
-The location of the binary files is also added to your PATH.
+siesta
+transiesta
 
-Extended documentation on CMake can be found under $TACC_%{MODULE_VAR}_DIR/doc.
+as well as the following utilities:
 
-Version %{version}
+tbtrans
+denchar
+dm_creator
+mprop
+stm
+plstm
+gen-basis
+ioncat
+
+In order to run siesta please create a link to the binary inside the execution
+directory, and make sure your submission script contains the lines:
+
+module load siesta
+ibrun ./siesta < input.fdf
+
+As of version 4.0 Siesta no longer provides the Atom program to generate 
+pseudopotentials. Please go to this addresss in order to obtain one:
+
+http://nninc.cnf.cornell.edu
+
+Version 4.0
 ]]
 
 help(help_message,"\n")
 
-whatis("Name: %{name}")
-whatis("Version: %{version}")
-whatis("Category: system, utilities")
-whatis("Keywords: System, Utility")
-whatis("Description: tool for generation of files from source")
-whatis("URL: http://www.cmake.org")
+whatis("Siesta")
+whatis("Version: 4.0")
+whatis("Category: application, chemistry")
+whatis("Keywords: Chemistry, Molecular Dynamics, Application")
+whatis("Description: Spanish Initiative for Electronic Simulations with Thousands of Atoms")
+whatis("URL: http://www.icmab.es/siesta")
 
--- Export environmental variables
-local cmake_dir="%{INSTALL_DIR}"
-local cmake_bin=pathJoin(cmake_dir,"bin")
-setenv("TACC_CMAKE_DIR",cmake_dir)
-setenv("TACC_CMAKE_BIN",cmake_bin)
+help(help_message,"\n")
 
--- Prepend the cmake directories to the adequate PATH variables
-prepend_path("PATH",cmake_bin)
+local siesta_dir="%{INSTALL_DIR}"
+setenv("TACC_SIESTA_DIR", siesta_dir)
+setenv("TACC_SIESTA_BIN", pathJoin(siesta_dir, "bin"))
+prepend_path("PATH",      pathJoin(siesta_dir, "bin"))
 
 EOF
-  
+
+# Version File
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -227,10 +270,12 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 
 set     ModulesVersion      "%{version}"
 EOF
-  
-  # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-
+ 
+ 
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %endif
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -260,7 +305,6 @@ EOF
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
 
 ########################################
 ## Fix Modulefile During Post Install ##

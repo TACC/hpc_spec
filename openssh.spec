@@ -34,6 +34,7 @@ Group:		Productivity/Networking/SSH
 Packager:       TACC - cproctor@tacc.utexas.edu
 BuildRoot:	%{_tmppath}/openssh-%{version}-buildroot
 PreReq:		openssl
+PreReq:		tacc-openssl
 Obsoletes:	ssh
 Provides:	ssh
 #
@@ -43,6 +44,7 @@ Provides:	ssh
 #   and Gnome (glibdev, gtkdev, and gnlibsd)
 #
 BuildPrereq:	openssl
+BuildPrereq:	tacc-openssl
 BuildPrereq:	zlib-devel
 #BuildPrereq:	glibdev
 #BuildPrereq:	gtkdev
@@ -146,16 +148,17 @@ This package contains an X Window System passphrase dialog for OpenSSH.
 
 %build
 autoreconf
-export PATH=/opt/openssl/1.0.2m/usr/bin:$PATH
-export LD_LIBRARY_PATH=/opt/openssl/1.0.2m/usr/lib:$LD_LIBRARY_PATH
-CPPFLAGS="-I/opt/openssl/1.0.2m/usr/include" \
+export PATH=/opt/openssl/1.0.2o/usr/bin:$PATH
+export LD_LIBRARY_PATH=/opt/openssl/1.0.2o/usr/lib:$LD_LIBRARY_PATH
+export LDFLAGS="-Wl,-rpath=/opt/openssl/1.0.2o/usr/lib -L/opt/openssl/1.0.2o/usr/lib"
+CPPFLAGS="-I/opt/openssl/1.0.2o/usr/include" \
 CFLAGS="$RPM_OPT_FLAGS" \
 %configure	--prefix=/usr \
                 --sysconfdir=%{_sysconfdir}/ssh \
                 --libexecdir=%{_libexecdir}/openssh \
                 --datadir=%{_datadir}/openssh \
-                --with-default-path=/usr/local/bin:/bin:/usr/bin \
-                --with-superuser-path=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin \
+                --with-default-path=/usr/local/bin:/bin:/usr/bin:/opt/openssl/1.0.2o/usr/bin \
+                --with-superuser-path=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/opt/openssl/1.0.2o/usr/bin \
                 --with-privsep-path=%{_var}/empty/sshd \
 		--mandir=%{_mandir} \
 		--with-pam \
@@ -165,7 +168,7 @@ CFLAGS="$RPM_OPT_FLAGS" \
                 --with-ipaddr-display        \
                 --with-libedit               \
                 --with-nerscmod              \
-                --with-ssl-dir=/opt/openssl/1.0.2m/usr
+                --with-ssl-dir=/opt/openssl/1.0.2o/usr
 make
 
 %if %{build_x11_askpass}

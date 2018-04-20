@@ -25,8 +25,8 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 # Create some macros (spec file variables)
 %define major_version 2
-%define minor_version 6
-%define micro_version 4
+%define minor_version 17
+%define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -48,12 +48,14 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2
+Release:   1
 License:   GPLv2
 Group:     System Environment/Base
 URL:       https://git-scm.com
 Packager:  TACC - cproctor@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+PreReq:      tacc-openssl
+BuildPrereq: tacc-openssl
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -65,12 +67,18 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
+Git is a free and open source distributed version control system designed to
+handle everything from small to very large projects with speed and efficiency.
+Git is easy to learn and has a tiny footprint with lightning fast performance.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
+Git is a free and open source distributed version control system designed to
+handle everything from small to very large projects with speed and efficiency.
+Git is easy to learn and has a tiny footprint with lightning fast performance.
 
 %description
 Git is a free and open source distributed version control system designed to
@@ -143,8 +151,11 @@ export git=`pwd`
 export git_install=%{INSTALL_DIR}
 export git_version=%{pkg_version}
 export CC=gcc
-export CFLAGS="-mtune=generic"
-export LDFLAGS="-mtune=generic"
+export PATH=/opt/openssl/1.0.2o/usr/bin:$PATH
+export LD_LIBRARY_PATH=/opt/openssl/1.0.2o/usr/lib:$LD_LIBRARY_PATH
+export   CFLAGS="-I/opt/openssl/1.0.2o/usr/include -I/opt/openssl/1.0.2o/usr/include/openssl -mtune=generic"
+export CPPFLAGS="-I/opt/openssl/1.0.2o/usr/include -I/opt/openssl/1.0.2o/usr/include/openssl"
+export LDFLAGS="-Wl,-rpath=/opt/openssl/1.0.2o/usr/lib -L/opt/openssl/1.0.2o/usr/lib -mtune=generic"
 
 wget https://www.kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
 tar xvfz git-${git_version}.tar.gz

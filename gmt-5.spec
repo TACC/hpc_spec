@@ -30,12 +30,12 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 # Create some macros (spec file variables)
 %define major_version 5
-%define minor_version 2
-%define micro_version 1
+%define minor_version 4
+%define micro_version 3
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
-%define gshhg_version 2.3.4
+%define gshhg_version 2.3.7
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -56,13 +56,18 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3
+Release:   4
 License:   GNU
 Group:     Development/Tools
 URL:       http://gmt.soest.hawaii.edu/
 Packager:  TACC - eijkhout@tacc.utexas.edu
-# VLE NOTE !!! the 5.2.1 source is manually edited
 Source:    %{pkg_base_name}-%{pkg_version}-src.tar.gz
+
+# VLE NOTE !!! the 5.2.1 source is manually edited
+#int dummy_for_icc; // VLE
+#int dummy_for_icc; // VLE
+#gmt-5.2.1/src/gmt_gdalread.h
+# the 5.4.3 seems to compile without such edit
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -354,6 +359,8 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 #---------------------------------------
 #
+* Tue Mar 13 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 4: up to 5.4.3
 * Tue May 10 2016 eijkhout <eijkhout@tacc.utexas.edu>
 - release 3: fixed the gshhg dataset
 * Wed Mar 09 2016 eijkhout <eijkhout@tacc.utexas.edu>

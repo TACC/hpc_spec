@@ -13,7 +13,7 @@ Summary: Local METIS binary install
 
 Name: %{name_prefix}-%{base_name}
 Version: 5.0.2
-Release: 4
+Release: 5
 License: University of Minnesota
 Vendor: George Karypis
 Group: System Environment/Base
@@ -73,6 +73,9 @@ cmake --version
 cp  include/metis.h include/metis.h.orig
 cat include/metis.h.orig | sed -e 's/REALTYPEWIDTH 32/REALTYPEWIDTH 64/' > include/metis.h
 
+make config cc=$CC prefix=%{INSTALL_DIR}
+make
+make install DESTDIR=$RPM_BUILD_ROOT
 make config shared=1 cc=$CC prefix=%{INSTALL_DIR}
 make
  

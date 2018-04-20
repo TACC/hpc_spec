@@ -37,7 +37,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 %define pkg_version %{major_version}.%{minor_version}
 
-%define petscversion 3.7
+%define petscversion 3.8
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -60,7 +60,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2
+Release:   3
 License:   LGPL
 Vendor: llnl.gov
 Group: Development/Numerical-Libraries
@@ -181,7 +181,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 ##
 ## configure install loop
 ##
-export dynamic="debug cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug "
+export dynamic="debug cxx cxxdebug i64 i64debug"
 
 for ext in \
   "" \
@@ -231,11 +231,14 @@ family("hypre")
 -- Create environment variables.
 local             hypre_arch =    "${architecture}"
 local             hypre_dir  =     "${TACC_PETSC_DIR}"
+local             hypre_bin  = pathJoin(hypre_dir,"bin")
 local             hypre_inc  = pathJoin(hypre_dir,hypre_arch,"include")
 local             hypre_lib  = pathJoin(hypre_dir,hypre_arch,"lib")
 
 prepend_path("LD_LIBRARY_PATH", hypre_lib)
 
+setenv("TACC_HYPRE_DIR",        hypre_dir )
+setenv("TACC_HYPRE_BIN",        hypre_bin )
 setenv("TACC_HYPRE_INC",        hypre_inc )
 setenv("TACC_HYPRE_LIB",        hypre_lib)
 EOF
@@ -269,9 +272,9 @@ done
 %files package
 #------------------------
 
-  %defattr(-,root,install,)
-  # RPM package contains files within these directories
-  %{INSTALL_DIR}
+#   %defattr(-,root,install,)
+#   # RPM package contains files within these directories
+#   %{INSTALL_DIR}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -311,6 +314,9 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Sun Dec 31 2017 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: adding spurious DIR/BIN variables, set to petsc 3.8, 
+    removed complex, added i64
 * Tue Jan 24 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: fixed unexpanded modulefile variables
 * Mon Jan 23 2017 eijkhout <eijkhout@tacc.utexas.edu>
