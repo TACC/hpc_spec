@@ -7,9 +7,10 @@
 
 %include rpm-dir.inc
 
-Release: 1
+Release: 2
 
-%define openssldir /var/ssl
+###%define openssldir /var/ssl
+%define openssldir /etc/ssl
 
 Summary: Secure Sockets Layer and cryptography libraries and tools
 Name: openssl
@@ -90,7 +91,8 @@ documentation and POD files from which the man pages were produced.
 
 %build 
 
-%define CONFIG_FLAGS -DSSL_ALLOW_ADH --prefix=%{INSTALL_DIR}/%{_exec_prefix} --openssldir=%{INSTALL_DIR}/%{openssldir}
+###%define CONFIG_FLAGS -DSSL_ALLOW_ADH --prefix=%{INSTALL_DIR}/%{_exec_prefix} --openssldir=%{INSTALL_DIR}/%{openssldir}
+%define CONFIG_FLAGS -DSSL_ALLOW_ADH --prefix=%{INSTALL_DIR}/%{_exec_prefix} --openssldir=%{openssldir}
 
 perl util/perlpath.pl /usr/bin/perl
 
@@ -140,9 +142,11 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0644,root,root) %{INSTALL_DIR}/%{_mandir}/man[157]/*
 
 %config %attr(0644,root,root) %{INSTALL_DIR}/%{openssldir}/openssl.cnf 
-%dir %attr(0755,root,root) %{INSTALL_DIR}/%{openssldir}/certs
+###%dir %attr(0755,root,root) %{INSTALL_DIR}/%{openssldir}/certs
+%dir %attr(0755,root,root) %{openssldir}/certs
 %dir %attr(0755,root,root) %{INSTALL_DIR}/%{openssldir}/misc
-%dir %attr(0750,root,root) %{INSTALL_DIR}/%{openssldir}/private
+##%dir %attr(0750,root,root) %{INSTALL_DIR}/%{openssldir}/private
+%dir %attr(0750,root,root) %{openssldir}/private
 
 %files devel
 %defattr(0644,root,root,0755)

@@ -37,7 +37,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+%include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -151,22 +151,26 @@ export git=`pwd`
 export git_install=%{INSTALL_DIR}
 export git_version=%{pkg_version}
 export CC=gcc
-export PATH=/opt/openssl/1.0.2o/usr/bin:$PATH
-export LD_LIBRARY_PATH=/opt/openssl/1.0.2o/usr/lib:$LD_LIBRARY_PATH
+export PATH=/opt/curl/7.20.1/usr/bin:/opt/openssl/1.0.2o/usr/bin:$PATH
+export LD_LIBRARY_PATH=/opt/curl/7.20.1/usr/lib64:/opt/openssl/1.0.2o/usr/lib:$LD_LIBRARY_PATH
 export   CFLAGS="-I/opt/openssl/1.0.2o/usr/include -I/opt/openssl/1.0.2o/usr/include/openssl -mtune=generic"
 export CPPFLAGS="-I/opt/openssl/1.0.2o/usr/include -I/opt/openssl/1.0.2o/usr/include/openssl"
-export LDFLAGS="-Wl,-rpath=/opt/openssl/1.0.2o/usr/lib -L/opt/openssl/1.0.2o/usr/lib -mtune=generic"
+export LDFLAGS="-Wl,-v -Wl,-rpath=/opt/openssl/1.0.2o/usr/lib -Wl,-rpath=/opt/curl/7.20.1/usr/lib64 -L/opt/openssl/1.0.2o/usr/lib -L/opt/curl/7.20.1/usr/lib64"
+#export LDFLAGS="-static -fPIC /opt/openssl/1.0.2o/usr/lib/libcrypto.a /opt/openssl/1.0.2o/usr/lib/libssl.a"
+#export LIBS="-lssl -lcrypto"
 
 wget https://www.kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
 tar xvfz git-${git_version}.tar.gz
 
 cd git-${git_version}
 
-${git}/git-${git_version}/configure \
---prefix=${git_install}
+${git}/git-${git_version}/configure    \
+--prefix=${git_install}                \
+--with-openssl=/opt/openssl/1.0.2o/usr \
+--with-curl=/opt/curl/7.20.1/usr
 
-make all -j ${ncores}
-make install -j ${ncores}
+make VERBOSE=1 all -j ${ncores}
+make VERBOSE=1 install -j ${ncores}
 
 if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
@@ -235,6 +239,7 @@ setenv (     "GIT_TEMPLATE_DIR"       , "%{INSTALL_DIR}/share/git-core/templates
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
+#cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version << 'EOF'
 #%Module3.1.1#################################################
 ##
 ## version file for %{BASENAME}%{version}

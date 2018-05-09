@@ -19,13 +19,11 @@
 
 %bcond_without openssl
 %bcond_with mozilla_nss
-###%bcond_without testsuite
+#%bcond_without testsuite
 %bcond_with testsuite
 
 Name:           curl
-#BuildRequires:  libidn-devel openldap2-devel pkg-config zlib-devel
-#BuildRequires:  libidn2-devel openldap2-devel pkg-config zlib-devel
-BuildRequires:  openldap2-devel pkg-config zlib-devel
+BuildRequires:  libidn-devel openldap2-devel pkg-config zlib-devel
 %if %{with openssl}
 BuildRequires:  openssl-devel
 %endif
@@ -37,8 +35,7 @@ BuildRequires:  krb5-devel
 %else
 BuildRequires:  heimdal-devel
 %endif
-##BuildRequires:  libssh2-devel openssh
-BuildRequires:  openssh
+BuildRequires:  libssh2-devel openssh
 %if 0%{?_with_stunnel:1}
 # used by the testsuite
 BuildRequires:  stunnel
@@ -61,8 +58,6 @@ Packager:       TACC - cproctor@tacc.utexas.edu
 Source:         curl-%version%{?cvs_suffix}.tar.bz2
 Source2:        baselibs.conf
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
-###%define         INSTALL_DIR /
-%define         INSTALL_DIR /opt/%{name}/%{version}
 PreReq:         tacc-openssl
 
 %description
@@ -103,13 +98,13 @@ user interaction or any kind of interactivity.
 # will hopefully change in the future)
 sed -i 's/link_all_deplibs=unknown/link_all_deplibs=no/' configure
 export CFLAGS="$RPM_OPT_FLAGS"
-export PATH=/opt/libidn2/2.0.4/usr/bin:/opt/openssl/1.0.2o/usr/bin:$PATH
-export LD_LIBRARY_PATH=/opt/libidn2/2.0.4/usr/lib:/opt/openssl/1.0.2o/usr/lib:$LD_LIBRARY_PATH
-export LDFLAGS="-Wl,-rpath=/opt/openssl/1.0.2o/usr/lib -L/opt/openssl/1.0.2o/usr/lib -Wl,-rpath=/opt/libidn2/2.0.4/usr/lib -L/opt/libidn2/2.0.4/usr/lib"
-export CPPFLAGS="-I/opt/libidn2/2.0.4/usr/include -I/opt/openssl/1.0.2o/usr/include"
+export PATH=/opt/openssl/1.0.2o/usr/bin:$PATH
+export LD_LIBRARY_PATH=/opt/openssl/1.0.2o/usr/lib:$LD_LIBRARY_PATH
+export LDFLAGS="-Wl,-rpath=/opt/openssl/1.0.2o/usr/lib -L/opt/openssl/1.0.2o/usr/lib"
+export CPPFLAGS="-I/opt/openssl/1.0.2o/usr/include"
 
 ./configure \
-	--prefix=%{INSTALL_DIR}/%{_prefix} \
+	--prefix=%{_prefix} \
 	--enable-ipv6 \
 %if %{with openssl}
 	--with-ssl=/opt/openssl/1.0.2o \
@@ -125,47 +120,42 @@ export CPPFLAGS="-I/opt/libidn2/2.0.4/usr/include -I/opt/openssl/1.0.2o/usr/incl
 %else
 	--with-gssapi=/usr/lib/heimdal \
 %endif
-        --without-libssh2 \
-	--libdir=%{INSTALL_DIR}%{_libdir} \
+	--with-libssh2\
+	--libdir=%{_libdir} \
 	--enable-hidden-symbols \
-	--enable-static \
-        --enable-shared
+	--disable-static
 : if this fails, the above sed hack did not work
 ./libtool --config | grep -q link_all_deplibs=no
-
-## --with-libssh2\
-##--disable-static
-
 # enable-hidden-symbols needs gcc4 and causes that curl exports only its API
 make %{?jobs:-j%jobs}
 
-### %if %{with testsuite}
-### 
-### %check
-### cd tests
-### make
-### # make sure the testsuite runs don't race on MP machines in autobuild
-### if test -z "$BUILD_INCARNATION" -a -r /.buildenv; then
-### 	. /.buildenv
-### fi
-### if test -z "$BUILD_INCARNATION"; then
-### 	BUILD_INCARNATION=0
-### fi
-### base=$((8990 + $BUILD_INCARNATION * 20))
-### perl ./runtests.pl -a -b$base || {
-### %if 0%{?curl_testsuite_fatal:1}
-### 	exit
-### %else
-### 	echo "WARNING: runtests.pl failed with code $?, continuing nevertheless"
-### %endif
-### }
-### %endif
+%if %{with testsuite}
+
+%check
+cd tests
+make
+# make sure the testsuite runs don't race on MP machines in autobuild
+if test -z "$BUILD_INCARNATION" -a -r /.buildenv; then
+	. /.buildenv
+fi
+if test -z "$BUILD_INCARNATION"; then
+	BUILD_INCARNATION=0
+fi
+base=$((8990 + $BUILD_INCARNATION * 20))
+perl ./runtests.pl -a -b$base || {
+%if 0%{?curl_testsuite_fatal:1}
+	exit
+%else
+	echo "WARNING: runtests.pl failed with code $?, continuing nevertheless"
+%endif
+}
+%endif
 
 %install
-make install DESTDIR=$RPM_BUILD_ROOT mandir=%{INSTALL_DIR}/%{_mandir}
-rm $RPM_BUILD_ROOT%{INSTALL_DIR}%{_libdir}/libcurl.la
-install -d $RPM_BUILD_ROOT%{INSTALL_DIR}/usr/share/aclocal
-install -m 644 docs/libcurl/libcurl.m4 $RPM_BUILD_ROOT%{INSTALL_DIR}/usr/share/aclocal/
+make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
+rm $RPM_BUILD_ROOT%_libdir/libcurl.la
+install -d $RPM_BUILD_ROOT/usr/share/aclocal
+install -m 644 docs/libcurl/libcurl.m4 $RPM_BUILD_ROOT/usr/share/aclocal/
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -176,36 +166,26 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root)
-### %doc %{INSTALL_DIR}/README
-### %doc %{INSTALL_DIR}RELEASE-NOTES
-### %doc %{INSTALL_DIR}/docs/BUGS
-### %doc %{INSTALL_DIR}/docs/FAQ
-### %doc %{INSTALL_DIR}/docs/FEATURES
-### %doc %{INSTALL_DIR}/docs/MANUAL
-### %doc %{INSTALL_DIR}/docs/RESOURCES
-### %doc %{INSTALL_DIR}/docs/TODO
-### %doc %{INSTALL_DIR}/docs/TheArtOfHttpScripting
-### %doc %{INSTALL_DIR}/lib/README.curl_off_t
-%{INSTALL_DIR}%{_prefix}/bin/curl
-##%doc %{INSTALL_DIR}%{_mandir}/man1/curl.1.gz
-%doc %{INSTALL_DIR}%{_mandir}/man1/curl.1
+%doc README RELEASE-NOTES
+%doc docs/{BUGS,FAQ,FEATURES,MANUAL,RESOURCES,TODO,TheArtOfHttpScripting}
+%doc lib/README.curl_off_t
+%{_prefix}/bin/curl
+%doc %{_mandir}/man1/curl.1.gz
 
 %files -n libcurl4
 %defattr(-,root,root)
-%{INSTALL_DIR}%{_libdir}/libcurl.so.4*
-%{INSTALL_DIR}%{_libdir}/libcurl.a
+%{_libdir}/libcurl.so.4*
 
 %files -n libcurl-devel
 %defattr(-,root,root)
-%{INSTALL_DIR}%{_prefix}/bin/curl-config
-%{INSTALL_DIR}%{_prefix}/include/curl
-%{INSTALL_DIR}%{_prefix}/share/aclocal/libcurl.m4
-%{INSTALL_DIR}%{_libdir}/libcurl.so
-%{INSTALL_DIR}%{_libdir}/pkgconfig/libcurl.pc
-##%doc %{INSTALL_DIR}%{_mandir}/man1/curl-config.1.gz
-%doc %{INSTALL_DIR}%{_mandir}/man1/curl-config.1
-%doc %{INSTALL_DIR}%{_mandir}/man3/*
-##%doc %{INSTALL_DIR}/docs/libcurl/symbols-in-versions
+%{_prefix}/bin/curl-config
+%{_prefix}/include/curl
+%{_prefix}/share/aclocal/libcurl.m4
+%{_libdir}/libcurl.so
+%{_libdir}/pkgconfig/libcurl.pc
+%doc %{_mandir}/man1/curl-config.1.gz
+%doc %{_mandir}/man3/*
+%doc docs/libcurl/symbols-in-versions
 
 %changelog
 * Wed Jun  2 2010 lnussel@suse.de

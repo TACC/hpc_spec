@@ -22,6 +22,7 @@ URL:		https://slurm.schedmd.com/
 
 Source:		%{slurm_source_dir}.tar.bz2
 Patch100: slurm-%{version}.patch
+Patch101: slurm-%{version}_LG.configure.patch
 
 ## WCP Added in for ls5
 %global _prefix /opt/slurm/%{version}
@@ -110,7 +111,7 @@ BuildRequires: mariadb-devel
 %endif
 BuildRequires: cray-libalpscomm_cn-devel
 BuildRequires: cray-libalpscomm_sn-devel
-BuildRequires: hwloc-devel
+BuildRequires: libhwloc-devel
 BuildRequires: gtk2-devel
 BuildRequires: glib2-devel
 BuildRequires: pkgconfig
@@ -123,7 +124,7 @@ BuildRequires: pkgconfig(lua) >= 5.1.0
 %endif
 
 %if %{with hwloc}
-BuildRequires: hwloc-devel
+BuildRequires: libhwloc-devel
 %endif
 
 %if %{with numa}
@@ -291,11 +292,16 @@ according to the Slurm
 # when the rel number is one, the tarball filename does not include it
 %setup -n %{slurm_source_dir}
 %patch100 -p1
+%patch101 -p1
 
 %build
 %if %{with cray}
   echo "CYRUS WITH CRAY"
 %endif
+#%include system-load.inc
+#ml purge
+#ml autotools
+#./autogen.sh
 %configure \
 	%{?_without_debug:--disable-debug} \
 	%{?_with_pam_dir} \

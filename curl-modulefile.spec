@@ -1,6 +1,6 @@
 #
 # W. Cyrus Proctor
-# 2015-11-20
+# 2015-11-12
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -20,14 +20,15 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name TACC
-%define MODULE_VAR    TACC
+%define pkg_base_name curl
+%define MODULE_VAR    CURL
 
 # Create some macros (spec file variables)
-%define major_version 1
-%define minor_version 0
+%define major_version 7
+%define minor_version 20
+%define micro_version 1
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -42,15 +43,15 @@ Summary: A Nice little relocatable skeleton spec file example.
 ########################################
 
 ############ Do Not Change #############
-# hacked for reasonable name WCP 2015-12-01
-Name:      tacc-tacc_env_base_modules
+Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   11%{?dist}
-License:   GPL
-Group:     Module Magic
+Release:   1%{?dist}
+License:   proprietary
+Group:     Compiler
+URL:       https://curl.haxx.se
 Packager:  TACC - cproctor@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
@@ -64,17 +65,17 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
-Welcome to the TACC Module way!
+This is specifically an rpm for the curl modulefile used on LS5.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
-Welcome to the TACC Module way!
+This is specifically an rpm for the curl modulefile used on LS5.
 
 %description
-Welcome to the TACC Module way!
+This is specifically an rpm for the curl modulefile used on LS5.
 
 #---------------------------------------
 %prep
@@ -109,10 +110,10 @@ Welcome to the TACC Module way!
 #---------------------------------------
 
 # Setup modules
-# Nothing to do!
+%include system-load.inc
 
 # Insert necessary module commands
-# None to have!
+module purge
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -134,9 +135,9 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-
-  # Nothing to see here!
-
+ 
+  # Nothing to do!
+  
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -158,106 +159,31 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local helpMsg = [[
-The %{MODULE_VAR} modulefile defines the default paths and environment
-variables needed to use the local software and utilities
-available, placing them after the vendor-supplied
-paths in PATH and MANPATH.
+local help_msg=[[
+Curl is used in command lines or scripts to transfer data. This version of curl
+is built with a modern version of OpenSSL.
+
+Version %{version}
 ]]
 
-help(helpMsg)
+--help(help_msg)
+help(help_msg)
 
+whatis("Name: curl"                                        )
+whatis("Version: %{version}"                               )
+whatis("Category: Core Utility, Runtime Support"           )
+whatis("Description: Curl compiled against modern OpenSSL" )
+whatis("URL: https://curl.haxx.se"                         )
 
---------------------------------------------------------------------------
--- Define TACC_SYSTEM and TACC_DOMAIN
-
-local host    = capture("hostname -f"):gsub("\n","")
-local syshost = host:gsub("%.tacc%.utexas%.edu",""):gsub("^[^.]*%.","")
-local domain  = syshost
-
-if (domain:find("^ls%d$") or domain:find("^nid"))then
-   domain = "ls5"
-end
-
-if (mode() == "load") then
-  -- Extract nid number if it exists
-  local i,j, num = host:find("^nid(%d+)")
-  if (i) then
-     num = tonumber(num)
-     -- Aries network (cray) computes are all nid numbers less than 2000 on LS5 
-     if (num >= 2000) then
-        LmodMessage("\n=================================================================================")
-        LmodMessage("WARNING:                                                                 :WARNING")
-        LmodMessage("WARNING:              You have loaded the \"TACC\" module.                 :WARNING")
-        LmodMessage("WARNING:                                                                 :WARNING")
-        LmodMessage("WARNING: This module is intended for compiling and running on Lonestar 5 :WARNING")
-        LmodMessage("WARNING:             NON-large memory compute nodes only.                :WARNING")
-        LmodMessage("WARNING:                                                                 :WARNING")
-        LmodMessage("WARNING:       You are currently on a large memory compute node.         :WARNING")
-        LmodMessage("WARNING:                                                                 :WARNING")
-        LmodMessage("WARNING:       Please use \"module load TACC-largemem\" instead.           :WARNING")
-        LmodMessage("WARNING:                                                                 :WARNING")
-        LmodMessage("WARNING:                         Navigate to:                            :WARNING")
-        LmodMessage("WARNING:     https://portal.tacc.utexas.edu/user-guides/lonestar5        :WARNING")
-        LmodMessage("WARNING:                      for more information.                      :WARNING")
-        LmodMessage("WARNING:                                                                 :WARNING")
-        LmodMessage("WARNING:                This message is worth repeating.                 :WARNING")
-        LmodMessage("WARNING:                                                                 :WARNING")
-        LmodMessage("=================================================================================\n")
-     end
-  end
-end
-
-setenv(         "TACC_SYSTEM",  domain)
-setenv(         "TACC_DOMAIN",  domain)
-
-if (os.getenv("USER") ~= "root") then
-  append_path("PATH",  ".")
-end
-
-load("intel")
-load("cray_mpich")
-load("git")
-load("autotools")
-load("python2")
-load("cmake")
-
-setenv("APPS","/opt/apps")
-prepend_path("MANPATH","/usr/local/man:/usr/share/man:/usr/X11R6/man:/usr/kerberos/man:/usr/man")
-
--- Environment change - assume single threaded to fix silly MKL
-if (mode() == "load" and os.getenv("OMP_NUM_THREADS") == nil) then
-  setenv("OMP_NUM_THREADS","1")
-end
-
-
--- Create slurm environment variables.
-local base_dir           = "/opt/slurm/default"
-
-prepend_path( "PATH"            , pathJoin( base_dir, "bin")      )
--- append_path("LD_LIBRARY_PATH" , pathJoin(base_dir, "lib")       )
-prepend_path("MANPATH"         , pathJoin(base_dir, "share/man") )
-prepend_path("MANPATH"         , "/usr/share/man"                )
-prepend_path("PERL5LIB"        , pathJoin(base_dir,"lib/perl5/site_perl/5.10.0/x86_64-linux-thread-multi"))
-
-setenv( "TACC_SLURM_DIR",                base_dir)
-setenv( "TACC_SLURM_INC",       pathJoin(base_dir, "include"))
-setenv( "TACC_SLURM_LIB",       pathJoin(base_dir, "lib"))
-setenv( "TACC_SLURM_BIN",       pathJoin(base_dir, "bin"))
-setenv( "TACC_SLURM_CONF",      "/etc/opt/slurm/slurm.conf")
-setenv( "TACC_SHOWQ_CONF",      "/opt/apps/tacc/bin/showq.conf")
-setenv( "SLURM_CONF"     ,      "/etc/opt/slurm/slurm.conf")
-setenv( "SQUEUE_FORMAT"  ,      "%.18i %.15P %.8j %.8u %.2t %.10M %.6D %R")
-
--- "Wimmy Wham Wham Wozzle!" -- Slurms MacKenzie
-
--- prepend_path{ "PATH", "/opt/apps/tacc/bin", priority=10 }
-
-family("TACC")
-
+-- Create environment variables.
+local base         = "/opt/curl/7.20.1/usr"
+prepend_path( "PATH"            ,     pathJoin( base , "bin"   ) )
+prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( base , "lib64" ) )
+family("curl")
 EOF
-  
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
+
+#cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version << 'EOF'
 #%Module3.1.1#################################################
 ##
 ## version file for %{BASENAME}%{version}
@@ -267,7 +193,7 @@ set     ModulesVersion      "%{version}"
 EOF
   
   # Check the syntax of the generated lua modulefile
-  ####%{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------
 %endif # BUILD_MODULEFILE |

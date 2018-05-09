@@ -31,6 +31,13 @@ Source3:        baselibs.conf
 BuildRequires:  libunistring-devel
 BuildRequires:  pkgconfig
 Requires(post): %{install_info_prereq}
+%define         INSTALL_DIR /opt/%{name}/%{version}
+%define         _prefix /usr
+%define         _bindir %{_prefix}/bin
+%define         _libdir %{_prefix}/lib
+%define         _datadir %{_prefix}/share
+%define         _infodir %{_prefix}/share/info
+%define         _mandir %{_prefix}/share/man
 
 %description
 An implementation of the IDNA2008 specifications (RFCs 5890, 5891, 5892, 5893)
@@ -61,7 +68,8 @@ An implementation of the IDNA2008 specifications (RFCs 5890, 5891, 5892, 5893)
 %setup -q
 
 %build
-%configure \
+./configure \
+    --prefix=%{INSTALL_DIR}/%{_prefix} \
     --disable-rpath \
     --disable-silent-rules \
     --disable-static \
@@ -70,38 +78,87 @@ An implementation of the IDNA2008 specifications (RFCs 5890, 5891, 5892, 5893)
 make %{?_smp_mflags}
 
 %install
-%define buildroot /var/tmp/%{name}-%{version}-buildroot 
-%make_install
+##%define buildroot /var/tmp/%{name}-%{version}-buildroot 
+###%make_install
+make DESTDIR=%{buildroot} install
+##find %{buildroot} -type f -name "*.la" -delete -print
 find %{buildroot} -type f -name "*.la" -delete -print
 # Do not bother with partial gtkdoc
-rm -rf %{buildroot}/%{_datadir}/gtk-doc/
+##rm -rf %{buildroot}/%{_datadir}/gtk-doc/
+rm -rf %{buildroot}/%{INSTALL_DIR}/%{_datadir}/gtk-doc/
+rm -rf %{buildroot}/%{INSTALL_DIR}/%{_infodir}/dir
 
 %check
 make check %{?_smp_mflags}
 
 %post tools
-%install_info --info-dir=%{_infodir} %{_infodir}/libidn2.info.*
+%install_info --info-dir=%{INSTALL_DIR}%{_infodir} %{INSTALL_DIR}%{_infodir}/libidn2.info.*
 
 %preun tools
-%install_info_delete --info-dir=%{_infodir} %{_infodir}/libidn2.info.*
+%install_info_delete --info-dir=%{INSTALL_DIR}%{_infodir} %{INSTALL_DIR}%{_infodir}/libidn2.info.*
 
 %post -n %{lname} -p /sbin/ldconfig
 %postun -n %{lname} -p /sbin/ldconfig
 
 %files tools
 %doc AUTHORS COPYING* ChangeLog NEWS README.md
-%{_infodir}/libidn*
-%{_bindir}/idn2
-%{_mandir}/man1/idn2.1%{ext_man}
+%{INSTALL_DIR}%{_infodir}/libidn*
+%{INSTALL_DIR}%{_bindir}/idn2
+%{INSTALL_DIR}%{_mandir}/man1/idn2.1*
 
 %files -n %{lname}
-%{_libdir}/libidn2.so.*
+%{INSTALL_DIR}%{_libdir}/libidn2.so.*
 
 %files devel
-%{_libdir}/libidn2.so
-%{_libdir}/pkgconfig/libidn2.pc
-%{_includedir}/*.h
-%{_mandir}/man3/*
+%{INSTALL_DIR}%{_libdir}/libidn2.so
+%{INSTALL_DIR}%{_libdir}/pkgconfig/libidn2.pc
+%{INSTALL_DIR}%{_includedir}/*.h
+%{INSTALL_DIR}%{_mandir}/man3/*
+
+
+##%{INSTALL_DIR}/bin/idn2
+##%{INSTALL_DIR}/include/idn2.h
+##%{INSTALL_DIR}/lib/libidn2.so
+##%{INSTALL_DIR}/lib/libidn2.so.0
+##%{INSTALL_DIR}/lib/libidn2.so.0.3.3
+##%{INSTALL_DIR}/lib/pkgconfig/libidn2.pc
+##%{INSTALL_DIR}/share/gtk-doc/html/libidn2/*
+####%{INSTALL_DIR}/share/gtk-doc/html/libidn2/api-index-full.html
+####%{INSTALL_DIR}/share/gtk-doc/html/libidn2/home.png
+####%{INSTALL_DIR}/share/gtk-doc/html/libidn2/index.html
+####%{INSTALL_DIR}/share/gtk-doc/html/libidn2/left-insensitive.png
+####%{INSTALL_DIR}/share/gtk-doc/html/libidn2/left.png
+####%{INSTALL_DIR}/share/gtk-doc/html/libidn2/libidn2-idn2.html
+####%{INSTALL_DIR}/share/gtk-doc/html/libidn2/libidn2.devhelp2
+####%{INSTALL_DIR}/share/gtk-doc/html/libidn2/libidn2.html
+####%{INSTALL_DIR}/share/gtk-doc/html/libidn2/right-insensitive.png
+####%{INSTALL_DIR}/share/gtk-doc/html/libidn2/right.png
+####%{INSTALL_DIR}/share/gtk-doc/html/libidn2/style.css
+####%{INSTALL_DIR}/share/gtk-doc/html/libidn2/up-insensitive.png
+####%{INSTALL_DIR}/share/gtk-doc/html/libidn2/up.png
+##%{INSTALL_DIR}/share/info/dir
+##%{INSTALL_DIR}/share/info/libidn2.info
+##%{INSTALL_DIR}/share/man/man1/idn2.1
+##%{INSTALL_DIR}/share/man/man3/*
+####%{INSTALL_DIR}/share/man/man3/idn2_check_version.3
+####%{INSTALL_DIR}/share/man/man3/idn2_free.3
+####%{INSTALL_DIR}/share/man/man3/idn2_lookup_u8.3
+####%{INSTALL_DIR}/share/man/man3/idn2_lookup_ul.3
+####%{INSTALL_DIR}/share/man/man3/idn2_register_u8.3
+####%{INSTALL_DIR}/share/man/man3/idn2_register_ul.3
+####%{INSTALL_DIR}/share/man/man3/idn2_strerror.3
+####%{INSTALL_DIR}/share/man/man3/idn2_strerror_name.3
+####%{INSTALL_DIR}/share/man/man3/idn2_to_ascii_4i.3
+####%{INSTALL_DIR}/share/man/man3/idn2_to_ascii_4z.3
+####%{INSTALL_DIR}/share/man/man3/idn2_to_ascii_8z.3
+####%{INSTALL_DIR}/share/man/man3/idn2_to_ascii_lz.3
+####%{INSTALL_DIR}/share/man/man3/idn2_to_unicode_44i.3
+####%{INSTALL_DIR}/share/man/man3/idn2_to_unicode_4z4z.3
+####%{INSTALL_DIR}/share/man/man3/idn2_to_unicode_8z4z.3
+####%{INSTALL_DIR}/share/man/man3/idn2_to_unicode_8z8z.3
+####%{INSTALL_DIR}/share/man/man3/idn2_to_unicode_8zlz.3
+####%{INSTALL_DIR}/share/man/man3/idn2_to_unicode_lzlz.3
+
 
 %changelog
 * Wed Aug 30 2017 astieger@suse.com

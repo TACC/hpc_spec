@@ -3,17 +3,17 @@
 #
 Summary: DDT is a parallel, symbolic debugger.
 Name: ddt
-Version: 6.0.1
-Release: 2
+Version: 18.1.3
+Release: 1
 License: Commercial
 Group: tools/debugging
-Source0: ddt_6.0.1.tar.gz
-URL: http://www.allinea.com
+Source0: ddt_18.1.3.tar.gz
+URL: https://developer.arm.com/products/software-development-tools/hpc/downloads/download-arm-forge
 Distribution: SuSE Linux
 Vendor: Allinea
 Packager: TACC - cazes@tacc.utexas.edu
 %include rpm-dir.inc
-%define _unpack_name ddt_6.0.1
+%define _unpack_name %{name}_%{version}
 %define _system_config_file system.config
 
 %define APPS /opt/apps
@@ -83,13 +83,13 @@ For detailed instructions, go to:
         ddt ./<host_exe> <args>
 
 3.  Set your mpi type via the "Change" button in the MPI pane in the 
-    "DDT - Run" window.  Choose either "MVAPICH 2" or "Intel MPI" 
+    "DDT - Run" window.  Choose "MPICH 2" if it is not already selected
     from the "MPI/UPC Implementation" dropdown menu.
 
 4.  Set the number of tasks to the TOTAL number of MPI tasks in the 
-    "Number of processes" window in the MPI section.
+    "Number of Processes" window in the MPI section.
 
-5.  Set the number of nodes to the number of nodes you would like to 
+5.  Set the number of nodes via the "Parameters" button in the 
     run on.  This is analagous to using "-N #" in a slurm batch script.
 
 6.  Set your project via the "Parameters" button in the 
@@ -106,7 +106,7 @@ For detailed instructions, go to:
 
 help(help_message,"\n")
 
-whatis("Version: 6.0.1")
+whatis("Version: %{version}")
 whatis("Category: utility, runtime support")
 whatis("Keywords: System, Utility")
 whatis("URL: http://content.allinea.com/downloads/userguide.pdf")
@@ -118,9 +118,12 @@ setenv("DDTROOT","%{INSTALL_DIR}")
 setenv("DDTPATH","%{INSTALL_DIR}/bin")
 setenv("TACC_DDT_DIR","%{INSTALL_DIR}")
 setenv("TACC_DDT_BIN","%{INSTALL_DIR}/bin")
-setenv("ALLINEA_TOOLS_CONFIG_DIR",pathJoin(home,".allinea_6.0.1"))
+setenv("ALLINEA_TOOLS_CONFIG_DIR",pathJoin(home,".allinea_${version}"))
+setenv("ALLINEA_ALLOW_CRAY_DMALLOC_PRELOAD","1")
 prepend_path("PATH","%{INSTALL_DIR}/bin")
 prepend_path("LD_LIBRARY_PATH","%{INSTALL_DIR}/lib")
+prepend_path("LD_LIBRARY_PATH","%{INSTALL_DIR}/lib/64")
+
 
 EOF
 

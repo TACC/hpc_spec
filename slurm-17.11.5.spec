@@ -108,7 +108,7 @@ BuildRequires: mariadb-devel
 %endif
 BuildRequires: cray-libalpscomm_cn-devel
 BuildRequires: cray-libalpscomm_sn-devel
-BuildRequires: hwloc-devel
+BuildRequires: libhwloc-devel
 BuildRequires: gtk2-devel
 BuildRequires: glib2-devel
 BuildRequires: pkgconfig
@@ -121,7 +121,7 @@ BuildRequires: pkgconfig(lua) >= 5.1.0
 %endif
 
 %if %{with hwloc}
-BuildRequires: hwloc-devel
+BuildRequires: libhwloc-devel
 %endif
 
 %if %{with numa}
