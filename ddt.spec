@@ -7,8 +7,8 @@
 
 # Create some macros (spec file variables)
 %define major_version 18
-%define minor_version 0
-%define micro_version 1
+%define minor_version 1
+%define micro_version 3
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -25,7 +25,7 @@
 
 ############ Do Not Change #############
 # Name: ddt
-# Version: 18.0.1
+# Version: 18.1.3
 Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}_%{pkg_version}-buildroot
@@ -37,9 +37,8 @@ License: Commercial
 Vendor: Allinea
 URL: http://www.allinea.com
 Packager: TACC - cazes@tacc.utexas.edu
-# Source0: ddt_7.0.3.tar.gz
 Source:    %{pkg_base_name}_%{pkg_version}.tar.gz
-%define _unpack_name ddt_7.0.3
+#  define _unpack_name ddt_7.0.3
 %define _system_config_file system.config
 
 
@@ -167,8 +166,9 @@ For detailed instructions, go to:
         ddt ./<host_exe> <args>
 
 3.  Set your mpi type via the "Change" button in the MPI pane in the 
-    "DDT - Run" window.  Choose "Intel MPI (MPD)" from the 
-     "MPI/UPC Implementation" dropdown menu.
+    "DDT - Run" window.  Choose the appropriate MPI version from the 
+    "MPI/UPC Implementation" "DDT - Run" window.  (The default is set
+    to "Intel MPI".)
 
 4.  Set the number of tasks to the TOTAL number of MPI tasks in the 
     "Number of processes" window in the MPI section.

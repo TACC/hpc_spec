@@ -7,8 +7,8 @@ Summary: PETSc install
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 9
-%define micro_version pre
-%define versionpatch 3.8.4-pz
+%define micro_version 1
+%define versionpatch 3.9.1
 
 %define pkg_version %{major_version}.%{minor_version}
 
@@ -32,7 +32,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -74,7 +74,7 @@ It contains solvers and tools mostly for PDE solving.
 %prep
 
 #%setup -n petsc-%{major_version}.%{minor_version}.%{micro_version}
-%setup -n petsc-3.8.4
+%setup -n petsc-%{versionpatch}
 
 #---------------------------------------
 %build
@@ -438,8 +438,7 @@ esac
 ## here we go
 ##
 export PETSC_ARCH=${architecture}
-export EXTERNAL_PACKAGES_DIR=/tmp/petsc-build/externalpackages/${architecture}
-rm -rf ${EXTERNAL_PACKAGES_DIR}
+export EXTERNAL_PACKAGES_DIR=/admin/build/admin/rpms/stampede2/SOURCES/petsc-packages/externalpackages-%{pkg_version}
 mkdir -p ${EXTERNAL_PACKAGES_DIR}
 noprefix=--prefix=%{INSTALL_DIR}/${architecture}
 # export packages=
@@ -456,6 +455,7 @@ else
   # python config/configure.py
   RPM_BUILD_ROOT=tmpfs PETSC_DIR=`pwd` ./configure \
     ${PETSC_CONFIGURE_OPTIONS} \
+    --with-packages-dir=${EXTERNAL_PACKAGES_DIR} \
     --with-external-packages-dir=${EXTERNAL_PACKAGES_DIR} \
     ${mpi} ${clanguage} ${scalar} ${dynamicshared} ${precision} ${packages} \
     --with-debugging=${usedebug} \
@@ -578,21 +578,15 @@ EOF
 ##
 done
 
-#
-# more cleanup
-#
-#/bin/rm -rf externalpackages/git.*
-#find externalpackages -name \*.o -exec rm -f {} \;
-
 cp -r config include lib makefile src \
     $RPM_BUILD_ROOT/%{INSTALL_DIR}
 cp -r skylake* \
     $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 popd
-# umount %{INSTALL_DIR}
+umount %{INSTALL_DIR}
 
-echo "Directory to package: $RPM_BUILD_ROOT/%{INSTALL_DIR}"
+echo "Directory to package up: $RPM_BUILD_ROOT/%{INSTALL_DIR}"
 echo "listing:"
 ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
@@ -632,5 +626,7 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Mon Apr 30 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2 UNRELEASED : point update
 * Sun Apr 01 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

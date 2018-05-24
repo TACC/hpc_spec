@@ -8,7 +8,7 @@
 
 Summary: Local TACC parametric-launcher install.
 
-Release: 1
+Release: 2
 Vendor: TACC
 License: none
 Group: Utility
@@ -175,8 +175,8 @@ whatis ("Category: utility, runtime support")
 whatis ("Keywords: System, Utility, Tools")
 whatis ("Description: Utility for starting parametric job sweeps")
 
-local launcher_dir="%{PKG_INSTALL_DIR}"
-local launcher_plugin_dir="%{PKG_INSTALL_DIR}/plugins"
+local launcher_dir="/opt/apps/launcher/launcher-3.2"
+local launcher_plugin_dir="/opt/apps/launcher/launcher-3.2/plugins"
 setenv("TACC_LAUNCHER_DIR", launcher_dir)
 setenv("LAUNCHER_DIR", launcher_dir)
 setenv("LAUNCHER_PLUGIN_DIR", launcher_plugin_dir)

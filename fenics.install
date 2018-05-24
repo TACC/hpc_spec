@@ -141,11 +141,6 @@ chmod o+rX,g+rX -R ${INSTALL_DIR}/lib/python3.6/site-packages/
 export nocmake="\
         -D DOLFIN_ENABLE_MPI=true \
     "
-#  && sed -i s?/opt/intel/compilers_and_libraries_2017.4.196/linux/bin/intel64/icpc?mpicxx? CMakeCache.txt
-#if (DOLFIN_ENABLE_MPI)
-#if (DOLFIN_AUTO_DETECT_MPI)
-#else
-
 echo ; echo "VLE Mshr install" ; echo
 export INSTALL_DIR=${INSTALLATION}/mshr
 rm -rf ${INSTALL_DIR} && mkdir -p ${INSTALL_DIR}

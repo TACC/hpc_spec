@@ -1,6 +1,6 @@
 #
 # W. Cyrus Proctor
-# 2015-11-07
+# 2015-12-01
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -20,15 +20,14 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name libfabric
-%define MODULE_VAR    LIBFABRIC
+%define pkg_base_name sge_wrapper
+%define MODULE_VAR    SGE_WRAPPER
 
 # Create some macros (spec file variables)
 %define major_version 1
-%define minor_version 6
-%define micro_version 0
+%define minor_version 0
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{major_version}.%{minor_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -49,9 +48,8 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1%{?dist}
-License:   GPLv2 or BSD
-Group:     System Environment/Libraries
-URL:       http://www.github.com/ofiwg/libfabric
+License:   GPL
+Group:     Development/Tools
 Packager:  TACC - cproctor@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
@@ -65,29 +63,17 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
-penFabrics Interfaces (OFI) is a framework focused on exporting fabric
-communication services to applications. OFI is best described as a collection
-of libraries and applications used to export fabric services. The key
-components of OFI are: application interfaces, provider libraries, kernel
-services, daemons, and test applications.
+Wrap SGE commands to point users to user guide information.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...  OpenFabrics Interfaces
-(OFI) is a framework focused on exporting fabric communication services to
-applications. OFI is best described as a collection of libraries and
-applications used to export fabric services. The key components of OFI are:
-application interfaces, provider libraries, kernel services, daemons, and test
-applications.
+This is the long description for the modulefile RPM...
+Wrap SGE commands to point users to user guide information.
 
 %description
-OpenFabrics Interfaces (OFI) is a framework focused on exporting fabric
-communication services to applications. OFI is best described as a collection
-of libraries and applications used to export fabric services. The key
-components of OFI are: application interfaces, provider libraries, kernel
-services, daemons, and test applications.
+Wrap SGE commands to point users to user guide information.
 
 #---------------------------------------
 %prep
@@ -111,8 +97,6 @@ services, daemons, and test applications.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n %{pkg_base_name}-%{pkg_version}
-
 
 #---------------------------------------
 %build
@@ -124,10 +108,8 @@ services, daemons, and test applications.
 #---------------------------------------
 
 # Setup modules
-%include system-load.inc
 
 # Insert necessary module commands
-module purge
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -137,6 +119,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+  mkdir -p $RPM_BUILD_ROOT/usr/local/bin
   mkdir -p %{INSTALL_DIR}
   mount -t tmpfs tmpfs %{INSTALL_DIR}
   
@@ -151,21 +135,78 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
- 
-  export CC=gcc
-  export ncores=8
-  # DO NOT preppend $RPM_BUILD_ROOT in prefix
-  ./configure \
-  --prefix=%{INSTALL_DIR}
-  make -j ${ncores}
-  make install -j ${ncores}
-  
-  if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-    mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  fi
-  cp -r %{INSTALL_DIR} $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-  umount %{INSTALL_DIR}
-  
+
+# Create generic wrapper script
+cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/sge_wrapper << "EOF"
+#!/usr/bin/env bash
+
+# Constants
+export zero=0
+export  one=1
+export    R='\033[1;31m' # Red
+export    G='\033[1;32m' # Green
+export   NC='\033[0m'    # No Color
+export  err="[ ${R}ERROR${NC} ]"
+
+# Print functions
+eprintf(){
+printf "${err} $@"
+}
+
+printf "\n"
+printf "=%.0s" {1..85}
+printf "\n"
+eprintf "You have invoked an SGE job scheduler-specific command:\n"
+eprintf "  $0\n"
+eprintf "Stampede2 uses the Slurm job scheduler.\n"
+eprintf "For more information on appropriate Slurm commands,\n"
+eprintf "please visit our user guide here:\n"
+eprintf "${G}https://portal.tacc.utexas.edu/user-guides/stampede2${NC}\n"
+printf "=%.0s" {1..85}
+printf "\n"
+printf "\n"
+exit ${one}
+
+EOF
+chmod a+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/sge_wrapper
+
+
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/usr/local/bin/qselect  
+#ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/usr/local/bin/qmake    ### conflicts with Qt qmake
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/usr/local/bin/qrsub    
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/usr/local/bin/qstat    
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/usr/local/bin/qrstat   
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/usr/local/bin/qacct    
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/usr/local/bin/qquota   
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/usr/local/bin/qsh      
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/usr/local/bin/qping    
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/usr/local/bin/qtcsh    
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/usr/local/bin/qhost    
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/usr/local/bin/qconf    
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/usr/local/bin/qrdel    
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/usr/local/bin/qrsh     
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/usr/local/bin/qmod     
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/usr/local/bin/qhold    
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/usr/local/bin/qalter   
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/usr/local/bin/qresub   
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/usr/local/bin/qsub     
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/usr/local/bin/sgepasswd
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/usr/local/bin/qdel     
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/usr/local/bin/qlogin   
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/usr/local/bin/qrls     
+ln -s %{INSTALL_DIR}/bin/sge_wrapper $RPM_BUILD_ROOT/usr/local/bin/qmon     
+
+
+if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+fi
+
+cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+umount %{INSTALL_DIR}/
+
+
+
+
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -184,65 +225,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
-# Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_message = [[
-OpenFabrics Interfaces (OFI) is a framework focused on exporting fabric
-communication services to applications. OFI is best described as a collection
-of libraries and applications used to export fabric services. The key
-components of OFI are: application interfaces, provider libraries, kernel
-services, daemons, and test applications.
 
-This module defines the environmental variables TACC_%{MODULE_VAR}_DIR,
-TACC_%{MODULE_VAR}_BIN, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC
-for the location of the main libfabric directory, binaries, libraries,
-and include files respectively.
-
-The location of the binary files is also added to your PATH.
-The location of the library files is also added to your LD_LIBRARY_PATH.
-Documentation is also added to your MANPATH.
-
-Version %{version}
-]]
-
-help(help_message,"\n")
-
-whatis("Name: %{name}")
-whatis("Version: %{version}")
-whatis("Category: system, environment libaries")
-whatis("Keywords: System, Environment Libraries")
-whatis("Description: Fabric communication services")
-whatis("URL: http://www.github.com/ofiwg/libfabric")
-
--- Export environmental variables
-local libfabric_dir="%{INSTALL_DIR}"
-local libfabric_bin=pathJoin(libfabric_dir,"bin")
-local libfabric_lib=pathJoin(libfabric_dir,"lib")
-local libfabric_inc=pathJoin(libfabric_dir,"include")
-setenv("TACC_LIBFABRIC_DIR",libfabric_dir)
-setenv("TACC_LIBFABRIC_BIN",libfabric_bin)
-setenv("TACC_LIBFABRIC_LIB",libfabric_lib)
-setenv("TACC_LIBFABRIC_INC",libfabric_inc)
-
--- Prepend the libfabric directories to the adequate PATH variables
-prepend_path("PATH",libfabric_bin)
-prepend_path("LD_LIBRARY_PATH",libfabric_lib)
-prepend_path("MANPATH", pathJoin(libfabric_dir, "share/man"))
-
-EOF
-  
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module3.1.1#################################################
-##
-## version file for %{BASENAME}%{version}
-##
-
-set     ModulesVersion      "%{version}"
-EOF
-  
-  # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+# Nothing to do!
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
@@ -257,6 +241,31 @@ EOF
   %defattr(-,root,install,)
   # RPM package contains files within these directories
   %{INSTALL_DIR}
+/usr/local/bin/qselect  
+#/usr/local/bin/qmake    ### conflicts with Qt qmake
+/usr/local/bin/qrsub    
+/usr/local/bin/qstat    
+/usr/local/bin/qrstat   
+/usr/local/bin/qacct    
+/usr/local/bin/qquota   
+/usr/local/bin/qsh      
+/usr/local/bin/qping    
+/usr/local/bin/qtcsh    
+/usr/local/bin/qhost    
+/usr/local/bin/qconf    
+/usr/local/bin/qrdel    
+/usr/local/bin/qrsh     
+/usr/local/bin/qmod     
+/usr/local/bin/qhold    
+/usr/local/bin/qalter   
+/usr/local/bin/qresub   
+/usr/local/bin/qsub     
+/usr/local/bin/sgepasswd
+/usr/local/bin/qdel     
+/usr/local/bin/qlogin   
+/usr/local/bin/qrls     
+/usr/local/bin/qmon     
+
 
 #-----------------------
 %endif # BUILD_PACKAGE |

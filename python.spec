@@ -1,6 +1,6 @@
 Summary:    Python is a high-level general-purpose programming language.
 Name:       tacc-python2 
-Version:    2.7.14
+Version:    2.7.15
 Release:    1%{?dist}
 License:    GPLv2
 Vendor:     Python Software Foundation

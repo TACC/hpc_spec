@@ -1,7 +1,7 @@
 Prefix:    /opt/apps
 Summary:   lmod: Lua based Modules
 Name:      lmod
-Version:   7.7.3
+Version:   7.7.32
 Release:   1%{?dist}
 License:   MIT
 Vendor:    Robert McLay
@@ -81,7 +81,7 @@ PATH=$luaPath:$PATH
 
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR} $RPM_BUILD_ROOT/%{ZSH_SITE_FUNC}
 
-./configure --prefix=%{APPS} $CACHE_DIR --with-settarg=FULL $EXTRA --with-siteName=TACC 
+./configure --prefix=%{APPS} $CACHE_DIR --with-settarg=FULL $EXTRA --with-siteName=TACC --with-silentShellDebugging=yes
 make DESTDIR=$RPM_BUILD_ROOT install
 cp contrib/TACC/*.lua $RPM_BUILD_ROOT/%{INSTALL_DIR}/libexec
 

@@ -28,3 +28,5 @@ git clone https://bitbucket.org/fenics-project/mshr
 hg clone https://bitbucket.org/eigen/eigen
 #module unload python
 #module load python3
+
+tar fcz fenics.tgz fiat instant dijitso ufl ffc dolfin mshr eigen

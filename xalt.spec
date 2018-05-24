@@ -2,11 +2,11 @@
 
 Summary: XALT
 Name: xalt
-Version: 1.7.7
+Version: 2.0.3
 Release: 1
 License: LGPLv2
 Group: System Environment/Base
-Source0:  xalt-%{version}-devel.tar.bz2
+Source0:  xalt-%{version}.tar.bz2
 Packager: mclay@tacc.utexas.edu
 
 %define debug_package %{nil}
@@ -25,7 +25,7 @@ A method to collect system usage data.
 
 %prep
 
-%setup -n %{PNAME}-%{version}-devel
+%setup -n %{PNAME}-%{version}
 
 %build
 %install
@@ -66,11 +66,15 @@ whatis("Keywords: System, TOOLS")
 whatis("URL: http://xalt.sf.net")
 whatis("Description: Collects system usage data")
 
-prepend_path{"PATH",                     "%{INSTALL_DIR}/bin", priority = 100}
-prepend_path("LD_PRELOAD",               "%{INSTALL_DIR}/lib64/libxalt_init.so")
-setenv (     "%{MODULE_VAR}_DIR",        "%{INSTALL_DIR}/")
-setenv (     "%{MODULE_VAR}_BIN",        "%{INSTALL_DIR}/bin")
-setenv (     "XALT_EXECUTABLE_TRACKING", "yes")
+prepend_path{"PATH",                          "%{INSTALL_DIR}/bin", priority = 100}
+prepend_path("COMPILER_PATH",                 "%{INSTALL_DIR}/bin")
+prepend_path("LD_PRELOAD",                    "%{INSTALL_DIR}/lib64/libxalt_init.so")
+setenv (     "%{MODULE_VAR}_DIR",             "%{INSTALL_DIR}/")
+setenv (     "%{MODULE_VAR}_BIN",             "%{INSTALL_DIR}/bin")
+setenv (     "XALT_EXECUTABLE_TRACKING",      "yes")
+setenv (     "XALT_SCALAR_AND_SPSR_SAMPLING", "yes")
+
+
 
 EOF
 

@@ -5,7 +5,7 @@ Summary: Fenics install
 %define MODULE_VAR    FENICS
 
 # Create some macros (spec file variables)
-%define major_version 2017dec
+%define major_version 2018may
 #%define minor_version 10
 #%define micro_version 1
 
@@ -32,7 +32,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 4%{?dist}
+Release: 6%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tgz
@@ -127,14 +127,11 @@ export FENICS_DIR=/tmp/fenics-stuff
 # for some reason we can't do it here:
 # ( cd ${FENICS_DIR} ; . %{_topdir}/SPECS/fenics.download )
 
-#export BUILD_DIR=%{_topdir}/BUILD/fenics
-#export FENICS_DIR=%{INSTALL_DIR}
-#export PYTHON_EXTRA_PATHS=
-
 rm -f ${LOG_DIR}/fenics_install.log
 ( cd ${FENICS_DIR} ; %{_topdir}/SPECS/fenics.install %{INSTALL_DIR} %{_topdir}/SPECS )
 
-cp -r %{INSTALL_DIR}/{fiat,instant,dijitso,ufl,ffc,eigen,dolfin,mshr} ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
+cp -r %{INSTALL_DIR}/{fiat,instant,dijitso,ufl,ffc,eigen,dolfin,mshr} \
+      ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
 #cp -r %{INSTALL_DIR}/python ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
 
 ##
@@ -148,8 +145,10 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
 help( [[
 The fenics module defines the environment variables:
-TACC_FENICS_DIR for the location of the Fenics distribution, 
-and PYTHONPATH. Fenics requires python3.
+TACC_FENICS_DIR for the location of the Fenics distribution,
+TACC_DOLFIN_DIR/INC/LIB for the dolfin library;
+it also updates PYTHONPATH.
+Fenics requires python3.
 
 Version %{version}
 ]] )
@@ -181,21 +180,29 @@ prepend_path("LD_LIBRARY_PATH", pathJoin(fenics_dir,"dolfin","lib" ) )
 prepend_path("PYTHONPATH",      pathJoin(fenics_dir,"dolfin","lib/python3.6/site-packages") )
 prepend_path("CMAKE_PREFIX_PATH", pathJoin(fenics_dir,"dolfin","share","dolfin","cmake" ) )
 prepend_path("CMAKE_MODULE_PATH", pathJoin(fenics_dir,"dolfin","share","dolfin","cmake" ) )
-setenv("DOLFIN_DIR", pathJoin(fenics_dir,"dolfin","share","dolfin","cmake" ) )
+
+setenv("TACC_FENICS_DIR",        fenics_dir)
+setenv("DOLFIN_DIR", pathJoin(fenics_dir,"dolfin" ) )
+setenv("TACC_DOLFIN_DIR", pathJoin(fenics_dir,"dolfin" ) )
+setenv("TACC_DOLFIN_BIN", pathJoin(fenics_dir,"dolfin","bin" ) )
+setenv("TACC_DOLFIN_INC", pathJoin(fenics_dir,"dolfin","include" ) )
+setenv("TACC_DOLFIN_LIB", pathJoin(fenics_dir,"dolfin","lib" ) )
 setenv("DOLFIN", pathJoin(fenics_dir,"dolfin","share","dolfin","cmake","DOLFINConfig.cmake" ) )
 
 prepend_path("LD_LIBRARY_PATH", pathJoin(fenics_dir,"dijitso","lib" ) )
 prepend_path("PYTHONPATH",      pathJoin(fenics_dir,"dijitso","lib/python3.6/site-packages") )
 
-setenv("TACC_FENICS_DIR",        fenics_dir)
+always_load("boost")
+EOF
+
+%if "%{comp_fam}" == "gcc"
+cat >> $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
 
 setenv( "CC",    "/opt/apps/gcc/7.1.0/bin/gcc" )
 setenv( "CXX",   "/opt/apps/gcc/7.1.0/bin/g++" )
 setenv( "FC",    "/opt/apps/gcc/7.1.0/bin/gfortran" )
-
-always_load("boost")
-
 EOF
+%endif
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
 #%Module1.0#################################################
@@ -223,6 +230,10 @@ EOF
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Tue May 15 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 6 UNRELEASED : more dolfin fix, also re-clone everythin
+* Wed May 02 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 5 : fixed the dolfin installation
 * Sun Dec 03 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 4: load boost, redefine compiler macros damn-the-torpedoes
 * Thu Sep 21 2017 eijkhout <eijkhout@tacc.utexas.edu>

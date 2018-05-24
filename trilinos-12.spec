@@ -6,7 +6,7 @@ Summary: Trilinos install
 
 # Create some macros (spec file variables)
 %define major_version 12
-%define minor_version 10
+%define minor_version 12
 %define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
@@ -31,7 +31,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tar.gz
@@ -285,6 +285,8 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Mon Apr 23 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 6: upgrade to 12.12.1
 * Wed Jan 17 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 5: giving up on SuperLU for now, fixed module help
 * Wed Aug 16 2017 eijkhout <eijkhout@tacc.utexas.edu>

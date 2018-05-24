@@ -18,7 +18,7 @@ Release: 2%{?dist}
 License: BSD License
 Group:   Development/Libraries
 Packager: TACC - viennej@tacc.utexas.edu
-Source: http://mvapich.cse.ohio-state.edu/download/mvapich/mv2/mvapich2-2.3b.tar.gz 
+Source: http://mvapich.cse.ohio-state.edu/download/mvapich/mv2/mvapich2-2.3rc1.tar.gz 
 BuildRoot: /var/tmp/%{name}-%{version}-root
 
 #---------------------------------------------------------------------------
