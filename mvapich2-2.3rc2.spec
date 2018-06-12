@@ -1,5 +1,6 @@
 #
-# $Id: mvapich2-2.3b 2017-09-01 13:29:50 Jerome $
+# $Id: mvapich2-2.3rc2 
+# Si Liu
 #
 %define myversion 2.3rc2
 
@@ -14,11 +15,11 @@
 Summary: OSU MVAPICH2 MPI implementation
 Name:    mvapich2
 Version: 2.3rc2
-Release: 2%{?dist}
+Release: 1%{?dist}
 License: BSD License
 Group:   Development/Libraries
 Packager: TACC - siliu@tacc.utexas.edu
-Source: http://mvapich.cse.ohio-state.edu/download/mvapich/mv2/mvapich2-2.3rc1.tar.gz 
+Source: %{name}-%{version}.tar.gz
 BuildRoot: /var/tmp/%{name}-%{version}-root
 
 #---------------------------------------------------------------------------
@@ -27,7 +28,7 @@ BuildRoot: /var/tmp/%{name}-%{version}-root
 
 
 %define mpi_fam mvapich2
-%define mpi_fam_ver mvapich2-2_3rc1
+%define mpi_fam_ver mvapich2-2_3rc2
 
 %include rpm-dir.inc
 %include compiler-defines.inc
@@ -243,6 +244,7 @@ EOF
 %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}%{dbg}
 
 %files -n %{name}-%{comp_fam_ver}%{dbg}
+%defattr(-,root,install,)
 %{INSTALL_DIR}
 %{MODULE_DIR}
 

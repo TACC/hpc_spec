@@ -1,6 +1,6 @@
 #
-# W. Cyrus Proctor
-# 2015-12-11
+# Joe Garcia 
+# 2018-06-07
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -20,24 +20,27 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name mkl
-%define MODULE_VAR    MKL
+%define pkg_base_name advisor 
+%define MODULE_VAR    ADVISOR 
 
 # Create some macros (spec file variables)
 %define major_version 18
-%define minor_version 0
-%define patch_version 0
+%define minor_version 0 
+%define micro_version 2
 
-%define pkg_version %{major_version}.%{minor_version}.%{patch_version}
+%define lib_version 2018.2.0.551025
+
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define underscore_version %{major_version}_%{minor_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-%include compiler-defines.inc
+#%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+%include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -50,9 +53,9 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
 Release:   1%{?dist}
 License:   proprietary
-Group:     Compiler
-URL:       https://software.intel.com/en-us/intel-compilers
-Packager:  TACC - cproctor@tacc.utexas.edu
+Group:     PROFILER
+URL:       https://software.intel.com/en-us/intel-advisor-xe
+Packager:  TACC - jgarcia@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -65,20 +68,20 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
-This is specifically an rpm for the Intel MKL modulefile
-used on Stampede 2 for GCC.
+This is specifically an rpm for the Intel advisor modulefile
+used on Stampede2.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
-This is specifically an rpm for the Intel MKL modulefile
-used on Stampede 2 for GCC.
+This is specifically an rpm for the Intel advisor modulefile
+used on Stampede2.
 
 %description
-This is specifically an rpm for the Intel MKL modulefile
-used on Stampede 2 for GCC.
+This is specifically an rpm for the Intel advisor modulefile
+used on Stampede2.
 
 #---------------------------------------
 %prep
@@ -138,8 +141,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
- 
-  # Nothing to do!
   
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -159,67 +160,48 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
+
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
-The Intel Math Kernel Library (Intel MKL) improves performance with math
-routines for software applications that solve large computational problems.
-Intel MKL provides BLAS and LAPACK linear algebra routines, fast Fourier
-transforms, vectorized math functions, random number generation functions, and
-other functionality.
+local advisor_dir   = "/opt/intel/advisor_%{lib_version}"
 
-The Intel MKL module enables the use of the MKL with the GNU GCC compilers by
-updating the $LD_LIBRARY_PATH, $INCLUDE, and $MANPATH environment variables to
-access the MKL libraries, include files, and available man pages, respectively.
+whatis( "Name: advisor" )
+whatis( "Version: %{version}" )
+whatis( "Category: performance analysis" )
+whatis( "Keywords: System, Utility, Tools" )
+whatis( "Description: Intel Advisor" )
+whatis( "URL: https://software.intel.com/en-us/intel-advisor-xe" )
 
-The following additional environment variables are also defined:
+prepend_path(       "PATH",       pathJoin( advisor_dir, "bin64"     )   )
+append_path(        "PYTHONPATH", pathJoin( advisor_dir, "pythonapi" )   )
 
-$TACC_MKL_DIR           (path to Math Kernel Library root         )
-$TACC_MKL_LIB           (path to Math Kernel Library libs         )
-$TACC_MKL_INC           (path to Math Kernel Library includes     )
-$TACC_MKL_DOC           (path to Math Kernel Library documentation)
+setenv( "ADVISOR_2018_DIR", advisor_dir                          )
 
-To use the MKL with Intel compilers, please see the Intel module help
-by issuing a "module help intel".
+setenv( "TACC_ADVISOR_DIR", advisor_dir                          )
+setenv( "TACC_ADVISOR_BIN", pathJoin( advisor_dir, "bin64"   )   )
+setenv( "TACC_ADVISOR_LIB", pathJoin( advisor_dir, "lib64"   )   )
+setenv( "TACC_ADVISOR_INC", pathJoin( advisor_dir, "include" )   )
 
-Also see the Intel MKL Link Line Advisor:
-https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor
+help(
+[[
 
-Version %{version}
+Intel Advisor focuses on vector optimization and thread prototyping.
+
+For detailed info, consult the extensive documentation in
+$TACC_ADVISOR_DIR/documentation or online at
+software.intel.com/en-us/intel-advisor-xe.
+See also software.intel.com/en-us/articles/advisor-tutorials.
+
+To see the exact effect of loading the module, execute "module show advisor".
+
+Version %{version}  (file version %{version})
+
 ]]
-
---help(help_msg)
-help(help_msg)
-
-whatis("Name: Intel MKL"                                                    )
-whatis("Version: %{version}"                                                )
-whatis("Category: Library, Runtime Support"                                 )
-whatis("Description: Intel Math Kernel Library"                             )
-whatis("URL: https://software.intel.com/en-us/intel-mkl"                    )
-
--- Create environment variables.
-local base         = "/opt/intel"
-local full_xe      = "compilers_and_libraries_2018.0.128/linux"
-local installDir   = pathJoin(base,full_xe)
-local mklRoot      = pathJoin(installDir,"mkl")
-
-setenv( "MKLROOT"      ,              mklRoot )
-setenv( "TACC_MKL_DIR" ,              mklRoot )
-setenv( "TACC_MKL_LIB" ,              pathJoin( mklRoot    , "lib/intel64" ) )
-setenv( "TACC_MKL_INC" ,              pathJoin( mklRoot    , "include" ) )
-setenv( "TACC_MKL_DOC" ,              pathJoin( base       , "documentation_2018/en/mkl/ps2018" ) )
-
-prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( mklRoot    , "lib/intel64" ) )
-
-prepend_path( "INCLUDE" ,             pathJoin( mklRoot    , "include" ) )
-
-prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2018/en/debugger/gdb-ia/man" ) )
-prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2018/en/debugger/gdb-igfx/man" ) )
-prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2018/en/man/common" ) )
-
-EOF
+)
   
+EOF
+
+ 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -230,6 +212,7 @@ set     ModulesVersion      "%{version}"
 EOF
   
   # Check the syntax of the generated lua modulefile
+  ### don't check the hidden one!
   %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------

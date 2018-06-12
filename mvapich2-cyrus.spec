@@ -3,19 +3,16 @@
 # 2017-05-18
 #
 
-Summary: SILO spec file 
-Need to rewrite it!!!!
+Summary: MVvapich2 new spec file 
 
 # Give the package a base name
-%define pkg_base_name silo
-%define MODULE_VAR    SILO
+%define pkg_base_name mvapich2
+%define MODULE_VAR    MVAPICH2
 
 # Create some macros (spec file variables)
-%define major_version 1
-%define minor_version 66
-%define micro_version 0
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version 2.3rc2
+%define underscore_version 2_3
 
 ### Toggle On/Off ###
 %include rpm-dir.inc
@@ -36,38 +33,45 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3%{?dist}
-License: BSD Open Source License
-Group:   Data/Visualization
+Release:   1%{?dist}
+License: BSD License
+Group:   Development/Libraries
 Packager: TACC - siliu@tacc.utexas.edu
-Source: %{name}-%{version}.tar.gz
-
-# Turn off debug package mode
-%define debug_package %{nil}
-%define dbg           %{nil}
+Source: %{pkg_base_name}-%{pkg_version}.tar.gz
 
 %package %{PACKAGE}
-Summary: Silo
-Group: Data/Visualization
+Summary: OSU MPI-3 implementation
+Group: Development/Libraries
 
 %description package
-Silo is a library for reading and writing a wide variety of scientific data to binary, disk files. 
-The files Silo produces and the data within them can be easily shared and exchanged 
-between wholly independently developed applications running on disparate computing platforms. 
-Consequently, Silo facilitates the development of general purpose tools for processing scientific data. 
+MVAPICH is an open-source and portable implementation of the Message-Passing
+Interface (MPI, www.mpi-forum.org).  MPI is a library for parallel programming,
+and is available on a wide range of parallel machines, from single laptops to
+massively parallel vector parallel processors.
+MVAPICH includes all of the routines in MPI 3.1.
+MVAPICH is developed at the Ohio State University. See whttp://mvapich.cse.ohio-state.edu/
 
 %package %{MODULEFILE}
-Summary: Silo
-Group: Data/Visualization 
+Summary: OSU MPI-3 implementation
+Group: Development/Libraries
 
 %description modulefile
-Module RPM for Silo
+Module RPM for Mvapich2
+MVAPICH is an open-source and portable implementation of the Message-Passing
+Interface (MPI, www.mpi-forum.org).  MPI is a library for parallel programming,
+and is available on a wide range of parallel machines, from single laptops to
+massively parallel vector parallel processors.
+MVAPICH includes all of the routines in MPI 3.1.
+MVAPICH is developed at the Ohio State University. See whttp://mvapich.cse.ohio-state.edu/
+
 
 %description
-Silo is a library for reading and writing a wide variety of scientific data to binary, disk files. 
-The files Silo produces and the data within them can be easily shared and exchanged 
-between wholly independently developed applications running on disparate computing platforms. 
-Consequently, Silo facilitates the development of general purpose tools for processing scientific data.
+MVAPICH is an open-source and portable implementation of the Message-Passing
+Interface (MPI, www.mpi-forum.org).  MPI is a library for parallel programming,
+and is available on a wide range of parallel machines, from single laptops to
+massively parallel vector parallel processors.
+MVAPICH includes all of the routines in MPI 3.1.
+MVAPICH is developed at the Ohio State University. See whttp://mvapich.cse.ohio-state.edu/
 
 #---------------------------------------
 %prep
@@ -79,7 +83,7 @@ Consequently, Silo facilitates the development of general purpose tools for proc
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%setup -n %{name}-%{pkg_version} 
+%setup -n  %{pkg_base_name}-%{pkg_version}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -106,13 +110,8 @@ Consequently, Silo facilitates the development of general purpose tools for proc
 
 # Setup modules
 %include system-load.inc
-%include compiler-defines.inc
-#%include mpi-defines.inc
 module purge
-
-
 %include compiler-load.inc
-module load intel/17.0.4
 module list
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
@@ -187,12 +186,10 @@ export FCFLAGS=$FFLAGS
   DEBUG_OPTIONS="--enable-g=dbg,mem,meminit --with-valgrind=$TACC_VALGRIND_INC --enable-debuginfo  --enable-error-messages=all"
   %endif
 
-  INSTALL_DIR=%{INSTALL_DIR}
-
   # Removed from config:
   # --enable-sharedlibs=gcc  --enable-shared
 
-  ./configure --prefix=$INSTALL_DIR   \
+  ./configure --prefix=%{INSTALL_DIR}   \
         --with-device=ch3:psm  \
         --with-ch3-rank-bits=32 \
         --enable-cxx --enable-romio \
@@ -237,66 +234,46 @@ export FCFLAGS=$FFLAGS
   #######################################
   ########### Do Not Remove #############
   #######################################
-
+echo %{INSTALL_DIR}
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{pkg_version}.lua << 'EOF'
+local help_msg=[[
+This module loads the MVAPICH2 MPI environment built with Intel compilers. 
+By loading this module, the following commands will be automatically available 
+for compiling MPI applications:
+mpif77       (F77 source)
+mpif90       (F90 source)
+mpicc        (C   source)
+mpiCC/mpicxx (C++ source)
 
-#%Module1.0#####################################################################
-##
-## MVAPICH2
-##
-proc ModulesHelp { } {
-global version MPICHhome
+Version %{version}
+]]
 
-puts stderr " "
-puts stderr "Mvapich2 2.3RC2 "
-puts stderr " "
-puts stderr "This module loads the MVAPICH2 MPI environment built with"
-puts stderr "%{comp_fam_name} compilers. By loading this module, the following commands"
-puts stderr "will be automatically available for compiling MPI applications:"
-puts stderr "\n"
-puts stderr "mpif77       (F77 source)"
-puts stderr "mpif90       (F90 source)"
-puts stderr "mpicc        (C   source)"
-puts stderr "mpiCC/mpicxx (C++ source)"
-puts stderr "\n"
-puts stderr "Version $version\n"
-}
+help(help_msg)
 
-module-whatis "MVAPICH2"
-module-whatis "Version: %{version}"
-module-whatis "Category: library, runtime support"
-module-whatis "Keywords: System, Library"
-module-whatis "Description: MPI-3.1 implementation for Infiniband"
-module-whatis "URL: http://mvapich.cse.ohio-state.edu/overview/mvapich2/"
+whatis( "Name: %{pkg_base_name}"                                       )
+whatis( "Version: %{version}"                                          )
+whatis( "Category: library, runtime support"                           )
+whatis( "Keywords: System, Library"                                    )
+whatis( "Description:  MPI-3.1 implementation"                         )
+whatis( "URL: http://mvapich.cse.ohio-state.edu/overview/mvapich2"     )
 
-# for Tcl script use only
-set     version         %version
-set     MPICHhome       %{INSTALL_DIR}
+local base_dir = "%{INSTALL_DIR}"
 
-# Export to User.
+setenv( "MPICH_HOME"             , base_dir                            )
+setenv( "TACC_MPI_GETMODE"       , "mvapich2_ssh"                      )
+setenv( "MV2_FASTSSH_THRESHOLD"  , "10000"                             )
+setenv( "MV2_HOMOGENEOUS_CLUSTER", "1"                                 )
 
-setenv MPICH_HOME       $MPICHhome
-setenv TACC_MPI_GETMODE mvapich2_ssh
-setenv MV2_FASTSSH_THRESHOLD 10000
-setenv MV2_HOMOGENEOUS_CLUSTER 1
+prepend_path( "PATH"             , pathJoin( base_dir , "bin"          ) )
+prepend_path( "MANPATH"          , pathJoin( base_dir , "share/man"    ) )
+prepend_path( "INFOPATH"         , pathJoin( base_dir , "doc"          ) )
+prepend_path( "LD_LIBRARY_PATH"  , pathJoin( base_dir , "lib/shared"   ) )
+prepend_path( "LD_LIBRARY_PATH"  , pathJoin( base_dir , "lib"          ) )
+prepend_path( "PKG_CONFIG_PATH"  , pathJoin( base_dir , "lib/pkgconfig") )
+prepend_path( "MODULEPATH"       ,"%{INSTALL_PREFIX}/%{comp_fam_ver}/%{pkg_base_name}-%{underscore_version}/modulefiles" )
 
-prepend-path    PATH            $MPICHhome/bin
-prepend-path    MANPATH         $MPICHhome/share/man
-prepend-path    INFOPATH        $MPICHhome/doc
-prepend-path    LD_LIBRARY_PATH $MPICHhome/lib/shared
-
-prepend-path    LD_LIBRARY_PATH $MPICHhome/lib
-
-prepend-path    MODULEPATH      %{SUBMODULES}
-prepend-path    PKG_CONFIG_PATH $MPICHhome/lib/pkgconfig
-
-%if "%{is_debug}" == "1"
-setenv  MPICH_TRMEM_VALIDATE YES
-setenv  MPICH_TRMEM_INITZERO YES
-%endif
-
-family "MPI"
+family("MPI")
 
 EOF
 
@@ -339,6 +316,8 @@ EOF
   # RPM modulefile contains files within these directories
   %{MODULE_DIR}
 
+  ## Avoid directory conflict with mvapich2-intel17-2.3b-2.el7.centos.x86_64 RPM 
+  %exclude %dir %{MODULE_DIR}
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------

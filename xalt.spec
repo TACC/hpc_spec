@@ -2,8 +2,8 @@
 
 Summary: XALT
 Name: xalt
-Version: 2.0.3
-Release: 1
+Version: 2.0.7
+Release: 2
 License: LGPLv2
 Group: System Environment/Base
 Source0:  xalt-%{version}.tar.bz2
@@ -16,9 +16,11 @@ Packager: mclay@tacc.utexas.edu
 %define APPS /opt/apps
 %define MODULES modulefiles
 
-%define INSTALL_DIR %{APPS}/%{PNAME}/%{version}
-%define MODULE_DIR  %{APPS}/%{MODULES}/%{PNAME}
-%define MODULE_VAR TACC_XALT
+%define PKG_BASE      %{APPS}/%{name}
+%define INSTALL_DIR   %{APPS}/%{PNAME}/%{version}
+%define GENERIC_IDIR  %{PKG_BASE}/%{name}
+%define MODULE_DIR    %{APPS}/%{MODULES}/%{PNAME}
+%define MODULE_VAR    TACC_XALT
 
 %description
 A method to collect system usage data.
@@ -39,10 +41,11 @@ if [ -f "$BASH_ENV" ]; then
 fi
 
 
-CXX=/usr/bin/g++ CC=/usr/bin/gcc ./configure CXX=/usr/bin/g++ CC=/usr/bin/gcc --prefix=%{INSTALL_DIR} --with-syshostConfig=nth_name:2 --with-config=Config/TACC_config.py --with-transmission=syslog --with-trackMPIOnly=yes --with-MySQL=no
+CXX=/usr/bin/g++ CC=/usr/bin/gcc ./configure CXX=/usr/bin/g++ CC=/usr/bin/gcc --prefix=%{APPS} --with-syshostConfig=nth_name:2 --with-config=Config/TACC_config.py --with-transmission=syslog --with-MySQL=no
 
 make CXX=/usr/bin/g++ CC=/usr/bin/gcc DESTDIR=$RPM_BUILD_ROOT install Inst_TACC
 rm -f $RPM_BUILD_ROOT/%{INSTALL_DIR}/sbin/xalt_db.conf
+rm $RPM_BUILD_ROOT/%{INSTALL_DIR}/../%{name}
 
 #-----------------
 # Modules Section 
@@ -66,16 +69,13 @@ whatis("Keywords: System, TOOLS")
 whatis("URL: http://xalt.sf.net")
 whatis("Description: Collects system usage data")
 
-prepend_path{"PATH",                          "%{INSTALL_DIR}/bin", priority = 100}
-prepend_path("COMPILER_PATH",                 "%{INSTALL_DIR}/bin")
-prepend_path("LD_PRELOAD",                    "%{INSTALL_DIR}/lib64/libxalt_init.so")
-setenv (     "%{MODULE_VAR}_DIR",             "%{INSTALL_DIR}/")
-setenv (     "%{MODULE_VAR}_BIN",             "%{INSTALL_DIR}/bin")
+prepend_path{"PATH",                          "%{GENERIC_IDIR}/bin", priority = 100}
+prepend_path("COMPILER_PATH",                 "%{GENERIC_IDIR}/bin")
+prepend_path("LD_PRELOAD",                    "%{GENERIC_IDIR}/lib64/libxalt_init.so")
+setenv (     "%{MODULE_VAR}_DIR",             "%{GENERIC_IDIR}/")
+setenv (     "%{MODULE_VAR}_BIN",             "%{GENERIC_IDIR}/bin")
 setenv (     "XALT_EXECUTABLE_TRACKING",      "yes")
 setenv (     "XALT_SCALAR_AND_SPSR_SAMPLING", "yes")
-
-
-
 EOF
 
 #--------------
@@ -97,6 +97,26 @@ EOF
 %defattr(-,root,install)
 %{INSTALL_DIR}
 %{MODULE_DIR}
+
+%post
+
+cd %{PKG_BASE}
+
+if [ -d %{name} ]; then
+  rm -f %{name}
+fi
+ln -s %{version} %{name}
+
+%postun
+
+cd %{PKG_BASE}
+
+if [ -h %{name} ]; then
+  lv=`readlink %{name}`
+  if [ ! -d $lv ]; then
+    rm %{name}
+  fi
+fi
 
 %clean
 rm -rf $RPM_BUILD_ROOT

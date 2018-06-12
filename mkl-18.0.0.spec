@@ -1,6 +1,6 @@
 #
 # W. Cyrus Proctor
-# 2015-11-12
+# 2015-12-11
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -20,20 +20,15 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name impi
-%define MODULE_VAR    IMPI
+%define pkg_base_name mkl
+%define MODULE_VAR    MKL
 
 # Create some macros (spec file variables)
 %define major_version 18
 %define minor_version 0
-%define micro_version 0
+%define patch_version 0
 
-
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
-%define underscore_version %{major_version}_%{minor_version}
-
-%define base /home1/apps/intel/%{pkg_version} 
-%define lib_version 2018.0.128
+%define pkg_version %{major_version}.%{minor_version}.%{patch_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -55,8 +50,8 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
 Release:   2%{?dist}
 License:   proprietary
-Group:     MPI
-URL:       https://software.intel.com/en-us/intel-mpi-library
+Group:     Compiler
+URL:       https://software.intel.com/en-us/intel-compilers
 Packager:  TACC - cproctor@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
@@ -70,20 +65,20 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
-This is specifically an rpm for the Intel MPI modulefile
-used on Stampede2.
+This is specifically an rpm for the Intel MKL modulefile
+used on Stampede 2 for GCC.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
-This is specifically an rpm for the Intel MPI modulefile
-used on Stampede2.
+This is specifically an rpm for the Intel MKL modulefile
+used on Stampede 2 for GCC.
 
 %description
-This is specifically an rpm for the Intel MPI modulefile
-used on Stampede2.
+This is specifically an rpm for the Intel MKL modulefile
+used on Stampede 2 for GCC.
 
 #---------------------------------------
 %prep
@@ -143,25 +138,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-
-%if "%{comp_fam_name}" == "Intel"
-  # gfortran "use mpi" statements are busted
-  # fix intel's mess
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  ln -s %{base}/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiicc $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicc
-  ln -s %{base}/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiicpc $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicxx
-  ln -s %{base}/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiifort $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif77
-  ln -s %{base}/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiifort $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
-%endif
-
  
-%if "%{comp_fam_name}" == "GNU"
-  # gfortran "use mpi" statements are busted
-  # fix intel's mess
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  cp %{_sourcedir}/mpif90.15 $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
-  chmod +rx $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
-%endif
+  # Nothing to do!
   
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -181,41 +159,32 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-
-# Default Intel
-%define myCC  icc
-%define myCXX icpc
-%define myFC  ifort
-
-# GCC module
-%if "%{comp_fam_name}" == "GNU"
-%define myCC  gcc
-%define myCXX g++
-%define myFC  gfortran
-%endif
-
+  
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_msg=[[
-Intel MPI Library %{pkg_version} focuses on making applications perform better on Intel
-architecture-based clusters -- implementing the high performance Message Passing
-Interface Version 3.0 specification on multiple fabrics. It enables you to
-quickly deliver maximum end user performance even if you change or upgrade to
-new interconnects, without requiring changes to the software or operating
-environment.
+The Intel Math Kernel Library (Intel MKL) improves performance with math
+routines for software applications that solve large computational problems.
+Intel MKL provides BLAS and LAPACK linear algebra routines, fast Fourier
+transforms, vectorized math functions, random number generation functions, and
+other functionality.
 
-This module loads the Intel MPI environment built with
-Intel compilers. By loading this module, the following commands
-will be automatically available for compiling MPI applications:
-mpif77       (F77 source)
-mpif90       (F90 source)
-mpicc        (C   source)
-mpicxx       (C++ source)
+The Intel MKL module enables the use of the MKL with the GNU GCC compilers by
+updating the $LD_LIBRARY_PATH, $INCLUDE, and $MANPATH environment variables to
+access the MKL libraries, include files, and available man pages, respectively.
 
-The %{MODULE_VAR} module also defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
-TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
-include files, and tools respectively.
+The following additional environment variables are also defined:
+
+$TACC_MKL_DIR           (path to Math Kernel Library root         )
+$TACC_MKL_LIB           (path to Math Kernel Library libs         )
+$TACC_MKL_INC           (path to Math Kernel Library includes     )
+$TACC_MKL_DOC           (path to Math Kernel Library documentation)
+
+To use the MKL with Intel compilers, please see the Intel module help
+by issuing a "module help intel".
+
+Also see the Intel MKL Link Line Advisor:
+https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor
 
 Version %{version}
 ]]
@@ -223,43 +192,34 @@ Version %{version}
 --help(help_msg)
 help(help_msg)
 
--- Create environment variables.
-local base_dir           = "%{base}/compilers_and_libraries_%{lib_version}/linux/mpi"
+whatis("Name: Intel MKL"                                                    )
+whatis("Version: %{version}"                                                )
+whatis("Category: Library, Runtime Support"                                 )
+whatis("Description: Intel Math Kernel Library"                             )
+whatis("URL: https://software.intel.com/en-us/intel-mkl"                    )
 
-whatis("Name: Intel MPI"                                                    )
-whatis("Version: %{version}"                                                     )
-whatis("Category: library, Runtime Support"                                 )
-whatis("Description: Intel MPI Library (C/C++/Fortran for x86_64) "         )
-whatis("URL: http://software.intel.com/en-us/articles/intel-mpi-library/ "  )
-prepend_path( "PATH"                   , pathJoin( base_dir , "intel64/bin"      ) )
-prepend_path( "PATH"                   , pathJoin( "%{INSTALL_DIR}" , "bin"      ) )
-prepend_path( "LD_LIBRARY_PATH"        , pathJoin( base_dir , "intel64/lib"      ) )
-prepend_path( "MANPATH"                , pathJoin( base_dir , "man"              ) )
-prepend_path( "MODULEPATH"             ,"/opt/apps/%{comp_fam_ver}/impi%{underscore_version}/modulefiles" )
-prepend_path( "I_MPI_ROOT"             , base_dir                                )
-setenv(       "MPICH_HOME"             , base_dir                                )
-setenv(       "TACC_MPI_GETMODE"       , "impi_hydra"                            )
-setenv(       "TACC_IMPI_DIR"          , base_dir                                )
-setenv(       "TACC_IMPI_BIN"          , pathJoin( base_dir , "intel64/bin"      ) )
-setenv(       "TACC_IMPI_LIB"          , pathJoin( base_dir , "intel64/lib"      ) )
-setenv(       "TACC_IMPI_INC"          , pathJoin( base_dir , "intel64/include"  ) )
-setenv(       "I_MPI_JOB_FAST_STARTUP" , "1"                                     )
-setenv(       "I_MPI_CC"               , "%{myCC}"                               )
-setenv(       "I_MPI_CXX"              , "%{myCXX}"                              )
-setenv(       "I_MPI_FC"               , "%{myFC}"                               )
-setenv(       "I_MPI_F77"              , "%{myFC}"                               )
-setenv(       "I_MPI_F90"              , "%{myFC}"                               )
-family(       "MPI"                                                              )
- 	
-if (os.getenv("TACC_SYSTEM") == "stampede2") then
-  setenv(       "I_MPI_FABRICS"          , "shm:tmi"                               )
-  setenv(       "I_MPI_TMI_PROVIDER"     , "psm2"                                  )
-  setenv(       "I_MPI_HYDRA_PMI_CONNECT", "alltoall"                              )
-end
+-- Create environment variables.
+local base         = "/home1/apps/intel/18.0.0"
+local full_xe      = "compilers_and_libraries_2018.0.128/linux"
+local installDir   = pathJoin(base,full_xe)
+local mklRoot      = pathJoin(installDir,"mkl")
+
+setenv( "MKLROOT"      ,              mklRoot )
+setenv( "TACC_MKL_DIR" ,              mklRoot )
+setenv( "TACC_MKL_LIB" ,              pathJoin( mklRoot    , "lib/intel64" ) )
+setenv( "TACC_MKL_INC" ,              pathJoin( mklRoot    , "include" ) )
+setenv( "TACC_MKL_DOC" ,              pathJoin( base       , "documentation_2018/en/mkl/ps2018" ) )
+
+prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( mklRoot    , "lib/intel64" ) )
+
+prepend_path( "INCLUDE" ,             pathJoin( mklRoot    , "include" ) )
+
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2018/en/debugger/gdb-ia/man" ) )
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2018/en/debugger/gdb-igfx/man" ) )
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2018/en/man/common" ) )
 
 EOF
-
- 
+  
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -270,7 +230,6 @@ set     ModulesVersion      "%{version}"
 EOF
   
   # Check the syntax of the generated lua modulefile
-  ### don't check the hidden one!
   %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------
