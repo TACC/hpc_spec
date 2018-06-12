@@ -1,9 +1,9 @@
-# $Id: matlab.spec, v2018a, 2018/04/16 siliu $ 
+# $Id: matlab.spec, v2018a, 2018/05/26 siliu $ 
 
 Summary: Matlab
 Name: matlab
 Version: 2018a
-Release: 1
+Release: 2
 License: Mathworks License
 Vendor: Mathworks
 Group: Matlab
@@ -76,11 +76,11 @@ setenv ("DVS_CACHE","off")
 --Set MKLROOT, BLAS_VERSION, and LAPACK_VERSION for matlab
 local mklroot=os.getenv("MKLROOT")
 
-if mklroot then
-  setenv("BLAS_VERSION", pathJoin(mklroot,"lib/intel64/libmkl_rt.so") )
-  setenv("LAPACK_VERSION", pathJoin(mklroot,"lib/intel64/libmkl_rt.so") )
-  setenv("MKL_INTERFACE_LAYER","ILP64")
-end
+--if mklroot then
+--  setenv("BLAS_VERSION", pathJoin(mklroot,"lib/intel64/libmkl_rt.so") )
+--  setenv("LAPACK_VERSION", pathJoin(mklroot,"lib/intel64/libmkl_rt.so") )
+--  setenv("MKL_INTERFACE_LAYER","ILP64")
+--end
 
 --License file
 local UserHome=os.getenv("HOME")

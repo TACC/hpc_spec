@@ -7,7 +7,7 @@
 Prefix:    /opt/apps
 Summary:   lmod: Lua based Modules
 Name:      %{name_prefix}-%{base_name}
-Version:   7.7.13
+Version:   7.7.32
 Release:   1
 License:   MIT
 Vendor:    Robert McLay
@@ -55,7 +55,7 @@ first=${myhost%%.*}
 SYSHOST=${myhost#*.}
 
 if [ "$SYSHOST" = "ls5" ]; then
-EXTRA="--with-tmodPathRule=yes --with-syshost=ls5 --with-siteName=TACC"
+EXTRA="--with-tmodPathRule=yes --with-syshost=ls5 --with-siteName=TACC --with-silentShellDebugging=yes"
 CACHE_DIR="--with-spiderCacheDescript=cacheDescript.txt"
 
 cat > cacheDescript.txt << EOF

@@ -28,7 +28,7 @@ Summary: PETSc rpm build script
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 9
-%define micro_version 0
+%define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}
 %define pkg_full_version %{major_version}.%{minor_version}.%{micro_version}
@@ -52,7 +52,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.mcs.anl.gov/petsc/
@@ -67,7 +67,13 @@ Source:    %{pkg_base_name}-%{pkg_full_version}.tar.gz
 %package %{PACKAGE}
 Summary: PETSc rpm building
 Group: HPC/libraries
-%description package
+%description %{PACKAGE}
+Portable Extendible Toolkit for Scientific Computations
+
+%package %{PACKAGE}-xx
+Summary: PETSc rpm building
+Group: HPC/libraries
+%description %{PACKAGE}-xx
 Portable Extendible Toolkit for Scientific Computations
 
 %package %{MODULEFILE}
@@ -200,7 +206,8 @@ export ML_STRING=
 ##
 ## Hypre
 ##
-export HYPRE_OPTIONS="--with-hypre=1 --download-hypre=${SRC_DIR}/git.hypre.tgz"
+export HYPRE_OPTIONS="--with-hypre=1 --download-hypre=1"
+#export HYPRE_OPTIONS="--with-hypre=1 --download-hypre=${SRC_DIR}/git.hypre.tgz"
 export HYPRE_STRING=hypre
 
 %if "%{is_intel}" == "1"
@@ -222,13 +229,16 @@ export MPI_EXTRA_OPTIONS="--with-mpiexec=mpirun_rsh"
 #export MATLABOPTIONS="--with-matlab --with-matlab-dir=${TACC_MATLAB_DIR}"
 
 
-export EXTERNAL_PACKAGES_DIR=/admin/rpms/SOURCES/petsc-packages/externalpackages-%{pkg_version}
+export EXTERNAL_PACKAGES_DIR=/tmp/petsc-stuff/externalpackages-%{pkg_version}
+rm -rf ${EXTERNAL_PACKAGES_DIR}
 mkdir -p ${EXTERNAL_PACKAGES_DIR}
 export PETSC_CONFIGURE_OPTIONS="\
   --with-x=0 -with-pic \
   --with-np=8 \
-  --with-packages-dir=${EXTERNAL_PACKAGES_DIR} \
   --with-external-packages-dir=${EXTERNAL_PACKAGES_DIR} \
+  "
+export nopackage="\
+  --with-packages-dir=${EXTERNAL_PACKAGES_DIR} \
   "
 mkdir -p %{INSTALL_DIR}/externalpackages
 mkdir -p %{MODULE_DIR}
@@ -248,16 +258,8 @@ mkdir -p ${logdir}; rm -rf ${logdir}/*
 export dynamiccc="i64 debug i64debug uni unidebug"
 export dynamiccxx="cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug cxxi64 cxxi64debug"
 
-#export static="cxxstatic cxxstaticdebug static staticdebug complexstatic complexstaticdebug cxxcomplexstatic cxxcomplexstaticdebug"
-
 export EXTENSIONS="single ${dynamiccc} ${dynamiccxx}"
-export noext="\
-  reinstate: \
-  \
-  ${dynamiccxx} \
-  tau \
-  ${static} we don't do static anymore \
-  nono"
+#export EXTENSIONS="single ${dynamiccc}"
 
 ##
 ## start of for ext loop, installation only
@@ -524,7 +526,10 @@ if [ "${ext}" = "tau" ] ; then
     --with-batch --known-mpi-shared-libraries=1
 else
   # python config/configure.py
-echo $TACC_CRAY_MPT_INC
+if [ "%{comp_fam}" = "gcc" ] ; then
+  echo ${LIBS}
+  export LIBS="${LIBS} /opt/apps/intel/16.0.0.109/compilers_and_libraries_2016.0.109/linux/compiler/lib/intel64_lin/libirc.so"
+fi
   RPM_BUILD_ROOT=tmpfs PETSC_DIR=`pwd` ./configure \
     ${PETSC_CONFIGURE_OPTIONS} \
     ${mpi} ${clanguage} ${scalar} ${dynamicshared} ${precision} ${packages} \
@@ -626,12 +631,33 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #------------------------
 %if %{?BUILD_PACKAGE}
-%files package
+%files %{PACKAGE}
 #------------------------
 
   %defattr(-,root,install,)
   # RPM package contains files within these directories
-  %{INSTALL_DIR}
+  %{INSTALL_DIR}/config
+  %{INSTALL_DIR}/include
+  %{INSTALL_DIR}/lib
+  %{INSTALL_DIR}/makefile
+  %{INSTALL_DIR}/src
+  %{INSTALL_DIR}/haswell
+  %{INSTALL_DIR}/haswell-single 
+  %{INSTALL_DIR}/haswell-i64
+  %{INSTALL_DIR}/haswell-debug
+  %{INSTALL_DIR}/haswell-i64debug
+  %{INSTALL_DIR}/haswell-uni
+  %{INSTALL_DIR}/haswell-unidebug
+
+%files %{PACKAGE}-xx
+  %{INSTALL_DIR}/haswell-cxx 
+  %{INSTALL_DIR}/haswell-cxxdebug 
+  %{INSTALL_DIR}/haswell-complex 
+  %{INSTALL_DIR}/haswell-complexdebug 
+  %{INSTALL_DIR}/haswell-cxxcomplex 
+  %{INSTALL_DIR}/haswell-cxxcomplexdebug 
+  %{INSTALL_DIR}/haswell-cxxi64
+  %{INSTALL_DIR}/haswell-cxxi64debug
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -661,6 +687,8 @@ export MODULEFILE_POST=1
 %include post-defines.inc
 %preun %{PACKAGE}
 export PACKAGE_PREUN=1
+%preun %{PACKAGE}-xx
+export PACKAGE_PREUN=1
 %include post-defines.inc
 ########################################
 ############ Do Not Remove #############
@@ -672,5 +700,7 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Mon May 14 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2 UNRELEASED: point update, going back to instant download
 * Tue Apr 24 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release of 3.9
