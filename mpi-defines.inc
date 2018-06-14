@@ -58,6 +58,10 @@
     %define mpi_label 5_0
     %define mpi_module_version 5.0.3
   %endif
+  %if "%{mpiV}" == "18_0"
+    %define mpi_label 18_0
+    %define mpi_module_version 18.0.2
+  %endif
   %define mpi_fam     impi
   %define mpi_fam_ver impi_%{mpi_label}
   %define mpi_module  %{mpi_fam}/%{mpi_module_version}
