@@ -10,15 +10,16 @@ Summary: Local TACC parametric-launcher install.
 
 Name: launcher
 Version: 3.1.1
-Release: 2
+Release: 1
 Vendor: TACC
 License: none
 Group: Utility
 Source: %{name}-%{version}.tar.gz
-Packager: lwilson@tacc.utexas.edu
+Packager: cproctor@tacc.utexas.edu
 Buildroot: /var/tmp/%{name}-%{version}-buildroot
 
 %include rpm-dir.inc
+%include compiler-defines.inc
 
 %define APPS /opt/apps
 %define MODULES modulefiles
@@ -47,6 +48,9 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULEFILES_INSTALL_DIR}/%{name}
 
 %build
 
+%include compiler-load.inc
+ifort -o hello hello.f90
+ 
 %install
 
 find . | cpio -pduv  $RPM_BUILD_ROOT/%{PKG_INSTALL_DIR}
@@ -56,13 +60,13 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULEFILES_INSTALL_DIR}/%{name}
 cat > $RPM_BUILD_ROOT/%{MODULEFILES_INSTALL_DIR}/%{name}/%{version}.lua << 'EOF'
 
 local help_message=[[
-The %{name} module file defines the environment variable:
-$%{MODULE_VAR}_DIR for the location of the TACC Parametric 
+The launcher module file defines the environment variable:
+$TACC_LAUNCHER_DIR for the location of the TACC Parametric 
 Job Launcher which is a simple utility for submitting multiple
 serial applications simultaneously.
 
 For more information on using the Launcher, please consult
-the README.launcher file located in $%{MODULE_VAR}_DIR
+the README.launcher file located in $TACC_LAUNCHER_DIR
 
 Version %{version}
 ]]
@@ -106,4 +110,5 @@ EOF
 
 %clean
 rm -rf $RPM_BUILD_ROOT
+
 

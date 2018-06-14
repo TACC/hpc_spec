@@ -25,8 +25,8 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 # Create some macros (spec file variables)
 %define major_version 3
-%define minor_version 7
-%define micro_version 1
+%define minor_version 10
+%define micro_version 2
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -158,8 +158,10 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
  
   export CC=gcc
-  export ncores=68
+  export CXX=g++
+  export ncores=4
   export CFLAGS="-mtune=generic"
+  export CXXFLAGS="-mtune=generic"
   #export LDFLAGS="-Wl,-rpath,${GCC_LIB} -march=core-avx -mtune=core-avx2" # Location of correct libstdc++.so.6
   export LDFLAGS="-mtune=generic" # Location of correct libstdc++.so.6
   echo ${LD_LIBRARY_PATH}

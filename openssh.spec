@@ -1,11 +1,11 @@
 # W. Cyrus Proctor
 # 2016-03-06
 
-%define ver 7.1p2
-%define rel 3
+%define ver 7.5p1
+%define rel 1
 
 # TACC tag version
-%define tacc_tag v3.19.1-tacc-2
+%define tacc_tag v3.19.1-tacc-5
 
 # OpenSSH privilege separation requires a user & group ID
 %define sshd_uid    74
@@ -194,7 +194,7 @@ CFLAGS="$RPM_OPT_FLAGS -Os"; export CFLAGS
 
 
 %if %{kerberos5}
-K5DIR=`rpm -ql krb5-devel | grep include/krb5.h | sed 's,\/include\/krb5.h,,'`
+K5DIR=`rpm -ql krb5-devel | grep 'include/krb5\.h' | sed 's,\/include\/krb5.h,,'`
 echo K5DIR=$K5DIR
 %endif
 
@@ -226,7 +226,6 @@ autoreconf
 %if %{kerberos5}
 	 --with-kerberos5=$K5DIR \
 %endif
-
 
 
 %if %{static_libcrypto}
@@ -353,7 +352,7 @@ fi
 
 %files
 %defattr(-,root,root)
-###%doc CREDITS ChangeLog INSTALL LICENCE OVERVIEW README* PROTOCOL* TODO
+##%doc CREDITS ChangeLog INSTALL LICENCE OVERVIEW README* PROTOCOL* TODO
 %doc CREDITS INSTALL LICENCE OVERVIEW README* PROTOCOL* TODO
 %attr(0755,root,root) %{_bindir}/scp
 %attr(0644,root,root) %{_mandir}/man1/scp.1*
@@ -379,8 +378,6 @@ fi
 %attr(0644,root,root) %{_mandir}/man1/ssh.1*
 %attr(0644,root,root) %{_mandir}/man5/ssh_config.5*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ssh/ssh_config
-%attr(-,root,root) %{_bindir}/slogin
-%attr(-,root,root) %{_mandir}/man1/slogin.1*
 %if ! %{rescue}
 %attr(2755,root,nobody) %{_bindir}/ssh-agent
 %attr(0755,root,root) %{_bindir}/ssh-add
