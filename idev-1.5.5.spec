@@ -1,5 +1,5 @@
-# rpmbuild -bb idev-1.5.2-2.spec 2>&1 | tee idev-1.5.2-2.log
-# rpmbuild -bb idev-1.5.2-x.spec 2>&1 | tee log_idev-1.5.2-x.log
+# rpmbuild -bb idev-1.5.5.spec 2>&1 | tee idev-1.5.5-2.log
+# rpmbuild -bb idev-1.5.5.spec 2>&1 | tee idev-4.5.2-x.log
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
@@ -9,7 +9,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 # Create some macros (spec file variables)
 %define major_version 1
 %define minor_version 5
-%define micro_version 2
+%define micro_version 5
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -20,12 +20,12 @@ Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GPL
 Group:     Development/Tools
 URL:       https:/github.com/tacc/idev
 Packager:  TACC - milfeld@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Source:    %{pkg_base_name}-%{pkg_version}.tar
 
 # Turn off debug package mode
 %define debug_package %{nil}
