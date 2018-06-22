@@ -28,8 +28,8 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 # Create some macros (spec file variables)
 %define major_version 3
-%define minor_version 8
-%define build_version 2017.08.59291
+%define minor_version 9
+%define build_version 2018.09.60072
 
 %define pkg_version %{major_version}.%{minor_version}
 
@@ -162,6 +162,10 @@ ml
 %endif
 %if "%{is_intel17}" == "1"
   %define comp_ver 17.0
+  %define comp icc
+%endif
+%if "%{is_intel18}" == "1"
+  %define comp_ver 18.0
   %define comp icc
 %endif
 %if "%{is_gcc49}" == "1"
@@ -2742,7 +2746,7 @@ options = {
 
     "cxx" : {
         "gcc"     : [ "3.3", "3.4", "4.0", "4.1", "4.2", "4.3","4.4","4.5", "4.6","4.7", "4.9", "*" ],
-        "icc"     : [ "8.0", "8.1", "9.0", "9.1", "10.0", "10.1", "11.1", "*", "13.1", "14.0", "15.0", "16.0", "17.0" ], #PBHACK
+        "icc"     : [ "8.0", "8.1", "9.0", "9.1", "10.0", "10.1", "11.1", "*", "13.1", "14.0", "15.0", "16.0", "17.0", "18.0" ], #PBHACK
         "msvc"    : [ "7.0", "7.1", "8.0", "8.1", "*" ],
         "xlc"     : [ "7.0", "8.0", "9.0", "XL", "*" ],
         "clang"   : [ "1.7", "2.1", "2.0", "2.8", "2.9", "3.0", "3.3", "4.0", "3.0-6ubuntu3", "4.1", "4.2", "*" ],
@@ -2977,7 +2981,7 @@ export   EXTRAS=mpi,cxx11
 
 ./scons.py -c
 rm -f .sconsign.dblite
-./scons.py -j64 mode=${MODE} extras=${EXTRAS} cxx=${COMPILER} bin 
+./scons.py -j24 mode=${MODE} extras=${EXTRAS} cxx=${COMPILER} bin 
 
 
   cd $RPM_BUILD_ROOT 
