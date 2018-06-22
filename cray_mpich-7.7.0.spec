@@ -26,7 +26,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 # Create some macros (spec file variables)
 %define major_version 7
-%define minor_version 3
+%define minor_version 7
 %define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
@@ -34,6 +34,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
 %include compiler-defines.inc
+#########################
 %include name-defines-noreloc.inc
 
 ############ Do Not Change #############
@@ -42,10 +43,10 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   16
+Release:   1
 License:   GPL
 Group:     Development/Tools
-Packager:  TACC - carlos@tacc.utexas.edu
+Packager:  TACC - cproctor@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -57,18 +58,19 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 Summary: The package RPM
 Group: Development/Tools
 %description package
-This package provides Cray Message Passing Toolkit 7.3.0, a Cray 
+This package provides Cray Message Passing Toolkit %{version}, a Cray 
 optimized version of hte MPICH libraries and runtime.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-This modulefile provides access to the Cray Message Passing Toolkit 7.3.0
+This package provides Cray Message Passing Toolkit %{version}, a Cray 
+optimized version of hte MPICH libraries and runtime.
 
 %description
-This module provides access to the Cray Message Passing Toolkit 7.3.0, a Cray 
-optimized version of the MPICH libraries and runtime.  
+This package provides Cray Message Passing Toolkit %{version}, a Cray 
+optimized version of hte MPICH libraries and runtime.
 
 #---------------------------------------
 %prep -n %{pkg_base_name}-%{version}
@@ -128,24 +130,24 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
 
 %if "%{comp_fam}" == "intel"
-cp ./intel/mpi* $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-chmod ugo+rx $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpi*
-# Enable traditional TACC MPICH_HOME
-ln -s /opt/cray/mpt/7.3.0/gni/mpich-intel/14.0/lib     $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
-ln -s /opt/cray/mpt/7.3.0/gni/mpich-intel/14.0/include $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
+  cp ./intel/mpi* $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+  chmod ugo+rx $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpi*
+  # Enable traditional TACC MPICH_HOME
+  ln -s /opt/cray/mpt/%{version}/gni/mpich-intel/16.0/lib     $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+  ln -s /opt/cray/mpt/%{version}/gni/mpich-intel/16.0/include $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
 %endif
 %if "%{comp_fam}" == "gcc"
-cp ./%{comp_fam_ver}/mpi* $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-chmod ugo+rx $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpi*
-# Enable traditional TACC MPICH_HOME
-%if "%{comp_fam_ver}" != "gcc4_9"
-ln -s /opt/cray/mpt/7.3.0/gni/mpich-gnu/5.1/lib     $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
-ln -s /opt/cray/mpt/7.3.0/gni/mpich-gnu/5.1/include $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
-%endif
-%if "%{comp_fam_ver}" == "gcc4_9"
-ln -s /opt/cray/mpt/7.3.0/gni/mpich-gnu/4.9/lib     $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
-ln -s /opt/cray/mpt/7.3.0/gni/mpich-gnu/4.9/include $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
-%endif
+  cp ./%{comp_fam_ver}/mpi* $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+  chmod ugo+rx $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpi*
+  # Enable traditional TACC MPICH_HOME
+  %if "%{comp_fam_ver}" != "gcc4_9"
+   ln -s /opt/cray/mpt/%{version}/gni/mpich-gnu/5.1/lib     $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+   ln -s /opt/cray/mpt/%{version}/gni/mpich-gnu/5.1/include $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
+  %endif
+  %if "%{comp_fam_ver}" == "gcc4_9"
+   ln -s /opt/cray/mpt/%{version}/gni/mpich-gnu/4.9/lib     $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+   ln -s /opt/cray/mpt/%{version}/gni/mpich-gnu/4.9/include $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
+  %endif
 %endif
 
 
@@ -165,7 +167,7 @@ ln -s /opt/cray/mpt/7.3.0/gni/mpich-gnu/4.9/include $RPM_BUILD_ROOT/%{INSTALL_DI
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_msg=[[
-This module provides access to the Cray Message Passing Toolkit 7.3.0, a Cray
+This module provides access to the Cray Message Passing Toolkit %{version}, a Cray
 optimized version of the MPICH libraries and runtime. The following commands 
 will be automatically available for compiling MPI applications:
 
@@ -187,18 +189,18 @@ Improved support for multi-threaded applications that perform MPI operations
 within threaded regions is available via a separate version of the Cray-MPICH 
 library that is invoked by using the compiler option "-craympich-mt".
 
-Version  7.3.0
+Version  %{version}
 ]]
 
 --help(help_msg)
 help(help_msg)
 
 whatis("Name: cray_mpich")
-whatis("Version: %{pkg_version}%{dbg}")
+whatis("Version: %{version}%{dbg}")
 
 -- Create environment variables.
-local mpt_base    = "/opt/cray/mpt/"
-local mpt_version = "7.3.0"
+local mpt_base    = "/opt/cray/mpt"
+local mpt_version = "%{version}"
 local mpt_path    = pathJoin( mpt_base, mpt_version, "gni" ) 
 setenv( "MPICH_HOME", "%{INSTALL_DIR}" )
 setenv( "TACC_MPI_GETMODE", "cray_slurm" )
@@ -206,71 +208,71 @@ setenv( "TACC_MPI_GETMODE", "cray_slurm" )
 -- Paths specific to GCC
 -- These seem to be valid for both 5.1 and 5.2
 %if "%{comp_fam}" == "gcc"
-local comp_dir  = "/mpich-gnu/5.1"
-local full_path = pathJoin( mpt_path, comp_dir )
-setenv( "CRAY_MPICH2_DIR", full_path )
-setenv( "MPICH_DIR", full_path )
-setenv( "TACC_CRAY_MPT_INC", pathJoin( full_path, "include" ) )
-setenv( "TACC_CRAY_MPT_LIB", pathJoin( full_path, "lib" ) )
-prepend_path("LD_LIBRARY_PATH", pathJoin( full_path, "lib" ) )
+  local comp_dir  = "/mpich-gnu/5.1"
+  local full_path = pathJoin( mpt_path, comp_dir )
+  setenv( "CRAY_MPICH2_DIR", full_path )
+  setenv( "MPICH_DIR", full_path )
+  setenv( "TACC_CRAY_MPT_INC", pathJoin( full_path, "include" ) )
+  setenv( "TACC_CRAY_MPT_LIB", pathJoin( full_path, "lib" ) )
+  prepend_path("LD_LIBRARY_PATH", pathJoin( full_path, "lib" ) )
 %endif
 
 %if "%{comp_fam_ver}" == "gcc4_9"
-local comp_dir  = "/mpich-gnu/4.9"
-local full_path = pathJoin( mpt_path, comp_dir )
-setenv( "CRAY_MPICH2_DIR", full_path )
-setenv( "MPICH_DIR", full_path )
-setenv( "TACC_CRAY_MPT_INC", pathJoin( full_path, "include" ) )
-setenv( "TACC_CRAY_MPT_LIB", pathJoin( full_path, "lib" ) )
-prepend_path("LD_LIBRARY_PATH", pathJoin( full_path, "lib" ) )
+  local comp_dir  = "/mpich-gnu/4.9"
+  local full_path = pathJoin( mpt_path, comp_dir )
+  setenv( "CRAY_MPICH2_DIR", full_path )
+  setenv( "MPICH_DIR", full_path )
+  setenv( "TACC_CRAY_MPT_INC", pathJoin( full_path, "include" ) )
+  setenv( "TACC_CRAY_MPT_LIB", pathJoin( full_path, "lib" ) )
+  prepend_path("LD_LIBRARY_PATH", pathJoin( full_path, "lib" ) )
 %endif
 
 -- Paths specific to Intel
 %if "%{comp_fam}" == "intel"
-local comp_dir  = "mpich-intel/14.0"
-local full_path = pathJoin( mpt_path, comp_dir ) 
-setenv( "PE_INTEL_FIXED_PKGCONFIG_PATH", pathJoin( full_path, "lib/pkgconfig" ) )
-setenv( "CRAY_MPICH2_DIR", full_path )
-setenv( "MPICH_DIR", full_path )
-setenv( "TACC_CRAY_MPT_INC", pathJoin( full_path, "include" ) )
-setenv( "TACC_CRAY_MPT_LIB", pathJoin( full_path, "lib" ) )
-prepend_path( "LD_LIBRARY_PATH", pathJoin( full_path, "lib" ) )
+  local comp_dir  = "mpich-intel/16.0"
+  local full_path = pathJoin( mpt_path, comp_dir ) 
+  setenv( "PE_INTEL_FIXED_PKGCONFIG_PATH", pathJoin( full_path, "lib/pkgconfig" ) )
+  setenv( "CRAY_MPICH2_DIR", full_path )
+  setenv( "MPICH_DIR", full_path )
+  setenv( "TACC_CRAY_MPT_INC", pathJoin( full_path, "include" ) )
+  setenv( "TACC_CRAY_MPT_LIB", pathJoin( full_path, "lib" ) )
+  prepend_path( "LD_LIBRARY_PATH", pathJoin( full_path, "lib" ) )
 %endif
 
 -- Paths independent of the compiler
 prepend_path( "MANPATH", pathJoin( mpt_path, "man/mpich" ) )
 prepend_path( "PATH",    pathJoin( mpt_path, "bin" ) )
 
--- Variables and paths set by Cray 
-setenv( "CRAY_MPICH2_BASEDIR", mpt_path )
-setenv( "CRAY_MPICH2_ROOTDIR", pathJoin( mpt_base, mpt_version ) )
-setenv( "CRAY_MPICH2_VER", mpt_version )
-setenv( "PE_CXX_PKGCONFIG_LIBS",       "mpichcxx" )
-setenv( "PE_FORTRAN_PKGCONFIG_LIBS",   "mpichf90" )
-setenv( "PE_MPICH_CXX_PKGCONFIG_LIBS", "mpichcxx" )
-setenv( "PE_MPICH_DIR_CRAY_DEFAULT64", "64" )
-setenv( "PE_MPICH_DIR_PGI_DEFAULT64",  "64" )
-setenv( "PE_MPICH_FIXED_PRGENV", "INTEL" )
-setenv( "PE_MPICH_FORTRAN_PKGCONFIG_LIBS", "mpichf90" )
-setenv( "PE_MPICH_GENCOMPILERS_CRAY", "8.3" )
-setenv( "PE_MPICH_GENCOMPILERS_GNU", "51" )
-setenv( "PE_MPICH_GENCOMPILERS_PGI", "15.3" )
-setenv( "PE_MPICH_GENCOMPS_CRAY", "83" )
-setenv( "PE_MPICH_GENCOMPS_GNU", "51" )
-setenv( "PE_MPICH_GENCOMPS_PGI", "153" )
-setenv( "PE_MPICH_MODULE_NAME", "cray-mpich" )
-setenv( "PE_MPICH_MULTITHREADED_LIBS_multithreaded", "_mt" )
-setenv( "PE_MPICH_NV_LIBS", "" )
-setenv( "PE_MPICH_NV_LIBS_nvidia20", "-lcudart" )
-setenv( "PE_MPICH_NV_LIBS_nvidia35", "-lcudart" )
-setenv( "PE_MPICH_PKGCONFIG_LIBS", "mpich" )
-setenv( "PE_MPICH_PKGCONFIG_VARIABLES", "PE_MPICH_NV_LIBS_@accelerator@:PE_MPICH_MULTITHREADED_LIBS_@multithreaded@" )
-setenv( "PE_MPICH_TARGET_VAR_nvidia20", "-lcudart" )
-setenv( "PE_MPICH_TARGET_VAR_nvidia35", "-lcudart" )
+-- Variables and paths set by Cray
+setenv("CRAY_MPICH2_VER", mpt_version)
+setenv("CRAY_MPICH_BASEDIR", mpt_path)
+setenv("CRAY_MPICH_DIR", full_path)
+setenv("CRAY_MPICH_ROOTDIR", pathJoin(mpt_base, mpt_version) )
+setenv("PE_CXX_PKGCONFIG_LIBS","mpichcxx")
+setenv("PE_FORTRAN_PKGCONFIG_LIBS","mpichf90")
+setenv("PE_MPICH_ALTERNATE_LIBS_dpm","_dpm")
+setenv("PE_MPICH_ALTERNATE_LIBS_multithreaded","_mt")
+setenv("PE_MPICH_CXX_PKGCONFIG_LIBS","mpichcxx")
+setenv("PE_MPICH_DIR_CRAY_DEFAULT64","64")
+setenv("PE_MPICH_FIXED_PRGENV","INTEL")
+setenv("PE_MPICH_FORTRAN_PKGCONFIG_LIBS","mpichf90")
+setenv("PE_MPICH_GENCOMPILERS_CRAY","8.6")
+setenv("PE_MPICH_GENCOMPILERS_GNU","5.1 4.9")
+setenv("PE_MPICH_GENCOMPS_CRAY","86")
+setenv("PE_MPICH_GENCOMPS_GNU","51 49")
+setenv("PE_MPICH_MODULE_NAME","cray-mpich")
+setenv("PE_MPICH_NV_LIBS","")
+setenv("PE_MPICH_NV_LIBS_nvidia20","-lcudart")
+setenv("PE_MPICH_NV_LIBS_nvidia35","-lcudart")
+setenv("PE_MPICH_NV_LIBS_nvidia60","-lcudart")
+setenv("PE_MPICH_PKGCONFIG_LIBS","mpich")
+setenv("PE_MPICH_PKGCONFIG_VARIABLES","PE_MPICH_NV_LIBS_@accelerator@:PE_MPICH_ALTERNATE_LIBS_@multithreaded@:PE_MPICH_ALTERNATE_LIBS_@dpm@")
+setenv("PE_MPICH_TARGET_VAR_nvidia20","-lcudart")
+setenv("PE_MPICH_TARGET_VAR_nvidia35","-lcudart")
 setenv( "PE_MPICH_VOLATILE_PKGCONFIG_PATH", pathJoin( mpt_path, "mpich-@PRGENV@@PE_MPICH_DIR_DEFAULT64@/@PE_MPICH_GENCOMPS@/lib/pkgconfig" ) )
-setenv( "PE_MPICH_VOLATILE_PRGENV", "CRAY GNU PGI" )
+setenv("PE_MPICH_VOLATILE_PRGENV","CRAY GNU")
 
---TACC env for Cray Lib/Include - CRF 2015.12.17
+--TACC env for Cray Lib/Include - WCP 2018-06-13
 setenv( "TACC_CRAY_XPMEM_INC", "/opt/cray/xpmem/default/include" )
 setenv( "TACC_CRAY_XPMEM_LIB", "/opt/cray/xpmem/default/lib64" )
 setenv( "TACC_CRAY_UGNI_INC",  "/opt/cray/ugni/default/include" )
@@ -286,7 +288,7 @@ prepend_path( "PE_PKGCONFIG_PRODUCTS", "PE_MPICH" )
 
 family( "MPI" )
 
--- Update LD_LIBRARY_PATH with Cray Libs - CRF 2015.12.17
+-- Update LD_LIBRARY_PATH with Cray Libs - WCP 2018-06-13
 prepend_path( 'LD_LIBRARY_PATH', "/opt/cray/xpmem/default/lib64" )
 prepend_path( 'LD_LIBRARY_PATH', "/opt/cray/dmapp/default/lib64" )
 prepend_path( 'LD_LIBRARY_PATH', "/opt/cray/pmi/default/lib64" )
@@ -295,12 +297,10 @@ prepend_path( 'LD_LIBRARY_PATH', "/opt/cray/udreg/default/lib64" )
 
 local base_dir = "%{INSTALL_DIR}"
 prepend_path( "PATH", pathJoin( base_dir, "bin" ) )
-prepend_path( "MODULEPATH"    , "%{MODULE_PREFIX}/%{comp_fam_ver}/cray_mpich_7_2/modulefiles")
-prepend_path( "MODULEPATH"    , "%{MODULE_PREFIX}/%{comp_fam_ver}/cray_mpich_7_3/modulefiles")
+prepend_path( "MODULEPATH"    , "%{MODULE_PREFIX}/%{comp_fam_ver}/cray_mpich_7_7/modulefiles")
 EOF
   
-#cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version << 'EOF'
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
 ## version file for %{BASENAME}%{version}
