@@ -52,7 +52,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.gnu.org/software
@@ -233,7 +233,7 @@ printf "\n\n************************************************************\n"
 printf "isl\n"
 printf "************************************************************\n\n"
 
-wget http://isl.gforge.inria.fr/isl-${isl_version}.tar.gz
+##wget http://isl.gforge.inria.fr/isl-${isl_version}.tar.gz
 tar xvfz isl-${isl_version}.tar.gz
 
 cd isl-${isl_version}
@@ -321,20 +321,20 @@ tar xvfJ gcc-${gcc_version}.tar.xz
 
 cd gcc-${gcc_version}
 
-${gcc}/gcc-${gcc_version}/configure \
---enable-libssp                     \
---enable-gold=yes                   \
---enable-ld=default                 \
---enable-plugins                    \
---enable-lto                        \
---with-tune=generic                 \
---enable-languages='c,c++,fortran'  \
---disable-multilib                  \
---prefix=${gcc_install}             \
---with-gmp=${gcc_install}           \
---with-mlgmp=${gcc_install}         \
---with-mpfr=${gcc_install}          \
---with-mpc=${gcc_install}           \
+${gcc}/gcc-${gcc_version}/configure   \
+--enable-libssp                       \
+--enable-gold=yes                     \
+--enable-ld=default                   \
+--enable-plugins                      \
+--enable-lto                          \
+--with-tune=generic                   \
+--enable-languages='c,c++,fortran,go' \
+--disable-multilib                    \
+--prefix=${gcc_install}               \
+--with-gmp=${gcc_install}             \
+--with-mlgmp=${gcc_install}           \
+--with-mpfr=${gcc_install}            \
+--with-mpc=${gcc_install}             \
 --with-isl=${gcc_install}
 
 make BOOT_CFLAGS='-O2' bootstrap -j ${ncores}
