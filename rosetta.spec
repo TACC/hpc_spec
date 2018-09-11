@@ -180,6 +180,10 @@ ml
   %define comp_ver 6.3
   %define comp gcc
 %endif
+%if "%{is_gcc71}" == "1"
+  %define comp_ver 7.1
+  %define comp gcc
+%endif
 
 # Insert further module commands
 
@@ -2967,6 +2971,14 @@ settings = {
 EOF
 rm -f site.settings
 ln -s site.settings.stampede site.settings
+
+
+#sed -i 's/full_version = "\*"#None/full_version = "%{comp_ver}"/g' setup_platforms.py
+#sed -i 's/version = "\*"#None/version = "%{comp_ver}"/g'           setup_platforms.py
+#cp %{_sourcedir}/setup_platforms_rosetta-3.8.py .
+#rm -f setup_platforms.py
+#ln -s setup_platforms_rosetta-3.8.py setup_platforms.py
+
 cd ../../
 
 #sed -i '33i#include<iostream>' src/utility/string_util.hh
@@ -2979,9 +2991,9 @@ export     MODE=release
 #export   EXTRAS=mpi,omp,mkl,cxx11,cxx11thread,cxx11serialization,hdf5,python,boost_mpi,lto,boost_thread,apbs
 export   EXTRAS=mpi,cxx11
 
-./scons.py -c
+./scons.py -c mode=${MODE} extras=${EXTRAS} cxx=${COMPILER} bin 
 rm -f .sconsign.dblite
-./scons.py -j24 mode=${MODE} extras=${EXTRAS} cxx=${COMPILER} bin 
+./scons.py -j32 mode=${MODE} extras=${EXTRAS} cxx=${COMPILER} bin 
 
 
   cd $RPM_BUILD_ROOT 
@@ -2989,6 +3001,10 @@ rm -f .sconsign.dblite
   cp -rp %{INSTALL_DIR}/rosetta_src_%{build_version}_bundle/main/source/bin   $RPM_BUILD_ROOT/%{INSTALL_DIR}
   cp -rp %{INSTALL_DIR}/rosetta_src_%{build_version}_bundle/main/source/build $RPM_BUILD_ROOT/%{INSTALL_DIR}
   cp -rp %{INSTALL_DIR}/rosetta_src_%{build_version}_bundle/main/database     $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+  find $RPM_BUILD_ROOT/%{INSTALL_DIR} -name "*.o"  -type f -delete
+  find $RPM_BUILD_ROOT/%{INSTALL_DIR} -name "*.os" -type f -delete
+  rm -rf %{INSTALL_DIR}/rosetta_local_bin
 #  umount %{INSTALL_DIR}
   
 #-----------------------  

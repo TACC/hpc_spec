@@ -32,7 +32,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tgz
@@ -104,7 +104,7 @@ mkdir -p %{INSTALL_DIR}
 mount -t tmpfs tmpfs %{INSTALL_DIR}
 
 module load cmake boost python3 swig
-module load gsl petsc phdf5
+module load gsl petsc/3.9 phdf5 slepc/3.9
 # trilinos : gives problems with the STKdoc_tests
 
 %if "%{comp_fam}" == "gcc"
@@ -204,7 +204,7 @@ setenv( "FC",    "/opt/apps/gcc/7.1.0/bin/gfortran" )
 EOF
 %endif
 
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << EOF
 #%Module1.0#################################################
 ##
 ## version file for Fenics %version
@@ -230,8 +230,10 @@ EOF
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Thu Aug 02 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 7: adding slepc
 * Tue May 15 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 6 UNRELEASED : more dolfin fix, also re-clone everythin
+- release 6 : more dolfin fix, also re-clone everything
 * Wed May 02 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 5 : fixed the dolfin installation
 * Sun Dec 03 2017 eijkhout <eijkhout@tacc.utexas.edu>

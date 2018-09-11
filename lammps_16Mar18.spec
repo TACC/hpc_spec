@@ -5,7 +5,7 @@
 #    MACHINE       :   TACC STAMPEDE2
 #    VERSION       :   16 MAR 2018
 #    AUTHOR        :   Albert Lu
-#    LAST MODIFIED :   06-06-2018
+#    LAST MODIFIED :   07-11-2018
 #
 ################################################################
 
@@ -50,7 +50,7 @@ Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
-Release:   2%{?dist}
+Release:   3%{?dist}
 License:   GPL
 Vendor:    Sandia
 Group:     applications/chemistry
@@ -66,9 +66,10 @@ Packager:  TACC Albert Lu- alu@tacc.utexas.edu
 %define    dbg           %{nil}
 
 # External packages
-%define    kimver   1.9.5
+%define    kimver   1.9.6
 %define    vorover  0.4.6
 %define    eigenver 3.3.4
+%define    kim_src  kim-api-v%{kimver}
 
 ################################################################
 
@@ -247,7 +248,7 @@ as well as a syntax for looping over runs and breaking out of loops.
   mkliblist=()
 
   # List of additional library to be installed
-  liblist="atc awpmd colvars compress h5md latte linalg meam netcdf poems python quip smd voronoi"
+  liblist="atc awpmd colvars compress h5md kim linalg meam netcdf poems python quip smd voronoi"
 
   # Include all packages which don't need external libraries
   # Remove the packges that's not in the liblist
@@ -259,6 +260,7 @@ as well as a syntax for looping over runs and breaking out of loops.
   make no-gpu
   make no-reax
   make no-kokkos
+  make no-latte
 
   if [[ ! $liblist =~ "atc"      ]]; then make no-user-atc     ; fi
   if [[ ! $liblist =~ "awpmd"    ]]; then make no-user-awpmd   ; fi
@@ -385,7 +387,113 @@ EOF
 
   # kim
 
+  if [[ $liblist =~ "kim" ]]; then
+
+    echo "Working on kim ..."
+    cd lib/kim
+    
+    mkdir kim-api
+    cd kim-api
+
+    kim_build_dir=`pwd`
+
+    cd ..
+    tar -xf %{kim_src}.tar.gz
+    mv %{kim_src} tmp
+    mv ./tmp/* .
+    rm -r ./tmp %{kim_src}.tar.gz
+    cd %{kim_src}
+
+    kim_src_dir=`pwd`
+
+    ml gcc/7.1.0
+    ml impi/17.0.3
+
+    ./configure --prefix=${kim_build_dir} --compiler-suite="GCC"  CXX="mpicxx" CC="mpicc" FC="mpif90"
   
+    make
+    make install
+
+    cd ../kim_env_collection/models
+    ${kim_build_dir}/bin/kim-api-v1-build-config --makefile-kim-config > ./Makefile.KIM_Config
+    kim_model_dir=`pwd`
+
+    cp -r ../../kim-api-v%{kimver}/examples/models/ex_* .
+
+    for i in ex_*; do echo $i | sed 's/.txz//' >> models.txt; done
+
+    cd ../model_drivers
+    ${kim_build_dir}/bin/kim-api-v1-build-config --makefile-kim-config > ./Makefile.KIM_Config
+    kim_driver_dir=`pwd`
+
+    cp -r ../../kim-api-v%{kimver}/examples/model_drivers/ex_* .
+
+    for i in ex_*; do echo $i | sed 's/.txz//' >> drivers.txt; done
+
+    export KIM_API_MODELS_DIR=${kim_model_dir}
+    export KIM_API_MODEL_DRIVERS_DIR=${kim_driver_dir}
+
+    # Install drivers
+
+    while read  mo; do
+  
+      echo $mo
+      tar -xf "${mo}.txz"
+      cd "${mo}"
+      make
+      rm -rf *.o *.cpp *.hpp RE* LIC*
+      cd ..
+      rm "${mo}.txz"
+
+    done < drivers.txt
+
+    # Install models
+
+    cd ../models
+
+    while read  mo; do
+  
+      echo $mo
+      tar -xf "${mo}.txz"
+      cd "${mo}"
+      make
+      rm -rf *.o RE* LIC*
+      cd ..
+      rm "${mo}.txz"
+
+    done < models.txt
+
+    cd ${kim_src_dir}
+
+    # update final library path
+    ./configure --prefix="/opt/apps/%{INSTALL_SUFFIX}/lib/kim/kim-api" --compiler-suite="GCC"  CXX="mpicxx" CC="mpicc" FC="mpif90"
+    #./configure --prefix="/work/05392/cylu/stampede2/rpmbuild/test/%{INSTALL_SUFFIX}/lib/kim/kim-api" --compiler-suite="GCC"  CXX="mpicxx" CC="mpicc" FC="mpif90"
+  
+    make
+
+    cd ..
+
+PWD=`pwd`
+
+cat > Makefile.KIM_DIR <<EOF
+KIM_INSTALL_DIR=../../lib/kim/kim-api
+
+.DUMMY: print_dir
+
+print_dir:
+	@printf \$(KIM_INSTALL_DIR)
+EOF
+
+cat > Makefile.KIM_Config <<EOF
+include /opt/apps/%{INSTALL_SUFFIX}/lib/kim/kim-api/lib/kim-api-v1/Makefile.KIM_Config
+EOF
+
+    cd ../..
+
+    ml intel/17.0.4
+    ml impi/17.0.3
+
+  fi
 
   # latte
 
@@ -415,7 +523,8 @@ EOF
     CMAKE_INSTALL_PREFIX=${PWD}/install \
     CMAKE_BUILD_PREFIX=${PWD}/build \
     ./build.sh install
-    
+
+    rm -r tests examples docs
     cd install
     BMLDIR=`pwd`
     cd ../..
@@ -440,7 +549,8 @@ EOF
     CMAKE_PREFIX_PATH=${BMLDIR} \
     CMAKE_INSTALL_PREFIX=${PWD}/install \
     ./build.sh install
-    
+
+    rm -r tests examples docs
     cd install
     PROGRESSDIR=`pwd`
     cd ../..
@@ -621,6 +731,12 @@ EOF
 
     make libquip
 
+    rm -r src
+    rm -r tests
+    rm -r doc
+    rm -r docker
+    rm Singularity
+
     cd ../../..
 
   fi
@@ -680,15 +796,15 @@ EOF
 
   # Make lammmps (use src/MAKE/MACHINES/Makefile.stampede)
 
+  export LD_LIBRARY_PATH=/opt/apps/gcc/7.1.0/lib64/:$LD_LIBRARY_PATH
+
   echo Making lammps binary
   make -j 10 stampede CCFLAGS="$KNSX_LOPTS" LINKFLAGS="-O2 -qopenmp -xCOMMON-AVX512 -axMIC-AVX512 -fp-model precise -no-prec-div -qoverride-limits" #2>&1 | tee make_stampede.log
   mv lmp_stampede lmp_stampede_no_intel
 
-  echo make lammps library
-  make -j 10 stampede mode=lib CCFLAGS="$KNSX_LOPTS" LINKFLAGS="-O2 -qopenmp -xCOMMON-AVX512 -axMIC-AVX512 -fp-model precise -no-prec-div -qoverride-limits"
-  mv liblammps_stampede.a liblammps_stampede_no_intel.a
-  mv liblammps.a liblammps_no_intel.a
-  
+  #echo make lammps library
+  #make -j 10 stampede mode=lib CCFLAGS="$KNSX_LOPTS" LINKFLAGS="-O2 -qopenmp -xCOMMON-AVX512 -axMIC-AVX512 -fp-model precise -no-prec-div -qoverride-limits"
+  #mv liblammps_stampede.a liblammps_stampede_no_intel.a
 
   make yes-user-intel
 
@@ -717,27 +833,28 @@ echo "Installing the modulefile?: %{BUILD_MODULEFILE}"
 
 %if %{?BUILD_PACKAGE}
 
+  lmp_build_dir=`pwd`
+
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
   touch    $RPM_BUILD_ROOT/%{INSTALL_DIR}/.tacc_install_canary
   
-  # cleanup lib directories
-  rm -rf lib/gpu lib/kim lib/kokkos lib/molfile lib/mscg
+  # cleanup lib directories that we won't use
+  rm -rf lib/gpu lib/kokkos lib/molfile lib/mscg
   rm -rf lib/qmmm lib/reax lib/vtk
 
-  # cleanup tools directories
+  # cleanup tools directories that we won't use
   rm -rf tools/amber2lmp tools/ch2lmp
   rm -rf tools/eff tools/moltemplate tools/phonon 
   rm -rf tools/pymol_asphere tools/reax tools/smd tools/xmgrace
 
   # cleanup examples directories
-  #rm -rf examples/*
+  rm -rf examples/*
 
   # cleanup tools and lib directories
 
   find lib -name \*\*.o   -exec rm {} \;
   find lib -name \*\*.c   -exec rm {} \;
   find lib -name \*\*.cpp -exec rm {} \;
-  find lib -name \*\*.h   -exec rm {} \;
   find lib -name \*\*.f   -exec rm {} \;
   find lib -name \*\*.f90 -exec rm {} \;
   find lib -name \*\*.py  -exec rm {} \;
@@ -754,24 +871,71 @@ echo "Installing the modulefile?: %{BUILD_MODULEFILE}"
   # cleanup obj files
 
   rm -rf src/Obj_stampede
+  rm -rf src/fix_signal.*
 
   # clean doc files
-  #rm -rf doc/html  
-  #rm -rf doc/Makefile
-  #rm -rf doc/src
-  #rm -rf doc/utils
+  rm -rf doc/*
 
+  # create bin
   mkdir                                 $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  cp src/lmp_stampede                   $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
-  cp src/lmp_stampede_no_intel          $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
-  cp src/liblammps_stampede.so          $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
-  cp src/liblammps.so                   $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
-  cp src/liblammps_stampede.a           $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
-  cp src/liblammps_stampede_no_intel.a  $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
-  cp src/liblammps.a                    $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
-  cp src/liblammps_no_intel.a           $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
+  mv src/lmp_stampede                   $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+  mv src/lmp_stampede_no_intel          $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+  #mv src/liblammps_stampede.so          $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+  #mv src/liblammps_stampede.a           $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
 
   cp -pR lib             $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+  rm -r                  $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api
+  rm -r                  $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/%{kim_src}
+  rm -r                  $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim_env_collection
+
+  # install kim library
+  mkdir -p               $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/bin
+  mkdir -p               $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/etc/bash_completion.d
+  mkdir -p               $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/include/kim-api-v1
+  mkdir -p               $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/libexec/kim-api-v1  
+  mkdir -p               $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/lib/kim-api-v1/models
+  mkdir -p               $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/lib/kim-api-v1/model_drivers
+
+  cd lib/kim/%{kim_src}
+  cp ./src/utils/kim-api-v1-collections-management  $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/bin
+  cp ./src/utils/kim-api-v1-build-config            $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/bin
+  cp ./src/utils/kim-api-v1-activate                $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/bin
+  cp ./src/utils/kim-api-v1-deactivate              $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/bin
+  cp ./src/utils/kim-api-v1-collections-info        $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/libexec/kim-api-v1
+  cp ./src/utils/kim-api-v1-descriptor-file-match   $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/libexec/kim-api-v1
+  cp ./src/utils/kim-api-v1-simulator-model         $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/libexec/kim-api-v1
+
+  cp ./completion/kim-api-v1-completion.bash   $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/etc/bash_completion.d
+  cp ./src/*.h                                 $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/include/kim-api-v1
+  cp ./src/*.mod                               $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/include/kim-api-v1
+  cp ./src/*.dynamic-load.so                   $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/lib/libkim-api-v1.so
+  cp ./src/*.dynamic-load.so                   $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/lib/kim-api-v1/
+  cp ./src/*.dynamic-load.so                   $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/lib/kim-api-v1/libkim-api-v1.so
+
+  cp ./Makefile.KIM_Config                                         ../kim_env_collection/models
+  cp ./Makefile.KIM_Config                                         ../kim_env_collection/model_drivers
+  cp ./Makefile.KIM_Config                                         $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/lib/kim-api-v1
+  cp ./Makefile.Version                                            $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/lib/kim-api-v1
+  cp -r $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/bin                 $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/lib/kim-api-v1
+  cp -r $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/include/kim-api-v1  $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/lib/kim-api-v1/include
+  cp -r ./build_system                                             $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/lib/kim-api-v1
+  cp -r $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/libexec             $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/lib/kim-api-v1
+
+  cd ..
+
+  find kim_env_collection -name \*\*\*.a -exec rm {} \;
+  find kim_env_collection -name \*\*\*.hpp -exec rm {} \;
+  find kim_env_collection -name \*\*\*.cpp -exec rm {} \;
+
+  cp -r kim_env_collection   $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim_env_collection
+
+  rm -r $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/pair-kim.release.info
+  rm -r $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/.gitignore
+
+  chmod -Rf u+rwX,g+rwX,o=rX $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/*
+
+  # back to lammps build root
+  cd $lmp_build_dir
   cp -pR potentials      $RPM_BUILD_ROOT/%{INSTALL_DIR}/potentials
   cp -pR python          $RPM_BUILD_ROOT/%{INSTALL_DIR}/python
   cp -pR tools           $RPM_BUILD_ROOT/%{INSTALL_DIR}/tools
@@ -846,7 +1010,7 @@ echo "Installing the modulefile?: %{BUILD_MODULEFILE}"
 
       The following packages were not installed:
 
-        GPU, KIM, KOKKOS, MSCG, REAX, USER-MOLFILE, USER-QMMM, USER-VTK
+        GPU, KOKKOS, LATTE, MSCG, REAX, USER-MOLFILE, USER-QMMM, USER-VTK
 
       Library REAX was not compiled with this version, because the default virtual 
       space of the library consumes 1.6 GB/task (for a total of 2.2 GB per task), and
@@ -854,10 +1018,9 @@ echo "Installing the modulefile?: %{BUILD_MODULEFILE}"
 
       Information of external libraries:
 
-        * LATTE
-          https://github.com/lanl/LATTE.git        (latte)
-          https://github.com/lanl/bml.git          (bml)
-          https://github.com/lanl/qmd-progress.git (qmd-progress)
+        * OpenKIM
+          kim-api-v%{kimver}
+          https://openkim.org
 
         * QUIP
           https://github.com/libAtoms/QUIP.git
@@ -872,11 +1035,12 @@ echo "Installing the modulefile?: %{BUILD_MODULEFILE}"
       
       - LIBRARIES
 
-        LAMMPS libraries liblammps_stampede.a (static), liblammps_stampede.so (dynamic) are kept in TACC_LAMMPS_BIN.
+        LAMMPS libraries liblammps_stampede.a (static), liblammps_stampede.so (dynamic) are kept in TACC_LAMMPS_SRC.
 
       - REFERENCE
-      
-      See the LAMMPS website for additional info: http://lammps.sandia.gov/
+
+        LAMMPS website: http://lammps.sandia.gov
+        LAMMPS at TACC: https://portal.tacc.utexas.edu/software/lammps     
 
       Version %{version}
     ]]
@@ -904,12 +1068,24 @@ echo "Installing the modulefile?: %{BUILD_MODULEFILE}"
     setenv("TACC_LAMMPS_EXAM"      ,pathJoin(lmp_example_dir,"examples"))
     setenv("TACC_LAMMPS_SRC"       ,pathJoin(lmp_dir,"src"))
 
+    local kim_dir="%{INSTALL_DIR}/lib/kim/"
+    local kim_model_dir="%{INSTALL_DIR}/lib/kim/kim_env_collection/models"
+    local kim_driver_dir="%{INSTALL_DIR}/lib/kim/kim_env_collection/model_drivers"
+
+    setenv("TACC_KIM_DIR"              ,kim_dir)
+    setenv("TACC_KIM_API"              ,pathJoin(kim_dir,"kim-api"))
+    setenv("TACC_KIM_MODEL"            ,kim_model_dir)
+    setenv("TACC_KIM_DRIVER"           ,kim_driver_dir)
+    setenv("KIM_API_MODELS_DIR"        ,kim_model_dir)
+    setenv("KIM_API_MODEL_DRIVERS_DIR" ,kim_driver_dir)
+
     load("hdf5/1.8.16")
     load("netcdf/4.3.3.1")
     load("pnetcdf/1.8.1")
 
     append_path("PATH",pathJoin(lmp_dir,"bin"))
     append_path("PATH",pathJoin(lmp_dir,"tools"))
+    append_path("PATH",pathJoin(kim_dir,"kim-api/bin"))    
 
     append_path("LD_LIBRARY_PATH","/opt/apps/gcc/7.1.0/lib64/")
     append_path("LD_LIBRARY_PATH","/opt/intel/compilers_and_libraries_2017.4.196/linux/mkl/lib/intel64_lin/")
@@ -952,6 +1128,52 @@ EOF
 # Fix Modulefile During Post Install
 
 %post %{PACKAGE}
+
+# kim library re-linking
+
+cd %{INSTALL_DIR}/lib/kim/kim_env_collection/models
+
+while read  mo; do
+
+  cd "${mo}"
+  ln -s *dynamic-load.so libkim-api-model-v1.so
+  cd ..
+
+done < models.txt
+
+cd ../model_drivers
+
+while read  mo; do
+
+  cd "${mo}"
+  ln -s *dynamic-load.so libkim-api-model-driver-v1.so
+  cd ..
+
+done < drivers.txt 
+
+cd ../..
+
+# ----------------------------------------
+
+# files for LAMMPS
+
+PWD=`pwd`
+
+cat > Makefile.KIM_DIR <<EOF
+KIM_INSTALL_DIR=${PWD}/kim-api
+
+.DUMMY: print_dir
+
+print_dir:
+	@printf \$(KIM_INSTALL_DIR)
+EOF
+
+cat > Makefile.KIM_Config <<EOF
+include ${PWD}/kim-api/lib/kim-api-v1/Makefile.KIM_Config
+EOF
+
+# -----------------------------------------
+
 export PACKAGE_POST=1
 %include post-defines.inc
 

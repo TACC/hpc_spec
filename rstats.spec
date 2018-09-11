@@ -1,1 +1,1 @@
-Rstats-3.4.0_intel17_impi17_v1.spec
+Rstats-3.5.1_intel18_impi18_v1.spec

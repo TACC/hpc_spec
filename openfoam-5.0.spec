@@ -1,6 +1,6 @@
 #
 # Si Liu
-# 2017-11-16
+# 2018-08-16
 #
 
 # Give the package a base name
@@ -14,7 +14,7 @@
 
 
 Summary: Open Field Operation And Manipulation(OpenFOAM)
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: General Public Licence (GPL).
 Vendor: OpenFOAM Foundation
 Group: Utility/CFD
@@ -210,13 +210,13 @@ setenv("FOAMY_HEX_MESH","yes")
 -- prepend_path("LD_LIBRARY_PATH","/home1/apps/intel18/impi18_0/OpenFOAM/ThirdParty-5.0/platforms/linux64Icc/CGAL-4.8/lib")
 -- prepend_path("LD_LIBRARY_PATH","/home1/apps/intel18/impi18_0/OpenFOAM/ThirdParty-5.0/platforms/linux64Icc/gperftools-svn/lib")
 
+prepend_path("LD_LIBRARY_PATH","/home1/apps/intel18/impi18_0/OpenFOAM/OpenFOAM-5.0/platforms/linux64IccDPInt32Opt/lib/dummy")
 prepend_path("LD_LIBRARY_PATH","/home1/apps/intel18/impi18_0/OpenFOAM/OpenFOAM-5.0/platforms/linux64IccDPInt32Opt/lib/intel64")
 prepend_path("LD_LIBRARY_PATH","/home1/apps/intel18/impi18_0/OpenFOAM/ThirdParty-5.0/platforms/linux64IccDPInt32/lib/intel64")
 prepend_path("LD_LIBRARY_PATH","/opt/intel/compilers_and_libraries_2018.0.128/linux/mpi/intel64/lib")
 prepend_path("LD_LIBRARY_PATH","/home1/apps/intel18/impi18_0/OpenFOAM/site/5.0/platforms/linux64IccDPInt32Opt/lib")
 prepend_path("LD_LIBRARY_PATH","/home1/apps/intel18/impi18_0/OpenFOAM/OpenFOAM-5.0/platforms/linux64IccDPInt32Opt/lib")
 prepend_path("LD_LIBRARY_PATH","/home1/apps/intel18/impi18_0/OpenFOAM/ThirdParty-5.0/platforms/linux64IccDPInt32/lib")
-prepend_path("LD_LIBRARY_PATH","/home1/apps/intel18/impi18_0/OpenFOAM/OpenFOAM-5.0/platforms/linux64IccDPInt32Opt/lib/dummy")
 
 
 

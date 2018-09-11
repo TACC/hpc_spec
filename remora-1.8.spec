@@ -1,6 +1,9 @@
+# Si Liu (siliu@tacc.utexas.edu)
 # Carlos Rosales-Fernandez (carlos@tacc.utexas.edu)
 # Antonio Gomez (agomez@tacc.utexas.edu)
-# 2017-05-22
+
+
+# 2018-08-13
 # Modified for Stampede 2 deployment and avx512
 # This version is patch 2 with the missing fortran hearders
 #

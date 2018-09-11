@@ -13,7 +13,8 @@ cmake -VV \
   -D CMAKE_INSTALL_PREFIX:PATH=%{INSTALL_DIR} \
   -D CMAKE_BUILD_TYPE:STRING=RELEASE \
   -D CMAKE_C_FLAGS:STRING="${COPTFLAGS} ${MKLFLAG}" \
-  -D CMAKE_CXX_FLAGS:STRING="${COPTFLAGS} ${MKLFLAG} -DMPICH_SKIP_MPICXX" \
+  -D CMAKE_CXX_FLAGS:STRING="${COPTFLAGS} ${MKLFLAG} -DMPICH_SKIP_MPICXX \
+      -DHAVE_AMESOS_SUPERLU5_API -DHAVE_AMESOS2_SUPERLU5_API -DHAVE_IFPACK2_SUPERLU5_API" \
   -D Trilinos_EXTRA_LINK_FLAGS="${TACC_PYTHON_LIB}/libpython2.7.so" \
   -D Trilinos_EXTRA_LD_FLAGS="${TACC_PYTHON_LIB}/libpython2.7.so" \
   \
@@ -43,10 +44,15 @@ cmake -VV \
   -D Netcdf_INCLUDE_DIRS:PATH=$TACC_NETCDF_INC    \
   -D Netcdf_LIBRARY_DIRS:PATH=$TACC_NETCDF_LIB    \
   \
-  -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=ON \
+  -D SUPERLU_IS_FIXED_AFTER_12.12 \
+  -D TPL_ENABLE_SuperLU:BOOL=${HAS_SUPERLU} \
+      -D SuperLU_INCLUDE_DIRS:PATH="${TACC_SUPERLUSEQ_DIR}/include" \
+      -D SuperLU_LIBRARY_DIRS:PATH="${TACC_SUPERLUSEQ_LIB}" \
+      -D SuperLU_LIBRARY_NAMES="superlu" \
   \
+  -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=ON \
   -D Trilinos_ENABLE_Amesos:BOOL=ON \
-  -D Amesos2_ENABLE_Basker:BOOL=ON \
+  -D                 Amesos2_ENABLE_Basker:BOOL=ON \
   -D Trilinos_ENABLE_Anasazi:BOOL=ON \
   -D Trilinos_ENABLE_AztecOO:Bool=ON \
   -D Trilinos_ENABLE_Belos:BOOL=ON \
@@ -60,6 +66,7 @@ cmake -VV \
   -D Trilinos_ENABLE_Issoropia:BOOL=ON \
   -D Trilinos_ENABLE_Kokkos:BOOL=ON \
   -D Trilinos_ENABLE_ML:BOOL=ON \
+      -D ML_TAKES_SUPERLU_LESS_THAN_5=TRUE \
       -D ML_ENABLE_SuperLU:BOOL=OFF \
   -D Trilinos_ENABLE_MOOCHO:BOOL=ON \
   -D Trilinos_ENABLE_MueLu:BOOL=${HAS_MUELU} \
@@ -79,7 +86,6 @@ cmake -VV \
   -D Trilinos_ENABLE_SECONDARY_STABLE_CODE:BOOL=ON \
   -D Trilinos_ENABLE_Shards:BOOL=ON \
   -D Trilinos_ENABLE_ShyLU:BOOL=ON \
-  -D Trilinos_ENABLE_STK:BOOL=${HAS_STK} \
   -D Trilinos_ENABLE_Stokhos:BOOL=ON \
   -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
   -D Trilinos_ENABLE_Teko:BOOL=ON \
@@ -87,6 +93,8 @@ cmake -VV \
   -D Trilinos_ENABLE_Tpetra:BOOL=ON \
   -D Trilinos_ENABLE_TriKota:BOOL=ON \
   -D Trilinos_ENABLE_Zoltan:BOOL=ON \
+  \
+  -D Trilinos_ENABLE_STK:BOOL=${HAS_STK} \
   \
   -D Trilinos_ENABLE_PyTrilinos:Bool=${HAS_PYTHON} \
   -D CMAKE_PYTHON_INCLUDE_DIR:PATH="${TACC_PYTHON_INC}" \

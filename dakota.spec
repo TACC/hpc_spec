@@ -24,7 +24,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 # Create some macros (spec file variables)
 %define major_version 6
-%define minor_version 6
+%define minor_version 8
 %define patch_version 0
 
 %define pkg_version %{major_version}.%{minor_version}.%{patch_version}
@@ -144,7 +144,7 @@ module purge
 %include mpi-load.inc
 #ml cxx11
 ml cmake
-ml python
+ml python2
 ml boost
 ml gsl
 ml trilinos
@@ -180,7 +180,7 @@ export dakota_install=%{INSTALL_DIR}
 ##################################################
 
 export dakota_major=6
-export dakota_minor=6
+export dakota_minor=8
 export dakota_patch=0
 export dakota_dlversion=${dakota_major}.${dakota_minor}
 export dakota_version=${dakota_major}.${dakota_minor}.${dakota_patch}
@@ -194,11 +194,13 @@ export CC=mpicc
 export CXX=mpicxx
 export FC=mpif90
 
-export BLASLIB="-Wl,-rpath,/opt/intel/compilers_and_libraries/linux/lib/intel64 -L/opt/intel/compilers_and_libraries/linux/lib/intel64 -Wl,-rpath,${MKLROOT}/lib/intel64 -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_core -lmkl_intel_thread -liomp5 -lpthread -lm -ldl"
+# Intel 17 version
+#export BLASLIB="-Wl,-rpath,/opt/intel/compilers_and_libraries/linux/lib/intel64 -L/opt/intel/compilers_and_libraries/linux/lib/intel64 -Wl,-rpath,${MKLROOT}/lib/intel64 -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_core -lmkl_intel_thread -liomp5 -lpthread -lm -ldl"
+export BLASLIB="-Wl,-rpath,/opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64_lin -L/opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64_lin -Wl,-rpath,${MKLROOT}/lib/intel64 -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_core -lmkl_intel_thread -liomp5 -lpthread -lm -ldl"
 
 cd ${dakota}
-wget https://dakota.sandia.gov/sites/default/files/distributions/public/dakota-${dakota_dlversion}-public.src.tar.gz
-tar xvfz dakota-${dakota_dlversion}-public.src.tar.gz
+wget https://dakota.sandia.gov/sites/default/files/distributions/public/dakota-${dakota_dlversion}-release-public.src.tar.gz
+tar xvfz dakota-${dakota_dlversion}-release-public.src.tar.gz
 # Fix MPI variables to ints instead of size_t in text_book_par
 sed -i "s:size_t i, j, k, num_vars, num_fns, num_deriv_vars;:size_t i, j, k;\n  int num_vars, num_fns, num_deriv_vars;:g" ${dak_src}/test/text_book_par.cpp
 mkdir -p ${dak_build}/cmake

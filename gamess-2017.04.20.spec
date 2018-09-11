@@ -1,6 +1,11 @@
 # build rpm
 
 # rpmbuild -bb --clean  --define 'is_intel18 1' --define 'is_impi 1' --define 'mpiV 18_0' gamess-2017.04.20.spec   2>&1 | tee gamess-2017.04.20.r#_x.log
+
+# rpmbuild -bb --define 'is_intel18 1' --define 'is_impi 1' --define 'mpiV 18_2' gamess-2017.04.20.spec 2>&1 | tee gamess-2017.04.20.log
+# rpmbuild -bb --define 'is_intel18 1' --define 'is_impi 1' --define 'mpiV 18_2' gamess-2017.04.20.spec 2>&1 | tee gamess-2017.04.20-x.log
+
+
 #
 # Build only PACKAGE or MODULE -- set variable.  E.g. NO_PACKAGE=1 rpmbuild -bb ... only build modulefile
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -58,7 +63,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
 
-Release:   3%{?dist}
+Release:   4%{?dist}
 License:   GPL
 Vendor:    Ames Lab
 Group:     applications/chemistry
@@ -146,6 +151,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
    ifort -o tools/actvte.x actvte.f
    make -j 4
+   echo "FINISHED WITH BUILD"
 
 %endif # BUILD_PACKAGE |
 

@@ -61,7 +61,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4%{?dist}
+Release:   6%{?dist}
 License:   GNU
 Group: Development/Numerical-Libraries
 Vendor:     Argonne National Lab
@@ -187,7 +187,7 @@ cd build
   export CC=icc
   export CXX=icpc
   export FC=ifort
-  export CFLAGS="-mkl -O2"
+  export CFLAGS="-mkl -O2 -fPIC"
   export LOADOPTS=-mkl
 %endif
 %if "%{is_gcc}" == "1"
@@ -196,7 +196,7 @@ cd build
   export CC="gcc"
   export CXX=g++
   export FC="gfortran"
-  export CFLAGS=-O2
+  export CFLAGS="-g -O2 -fPIC"
 %endif
 
 cmake \
@@ -267,12 +267,12 @@ local superlu_seq_dir =  "%{INSTALL_DIR}"
 setenv("TACC_SUPERLUSEQ_DIR",superlu_seq_dir)
 -- setenv("TACC_SUPERLUSEQ_BIN",pathJoin( superlu_seq_dir,"bin" ) )
 setenv("TACC_SUPERLUSEQ_INC",pathJoin( superlu_seq_dir,"include" ) )
-setenv("TACC_SUPERLUSEQ_LIB",pathJoin( superlu_seq_dir,"lib" ) )
+setenv("TACC_SUPERLUSEQ_LIB",pathJoin( superlu_seq_dir,"lib64" ) )
 setenv("TACC_SUPERLUSEQ_SHARE",pathJoin( superlu_seq_dir,"share" ) )
 
 prepend_path ("PATH",pathJoin( superlu_seq_dir,"share" ) )
 -- prepend_path ("PATH",pathJoin( superlu_seq_dir,"bin" ) )
-prepend_path ("LD_LIBRARY_PATH",pathJoin( superlu_seq_dir, "lib" ) )
+prepend_path ("LD_LIBRARY_PATH",pathJoin( superlu_seq_dir, "lib64" ) )
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
@@ -340,6 +340,10 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Tue Aug 28 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 6: just to disambiguate for intel18
+* Wed Jul 18 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 5: TACC_SUPERLU_LIB: lib -> lib64
 * Tue Apr 03 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 4: using cmake
 * Mon Mar 12 2018 eijkhout <eijkhout@tacc.utexas.edu>

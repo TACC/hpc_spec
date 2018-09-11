@@ -7,8 +7,8 @@ Summary: PETSc install
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 9
-%define micro_version 1
-%define versionpatch 3.9.1
+%define micro_version 3
+%define versionpatch 3.9.3
 
 %define pkg_version %{major_version}.%{minor_version}
 
@@ -32,7 +32,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -167,7 +167,7 @@ export PLAPACKOPTIONS=
 ##
 export logdir=%{_topdir}/../apps/petsc/logs
 mkdir -p ${logdir}; rm -rf ${logdir}/*
-export dynamiccc="i64 debug i64debug uni unidebug"
+export dynamiccc="i64 debug i64debug complexi64 complexi64debug uni unidebug"
 export dynamiccxx="cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug cxxi64 cxxi64debug"
 #export static="cxxstatic cxxstaticdebug static staticdebug complexstatic complexstaticdebug cxxcomplexstatic cxxcomplexstaticdebug"
 #module load python
@@ -340,14 +340,14 @@ export ZOLTANSTRING="zoltan/ptscotch"
 INDEX_OPTIONS=
 case "${ext}" in
 *i64* ) INDEX_OPTIONS=--with-64-bit-indices ;
-        CHACO_OPTIONS= ;   CHACOSTRING= ;
-        MUMPS_OPTIONS= ;   MUMPSTRING= ;
-	ML_OPTIONS= ;      ML_STRING= ;
-	PLAPACK_OPTIONS= ; PLAPACK_STRING= ;
-        SPAI_OPTIONS= ;    SPAITRING= ;
-	SPOOLES_OPTIONS= ; SPOOLES_STRING= ;
-	SUNDIALS_OPTIONS= ; SUNDIALSSTRING= ;
-	SUPERLU_OPTIONS= ; superlustring= ;
+        CHACO_OPTIONS= ;       CHACOSTRING= ;
+        MUMPS_OPTIONS= ;       MUMPSTRING= ;
+	ML_OPTIONS= ;          ML_STRING= ;
+	PLAPACK_OPTIONS= ;     PLAPACK_STRING= ;
+        SPAI_OPTIONS= ;        SPAITRING= ;
+	SPOOLES_OPTIONS= ;     SPOOLES_STRING= ;
+	SUNDIALS_OPTIONS= ;    SUNDIALSSTRING= ;
+	SUPERLU_OPTIONS= ;     superlustring= ;
 	SUITESPARSE_OPTIONS= ; SUITESPARSE_STRING= ;
                 ;;
 esac
@@ -452,7 +452,9 @@ if [ "${ext}" = "tau" ] ; then
     CXX="${TACC_TAU_DIR}/x86_64/bin/tau_cxx.sh -I${MPICH_HOME}/include -mkl" \
     --with-batch --known-mpi-shared-libraries=1
 else
+
   # python config/configure.py
+  export I_MPI_FABRICS=shm:tmi
   RPM_BUILD_ROOT=tmpfs PETSC_DIR=`pwd` ./configure \
     ${PETSC_CONFIGURE_OPTIONS} \
     --with-packages-dir=${EXTERNAL_PACKAGES_DIR} \
@@ -532,11 +534,13 @@ fi
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua << EOF
 help( [[
-The petsc module defines the following environment variables:
+The petsc module defines the PETSc variables
+PETSC_DIR and PETSC_ARCH
+as well as the following environment variables:
 TACC_PETSC_DIR, TACC_PETSC_BIN, and
 TACC_PETSC_LIB for the location
 of the Petsc distribution, documentation, binaries,
-and libraries.
+and libraries. It also updates PATH and LD_LIBRARY_PATH.
 
 Version %{version}${versionextra}
 external packages installed: ${packageslisting}
@@ -614,19 +618,25 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 ###%files %{PACKAGE}-xx
 ###  %defattr(-,root,install,)
   %{INSTALL_DIR}/skylake-cxx
-  %{INSTALL_DIR}/skylake-complex
-  %{INSTALL_DIR}/skylake-cxxcomplex
   %{INSTALL_DIR}/skylake-cxxi64
+  %{INSTALL_DIR}/skylake-complex
+  %{INSTALL_DIR}/skylake-complexi64
+  %{INSTALL_DIR}/skylake-cxxcomplex
   # and debug variants
   %{INSTALL_DIR}/skylake-cxxdebug
-  %{INSTALL_DIR}/skylake-complexdebug
-  %{INSTALL_DIR}/skylake-cxxcomplexdebug
   %{INSTALL_DIR}/skylake-cxxi64debug
+  %{INSTALL_DIR}/skylake-complexdebug
+  %{INSTALL_DIR}/skylake-complexi64debug
+  %{INSTALL_DIR}/skylake-cxxcomplexdebug
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Tue Aug 14 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 4: just to disambiguate for intel 18 update 2
+* Mon Jul 23 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: point update to 3.9.3 and adding complexi64
 * Mon Apr 30 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2 UNRELEASED : point update
+- release 2: point update to 3.9.2
 * Sun Apr 01 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

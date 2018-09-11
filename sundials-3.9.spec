@@ -1,10 +1,7 @@
-# MUMPS specfile
+# SUNDIALS specfile
 # Victor Eijkhout 2017
-#
-# based on Bar.spec
-# W. Cyrus Proctor
-# Antonio Gomez
-# 2015-08-25
+# the version 3.9 corresponds to the petsc version
+# that this inherits from
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -21,19 +18,19 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: Mumps, piggybacking on the PETSc install
+Summary: Sundials, piggybacking on the PETSc install
 
 # Give the package a base name
-%define pkg_base_name mumps
-%define MODULE_VAR    MUMPS
+%define pkg_base_name sundials
+%define MODULE_VAR    SUNDIALS
 
 # Create some macros (spec file variables)
-%define major_version 4
-%define minor_version 10
-%define micro_version 0
+%define major_version 2
+%define minor_version 5
+%define micro_version 1
 
-%define pkg_version %{major_version}.%{minor_version}
-%define petscversion 3.7
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define petscversion 3.9
 ###%define NO_PACKAGE 0
 
 ### Toggle On/Off ###
@@ -58,10 +55,10 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   BSD-like
 Group:     Development/Numerical-Libraries
-URL:       http://crd-legacy.lbl.gov/~xiaoye/SuperLU/
+URL:       http://crd-legacy.lbl.gov/~xiaoye/Sundials/
 Packager:  TACC - eijkhout@tacc.utexas.edu
 #Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
@@ -77,13 +74,13 @@ Group: Development/Tools
 This is the long description for the package RPM...
 
 %package %{MODULEFILE}
-Summary: Mumps local binary install
+Summary: Sundials local binary install
 Group: System Environment/Base
 %description modulefile
 This is the long description for the modulefile RPM...
 
 %description
-Mumps is a solver library for distributed sparse linear system.
+Sundials is a solver library for distributed sparse linear system.
 
 #---------------------------------------
 %prep
@@ -165,34 +162,34 @@ fi
 echo 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua << EOF
 help( [[
-The Mumps module defines the following environment variables:
-TACC_MUMPS_INC and TACC_MUMPS_LIB for the location
-of the Mumps include files and libraries.
+The Sundials module defines the following environment variables:
+TACC_SUNDIALS_INC and TACC_SUNDIALS_LIB for the location
+of the Sundials include files and libraries.
 
 Version %{version}
 ]] )
 
-whatis( "Name: Mumps" )
+whatis( "Name: Sundials" )
 whatis( "Version: %{version}" )
 whatis( "Category: library, mathematics" )
-whatis( "URL: http://crd-legacy.lbl.gov/~xiaoye/SuperLU/" )
+whatis( "URL: http://crd-legacy.lbl.gov/~xiaoye/Sundials/" )
 whatis( "Description: Numerical library for sparse solvers" )
 
-local             mumps_arch =    "${architecture}"
-local             mumps_dir  =     "${TACC_PETSC_DIR}"
-local             mumps_inc  = pathJoin(mumps_dir,mumps_arch,"include")
-local             mumps_lib  = pathJoin(mumps_dir,mumps_arch,"lib")
+local             sundials_arch =    "${architecture}"
+local             sundials_dir  =     "${TACC_PETSC_DIR}"
+local             sundials_inc  = pathJoin(sundials_dir,sundials_arch,"include","sundials")
+local             sundials_lib  = pathJoin(sundials_dir,sundials_arch,"lib")
 
-prepend_path("LD_LIBRARY_PATH", mumps_lib)
+prepend_path("LD_LIBRARY_PATH", sundials_lib)
 
-setenv("TACC_MUMPS_INC",        mumps_inc )
-setenv("TACC_MUMPS_LIB",        mumps_lib)
+setenv("TACC_SUNDIALS_INC",        sundials_inc )
+setenv("TACC_SUNDIALS_LIB",        sundials_lib)
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
 #%Module1.0#################################################
 ##
-## version file for Mumps %version
+## version file for Sundials %version
 ##
 
 set     ModulesVersion      "${modulefilename}"
@@ -250,5 +247,7 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Tue May 30 2017 eijkhout <eijkhout@tacc.utexas.edu>
+* Tue Aug 14 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: intel/18.0.2
+* Tue Nov 07 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

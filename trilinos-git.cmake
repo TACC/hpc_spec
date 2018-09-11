@@ -61,6 +61,7 @@ cmake -VV \
   -D Trilinos_ENABLE_Issoropia:BOOL=ON \
   -D Trilinos_ENABLE_Kokkos:BOOL=ON \
   -D Trilinos_ENABLE_ML:BOOL=ON \
+      -D ML_TAKES_SUPERLU_LESS_THAN_5=TRUE \
       -D ML_ENABLE_SuperLU:BOOL=OFF \
   -D Trilinos_ENABLE_MOOCHO:BOOL=ON \
   -D Trilinos_ENABLE_MueLu:BOOL=${HAS_MUELU} \
@@ -81,7 +82,7 @@ cmake -VV \
   -D Trilinos_ENABLE_Shards:BOOL=ON \
   -D Trilinos_ENABLE_ShyLU:BOOL=ON \
   -D Trilinos_ENABLE_STK:BOOL=${HAS_STK} \
-  -D TPL_ENABLE_SuperLU:BOOL=ON \
+  -D TPL_ENABLE_SuperLU:BOOL=${HAS_SUPERLU} \
       -D SuperLU_INCLUDE_DIRS:PATH="${TACC_SUPERLUSEQ_DIR}/include" \
       -D SuperLU_LIBRARY_DIRS:PATH="${TACC_SUPERLUSEQ_LIB}" \
       -D SuperLU_LIBRARY_NAMES="superlu" \

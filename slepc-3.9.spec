@@ -11,8 +11,8 @@ Summary: Slepc install
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 9
-%define micro_version 0
-%define versionpatch 3.9.0
+%define micro_version 2
+%define versionpatch 3.9.2
 
 %define pkg_version %{major_version}.%{minor_version}
 
@@ -36,7 +36,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 1%{?dist}
+Release: 3%{?dist}
 License: GPL
 Vendor: Universitat Politecnica De Valencia http://www.grycap.upv.es/slepc/
 Group: Development/Numerical-Libraries
@@ -93,7 +93,7 @@ rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 # same as in petsc
-export dynamiccc="debug uni unidebug i64 i64debug"
+export dynamiccc="i64 debug i64debug complexi64 complexi64debug uni unidebug"
 export dynamiccxx="cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug cxxi64 cxxi64debug"
 
 for ext in \
@@ -198,5 +198,9 @@ cp -r docs include lib src $RPM_BUILD_ROOT/%{INSTALL_DIR}/
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Tue Aug 14 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: just to disambiguate for intel 18 update 2
+* Wed Jul 25 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: adding complexi64, update to 3.9.2
 * Sun Apr 22 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial build

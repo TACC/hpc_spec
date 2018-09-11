@@ -1,6 +1,7 @@
 Summary:    Python is a high-level general-purpose programming language.
-Name:       tacc-python2 
-Version:    2.7.15
+Name:       tacc-python3 
+#Version:    2.7.15
+Version:    3.7.0
 Release:    1%{?dist}
 License:    GPLv2
 Vendor:     Python Software Foundation
@@ -26,8 +27,8 @@ Packager:   TACC - rtevans@tacc.utexas.edu
 %include compiler-defines.inc
 %include mpi-defines.inc	
 
-%define MAJOR_MINOR 2.7
-%define MAJOR 2
+%define MAJOR_MINOR 3.7
+%define MAJOR 3
 %define PNAME python%{MAJOR}
 
 %define INSTALL_DIR_COMP %{APPS}/%{comp_fam_ver}/%{PNAME}/%{version}
@@ -129,6 +130,7 @@ if [ ! -f "%{INSTALL_DIR_COMP}/bin/pip%{MAJOR}" ]; then
 fi
 ${PIP} install --trusted-host pypi.python.org certifi
 ${PIP} install nose
+${PIP} install pytest
 ${PIP} install virtualenv
 ${PIP} install virtualenvwrapper    
 ${PIP} install sympy
@@ -140,6 +142,7 @@ ${PIP} install meld3
 #${PIP} install supervisor
 ${PIP} install paramiko
 ${PIP} install readline
+${PIP} install pybind11
 #${PIP} install egenix-mx-base
 
 #############################################################
@@ -151,13 +154,13 @@ ${PIP} install readline
 ### Numpy
 if ! $(%{INSTALL_DIR_COMP}/bin/%{PNAME} -c "import numpy"); then
     cd %{_topdir}/SOURCES	
-    if [ ! -f "%{_topdir}/SOURCES/numpy-1.14.0.tar.gz" ]; then	
-	wget https://github.com/numpy/numpy/releases/download/v1.14.0/numpy-1.14.0.tar.gz
+    if [ ! -f "%{_topdir}/SOURCES/numpy-1.14.5.tar.gz" ]; then	
+	wget https://github.com/numpy/numpy/releases/download/v1.14.5/numpy-1.14.5.tar.gz
     fi	   
     
-    rm -rf %{_topdir}/SOURCES/numpy-1.14.0 	   
-    tar -xzvf %{_topdir}/SOURCES/numpy-1.14.0.tar.gz -C %{_topdir}/SOURCES	
-    cd %{_topdir}/SOURCES/numpy-1.14.0
+    rm -rf %{_topdir}/SOURCES/numpy-1.14.5 	   
+    tar -xzvf %{_topdir}/SOURCES/numpy-1.14.5.tar.gz -C %{_topdir}/SOURCES	
+    cd %{_topdir}/SOURCES/numpy-1.14.5
 
     sed -i 's/-openmp/-fopenmp '"%{TACC_OPT}"'/' numpy/distutils/intelccompiler.py
     sed -i 's/-openmp/-fopenmp '"%{TACC_OPT}"'/' numpy/distutils/fcompiler/intel.py
@@ -178,13 +181,13 @@ fi
 ### Scipy
 if ! $(%{INSTALL_DIR_COMP}/bin/%{PNAME} -c "import scipy"); then
     cd %{_topdir}/SOURCES	
-    if [ ! -f "%{_topdir}/SOURCES/scipy-1.0.0.tar.gz" ]; then	
-	wget -O scipy-1.0.0.tar.gz https://github.com/scipy/scipy/releases/download/v1.0.0/scipy-1.0.0.tar.gz
+    if [ ! -f "%{_topdir}/SOURCES/scipy-1.1.0.tar.gz" ]; then	
+	wget -O scipy-1.1.0.tar.gz https://github.com/scipy/scipy/releases/download/v1.1.0/scipy-1.1.0.tar.gz
     fi	   
 
-    rm -rf %{_topdir}/SOURCES/scipy-1.0.0
-    tar -xzvf scipy-1.0.0.tar.gz -C %{_topdir}/SOURCES	 
-    cd %{_topdir}/SOURCES/scipy-1.0.0
+    rm -rf %{_topdir}/SOURCES/scipy-1.1.0
+    tar -xzvf scipy-1.1.0.tar.gz -C %{_topdir}/SOURCES	 
+    cd %{_topdir}/SOURCES/scipy-1.1.0
 
     %if "%{comp_fam_name}" == "Intel"
     %{INSTALL_DIR_COMP}/bin/%{PNAME} setup.py config --compiler=intelem --fcompiler=intelem build_clib --compiler=intelem --fcompiler=intelem build_ext --compiler=intelem --fcompiler=intelem install
@@ -246,12 +249,14 @@ CFLAGS="-O2" ${PIP} install --no-binary :all: lxml
 ${PIP} install --no-binary :all: pystuck
 ${PIP} install --no-binary :all: PyMySQL
 ${PIP} install --no-binary :all: psycopg2
-${PIP} install --no-binary :all: mercurial
+%if "%{MAJOR}" == "2"
+     ${PIP} install --no-binary :all: mercurial
+%endif
 #CFLAGS="-O0" ${PIP} install --no-binary :all: yt
 ${PIP} install --no-binary :all: theano
 ${PIP} install --no-binary :all: ply
 ${PIP} install --no-binary :all: PyYAML
-CFLAGS="-O2" ${PIP} install --no-binary :all: scikit_learn
+#CFLAGS="-O2" ${PIP} install --no-binary :all: scikit_learn
 
 #if module load hdf5; then
 #    ${PIP} install h5py
@@ -272,7 +277,7 @@ CFLAGS="-O2" ${PIP} install --no-binary :all: scikit_learn
   if module load phdf5; then
       export PYTHONPATH=%{INSTALL_DIR_MPI}/lib/python%{MAJOR_MINOR}/site-packages
       CC="mpicc -ip-no-inlining" HDF5_MPI="ON" HDF5_DIR=$TACC_HDF5_DIR ${PIP} install --no-binary=h5py --no-deps --install-option="--prefix=%{INSTALL_DIR_MPI}" --ignore-installed h5py
-      ${PIP} install tables
+      #${PIP} install tables
   fi
 %endif
 

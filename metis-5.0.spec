@@ -13,7 +13,7 @@ Summary: Local METIS binary install
 
 Name: %{name_prefix}-%{base_name}
 Version: 5.0.2
-Release: 1
+Release: 2
 License: University of Minnesota
 Vendor: George Karypis
 Group: System Environment/Base

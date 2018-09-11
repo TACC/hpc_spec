@@ -1,8 +1,14 @@
 # Antia Lamas-Linares
+# The following versions are built:
+# 
+# 2018-08-14
+# Building for intel18
+# New version of FFTW3 (3.3.8) available
+# ---
 # 2017-11-08
 # Building for phase 2 of Stampede2 deployment - SKX
 # Now using the standard TACC_VEC_OPT flags
-#---
+# ---
 # 2017-07-10 
 # User ticket TUP:38819 pointed out incorrect files in libtool files
 # It appears this will not work as a relocatable
@@ -36,7 +42,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 3
-%define micro_version 6
+%define micro_version 8
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -61,7 +67,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3%{?dist}
+Release:   1%{?dist}
 License:   GPL
 Group:     System Environment/Base
 URL:       http://www.fftw.org
@@ -205,26 +211,16 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 %endif
 
 %if "%is_intel" == "1"
-  #export CFLAGS="-O3 -xAVX -axCORE-AVX2"
-  #export LDFLAGS="-xAVX -axCORE-AVX2"
-  #export CFLAGS="-O3 -xCORE-AVX2 -axMIC-AVX512"
-  #export LDFLAGS="-xCORE-AVX2 -axMIC-AVX512"
   export CFLAGS="-O3 %{TACC_VEC_OPT}"
   export LDFLAGS="%{TACC_VEC_OPT}"
   echo "I'm intelling"
 %endif
 
 %if "%is_gcc" == "1"
-  #export CFLAGS="-O3 -march=sandybridge -mtune=haswell"
-  #export LDFLAGS="-march=sandybridge -mtune=haswell"
-  #per Todd's prescription for gcc KNL fat binaries
-  #export CFLAGS="-O3 -march=haswell -mtune=knl"
-  #export LDFLAGS="-march=haswell -mtune=knl"
   export CFLAGS="-O3 %{TACC_VEC_OPT}"
   export LDFLAGS="%{TACC_VEC_OPT}"
 %endif
 
-### Antia adding --enable-avx512 line for the KNL build
 ./configure --with-pic \
             --enable-shared \
             --enable-openmp \
@@ -240,7 +236,6 @@ make -j 16
 make DESTDIR=$RPM_BUILD_ROOT install
 
 ## Make single-precision version w/ mpi support
-### Antia adding --enable-avx2 line for the KNL build
 make clean
 ./configure --with-pic \
             --enable-single \

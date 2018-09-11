@@ -146,17 +146,34 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #  export LDFLAGS=-L${MPICH_HOME}/intel64/lib
 %endif
 
+%if "%is_intel" == "1"
+  export CFLAGS="-O3 %{TACC_VEC_OPT}"
+  export LDFLAGS="%{TACC_VEC_OPT}"
+  echo "I'm intelling"
+%endif
+
+%if "%is_gcc" == "1"
+  export CFLAGS="-O3 %{TACC_VEC_OPT}"
+  export LDFLAGS="%{TACC_VEC_OPT}"
+%endif
+
 unset PHG_CONFIG_PATH
 
 #./configure CFLAGS="-O3 " FFLAGS="-O3 -mcmodel=medium" --prefix=%{INSTALL_DIR} --enable-shared --enable-mpi --enable-threads 
 COMMON_CONFIG_ARGS="--prefix=%{INSTALL_DIR} --enable-type-prefix --enable-threads --enable-mpi"
 
-./configure CFLAGS="-O3 -xAVX" FFLAGS="-O3 -mcmodel=medium" ${COMMON_CONFIG_ARGS}
- make -j 16
+#./configure CFLAGS="-O3 -xAVX" FFLAGS="-O3 -mcmodel=medium" ${COMMON_CONFIG_ARGS}
+
+./configure FFLAGS="-O3 -mcmodel=medium" ${COMMON_CONFIG_ARGS}
+ 
+make -j 16
 make DESTDIR=$RPM_BUILD_ROOT install
 
 make clean
-./configure CFLAGS="-O3 -xAVX" FFLAGS="-O3 -mcmodel=medium" ${COMMON_CONFIG_ARGS} --enable-float
+#./configure CFLAGS="-O3 -xAVX" FFLAGS="-O3 -mcmodel=medium" ${COMMON_CONFIG_ARGS} --enable-float
+
+./configure FFLAGS="-O3 -mcmodel=medium" ${COMMON_CONFIG_ARGS} --enable-float
+
 make -j16
 make DESTDIR=$RPM_BUILD_ROOT install
 

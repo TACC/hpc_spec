@@ -1,6 +1,6 @@
 #
 # Si Liu
-# 2017-05-18
+# 2018-08-18
 #
 
 Summary: MVvapich2 new spec file 
@@ -268,6 +268,7 @@ setenv( "MPICH_HOME"             , base_dir                            )
 setenv( "TACC_MPI_GETMODE"       , "mvapich2_ssh"                      )
 setenv( "MV2_FASTSSH_THRESHOLD"  , "10000"                             )
 setenv( "MV2_HOMOGENEOUS_CLUSTER", "1"                                 )
+setenv( "PSM2_KASSIST_MODE"      , "none"                              )
 
 prepend_path( "PATH"             , pathJoin( base_dir , "bin"          ) )
 prepend_path( "MANPATH"          , pathJoin( base_dir , "share/man"    ) )

@@ -131,18 +131,14 @@ export BOOST_ROOT=${TACC_BOOST_DIR}
 %endif
 
 export COPTFLAGS="-g %{TACC_OPT} -O2"
-%if "%{comp_fam}" == "gcc"
   export HAS_HDF5=ON
   export HAS_NETCDF=ON
   export HAS_PYTHON=ON
   export HAS_MUELU=ON
   export HAS_STK=OFF
+  export HAS_SUPERLU=ON
+%if "%{comp_fam}" == "gcc"
 %else
-  export HAS_HDF5=ON
-  export HAS_NETCDF=ON
-  export HAS_PYTHON=ON
-  export HAS_MUELU=ON
-  export HAS_STK=ON
 %endif
 export HAS_SEACAS=${HAS_NETCDF}
 if [ "${HAS_HDF5}" = "ON" ] ; then
@@ -153,6 +149,9 @@ if [ "${HAS_NETCDF}" = "ON" ] ; then
 fi
 if [ "${HAS_PYTHON}" = "ON" ] ; then
   module load python
+fi
+if [ "${HAS_SUPERLU}" = "ON" ] ; then
+  module load superlu_seq
 fi
 
 ##
@@ -177,7 +176,7 @@ export TRILINOS_LOCATION=%{_topdir}/BUILD/
 
 export SOURCEVERSION=%{version}
 export VERSION=%{version}
-source %{SPEC_DIR}/trilinos.cmake
+source %{SPEC_DIR}/victor.trilinos.cmake
 echo ${trilinos_extra_libs}
 
 ####

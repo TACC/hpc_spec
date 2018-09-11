@@ -33,7 +33,7 @@ Summary: Mumps, piggybacking on the PETSc install
 %define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}
-%define petscversion 3.7
+%define petscversion 3.9
 ###%define NO_PACKAGE 0
 
 ### Toggle On/Off ###
@@ -250,5 +250,7 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Tue Aug 14 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: intel18.0.2
 * Tue May 30 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

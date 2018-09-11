@@ -60,7 +60,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3%{?dist}
+Release:   4%{?dist}
 License:   GNU
 Group:     Development/Tools
 Vendor:     SOEST - hawaii
@@ -282,6 +282,8 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Tue Aug 28 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 4: just to disambiguate for intel18
 * Thu Jun 15 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 3: proper path in modulefiles
 * Thu Jun 01 2017 eijkhout <eijkhout@tacc.utexas.edu>

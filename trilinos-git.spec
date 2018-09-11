@@ -31,7 +31,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 3%{?dist}
+Release: 6%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-git%{minor_version}.tar.gz
@@ -139,6 +139,8 @@ export HAS_SUPERLU=ON
 %if "%{comp_fam}" == "gcc"
   export HAS_HDF5=OFF
   export HAS_NETCDF=OFF
+  # VLE is this fixed?
+  export HAS_SUPERLU=ON
 %endif
 
 export HAS_SEACAS=${HAS_NETCDF}
@@ -322,6 +324,12 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Tue Aug 28 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 6: rebuild for intel18
+* Wed Jul 18 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 5: recompile with fixed superlu_seq
+* Wed Jun 20 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 4: superlu correctly included
 * Mon Feb 26 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 3: just to satisfy losf
 * Sat Nov 04 2017 eijkhout <eijkhout@tacc.utexas.edu>

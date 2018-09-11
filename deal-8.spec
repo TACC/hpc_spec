@@ -12,7 +12,7 @@ Summary: Dealii install
 ### %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 %define pkg_version git20170615
 
-%define dealiipetscversion 3.8
+%define dealiipetscversion 3.9
 
 %include rpm-dir.inc
 %include compiler-defines.inc

@@ -214,7 +214,7 @@ autoreconf
         --with-ssl-engine            \
         --with-ipaddr-display        \
         --with-libedit               \
-        --with-nerscmod              \
+        --without-nerscmod           \
 %if %{scard}
 	--with-smartcard \
 %endif
