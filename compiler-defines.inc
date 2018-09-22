@@ -87,3 +87,7 @@
   exit
 %endif
 
+%if "%{comp_fam}" == "gcc"
+  %define TACC_OPT -mcpu=power9 -mtune=power9
+%endif
+
