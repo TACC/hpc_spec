@@ -1,0 +1,15 @@
+*.log
+*.swp
+*~
+\#*\#
+nohup.out
+*.[0-9]
+.kent
+.cyrus
+tacctmpfs*
+*.bak
+*.cmake-cache
+*.orig
+s1victor
+.victor
+victor*
