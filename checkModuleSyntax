@@ -1,0 +1,98 @@
+#!/bin/bash
+# -*- shell-script -*-
+
+#  This script is designed to check module syntax
+
+usage()
+{
+  echo $0 modulefile
+}
+
+runMe()
+{
+  local cmdA=("$@")
+
+  local j
+  local jj
+  local i
+  local ignoreError
+  local j=0
+  for i in "${cmdA[@]}" ; do
+    ignoreError=
+    if [ "x${i:0:1}" = x- ]; then
+      i=${i:1}
+      ignoreError=1
+    fi
+      
+    j=$((j+1))
+    jj=$(printf "%02d" $j)
+    echo
+    echo "%%---------------------------------%%"
+    echo "   " $jj: $i
+    echo "%%---------------------------------%%"
+    echo
+
+    eval $i $QUIET
+    if [ -z "$ignoreError" -a $? != 0 ]; then
+      exit 1
+    fi
+  done
+}
+
+if [ "$1" = "--quiet" ]; then
+  QUIET=" >& /dev/null"
+  shift
+fi
+
+if [ "$1" = "--debug" ]; then
+  DEBUG="-d"
+  shift
+fi
+
+######################################################################## 
+#  Find an lmod that has a version 5 or better
+for i in /opt/apps/lmod/lmod/libexec             \
+         /opt/apps/lmod/5.0rc1/libexec           ; do
+  if [ -x $i/lmod ]; then
+    LmodVersion=$($i/lmod bash --version 2>&1 | grep "^Modules" | sed -e 's/.*Version \([0-9]\+\).*/\1/')
+    if [ "$LmodVersion" -ge 5 ]; then
+      export LMOD_DIR=$i
+      export LMOD_CMD=$i/lmod
+      break;
+    fi
+  fi
+done
+
+if [ -z $LMOD_DIR ]; then
+  exit
+fi
+
+DIR=/tmp/checkModuleSyntax/$$
+
+mkdir -p $DIR
+
+HOME=$DIR
+
+MODULE_FILE=$1
+
+if [ -z "$MODULE_FILE" -o ! -f "$MODULE_FILE" ]; then
+  usage
+fi
+
+clearMT
+
+export MODULEPATH=$(dirname $MODULE_FILE)
+MF=$(basename $MODULE_FILE .lua)
+
+
+cmdA=( "echo MODULEPATH: $MODULEPATH"
+       "module $DEBUG --checkSyntax load $MF"
+       "module $DEBUG help   $MF"
+       "module $DEBUG whatis $MF"
+       "module $DEBUG --checkSyntax avail"
+       "module $DEBUG --checkSyntax spider"
+)
+
+runMe "${cmdA[@]}"
+
+rm -rf $DIR
