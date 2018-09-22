@@ -68,7 +68,7 @@
   %endif
   %if "%{mpiV}" == "2_3"
     %define mpi_label 2_3
-    %define mpi_module_version 2.3b
+    %define mpi_module_version 2.3
     %define mpi_fam mvapich2
     %define mpi_fam_ver mvapich2-%{mpi_label}
   %endif

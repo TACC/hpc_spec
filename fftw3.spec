@@ -44,6 +44,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 %define minor_version 3
 %define micro_version 8
 
+%define TACC_VEC_OPT -mcpu=power9 -mtune=power9
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
@@ -227,12 +228,9 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
             --enable-threads \
             --disable-dependency-tracking \
             --enable-mpi \
-            --enable-sse2 \
-            --enable-avx \
-            --enable-avx2 \
-            --enable-avx512 \
+            --enable-vsx \
             --prefix=%{INSTALL_DIR}
-make -j 16
+make -j 48
 make DESTDIR=$RPM_BUILD_ROOT install
 
 ## Make single-precision version w/ mpi support
@@ -244,13 +242,10 @@ make clean
             --enable-threads \
             --disable-dependency-tracking \
             --enable-mpi \
-            --enable-sse \
-            --enable-sse2 \
-            --enable-avx \
-            --enable-avx2 \
-	    --enable-avx512 \
+            --enable-altivec \
+            --enable-vsx \
             --prefix=%{INSTALL_DIR}
-make -j 16
+make -j 48
 make DESTDIR=$RPM_BUILD_ROOT install
 
   # Copy everything from tarball over to the installation directory
