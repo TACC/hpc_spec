@@ -1,15 +1,22 @@
 #!/bin/bash
 
+DOWNLOAD_DIR=/tmp/fenics-stuff
 if [ $# -eq 1 ] ; then
-  mkdir -p $1
-  cd $1
+  DOWNLOAD_DIR=$1
 fi
+echo "Downloading in ${DOWNLOAD_DIR}"
 
+if [ ! -d "${DOWNLOAD_DIR}" ] ; then
+  echo "Making download directory: ${DOWNLOAD_DIR}"
+  mkdir -p "${DOWNLOAD_DIR}"
+fi
+cd ${DOWNLOAD_DIR}
 echo "Installing in: `pwd`"
 
 rm -rf fiat* instant* dijitso* ufl* ffc* dolfin* mshr* eigen*
 
 # using https on st2
+git clone https://bitbucket.org/fenics-project/fenics
 git clone https://bitbucket.org/fenics-project/fiat
 git clone https://bitbucket.org/fenics-project/instant
 git clone https://bitbucket.org/fenics-project/dijitso
@@ -22,3 +29,8 @@ git clone https://bitbucket.org/fenics-project/mshr
 hg clone https://bitbucket.org/eigen/eigen
 #module unload python
 #module load python3
+
+tardate=`date "+%Y%b"`
+echo "Tarring into fenics-${tardate}.tgz"
+tar fcz fenics-${tardate}.tgz fiat instant dijitso ufl ffc dolfin mshr eigen fenics
+mv fenics-${tardate}.tgz /admin/rpms/SOURCES

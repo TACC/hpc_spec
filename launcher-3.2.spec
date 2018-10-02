@@ -1,6 +1,6 @@
 #
-# Lucas A. Wilson
-# 2015-012-07
+# Si Liu
+# 08-13-2018
 #
 
 Summary: Launcher Tool for Simple HTC
@@ -11,8 +11,7 @@ Summary: Launcher Tool for Simple HTC
 
 # Create some macros (spec file variables)
 %define major_version 3
-%define minor_version 0.1
-%define micro_version 1
+%define minor_version 2
 
 %define pkg_version %{major_version}.%{minor_version}
 
@@ -23,7 +22,6 @@ Summary: Launcher Tool for Simple HTC
 ########################################
 ### Construct name based on includes ###
 ########################################
-
 %include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
@@ -35,7 +33,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3
+Release:   1
 License:   MIT
 Group:     Development/Tools
 URL:       https://github.com/TACC/launcher
@@ -153,8 +151,6 @@ as a single batch job.
 
 The %{MODULE_VAR} module defines the %{MODULE_VAR}_DIR environment variable.
 
-Make sure to load python before loading the launcher.
-
 For more information on using the Launcher, please consult 
 %{MODULE_VAR}_DIR/README or go to the Launcher website:
 
@@ -163,8 +159,6 @@ https://www.tacc.utexas.edu/research-development/tacc-software/the-launcher.
 
 --help(help_msg)
 help(help_msg)
-
-always_load("python2")
 
 whatis("Name: Launcher")
 whatis("Version: %{pkg_version}%{dbg}")
@@ -181,8 +175,6 @@ setenv( "%{MODULE_VAR}_PLUGIN_DIR",         plugin_dir)
 setenv( "%{MODULE_VAR}_RMI",                "SLURM")
 
 EOF
-# removed from modulefile:
-# load("python")
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################

@@ -1,6 +1,6 @@
 #
-# Si Liu 
-# 2018-08-10
+# Si Liu
+# 08-13-2018
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -19,22 +19,20 @@
 Summary: Boost spec file (www.boost.org)
 
 # Give the package a base name
-%define pkg_base_name boost
-%define MODULE_VAR    BOOST
+%define pkg_base_name boost-mpi
+%define MODULE_VAR    BOOST_MPI
 
 # Create some macros (spec file variables)
 %define major_version 1
-%define minor_version 64
+%define minor_version 59
 %define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}
 
-%define mpi_fam none
-
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
 %include compiler-defines.inc
-#%include mpi-defines.inc
+%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
@@ -50,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   3
 License:   GPL
 Group:     Utility
 URL:       http://www.boost.org
@@ -124,13 +122,15 @@ proposed for the upcoming TR2.
 %install
 #---------------------------------------
 
-# Setup modules
 %include system-load.inc
-%include compiler-defines.inc
-#%include mpi-defines.inc
-module purge
 %include compiler-load.inc
+%include mpi-load.inc
+
+module purge
 module load intel/18.0.2
+module load cray_mpich/7.7.0
+
+%define PNAME       boost-mpi
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -171,11 +171,11 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   %endif
 
   rm -f icu4c-56_1-src.tgz*
-  rm -f boost_1_64_0.tar.gz*
+  rm -f boost_1_59_0.tar.gz*
   wget http://download.icu-project.org/files/icu4c/56.1/icu4c-56_1-src.tgz
-  wget http://downloads.sourceforge.net/project/boost/boost/1.64.0/boost_1_64_0.tar.gz
+  wget http://downloads.sourceforge.net/project/boost/boost/1.59.0/boost_1_59_0.tar.gz
   tar -xzf icu4c-56_1-src.tgz
-  tar -xzf boost_1_64_0.tar.gz
+  tar -xzf boost_1_59_0.tar.gz
   WD=`pwd`
 
 #  if [ "$CXX" != mpicxx ]; then
@@ -187,7 +187,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #  fi
 
   cd $WD
-  cd boost_1_64_0
+  cd boost_1_59_0
   EXTRA="-sICU_PATH=%{INSTALL_DIR}"
   #if [ "$CXX" = mpicxx ]; then
  # 	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=mpi"
@@ -200,8 +200,14 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #  else
   	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all --without-libraries=mpi"
 #  fi
+  
+  CC=mpicxx
+  CXX=mpicxx
 
   ./bootstrap.sh --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
+
+  echo "using mpi : /opt/apps/intel18/cray_mpich/7.7.0/bin/mpicxx ;" >> ~/projet-config.jam
+
   ./b2 -j 10 --prefix=%{INSTALL_DIR} $EXTRA install
 
   mkdir -p              $RPM_BUILD_ROOT/%{INSTALL_DIR}

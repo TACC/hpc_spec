@@ -1,6 +1,8 @@
 #
-# Si Liu 
-# 2018-08-10
+# Portable Extendible Toolkit for Scientific Computing
+# spec file by Victor Eijkhout
+#
+# Adapted from Bar.spec, Cyrus Proctor & Antonio Gomez
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -11,34 +13,34 @@
 # RPM_DBPATH      -> Path To Non-Standard RPM Database Location
 #
 # Typical Command-Line Example:
+# ./build_rpm.sh Bar.spec
 # cd ../RPMS/x86_64
 # rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: Boost spec file (www.boost.org)
+Summary: Petsc4py rpm build script
 
 # Give the package a base name
-%define pkg_base_name boost
-%define MODULE_VAR    BOOST
+%define pkg_base_name petsc4py
+%define MODULE_VAR    PETSC4PY
 
 # Create some macros (spec file variables)
-%define major_version 1
-%define minor_version 64
-%define micro_version 0
+%define major_version 3
+%define minor_version 9
+%define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}
-
-%define mpi_fam none
+%define pkg_full_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
 %include compiler-defines.inc
-#%include mpi-defines.inc
+%include mpi-defines.inc
+
 ########################################
 ### Construct name based on includes ###
 ########################################
-#%include name-defines.inc
 %include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
@@ -52,11 +54,10 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
 Release:   1
 License:   GPL
-Group:     Utility
-URL:       http://www.boost.org
-Packager:  TACC - siliu@tacc.utexas.edu
-#Source0:   boost_1_59_0.tar.gz
-#Source1:   icu4c-56_1-src.tgz
+Group:     Development/Tools
+URL:       https://bitbucket.org/petsc/petsc4py/
+Packager:  TACC - eijkhout@tacc.utexas.edu
+Source:    %{pkg_base_name}-%{pkg_full_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -64,30 +65,28 @@ Packager:  TACC - siliu@tacc.utexas.edu
 
 
 %package %{PACKAGE}
-Summary: Boost RPM
-Group: Development/System Environment
-%description package
-Boost provides free peer-reviewed portable C++ source libraries.
+Summary: Petsc4py rpm building
+Group: HPC/libraries
+%description %{PACKAGE}
+Portable Extendible Toolkit for Scientific Computations
+
+%package %{PACKAGE}-xx
+Summary: Petsc4py rpm building
+Group: HPC/libraries
+%description %{PACKAGE}-xx
+Portable Extendible Toolkit for Scientific Computations
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-Module RPM for Boost
+This is the long description for the modulefile RPM...
 
 %description
+The longer-winded description of the package that will 
+end in up inside the rpm and is queryable if installed via:
+rpm -qi <rpm-name>
 
-Boost emphasizes libraries that work well with the C++ Standard
-Library. Boost libraries are intended to be widely useful, and usable
-across a broad spectrum of applications. The Boost license encourages
-both commercial and non-commercial use.
-
-Boost aims to establish "existing practice" and provide reference
-implementations so that Boost libraries are suitable for eventual
-standardization. Ten Boost libraries are already included in the C++
-Standards Committee's Library Technical Report (TR1) as a step toward
-becoming part of a future C++ Standard. More Boost libraries are
-proposed for the upcoming TR2.
 
 #---------------------------------------
 %prep
@@ -99,7 +98,7 @@ proposed for the upcoming TR2.
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-#%setup -n %{pkg_base_name}-%{pkg_version}
+%setup -n %{pkg_base_name}-%{pkg_full_version}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -126,11 +125,8 @@ proposed for the upcoming TR2.
 
 # Setup modules
 %include system-load.inc
-%include compiler-defines.inc
-#%include mpi-defines.inc
-module purge
 %include compiler-load.inc
-module load intel/18.0.2
+%include mpi-load.inc
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -140,9 +136,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -154,73 +148,10 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-
-  ICU_MODE=Linux
-  %if "%{comp_fam}" == "intel"
-        export CONFIGURE_FLAGS=--with-toolset=intel-linux
-        ICU_MODE=Linux/ICC
-  %endif
-
-
-  %if "%{mpi_fam}" != "none"
-        CXX=mpicxx
-  %endif
-
-  %if "%{comp_fam}" == "gcc"
-        export CONFIGURE_FLAGS=--with-toolset=gcc
-  %endif
-
-  rm -f icu4c-56_1-src.tgz*
-  rm -f boost_1_64_0.tar.gz*
-  wget http://download.icu-project.org/files/icu4c/56.1/icu4c-56_1-src.tgz
-  wget http://downloads.sourceforge.net/project/boost/boost/1.64.0/boost_1_64_0.tar.gz
-  tar -xzf icu4c-56_1-src.tgz
-  tar -xzf boost_1_64_0.tar.gz
-  WD=`pwd`
-
-#  if [ "$CXX" != mpicxx ]; then
-    	cd icu/source
-    	./runConfigureICU  $ICU_MODE --prefix=%{INSTALL_DIR}
-    	make -j 10
-    	make install
-    	rm -f ~/user-config.jam
-#  fi
-
-  cd $WD
-  cd boost_1_64_0
-  EXTRA="-sICU_PATH=%{INSTALL_DIR}"
-  #if [ "$CXX" = mpicxx ]; then
- # 	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=mpi"
- # 	EXTRA=""
- # 	mpipath=`which mpicxx`
-#	cat > $WD/tools/build/v2/user-config.jam << EOF
-#	#using mpi $mpipath ;
-#	using mpi ;
-#	EOF
-#  else
-  	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all --without-libraries=mpi"
-#  fi
-
-  ./bootstrap.sh --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
-  ./b2 -j 10 --prefix=%{INSTALL_DIR} $EXTRA install
-
-  mkdir -p              $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-
-
-  rm -f ~/tools/build/v2/user-config.jam
-
-  if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-  	mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  fi
-
-  cp -r %{INSTALL_DIR} $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-  umount %{INSTALL_DIR}
-
-#---------------------- - 
+  
+#-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
-
 
 #---------------------------
 %if %{?BUILD_MODULEFILE}
@@ -236,66 +167,128 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   ########### Do Not Remove #############
   #######################################
   
+#--------------------------
+%endif # BUILD_MODULEFILE |
+#--------------------------
+
+##
+## setup a tmpfs
+##
+mkdir -p %{INSTALL_DIR}
+mount -t tmpfs tmpfs %{INSTALL_DIR} 
+
+##
+## configure install loop
+##
+export dynamiccc="uni unidebug debug i64 i64debug complexi64 complexi64debug"
+export dynamiccxx="cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug cxxi64 cxxi64debug"
+
+export EXTENSIONS="single ${dynamiccc} ${dynamiccxx}"
+#export EXTENSIONS="single ${dynamiccc}"
+
+##
+## start of for ext loop, installation only
+##
+for ext in "" ${EXTENSIONS} ; do
+#for ext in "" ; do
+
+echo "configure install for ${ext}"
+module unload petsc
+if [ -z ${ext} ] ; then
+  export modulefilename=%{pkg_version}
+else
+  export modulefilename=%{pkg_version}-${ext}
+fi
+module load petsc/${modulefilename}
+
+#------------------------
+%if %{?BUILD_PACKAGE}
+#------------------------
+
+python2 \
+  setup.py install \
+  --prefix=%{INSTALL_DIR}
+
+#-----------------------
+%endif # BUILD_PACKAGE |
+#-----------------------
+
+#---------------------------
+%if %{?BUILD_MODULEFILE}
+#---------------------------
+
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
-help([[
-The boost module file defines the following environment variables:"
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC for"
-the location of the boost distribution."
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua << EOF
+help( [[
+The petsc4py module defines the following environment variables:
+TACC_PETSC4PY_DIR, TACC_PETSC4PY_BIN, and
+TACC_PETSC4PY_LIB for the location
+of the Petsc4py distribution, documentation, binaries,
+and libraries.
 
-To load the mpi boost      do "module load boost-mpi"
-To load the rest of boost  do "module load boost"
+Version %{version}${versionextra}
+external packages installed: ${packageslisting}
+]] )
 
-It is save to load both.
+whatis( "Name: Petsc4py" )
+whatis( "Version: %{version}${versionextra}${dynamicextra}" )
+whatis( "Version-notes: external packages installed: ${packages}" )
+whatis( "Category: library, mathematics" )
+whatis( "URL: https://bitbucket.org/petsc/petsc4py/" )
+whatis( "Description: Numerical library for sparse linear algebra" )
 
-Version %{version}"
-]])
+local             petsc4py_arch =    "${architecture}"
+local             petsc4py_dir =     "%{INSTALL_DIR}/"
 
-whatis("Name: boost")
-whatis("Version: %{version}")
-whatis("Category: %{group}")
-whatis("Keywords: System, Library, C++")
-whatis("URL: http://www.boost.org")
-whatis("Description: Boost provides free peer-reviewed portable C++ source libraries %{BOOST_TYPE}.")
+--prepend_path("PATH",            pathJoin(petsc4py_dir,"bin") )
+--prepend_path("PATH",            pathJoin(petsc4py_dir,petsc4py_arch,"bin") )
+--prepend_path("LD_LIBRARY_PATH", pathJoin(petsc4py_dir,petsc4py_arch,"lib") )
+prepend_path("PYTHONPATH", 
+    pathJoin(petsc4py_dir,"lib64","python$TACC_PYTHON_VER","site-packages") )
 
-
-setenv("TACC_%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
-setenv("TACC_%{MODULE_VAR}_LIB","%{INSTALL_DIR}/lib")
-setenv("TACC_%{MODULE_VAR}_INC","%{INSTALL_DIR}/include")
-
-conflict("boost","boost-mpi")
-
--- Add boost to the LD_LIBRARY_PATH
-prepend_path("LD_LIBRARY_PATH","%{INSTALL_DIR}/lib")
-
+setenv("PETSC4PY_ARCH",            petsc4py_arch)
+setenv("PETSC4PY_DIR",             petsc4py_dir)
+setenv("TACC_PETSC4PY_DIR",        petsc4py_dir)
+--setenv("TACC_PETSC4PY_BIN",        pathJoin(petsc4py_dir,petsc4py_arch,"bin") )
+--setenv("TACC_PETSC4PY_LIB",        pathJoin(petsc4py_dir,petsc4py_arch,"lib") )
 EOF
 
-  
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module3.1.1#################################################
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
+#%Module1.0#################################################
 ##
-## version file for %{MODULE_VAR}%{version}
+## version file for Petsc4py %version
 ##
 
-set     ModulesVersion      "%{version}"
+set     ModulesVersion      "${modulefilename}"
 EOF
-  
+
   # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
+##
+## end of for ext loop
+##
+done 
+
+cp -r %{INSTALL_DIR}/* $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+umount %{INSTALL_DIR}  
+
+echo "Directory to package up: $RPM_BUILD_ROOT/%{INSTALL_DIR}"
+echo "listing:"
+ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #------------------------
 %if %{?BUILD_PACKAGE}
-%files package
+%files %{PACKAGE}
 #------------------------
 
-  %defattr(-,root,install,)
-  # RPM package contains files within these directories
-  %{INSTALL_DIR}
+%defattr(-,root,install,)
+%{INSTALL_DIR}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -305,9 +298,8 @@ EOF
 %files modulefile 
 #---------------------------
 
-  %defattr(-,root,install,)
-  # RPM modulefile contains files within these directories
-  %{MODULE_DIR}
+%defattr(-,root,install,)
+%{MODULE_DIR}
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
@@ -325,6 +317,8 @@ export MODULEFILE_POST=1
 %include post-defines.inc
 %preun %{PACKAGE}
 export PACKAGE_PREUN=1
+%preun %{PACKAGE}-xx
+export PACKAGE_PREUN=1
 %include post-defines.inc
 ########################################
 ############ Do Not Remove #############
@@ -335,3 +329,6 @@ export PACKAGE_PREUN=1
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
 
+%changelog
+* Thu Aug 09 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial release of 3.9

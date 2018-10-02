@@ -24,7 +24,7 @@ Summary: Boost spec file (www.boost.org)
 
 # Create some macros (spec file variables)
 %define major_version 1
-%define minor_version 64
+%define minor_version 59
 %define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}
@@ -50,13 +50,11 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   3
 License:   GPL
 Group:     Utility
 URL:       http://www.boost.org
 Packager:  TACC - siliu@tacc.utexas.edu
-#Source0:   boost_1_59_0.tar.gz
-#Source1:   icu4c-56_1-src.tgz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -171,11 +169,11 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   %endif
 
   rm -f icu4c-56_1-src.tgz*
-  rm -f boost_1_64_0.tar.gz*
+  rm -f boost_1_59_0.tar.gz*
   wget http://download.icu-project.org/files/icu4c/56.1/icu4c-56_1-src.tgz
-  wget http://downloads.sourceforge.net/project/boost/boost/1.64.0/boost_1_64_0.tar.gz
+  wget http://downloads.sourceforge.net/project/boost/boost/1.59.0/boost_1_59_0.tar.gz
   tar -xzf icu4c-56_1-src.tgz
-  tar -xzf boost_1_64_0.tar.gz
+  tar -xzf boost_1_59_0.tar.gz
   WD=`pwd`
 
 #  if [ "$CXX" != mpicxx ]; then
@@ -187,7 +185,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #  fi
 
   cd $WD
-  cd boost_1_64_0
+  cd boost_1_59_0
   EXTRA="-sICU_PATH=%{INSTALL_DIR}"
   #if [ "$CXX" = mpicxx ]; then
  # 	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=mpi"

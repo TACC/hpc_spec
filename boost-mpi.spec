@@ -1,6 +1,6 @@
 #
-# Si Liu 
-# 2018-08-10
+# Si Liu
+# 08-13-2018
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -19,8 +19,8 @@
 Summary: Boost spec file (www.boost.org)
 
 # Give the package a base name
-%define pkg_base_name boost
-%define MODULE_VAR    BOOST
+%define pkg_base_name boost-mpi
+%define MODULE_VAR    BOOST_MPI
 
 # Create some macros (spec file variables)
 %define major_version 1
@@ -29,7 +29,7 @@ Summary: Boost spec file (www.boost.org)
 
 %define pkg_version %{major_version}.%{minor_version}
 
-%define mpi_fam none
+%define mpi_fam impi
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -127,10 +127,12 @@ proposed for the upcoming TR2.
 # Setup modules
 %include system-load.inc
 %include compiler-defines.inc
-#%include mpi-defines.inc
+%include mpi-defines.inc
 module purge
 %include compiler-load.inc
 module load intel/18.0.2
+module load cray_mpich/7.7.0
+module load python2
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -200,8 +202,14 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #  else
   	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all --without-libraries=mpi"
 #  fi
+  
+  CC=mpicxx
+  CXX=mpicxx
 
   ./bootstrap.sh --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
+
+  echo "using mpi : /opt/apps/intel18/cray_mpich/7.7.0/bin/mpicxx ;" >> ~/projet-config.jam
+
   ./b2 -j 10 --prefix=%{INSTALL_DIR} $EXTRA install
 
   mkdir -p              $RPM_BUILD_ROOT/%{INSTALL_DIR}
@@ -263,6 +271,7 @@ setenv("TACC_%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
 setenv("TACC_%{MODULE_VAR}_LIB","%{INSTALL_DIR}/lib")
 setenv("TACC_%{MODULE_VAR}_INC","%{INSTALL_DIR}/include")
 
+always_load("python2")
 conflict("boost","boost-mpi")
 
 -- Add boost to the LD_LIBRARY_PATH

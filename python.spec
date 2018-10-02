@@ -1,5 +1,5 @@
 Summary:    Python is a high-level general-purpose programming language.
-Name:       tacc-python2
+Name:       tacc-python3
 #Version:    2.7.15
 Version:    3.6.5
 Release:    1%{?dist}
@@ -12,7 +12,7 @@ Packager:   TACC - rtevans@tacc.utexas.edu
 # Either Python package or mpi4py will be built 
 # based on this switch
 #------------------------------------------------
-%define build_mpi4py     0
+%define build_mpi4py     1
 %global _python_bytecompile_errors_terminate_build 0
 #------------------------------------------------
 # BASIC DEFINITIONS
@@ -78,7 +78,7 @@ export CPPFLAGS="-I/opt/openssl/1.0.2o/usr/include"
 
 export PATH=%{INSTALL_DIR_COMP}/bin:$PATH
 export LD_LIBRARY_PATH=%{INSTALL_DIR_COMP}/lib64:%{INSTALL_DIR_COMP}/lib:$LD_LIBRARY_PATH
-export PIP=%{INSTALL_DIR_COMP}/bin/pip
+export PIP=%{INSTALL_DIR_COMP}/bin/pip%{MAJOR}
 ############################################################
 # System Specific Libraries
 ############################################################
@@ -130,12 +130,12 @@ fi
 ############################################################
 # core python modules
 ############################################################
-if [ ! -f "%{INSTALL_DIR_COMP}/bin/pip" ]; then
-    wget https://bootstrap.pypa.io/get-pip.py
-    %{INSTALL_DIR_COMP}/bin/%{PNAME} get-pip.py
-fi
+#if [ ! -f "%{INSTALL_DIR_COMP}/bin/pip" ]; then
+#    wget https://bootstrap.pypa.io/get-pip.py
+#    %{INSTALL_DIR_COMP}/bin/%{PNAME} get-pip.py
+#fi
 ${PIP} install --upgrade pip
-${PIP} install  certifi
+#${PIP} install  certifi
 ${PIP} install  nose
 ${PIP} install  virtualenv
 ${PIP} install  virtualenvwrapper    
@@ -150,6 +150,7 @@ ${PIP} install  paramiko
 ${PIP} install  readline
 #${PIP} install  egenix-mx-base
 ${PIP} install cython
+${PIP} install pybind11
 #############################################################
 # scipy stack: use INSTALL_DIR_COMP . 
 # We need to know which pip modules are compiler specific.  
@@ -254,15 +255,15 @@ ${PIP} install pandas
 ${PIP} install --no-binary :all:  psutil
 ${PIP} install --no-binary :all:  numexpr
 ${PIP} install --no-binary :all:  rpyc	
-${PIP} install --no-binary :all:  ipython
+#${PIP} install --no-binary :all:  ipython
 ${PIP} install jupyter	
 ${PIP} install --no-binary :all:  mako
 CFLAGS="-O2" ${PIP} install lxml
 ${PIP} install --no-binary :all:  pystuck
 ${PIP} install --no-binary :all:  fortran-magic
-${PIP} install --no-binary :all:  MySQL
+${PIP} install --no-binary :all:  PyMySQL
 #${PIP} install --no-binary :all:  psycopg2
-${PIP} install --no-binary :all:  mercurial
+#${PIP} install --no-binary :all:  mercurial
 CFLAGS="-O0" ${PIP} install --no-binary :all:  yt
 ${PIP} install --no-binary :all:  theano
 ${PIP} install --no-binary :all:  ply
@@ -286,7 +287,7 @@ CFLAGS="-O2" ${PIP} install --no-binary :all:  scikit_learn
 
 
   if module load phdf5; then
-      export PYTHONPATH=%{INSTALL_DIR_MPI}/lib/python3.6/site-packages
+      export PYTHONPATH=%{INSTALL_DIR_MPI}/lib/python%{MAJOR_MINOR}/site-packages
       CC="mpicc -ip-no-inlining" HDF5_MPI="ON" HDF5_DIR=$TACC_HDF5_DIR ${PIP} install --no-binary=h5py --no-deps --install-option="--prefix=%{INSTALL_DIR_MPI}" --ignore-installed h5py
       ${PIP} install tables
   fi
@@ -395,7 +396,7 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}
 cat >    $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}/%{version}.lua << 'EOF'
 inherit()
 whatis("Version-notes: Compiler:%{comp_fam_ver}. MPI:%{mpi_fam_ver}")
-prepend_path("PYTHONPATH", "%{INSTALL_DIR_MPI}/lib/python3.6/site-packages")
+prepend_path("PYTHONPATH", "%{INSTALL_DIR_MPI}/lib/python%{MAJOR_MINOR}/site-packages")
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}/.version.%{version} << 'EOF'

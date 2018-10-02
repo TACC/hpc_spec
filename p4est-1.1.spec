@@ -116,7 +116,7 @@ P4EST has octree forest support for dealii
 export modulefilename=%{pkg_version}
 
 # Insert necessary module commands
-module load boost cmake phdf5 parallel-netcdf python swig
+module load boost cmake phdf5 parallel-netcdf python2 swig
 # python
 
 echo "Building the package?:    %{BUILD_PACKAGE}"

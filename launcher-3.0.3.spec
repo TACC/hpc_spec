@@ -1,6 +1,6 @@
 #
-# Lucas A. Wilson
-# 2015-012-07
+# Si Liu
+# 2018-08-20
 #
 
 Summary: Launcher Tool for Simple HTC
@@ -11,7 +11,7 @@ Summary: Launcher Tool for Simple HTC
 
 # Create some macros (spec file variables)
 %define major_version 3
-%define minor_version 0.1
+%define minor_version 0.3
 %define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}
@@ -35,7 +35,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3
+Release:   1
 License:   MIT
 Group:     Development/Tools
 URL:       https://github.com/TACC/launcher

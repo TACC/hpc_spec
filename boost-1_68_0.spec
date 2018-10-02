@@ -1,5 +1,5 @@
 #
-# Si Liu 
+# Antonio Gomez-Iglesias
 # 2018-08-10
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
@@ -24,7 +24,7 @@ Summary: Boost spec file (www.boost.org)
 
 # Create some macros (spec file variables)
 %define major_version 1
-%define minor_version 64
+%define minor_version 68
 %define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}
@@ -54,7 +54,7 @@ Release:   1
 License:   GPL
 Group:     Utility
 URL:       http://www.boost.org
-Packager:  TACC - siliu@tacc.utexas.edu
+Packager:  TACC - agomez@tacc.utexas.edu
 #Source0:   boost_1_59_0.tar.gz
 #Source1:   icu4c-56_1-src.tgz
 
@@ -130,7 +130,7 @@ proposed for the upcoming TR2.
 #%include mpi-defines.inc
 module purge
 %include compiler-load.inc
-module load intel/18.0.2
+#module load intel
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -171,11 +171,11 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   %endif
 
   rm -f icu4c-56_1-src.tgz*
-  rm -f boost_1_64_0.tar.gz*
+  rm -f boost_1_68_0.tar.gz*
   wget http://download.icu-project.org/files/icu4c/56.1/icu4c-56_1-src.tgz
-  wget http://downloads.sourceforge.net/project/boost/boost/1.64.0/boost_1_64_0.tar.gz
+  wget http://downloads.sourceforge.net/project/boost/boost/1.68.0/boost_1_68_0.tar.gz 
   tar -xzf icu4c-56_1-src.tgz
-  tar -xzf boost_1_64_0.tar.gz
+  tar -xzf boost_1_68_0.tar.gz
   WD=`pwd`
 
 #  if [ "$CXX" != mpicxx ]; then
@@ -187,7 +187,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #  fi
 
   cd $WD
-  cd boost_1_64_0
+  cd boost_1_68_0
   EXTRA="-sICU_PATH=%{INSTALL_DIR}"
   #if [ "$CXX" = mpicxx ]; then
  # 	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=mpi"
@@ -262,8 +262,6 @@ whatis("Description: Boost provides free peer-reviewed portable C++ source libra
 setenv("TACC_%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
 setenv("TACC_%{MODULE_VAR}_LIB","%{INSTALL_DIR}/lib")
 setenv("TACC_%{MODULE_VAR}_INC","%{INSTALL_DIR}/include")
-
-conflict("boost","boost-mpi")
 
 -- Add boost to the LD_LIBRARY_PATH
 prepend_path("LD_LIBRARY_PATH","%{INSTALL_DIR}/lib")

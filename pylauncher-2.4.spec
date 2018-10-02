@@ -59,7 +59,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3
+Release:   4
 Group:     Development/Tools
 License: GPL
 Url: https://bitbucket.org/VictorEijkhout/pylauncher
@@ -274,5 +274,7 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Fri Aug 10 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 4: UNRELEASED
 * Tue May 17 2016 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial build

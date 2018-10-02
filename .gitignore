@@ -11,5 +11,5 @@ CHROOT_ONLY*
 *.bak
 *.cmake-cache
 *.orig
-*.install
 *.rpm
+victor*

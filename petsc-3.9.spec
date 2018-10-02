@@ -28,7 +28,7 @@ Summary: PETSc rpm build script
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 9
-%define micro_version 2
+%define micro_version 3
 
 %define pkg_version %{major_version}.%{minor_version}
 %define pkg_full_version %{major_version}.%{minor_version}.%{micro_version}
@@ -52,7 +52,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3
+Release:   5
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.mcs.anl.gov/petsc/
@@ -236,6 +236,7 @@ export PETSC_CONFIGURE_OPTIONS="\
   --with-x=0 -with-pic \
   --with-np=8 \
   --with-external-packages-dir=${EXTERNAL_PACKAGES_DIR} \
+  --download-petsc4py=yes \
   "
 export nopackage="\
   --with-packages-dir=${EXTERNAL_PACKAGES_DIR} \
@@ -255,7 +256,7 @@ export PLAPACKOPTIONS=
 ##
 export logdir=%{_topdir}/../apps/petsc/logs
 mkdir -p ${logdir}; rm -rf ${logdir}/*
-export dynamiccc="i64 debug i64debug uni unidebug"
+export dynamiccc="uni unidebug debug i64 i64debug complexi64 complexi64debug"
 export dynamiccxx="cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug cxxi64 cxxi64debug"
 
 export EXTENSIONS="single ${dynamiccc} ${dynamiccxx}"
@@ -316,14 +317,14 @@ export hdf5string=
 export hdf5download=
 export hdf5versionextra=
 
-%if "%{comp_fam}" == "intel"
-%if "%{is_cmpich}" == "1"
-    module load phdf5
-    export hdf5download="--with-hdf5=1 --with-hdf5-dir=${TACC_HDF5_DIR}"
-    export hdf5versionextra="; hdf5 support"
-    export hdf5string="hdf5"
-%endif
-%endif
+# %if "%{comp_fam}" == "intel"
+# %if "%{is_cmpich}" == "1"
+#     module load phdf5
+#     export hdf5download="--with-hdf5=1 --with-hdf5-dir=${TACC_HDF5_DIR}"
+#     export hdf5versionextra="; hdf5 support"
+#     export hdf5string="hdf5"
+# %endif
+# %endif
 
 export versionextra="${versionextra}${hdf5versionextra}"
 
@@ -513,6 +514,14 @@ esac
 %if %{?BUILD_PACKAGE}
 #------------------------
 
+#TACC_INTEL_LIB=/opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64
+if [ "%{comp_fam}" = "gcc" ] ; then
+  echo ${LIBS}
+  export LIBS="${LIBS} /opt/apps/intel/16.0.0.109/compilers_and_libraries_2016.0.109/linux/compiler/lib/intel64_lin/libirc.so"
+else
+  export LIBS="${LIBS} ${TACC_INTEL_LIB}/libirc.so"
+fi
+
 export PETSC_ARCH=${architecture}
 noprefix=--prefix=%{INSTALL_DIR}/${architecture}
 if [ "${ext}" = "tau" ] ; then
@@ -526,10 +535,6 @@ if [ "${ext}" = "tau" ] ; then
     --with-batch --known-mpi-shared-libraries=1
 else
   # python config/configure.py
-if [ "%{comp_fam}" = "gcc" ] ; then
-  echo ${LIBS}
-  export LIBS="${LIBS} /opt/apps/intel/16.0.0.109/compilers_and_libraries_2016.0.109/linux/compiler/lib/intel64_lin/libirc.so"
-fi
   RPM_BUILD_ROOT=tmpfs PETSC_DIR=`pwd` ./configure \
     ${PETSC_CONFIGURE_OPTIONS} \
     ${mpi} ${clanguage} ${scalar} ${dynamicshared} ${precision} ${packages} \
@@ -643,9 +648,9 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
   %{INSTALL_DIR}/makefile
   %{INSTALL_DIR}/src
   %{INSTALL_DIR}/haswell
+  %{INSTALL_DIR}/haswell-debug
   %{INSTALL_DIR}/haswell-single 
   %{INSTALL_DIR}/haswell-i64
-  %{INSTALL_DIR}/haswell-debug
   %{INSTALL_DIR}/haswell-i64debug
   %{INSTALL_DIR}/haswell-uni
   %{INSTALL_DIR}/haswell-unidebug
@@ -659,6 +664,8 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
   %{INSTALL_DIR}/haswell-cxxcomplexdebug 
   %{INSTALL_DIR}/haswell-cxxi64
   %{INSTALL_DIR}/haswell-cxxi64debug
+  %{INSTALL_DIR}/haswell-complexi64
+  %{INSTALL_DIR}/haswell-complexi64debug
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -701,6 +708,10 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Thu Aug 16 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 5: adding petsc4py UNRELEASED
+* Sat Jul 28 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 4: 3.9.3, also adding complexi64
 * Thu Jun 14 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 3: point update to 3.9.2, going back to instant download,
              gcc libirc fix, going to 3 rpms.

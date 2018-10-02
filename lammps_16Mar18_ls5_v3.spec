@@ -5,7 +5,7 @@
 #    MACHINE       :   TACC LONESTAR 5
 #    VERSION       :   16 MAR 2018
 #    AUTHOR        :   Albert Lu
-#    LAST MODIFIED :   07-11-2018
+#    LAST MODIFIED :   08-14-2018
 #
 ################################################################
 
@@ -25,7 +25,7 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 #
-# rpmbuild -bb --define 'is_intel16 1' --define 'is_cmpich 1' --define 'mpiV 7_3' lammps_16Mar18_ls.spec | tee log.install
+# rpmbuild -bb --define 'is_intel16 1' --define 'is_cmpich 1' --define 'mpiV 7_3' lammps_16Mar18_ls5_v3.spec | tee log.lammps_16Mar18_v3
 
 %define pkg_base_name lammps
 %define MODULE_VAR    LAMMPS 
@@ -50,7 +50,7 @@ Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
-Release:   2%{?dist}
+Release:   3%{?dist}
 License:   GPL
 Vendor:    Sandia
 Group:     applications/chemistry
@@ -410,31 +410,17 @@ EOF
 
   if [[ $liblist =~ "kim" ]]; then
 
-    echo "Working on kim ..."
-    cd lib/kim
+    ml gcc/5.2.0
+    kim_build_dir=/opt/apps/gcc5_2/cray_mpich_7_3/kim/1.9.6/kim-api
     
-    mkdir kim-api
-    cd kim-api
+    cd lib/kim
 
-    kim_build_dir=`pwd`
-
-    cd ..
     tar -xf %{kim_src}.tar.gz
     mv %{kim_src} tmp
     mv ./tmp/* .
     rm -r ./tmp %{kim_src}.tar.gz
-    cd %{kim_src}
 
-    kim_src_dir=`pwd`
-
-    module load gcc/5.2.0
-
-    ./configure --prefix=${kim_build_dir} --compiler-suite="GCC"  CXX="mpicxx" CC="mpicc" FC="mpif90"
-  
-    make
-    make install
-
-    cd ../kim_env_collection/models
+    cd ./kim_env_collection/models
     ${kim_build_dir}/bin/kim-api-v1-build-config --makefile-kim-config > ./Makefile.KIM_Config
     kim_model_dir=`pwd`
 
@@ -483,20 +469,10 @@ EOF
 
     done < models.txt
 
-    cd ${kim_src_dir}
-
-    # update final library path
-    ./configure --prefix="/opt/apps/%{INSTALL_SUFFIX}/lib/kim/kim-api" --compiler-suite="GCC"  CXX="mpicxx" CC="mpicc" FC="mpif90"
-    #./configure --prefix="/work/05392/cylu/lonestar/rpmbuild/test/%{INSTALL_SUFFIX}/lib/kim/kim-api" --compiler-suite="GCC"  CXX="mpicxx" CC="mpicc" FC="mpif90"
-  
-    make
-
-    cd ..
-
-PWD=`pwd`
+    cd ../../
 
 cat > Makefile.KIM_DIR <<EOF
-KIM_INSTALL_DIR=../../lib/kim/kim-api
+KIM_INSTALL_DIR=${kim_build_dir}
 
 .DUMMY: print_dir
 
@@ -504,13 +480,9 @@ print_dir:
 	@printf \$(KIM_INSTALL_DIR)
 EOF
 
-cat > Makefile.KIM_Config <<EOF
-include /opt/apps/%{INSTALL_SUFFIX}/lib/kim/kim-api/lib/kim-api-v1/Makefile.KIM_Config
-EOF
+    cd ../../
 
-    cd ../..
-
-    module load intel/16.0.1
+    ml intel/16.0.1
 
   fi
 
@@ -886,68 +858,11 @@ echo "Installing the modulefile?: %{BUILD_MODULEFILE}"
 
   mkdir                           $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
   mv src/lmp_lonestar             $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
-  #cp src/liblammps_lonestar.so    $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
-  #cp src/liblammps_lonestar.a     $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
 
   cp -pR lib             $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
-  rm -r                  $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api
-  rm -r                  $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/%{kim_src}
-  rm -r                  $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim_env_collection
-
-  # install kim library
-  mkdir -p               $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/bin
-  mkdir -p               $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/etc/bash_completion.d
-  mkdir -p               $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/include/kim-api-v1
-  mkdir -p               $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/libexec/kim-api-v1  
-  mkdir -p               $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/lib/kim-api-v1/models
-  mkdir -p               $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/lib/kim-api-v1/model_drivers
-
-  cd lib/kim/%{kim_src}
-  cp ./src/utils/kim-api-v1-collections-management  $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/bin
-  cp ./src/utils/kim-api-v1-build-config            $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/bin
-  cp ./src/utils/kim-api-v1-activate                $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/bin
-  cp ./src/utils/kim-api-v1-deactivate              $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/bin
-  cp ./src/utils/kim-api-v1-collections-info        $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/libexec/kim-api-v1
-  cp ./src/utils/kim-api-v1-descriptor-file-match   $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/libexec/kim-api-v1
-  cp ./src/utils/kim-api-v1-simulator-model         $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/libexec/kim-api-v1
-
-  cp ./completion/kim-api-v1-completion.bash   $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/etc/bash_completion.d
-  cp ./src/*.h                                 $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/include/kim-api-v1
-  cp ./src/*.mod                               $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/include/kim-api-v1
-  cp ./src/*.dynamic-load.so                   $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/lib/libkim-api-v1.so
-  cp ./src/*.dynamic-load.so                   $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/lib/kim-api-v1/
-  cp ./src/*.dynamic-load.so                   $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/lib/kim-api-v1/libkim-api-v1.so
-
-  cp ./Makefile.KIM_Config                                         ../kim_env_collection/models
-  cp ./Makefile.KIM_Config                                         ../kim_env_collection/model_drivers
-  cp ./Makefile.KIM_Config                                         $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/lib/kim-api-v1
-  cp ./Makefile.Version                                            $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/lib/kim-api-v1
-  cp -r $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/bin                 $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/lib/kim-api-v1
-  cp -r $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/include/kim-api-v1  $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/lib/kim-api-v1/include
-  cp -r ./build_system                                             $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/lib/kim-api-v1
-  cp -r $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/libexec             $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim-api/lib/kim-api-v1
-
-  cd ..
-
-  find kim_env_collection -name \*\*\*.a -exec rm {} \;
-  find kim_env_collection -name \*\*\*.hpp -exec rm {} \;
-  find kim_env_collection -name \*\*\*.cpp -exec rm {} \;
-
-  cp -r kim_env_collection   $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/kim_env_collection
-
-  rm -r $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/pair-kim.release.info
-  rm -r $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/.gitignore
-
-  chmod -Rf u+rwX,g+rwX,o=rX $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/kim/*
-
-  # back to lammps build root
-  cd $lmp_build_dir
   cp -pR potentials      $RPM_BUILD_ROOT/%{INSTALL_DIR}/potentials
   cp -pR python          $RPM_BUILD_ROOT/%{INSTALL_DIR}/python
   cp -pR tools           $RPM_BUILD_ROOT/%{INSTALL_DIR}/tools
-  #cp -pR bench          $RPM_BUILD_ROOT/%{INSTALL_DIR}/bench
-  #cp -pR doc            $RPM_BUILD_ROOT/%{INSTALL_DIR}/doc
-  #cp -pR examples       $RPM_BUILD_ROOT/%{INSTALL_DIR}/examples
   cp -pR src             $RPM_BUILD_ROOT/%{INSTALL_DIR}/src  
   
   chmod -Rf u+rwX,g+rwX,o=rX $RPM_BUILD_ROOT/%{INSTALL_DIR}/*
@@ -961,160 +876,166 @@ echo "Installing the modulefile?: %{BUILD_MODULEFILE}"
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
   touch    $RPM_BUILD_ROOT/%{MODULE_DIR}/.tacc_module_canary
   
-  cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua <<EOF
-    local help_message = [[
-      LAMMPS (Large-scale Atomic/Molecular Massively Parallel Simulator) 
-      is a classical molecular dynamics code developed at Sandia 
-      National Laboratories. 
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua <<EOF
+local help_message = [[
+LAMMPS (Large-scale Atomic/Molecular Massively Parallel Simulator) 
+is a classical molecular dynamics code developed at Sandia 
+National Laboratories. 
 
-      - TO RUN LAMMPS
+- TO RUN LAMMPS
 
-      Set the number of nodes (N) and MPI tasks (n) in the job script.
+  Set the number of nodes (N) and MPI tasks (n) in the job script.
 
-        E.g. One node with two MPI tasks 
+    E.g. One node with two MPI tasks 
 
-          #SBATCH -N 1
-          #SBATCH -n 2
+    #SBATCH -N 1
+    #SBATCH -n 2
 
-      Load required modules
+  Load required modules
 
-        module load intel/16.0.1
-        module load cray_mpich/7.3.0
-        module load lammps/%{major_version}
+    module load intel/16.0.1
+    module load cray_mpich/7.3.0
+    module load lammps/%{major_version}
 
-      Run LAMMPS program
+  Run LAMMPS program
 
-        * Basic
+    * Basic
       
-          ibrun lmp_lonestar -in lammps_input > log_file
+      ibrun lmp_lonestar -in lammps_input > log_file
 
-        * Use USER-OMP package (E.g. with 2 omp threads)
+    * Use USER-OMP package (E.g. with 2 omp threads)
 
-          ibrun lmp_lonestar -sf omp -pk omp 2 -in lammps_input > log_file
+      ibrun lmp_lonestar -sf omp -pk omp 2 -in lammps_input > log_file
 
-        * Use USER-INTEL package (E.g. with 2 omp threads)
+    * Use USER-INTEL package (E.g. with 2 omp threads)
       
-          ibrun lmp_lonestar -sf intel -pk intel 0 omp 2 -in lammps_input > log_file
+      ibrun lmp_lonestar -sf intel -pk intel 0 omp 2 -in lammps_input > log_file
       
-        * Use GPU package
+    * Use GPU package
 
-          #SBATCH -p gpu   
+      #SBATCH -p gpu   
 
-          ibrun lmp_lonestar -sf gpu -pk gpu 1 -in lammps_input > log_file
+      ibrun lmp_lonestar -sf gpu -pk gpu 1 -in lammps_input > log_file
  
-          (You can set -n > 1 to let more than one MPI tasks share one GPU)         
+      (You can set -n > 1 to let more than one MPI tasks share one GPU)         
     
-      - ENVIRONMENT VARIABLES 
+- ENVIRONMENT VARIABLES 
       
-      The LAMMPS modulefile defines the following environment 
-      variables (with the prefix "TACC_LAMMPS_"):
+  The LAMMPS modulefile defines the following environment 
+  variables (with the prefix "TACC_LAMMPS_"):
 
-      TACC_LAMMPS_DIR/BIN/BENCH/EXAM/LIB/POT/PYTH/SRC/TOOLS
+    TACC_LAMMPS_DIR/BIN/BENCH/EXAM/LIB/POT/PYTH/SRC/TOOLS
 
-      for the location of the LAMMPS home, binaries, benchmarks, examples, 
-      libraries, potentials, python scripts, source, and tools, respectively.
-      The modulefile also appends TACC_LAMMPS_BIN & TACC_LAMMPS_TOOLS to PATH.
+  for the location of the LAMMPS home, binaries, benchmarks, examples, 
+  libraries, potentials, python scripts, source, and tools, respectively.
+  The modulefile also appends TACC_LAMMPS_BIN & TACC_LAMMPS_TOOLS to PATH.
 
-      Folders "benchmark", "doc", "examples" are now kept in the
-      /work/apps/lammps/production_src/16Mar18 directory.
+  Folders "benchmark", "doc", "examples" are now kept in the
+  /work/apps/lammps/production_src/16Mar18 directory.
 
-      Not all the tools are compiled and included in the TOOLS directory.
+  Not all the tools are compiled and included in the TOOLS directory.
 
-      - PACKAGES
+- PACKAGES
 
-      The following packages were not installed:
+  The following packages were not installed:
 
-        KOKKOS, LATTE, MSCG, REAX, USER-MOLFILE, USER-QMMM, USER-VTK
+    KOKKOS, LATTE, MSCG, REAX, USER-MOLFILE, USER-QMMM, USER-VTK
 
-      Library REAX was not compiled with this version, because the default virtual 
-      space of the library consumes 1.6 GB/task (for a total of 2.2 GB per task), and
-      the TACC monitor kills jobs that use over 2.0 GB/task (32 GB for 16 tasks).
+  Library REAX was not compiled with this version, because the default virtual 
+  space of the library consumes 1.6 GB/task (for a total of 2.2 GB per task), and
+  the TACC monitor kills jobs that use over 2.0 GB/task (32 GB for 16 tasks).
 
-      Information of external libraries:
+  Information of external libraries:
 
-        * OpenKIM
-          kim-api-v%{kimver}
-          https://openkim.org
+    * OpenKIM
+      kim-api-v%{kimver}
+      https://openkim.org
 
-        * QUIP
-          https://github.com/libAtoms/QUIP.git
+      Environment variables: 
+      KIM_API_MODELS_DIR        (KIM models)
+      KIM_API_MODEL_DRIVERS_DIR (KIM model drivers)
 
-        * VORONOI  
-          voro++-%{vorover}
-          http://math.lbl.gov/voro++/download/dir/voro++-0.4.6.tar.gz
-          
-        * USER-SMD
-          Eigen-%{eigenver}
-          https://github.com/eigenteam/eigen-git-mirror.git
+      Use command 'kim-api-v1-collections-management list' to show all installed models and model drivers.
 
-      - LIBRARIES
+    * QUIP
+      https://github.com/libAtoms/QUIP.git
 
-        LAMMPS libraries liblammps_lonestar.a (static), liblammps_lonestar.so (dynamic) are kept in TACC_LAMMPS_SRC.
+    * VORONOI  
+      voro++-%{vorover}
+      http://math.lbl.gov/voro++/download/dir/voro++-0.4.6.tar.gz
       
-      - REFERENCE
-      
-        LAMMPS website: http://lammps.sandia.gov
-        LAMMPS at TACC: https://portal.tacc.utexas.edu/software/lammps     
+    * USER-SMD
+      Eigen-%{eigenver}
+      https://github.com/eigenteam/eigen-git-mirror.git
 
-      Version %{version}
-    ]]
+- LIBRARIES
 
-    help(help_message,"\n")
+  LAMMPS libraries liblammps_lonestar.a (static), liblammps_lonestar.so (dynamic) are kept in TACC_LAMMPS_SRC.
 
-    whatis("Name: LAMMPS")
-    whatis("Version: %{version}")
-    whatis("Category: application, chemistry")
-    whatis("Keywords: Chemistry, Biology, Molecular Dynamics, Application")
-    whatis("URL:  http://lammps.sandia.gov/index.html")
-    whatis("Description: Molecular Dynamics Chemistry Package")
+- REFERENCE
 
-    local lmp_dir="%{INSTALL_DIR}"
-    local lmp_example_dir="/work/apps/lammps/production_src/16Mar18/"
+  LAMMPS website: http://lammps.sandia.gov
+  LAMMPS at TACC: https://portal.tacc.utexas.edu/software/lammps     
 
-    setenv("TACC_LAMMPS_DIR"       ,lmp_dir)
-    setenv("TACC_LAMMPS_BIN"       ,pathJoin(lmp_dir,"bin"))
-    setenv("TACC_LAMMPS_LIB"       ,pathJoin(lmp_dir,"lib"))
-    setenv("TACC_LAMMPS_POT"       ,pathJoin(lmp_dir,"potentials"))
-    setenv("TACC_LAMMPS_PYTH"      ,pathJoin(lmp_dir,"python"))
-    setenv("TACC_LAMMPS_TOOLS"     ,pathJoin(lmp_dir,"tools"))
+Version %{version}
+]]
 
-    setenv("TACC_LAMMPS_BENCH"     ,pathJoin(lmp_example_dir,"bench"))
-    setenv("TACC_LAMMPS_EXAM"      ,pathJoin(lmp_example_dir,"examples"))
-    setenv("TACC_LAMMPS_DOC"       ,pathJoin(lmp_example_dir,"doc"))
-    setenv("TACC_LAMMPS_SRC"       ,pathJoin(lmp_dir,"src"))
+help(help_message,"\n")
 
-    local kim_dir="%{INSTALL_DIR}/lib/kim/"
-    local kim_model_dir="%{INSTALL_DIR}/lib/kim/kim_env_collection/models"
-    local kim_driver_dir="%{INSTALL_DIR}/lib/kim/kim_env_collection/model_drivers"    
+whatis("Name: LAMMPS")
+whatis("Version: %{version}")
+whatis("Category: application, chemistry")
+whatis("Keywords: Chemistry, Biology, Molecular Dynamics, Application")
+whatis("URL:  http://lammps.sandia.gov/index.html")
+whatis("Description: Molecular Dynamics Chemistry Package")
 
-    setenv("TACC_KIM_DIR"              ,kim_dir)
-    setenv("TACC_KIM_API"              ,pathJoin(kim_dir,"kim-api"))
-    setenv("TACC_KIM_MODEL"            ,kim_model_dir)
-    setenv("TACC_KIM_DRIVER"           ,kim_driver_dir)
-    setenv("KIM_API_MODELS_DIR"        ,kim_model_dir)
-    setenv("KIM_API_MODEL_DRIVERS_DIR" ,kim_driver_dir)
+local lmp_dir="%{INSTALL_DIR}"
+local lmp_example_dir="/work/apps/lammps/production_src/16Mar18/"
 
-    load("hdf5/1.8.16")
-    load("netcdf/4.3.3.1")
-    load("pnetcdf/1.6.1")
+setenv("TACC_LAMMPS_DIR"       ,lmp_dir)
+setenv("TACC_LAMMPS_BIN"       ,pathJoin(lmp_dir,"bin"))
+setenv("TACC_LAMMPS_LIB"       ,pathJoin(lmp_dir,"lib"))
+setenv("TACC_LAMMPS_POT"       ,pathJoin(lmp_dir,"potentials"))
+setenv("TACC_LAMMPS_PYTH"      ,pathJoin(lmp_dir,"python"))
+setenv("TACC_LAMMPS_TOOLS"     ,pathJoin(lmp_dir,"tools"))
 
-    append_path("PATH",pathJoin(lmp_dir,"bin"))
-    append_path("PATH",pathJoin(lmp_dir,"tools"))
-    append_path("PATH",pathJoin(kim_dir,"kim-api/bin"))   
+setenv("TACC_LAMMPS_BENCH"     ,pathJoin(lmp_example_dir,"bench"))
+setenv("TACC_LAMMPS_EXAM"      ,pathJoin(lmp_example_dir,"examples"))
+setenv("TACC_LAMMPS_DOC"       ,pathJoin(lmp_example_dir,"doc"))
+setenv("TACC_LAMMPS_SRC"       ,pathJoin(lmp_dir,"src"))
 
-    append_path("LD_LIBRARY_PATH","/opt/apps/gcc/5.2.0/lib64")
+local kim_dir="%{INSTALL_DIR}/lib/kim/"
+local kim_model_dir="%{INSTALL_DIR}/lib/kim/kim_env_collection/models"
+local kim_driver_dir="%{INSTALL_DIR}/lib/kim/kim_env_collection/drivers"
 
-    prepend_path("PYTHONPATH", pathJoin(lmp_dir,"python"))
+setenv("TACC_KIM_DIR"              ,kim_dir)
+setenv("TACC_KIM_API"              ,pathJoin(kim_dir,"kim-api"))
+setenv("TACC_KIM_MODEL"            ,kim_model_dir)
+setenv("TACC_KIM_DRIVER"           ,kim_driver_dir)
+setenv("KIM_API_MODELS_DIR"        ,kim_model_dir)
+setenv("KIM_API_MODEL_DRIVERS_DIR" ,kim_driver_dir)
+
+load("hdf5/1.8.16")
+load("netcdf/4.3.3.1")
+load("pnetcdf/1.6.1")
+
+append_path("PATH",pathJoin(lmp_dir,"bin"))
+append_path("PATH",pathJoin(lmp_dir,"tools"))
+append_path("PATH",pathJoin(kim_dir,"kim-api/bin"))   
+
+prepend_path("LD_LIBRARY_PATH","/opt/apps/gcc/5.2.0/lib64")
+
+prepend_path("PYTHONPATH", pathJoin(lmp_dir,"python"))
 
 EOF
 
-  cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} <<EOF
-  #%Module3.1.1#################################################
-  ##
-  ## version file for lammps
-  ##
-    
-  set     ModulesVersion      "%{version}"
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} <<EOF
+#%Module3.1.1#################################################
+##
+## version file for lammps
+##
+  
+set     ModulesVersion      "%{version}"
 EOF
 
 %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
@@ -1140,49 +1061,6 @@ EOF
 # Fix Modulefile During Post Install
 
 %post %{PACKAGE}
-
-# kim library re-linking
-
-cd %{INSTALL_DIR}/lib/kim/kim_env_collection/models
-
-while read  mo; do
-
-  cd "${mo}"
-  ln -s *dynamic-load.so libkim-api-model-v1.so
-  cd ..
-
-done < models.txt
-
-cd ../model_drivers
-
-while read  mo; do
-
-  cd "${mo}"
-  ln -s *dynamic-load.so libkim-api-model-driver-v1.so
-  cd ..
-
-done < drivers.txt 
-
-cd ../..
-
-# ----------------------------------------
-
-# files for LAMMPS
-
-PWD=`pwd`
-
-cat > Makefile.KIM_DIR <<EOF
-KIM_INSTALL_DIR=${PWD}/kim-api
-
-.DUMMY: print_dir
-
-print_dir:
-	@printf \$(KIM_INSTALL_DIR)
-EOF
-
-cat > Makefile.KIM_Config <<EOF
-include ${PWD}/kim-api/lib/kim-api-v1/Makefile.KIM_Config
-EOF
 
 # -----------------------------------------
 

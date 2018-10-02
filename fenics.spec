@@ -26,13 +26,9 @@ Summary: Fenics rpm build script
 %define MODULE_VAR    FENICS
 
 # Create some macros (spec file variables)
-%define major_version 2017oct
-%define minor_version 10
-%define micro_version 09
+%define major_version 2018Jun
 
 %define pkg_version %{major_version}
-##.%{minor_version}
-%define pkg_full_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -54,7 +50,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2
+Release:   3
 License:   GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tgz
@@ -339,6 +335,8 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Fri Jun 22 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: re-git, also fixing dolfin
 * Wed Dec 06 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: adding CXX and such flags
 * Mon Oct 16 2017 eijkhout <eijkhout@tacc.utexas.edu>

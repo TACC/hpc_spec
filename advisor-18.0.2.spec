@@ -1,6 +1,6 @@
 #
-# Si Liu 
-# 2018-08-10
+# Joe Garcia 
+# 2018-07-17
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -11,34 +11,35 @@
 # RPM_DBPATH      -> Path To Non-Standard RPM Database Location
 #
 # Typical Command-Line Example:
+# ./build_rpm.sh Bar.spec
 # cd ../RPMS/x86_64
 # rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: Boost spec file (www.boost.org)
+Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name boost
-%define MODULE_VAR    BOOST
+%define pkg_base_name advisor 
+%define MODULE_VAR    ADVISOR 
 
 # Create some macros (spec file variables)
-%define major_version 1
-%define minor_version 64
-%define micro_version 0
+%define major_version 18
+%define minor_version 0 
+%define micro_version 2
 
-%define pkg_version %{major_version}.%{minor_version}
+%define lib_version 2018.2.0.551025
 
-%define mpi_fam none
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define underscore_version %{major_version}_%{minor_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-%include compiler-defines.inc
+#%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-#%include name-defines.inc
 %include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
@@ -50,13 +51,12 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
-License:   GPL
-Group:     Utility
-URL:       http://www.boost.org
-Packager:  TACC - siliu@tacc.utexas.edu
-#Source0:   boost_1_59_0.tar.gz
-#Source1:   icu4c-56_1-src.tgz
+Release:   1%{?dist}
+License:   proprietary
+Group:     PROFILER
+URL:       https://software.intel.com/en-us/intel-advisor-xe
+Packager:  TACC - jgarcia@tacc.utexas.edu
+Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -64,30 +64,24 @@ Packager:  TACC - siliu@tacc.utexas.edu
 
 
 %package %{PACKAGE}
-Summary: Boost RPM
-Group: Development/System Environment
+Summary: The package RPM
+Group: Development/Tools
 %description package
-Boost provides free peer-reviewed portable C++ source libraries.
+This is the long description for the package RPM...
+This is specifically an rpm for the Intel advisor modulefile
+used on Stampede2.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-Module RPM for Boost
+This is the long description for the modulefile RPM...
+This is specifically an rpm for the Intel advisor modulefile
+used on Stampede2.
 
 %description
-
-Boost emphasizes libraries that work well with the C++ Standard
-Library. Boost libraries are intended to be widely useful, and usable
-across a broad spectrum of applications. The Boost license encourages
-both commercial and non-commercial use.
-
-Boost aims to establish "existing practice" and provide reference
-implementations so that Boost libraries are suitable for eventual
-standardization. Ten Boost libraries are already included in the C++
-Standards Committee's Library Technical Report (TR1) as a step toward
-becoming part of a future C++ Standard. More Boost libraries are
-proposed for the upcoming TR2.
+This is specifically an rpm for the Intel advisor modulefile
+used on Stampede2.
 
 #---------------------------------------
 %prep
@@ -98,9 +92,6 @@ proposed for the upcoming TR2.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-#%setup -n %{pkg_base_name}-%{pkg_version}
-
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -126,11 +117,9 @@ proposed for the upcoming TR2.
 
 # Setup modules
 %include system-load.inc
-%include compiler-defines.inc
-#%include mpi-defines.inc
+
+# Insert necessary module commands
 module purge
-%include compiler-load.inc
-module load intel/18.0.2
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -140,8 +129,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -154,70 +141,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-
-  ICU_MODE=Linux
-  %if "%{comp_fam}" == "intel"
-        export CONFIGURE_FLAGS=--with-toolset=intel-linux
-        ICU_MODE=Linux/ICC
-  %endif
-
-
-  %if "%{mpi_fam}" != "none"
-        CXX=mpicxx
-  %endif
-
-  %if "%{comp_fam}" == "gcc"
-        export CONFIGURE_FLAGS=--with-toolset=gcc
-  %endif
-
-  rm -f icu4c-56_1-src.tgz*
-  rm -f boost_1_64_0.tar.gz*
-  wget http://download.icu-project.org/files/icu4c/56.1/icu4c-56_1-src.tgz
-  wget http://downloads.sourceforge.net/project/boost/boost/1.64.0/boost_1_64_0.tar.gz
-  tar -xzf icu4c-56_1-src.tgz
-  tar -xzf boost_1_64_0.tar.gz
-  WD=`pwd`
-
-#  if [ "$CXX" != mpicxx ]; then
-    	cd icu/source
-    	./runConfigureICU  $ICU_MODE --prefix=%{INSTALL_DIR}
-    	make -j 10
-    	make install
-    	rm -f ~/user-config.jam
-#  fi
-
-  cd $WD
-  cd boost_1_64_0
-  EXTRA="-sICU_PATH=%{INSTALL_DIR}"
-  #if [ "$CXX" = mpicxx ]; then
- # 	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=mpi"
- # 	EXTRA=""
- # 	mpipath=`which mpicxx`
-#	cat > $WD/tools/build/v2/user-config.jam << EOF
-#	#using mpi $mpipath ;
-#	using mpi ;
-#	EOF
-#  else
-  	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all --without-libraries=mpi"
-#  fi
-
-  ./bootstrap.sh --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
-  ./b2 -j 10 --prefix=%{INSTALL_DIR} $EXTRA install
-
-  mkdir -p              $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-
-
-  rm -f ~/tools/build/v2/user-config.jam
-
-  if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-  	mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  fi
-
-  cp -r %{INSTALL_DIR} $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-  umount %{INSTALL_DIR}
-
-#---------------------- - 
+  
+#-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
 
@@ -235,52 +160,59 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
+
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
-help([[
-The boost module file defines the following environment variables:"
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC for"
-the location of the boost distribution."
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
+local advisor_dir   = "/opt/intel/advisor_%{lib_version}"
 
-To load the mpi boost      do "module load boost-mpi"
-To load the rest of boost  do "module load boost"
+whatis( "Name: advisor" )
+whatis( "Version: %{version}" )
+whatis( "Category: performance analysis" )
+whatis( "Keywords: System, Utility, Tools" )
+whatis( "Description: Intel Advisor" )
+whatis( "URL: https://software.intel.com/en-us/intel-advisor-xe" )
 
-It is save to load both.
+prepend_path(       "PATH",       pathJoin( advisor_dir, "bin64"     )   )
+append_path(        "PYTHONPATH", pathJoin( advisor_dir, "pythonapi" )   )
 
-Version %{version}"
-]])
+setenv( "ADVISOR_2018_DIR", advisor_dir                          )
 
-whatis("Name: boost")
-whatis("Version: %{version}")
-whatis("Category: %{group}")
-whatis("Keywords: System, Library, C++")
-whatis("URL: http://www.boost.org")
-whatis("Description: Boost provides free peer-reviewed portable C++ source libraries %{BOOST_TYPE}.")
+setenv( "TACC_ADVISOR_DIR", advisor_dir                          )
+setenv( "TACC_ADVISOR_BIN", pathJoin( advisor_dir, "bin64"   )   )
+setenv( "TACC_ADVISOR_LIB", pathJoin( advisor_dir, "lib64"   )   )
+setenv( "TACC_ADVISOR_INC", pathJoin( advisor_dir, "include" )   )
 
+help(
+[[
 
-setenv("TACC_%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
-setenv("TACC_%{MODULE_VAR}_LIB","%{INSTALL_DIR}/lib")
-setenv("TACC_%{MODULE_VAR}_INC","%{INSTALL_DIR}/include")
+Intel Advisor focuses on vector optimization and thread prototyping.
 
-conflict("boost","boost-mpi")
+For detailed info, consult the extensive documentation in
+$TACC_ADVISOR_DIR/documentation or online at
+software.intel.com/en-us/intel-advisor-xe.
+See also software.intel.com/en-us/articles/advisor-tutorials.
 
--- Add boost to the LD_LIBRARY_PATH
-prepend_path("LD_LIBRARY_PATH","%{INSTALL_DIR}/lib")
+To see the exact effect of loading the module, execute "module show advisor".
 
+Version %{version}  (file version %{version})
+
+]]
+)
+  
 EOF
 
-  
+ 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
-## version file for %{MODULE_VAR}%{version}
+## version file for %{BASENAME}%{version}
 ##
 
 set     ModulesVersion      "%{version}"
 EOF
   
   # Check the syntax of the generated lua modulefile
+  ### don't check the hidden one!
   %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------

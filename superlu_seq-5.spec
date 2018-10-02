@@ -1,4 +1,12 @@
 #
+# Spec file for SUPERLU_SEQ:
+# Sequential version of SuperLU
+# (needed for Trilinos, as opposed to PETSc which needs distributed.)
+#
+# Victor Eijkhout, 2017
+# based on:
+#
+# Bar.spec, 
 # W. Cyrus Proctor
 # Antonio Gomez
 # 2015-08-25
@@ -18,31 +26,28 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: A Nice little relocatable skeleton spec file example.
+Summary:    Set of tools for manipulating geographic and Cartesian data sets
 
 # Give the package a base name
-%define pkg_base_name pnetcdf
-%define MODULE_VAR    PNETCDF
-%define SOURCE_NAME parallel-netcdf
+%define pkg_base_name superlu_seq
+%define MODULE_VAR    SUPERLUSEQ
 
 # Create some macros (spec file variables)
-%define major_version 1
-%define minor_version 8
-%define micro_version 0
+%define major_version 5
+%define minor_version 2
+%define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
 %include compiler-defines.inc
-%include mpi-defines.inc
+## being sequential this does not use MPI
+#%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
-#%include name-defines-noreloc.inc
-#%include name-defines-hidden.inc
-#%include name-defines-hidden-noreloc.inc
+%include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -53,39 +58,35 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
-License:   BSD
-Group:     applications/io
-Source:    %{SOURCE_NAME}-%{version}.tar.gz
-URL:       trac.mcs.anl.gov/projects/parallel-netcdf
-Distribution: RedHat Linux
-Vendor:    Northwestern University & Argonne National Lab
-Packager:  TACC - cazes@tacc.utexas.edu
+Release:   1%{?dist}
+License:   GNU
+Group: Development/Numerical-Libraries
+Vendor:     Argonne National Lab
+Group:      Libraries/maps
+Source:	    superlu_seq-%{version}.tar.gz
+URL:	    http://crd-legacy.lbl.gov/~xiaoye/SuperLU/
+Packager:   eijkhout@tacc.utexas.edu
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
-
+%global _python_bytecompile_errors_terminate_build 0
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: SUPERLUSEQ is a single processor sparse direct solver
+Group: Libraries
 %description package
 This is the long description for the package RPM...
 
 %package %{MODULEFILE}
-Summary: The modulefile RPM
-Group: Lmod/Modulefiles
+Summary: SUPERLUSEQ is a single processor sparse direct solver
+Group: Libraries
 %description modulefile
 This is the long description for the modulefile RPM...
 
 %description
-Parallel netCDF (PnetCDF) is a library providing high-performance I/O while
-still maintaining file-format compatibility with Unidata's NetCDF.  NetCDF
-gives scientific programmers a space-efficient and portable means for storing
-data. However, it does so in a serial manner, making it difficult to achieve
-high I/O performance. By making some small changes to the NetCDF APIs, PnetCDF
-can use MPI-IO to achieve high-performance parallel I/O. 
+Summary: SUPERLUSEQ is a single processor sparse direct solver
+Group: Libraries
 
 
 #---------------------------------------
@@ -98,7 +99,7 @@ can use MPI-IO to achieve high-performance parallel I/O.
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%setup -n %{SOURCE_NAME}-%{version}
+%setup -n %{pkg_base_name}-%{pkg_version}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -130,9 +131,10 @@ module purge
 # Load Compiler
 %include compiler-load.inc
 # Load MPI Library
-%include mpi-load.inc
+#%include mpi-load.inc
 
 # Insert further module commands
+module load cmake
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -142,11 +144,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  # Create temporary directory for the install.  We need this to
-  mkdir -p             %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
-  #tacctmpfs --mount %{INSTALL_DIR}
-
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -160,43 +157,70 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
   
-  %if "%{is_intel}" == "1" || "%{is_intel13}" == "1" || "%{is_intel16}" == "1"
-  
-  	# environment used for configure with intel compiler
-          export CFLAGS="-O3"
-          export FFLAGS="-O3"
-          export CXXFLAGS="-O3"
-  %endif
-  
-  %if "%{mpi_fam}" != "none"
-     CC=mpicc
-     CXX=mpicxx
-     FC=mpif90
-     F77=mpif77
-     F90=$FC
-  %endif
-  
-  
-  %if "%{mpi_fam}" == "impi"
-     CC=mpiicc
-     CXX=mpiicxx
-     FC=mpiifort
-     F77=mpiifort
-     F90=$FC
-  %endif
+#
+# Use mount temp trick
+#
+mkdir -p             %{INSTALL_DIR}
+mkdir -p ${RPM_BUILD_ROOT}/%{INSTALL_DIR}
+mount -t tmpfs tmpfs %{INSTALL_DIR}
+export SLU_INSTALLATION=%{INSTALL_DIR}
 
-  pwd
-  ./configure --prefix=%{INSTALL_DIR} 
-  make 
-  make install
+#
+# make a copy of the source tree in which to build
+# (later try doing everything in BUILD?)
+#
+export SLU_SRC=/tmp/superlu-build
+rm -rf ${SLU_SRC}
+mkdir -p ${SLU_SRC}
+cp -r * ${SLU_SRC}
+cp %{SPEC_DIR}/superlu_seq-%{version}.inc ${SLU_SRC}/make.inc
+pushd ${SLU_SRC} # place for cmake crap
+mkdir build
+cd build
 
+#
+# config/make
+#
+%if "%{is_intel}" == "1"
+  export CC=icc
+  export CXX=icpc
+  export FC=ifort
+  export CFLAGS="-mkl -O2 -fPIC"
+  export LOADOPTS=-mkl
+%endif
+%if "%{is_gcc}" == "1"
+  module load mkl
+  export CC="gcc"
+  export CXX=g++
+  export FC="gfortran"
+  export CFLAGS="-g -O2 -fPIC"
+%endif
 
-  # Copy from tmpfs to RPM_BUILD_ROOT so that everything is in the right
-  # place for the rest of the RPM.  Then, unmount the tmpfs.
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-  umount %{INSTALL_DIR}
-  #tacctmpfs --umount %{INSTALL_DIR}
+cmake \
+    -D CMAKE_INSTALL_PREFIX:PATH="${SLU_INSTALLATION}" \
+    -D CMAKE_BUILD_TYPE:STRING=RELEASE \
+    -D CMAKE_C_COMPILER:FILEPATH=`which ${CC}` \
+    -D CMAKE_Fortran_COMPILER:FILEPATH="`which ${FC}`" \
+    -D CMAKE_C_FLAGS:STRING="-g -std=c99 -DNDEBUG -fPIC" \
+    -D CMAKE_Fortran_FLAGS:STRING="-g -shared -fPIC" \
+    -D enable_blaslib:BOOL=OFF \
+    -D TPL_BLAS_LIBRARIES="-L${TACC_MKL_LIB} -lmkl_core -lmkl_sequential -lmkl_rt" \
+    ${SLU_SRC}
+#lmkl_intel_thread ?
+make && make install
+
+popd # from /tmp back to BUILD
+cp -r %{INSTALL_DIR}/* ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
+umount %{INSTALL_DIR}
+
+#/opt/apps/gcc/7.1.0/bin/gcc  -DUSE_VENDOR_BLAS -DPRNTlevel=0 -DAdd_ -g -std=c99 -DNDEBUG -fPIC -O3 -DNDEBUG    CMakeFiles/z_test.dir/sp_ienv.c.o CMakeFiles/z_test.dir/zdrive.c.o CMakeFiles/z_test.dir/sp_zconvert.c.o CMakeFiles/z_test.dir/zgst01.c.o CMakeFiles/z_test.dir/zgst02.c.o CMakeFiles/z_test.dir/zgst04.c.o CMakeFiles/z_test.dir/zgst07.c.o  -o z_test  -L"/opt/intel/compilers_and_libraries_2017.4.196/linux/mkl/lib/intel64/libmkl_sequential.so /opt/intel/compilers_and_libraries_2017.4.196/linux/mkl/lib/intel64" -rdynamic ../SRC/libsuperlu.a MATGEN/libmatgen.a -lmkl_core -lm -Wl,-rpath,"/opt/intel/compilers_and_libraries_2017.4.196/linux/mkl/lib/intel64/libmkl_sequential.so /opt/intel/compilers_and_libraries_2017.4.196/linux/mkl/lib/intel64"
+#../build/TESTING/CMakeFiles/z_test.dir/link.txt
+
+# make CC="${CC}" FORTRAN="${FC}" CFLAGS="${CFLAGS}" \
+#           LOADOPTS=${LOADOPTS} NOOPTS="-O0 -fPIC" \
+#           ARCH=ar RANLIB=ranlib \
+#           SuperLUroot=${SLU_BUILD} SUPERLULIB=${SLU_INSTALLATION}/lib/libsuperlu.a \
+#           clean install lib
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -218,80 +242,49 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
---netcdf
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
+help( [[
+Module %{name} loads environmental variables defining
+the location of SUPERLUSEQ directory, libraries, and binaries:
+TACC_SUPERLUSEQ_DIR TACC_SUPERLUSEQ_LIB TACC_SUPERLUSEQ_BIN
 
-local help_message = [[
-IMPORTANT NOTE: TACC has several different versions of netcdf
-installed.  Below is a list of each module type:
+Version: %{version}
+]] )
 
-netcdf/3.6.3           -- Classic netcdf (serial)
-netcdf/4.x.x           -- Serial version of Netcdf4 based upon hdf5 and
-is backwards compatiable with classic netcdf (serial)
-parallel-netcdf/4.x.x  -- Parallel version of Netcdf4 based upon
-parallel hdf5 (parallel)
-pnetcdf/1.x.x          -- Parallel netcdf(PnetCDF) that supports netcdf
-in the classic formats, CDF-1 and CDF-2 (parallel)
+whatis( "SUPERLUSEQ" )
+whatis( "Version: %{version}" )
+whatis( "Category: system, development" )
+whatis( "Keywords: System, Cartesian Grids" )
+whatis( "Description: Supernodal LU factorization" )
+whatis( "URL: http://crd-legacy.lbl.gov/~xiaoye/SuperLU/" )
 
-The command "module avail netcdf" will show which versions of netcdf are
-available for your current compiler/mpi module environment.
+local version =  "%{version}"
+local superlu_seq_dir =  "%{INSTALL_DIR}"
 
-The %{pkg_base_name} module file defines the following environment variables:
-TACC_PNETCDF_DIR, TACC_PNETCDF_BIN, TACC_PNETCDF_LIB, and 
-TACC_PNETCDF_INC forthe location of the NETCDF distribution, binaries,
-libraries, and include files, respectively.
+setenv("TACC_SUPERLUSEQ_DIR",superlu_seq_dir)
+-- setenv("TACC_SUPERLUSEQ_BIN",pathJoin( superlu_seq_dir,"bin" ) )
+setenv("TACC_SUPERLUSEQ_INC",pathJoin( superlu_seq_dir,"include" ) )
+setenv("TACC_SUPERLUSEQ_LIB",pathJoin( superlu_seq_dir,"lib64" ) )
+setenv("TACC_SUPERLUSEQ_SHARE",pathJoin( superlu_seq_dir,"share" ) )
 
-Parallel netCDF (PnetCDF) is a library providing high-performance I/O while still maintaining file-format compatibility with Unidata's NetCDF.  NetCDF gives scientific programmers a space-efficient and portable means for storing data. However, it does so in a serial manner, making it difficult to achieve high I/O performance. By making some small changes to the NetCDF APIs, PnetCDF can use MPI-IO to achieve high-performance parallel I/O. 
-
-To use the NETCDF library, compile the source code with the option:
-
-	-I${TACC_PNETCDF_INC} 
-
-Add the following options to the link step: 
-
-	-L${TACC_PNETCDF_LIB} -lpnetcdf 
-
-Version %{version}
-
-]]
-
-help(help_message,"\n")
-
-
-whatis("Parallel-netCDF(Pnetcdf)")
-whatis("Version: %{version}")
-whatis("Category: library, runtime support")
-whatis("Keywords: I/O, Library")
-whatis("Description: I/O library which stores and retrieves data in self-describing, machine-independent datasets%{NETCDF_VERSION}." )
-whatis(" URL: trac.mcs.anl.gov/projects/parallel-netcdf")
-
---Prepend paths
-prepend_path("LD_LIBRARY_PATH","%{INSTALL_DIR}/lib")
-prepend_path("PATH",           "%{INSTALL_DIR}/bin")
-prepend_path("MANPATH",        "%{INSTALL_DIR}/share/man")
-
---Env variables 
-setenv("PNETCDF", "%{INSTALL_DIR}")
-setenv("TACC_PNETCDF_DIR", "%{INSTALL_DIR}")
-setenv("TACC_PNETCDF_INC", "%{INSTALL_DIR}/include")
-setenv("TACC_PNETCDF_LIB", "%{INSTALL_DIR}/lib")
-setenv("TACC_PNETCDF_BIN", "%{INSTALL_DIR}/bin")
-
+prepend_path ("PATH",pathJoin( superlu_seq_dir,"share" ) )
+-- prepend_path ("PATH",pathJoin( superlu_seq_dir,"bin" ) )
+prepend_path ("LD_LIBRARY_PATH",pathJoin( superlu_seq_dir, "lib64" ) )
 EOF
-  
+
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module3.1.1#################################################
+#%Module1.0####################################################################
 ##
-## version file for %{BASENAME}%{version}
+## Version file for %{name} version %{version}
 ##
-
-set     ModulesVersion      "%{version}"
+set ModulesVersion "%version"
 EOF
-  
+
   # Check the syntax of the generated lua modulefile only if a visible module
   %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
   %endif
+
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -343,3 +336,6 @@ export PACKAGE_PREUN=1
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
 
+%changelog
+* Mon Jul 30 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial release
