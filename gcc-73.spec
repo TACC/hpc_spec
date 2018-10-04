@@ -52,7 +52,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.gnu.org/software
@@ -299,6 +299,7 @@ ${gcc}/binutils-${binutils_version}/configure \
 --enable-ld=default                           \
 --enable-plugins                              \
 --enable-lto                                  \
+--enable-install-libiberty                    \
 --with-gmp=${gcc_install}                     \
 --with-mpfr=${gcc_install}                    \
 --with-mpc=${gcc_install}                     \
@@ -330,6 +331,7 @@ ${gcc}/gcc-${gcc_version}/configure   \
 --enable-languages='c,c++,fortran'    \
 --disable-multilib                    \
 --prefix=${gcc_install}               \
+--enable-install-libiberty            \
 --with-gmp=${gcc_install}             \
 --with-mlgmp=${gcc_install}           \
 --with-mpfr=${gcc_install}            \
