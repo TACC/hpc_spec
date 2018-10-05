@@ -25,11 +25,12 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 # Create some macros (spec file variables)
 %define major_version 7
-%define minor_version 0
-%define cuda_version  9.0
-%define cuda_fam_ver  cuda9_0
+%define minor_version 3
+%define patch_version 1
+%define cuda_version  9.2
+%define cuda_fam_ver  cuda9_2
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{patch_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -164,8 +165,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Create some dummy directories and files for fun
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib64
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
-  
-  tar xvfz %{_sourcedir}/cudnn-%{cuda_version}-linux-x64-v%{major_version}*.tgz
+ 
+  tar xvfz %{_sourcedir}/cudnn-%{cuda_version}-linux-x64-v%{major_version}.%{minor_version}.%{patch_version}*tgz
   cd cuda
   # Copy everything from tarball over to the installation directory
   cp -rp * $RPM_BUILD_ROOT/%{INSTALL_DIR}
