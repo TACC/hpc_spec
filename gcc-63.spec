@@ -299,6 +299,7 @@ ${gcc}/binutils-${binutils_version}/configure \
 --enable-ld=default                           \
 --enable-plugins                              \
 --enable-lto                                  \
+--enable-install-libiberty                    \
 --with-gmp=${gcc_install}                     \
 --with-mpfr=${gcc_install}                    \
 --with-mpc=${gcc_install}                     \
@@ -330,6 +331,7 @@ ${gcc}/gcc-${gcc_version}/configure \
 --with-tune=generic                 \
 --enable-languages='c,c++,fortran'  \
 --disable-multilib                  \
+--enable-install-libiberty          \
 --prefix=${gcc_install}             \
 --with-gmp=${gcc_install}           \
 --with-mlgmp=${gcc_install}         \

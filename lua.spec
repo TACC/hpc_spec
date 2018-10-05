@@ -13,6 +13,8 @@ Source:    lua-5.1.4.8.tar.gz
 Packager:  TACC - mclay@tacc.utexas.edu
 Buildroot: /var/tmp/%{base_name}-%{version}-buildroot
 
+
+
 %include rpm-dir.inc
 
 %define APPS        /opt/apps
@@ -21,6 +23,10 @@ Buildroot: /var/tmp/%{base_name}-%{version}-buildroot
 
 %define INSTALL_DIR %{PKG_BASE}/%{version}
 %define MODULE_DIR  %{APPS}/%{MODULES}/%{base_name}
+
+
+Provides: %{INSTALL_DIR}/bin/lua
+Provides: %{PKG_BASE}/%{base_name}/bin/%{base_name}
 
 #----------------------------------------------
 

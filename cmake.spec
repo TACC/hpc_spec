@@ -25,8 +25,8 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 # Create some macros (spec file variables)
 %define major_version 3
-%define minor_version 10
-%define micro_version 2
+%define minor_version 12
+%define micro_version 3
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -37,7 +37,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+%include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -65,12 +65,26 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
+CMake  is an extensible, open-source system that manages the build process in
+an operating system and in a compiler-independent manner. Unlike many cross-
+platform systems, CMake is designed to be used in conjunction with the native
+build environment. Simple configuration files placed in each source directory
+(called CMakeLists.txt files) are used to generate standard build files (e.g.,
+makefiles on Unix and projects/workspaces in Windows MSVC) which are used in
+the usual way.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
+CMake  is an extensible, open-source system that manages the build process in
+an operating system and in a compiler-independent manner. Unlike many cross-
+platform systems, CMake is designed to be used in conjunction with the native
+build environment. Simple configuration files placed in each source directory
+(called CMakeLists.txt files) are used to generate standard build files (e.g.,
+makefiles on Unix and projects/workspaces in Windows MSVC) which are used in
+the usual way.
 
 %description
 CMake  is an extensible, open-source system that manages the build process in
@@ -123,7 +137,7 @@ the usual way.
 # Insert necessary module commands
 module purge
 # For bootstrapping
-ml gcc/4.9.3
+#ml gcc/4.9.3
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -157,14 +171,14 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   export CXXFLAGS="-mtune=generic -std=c++1y"
   #export LDFLAGS="-Wl,-rpath,${GCC_LIB} -march=core-avx -mtune=core-avx2" # Location of correct libstdc++.so.6
   #export LDFLAGS="-mtune=generic /opt/openssl/1.0.2m/usr/lib/libssl.a" # Location of correct libstdc++.so.6
-  export LDFLAGS="-mtune=generic -L/opt/apps/gcc/4.9.3/lib64 -lstdc++ -Wl,-rpath,/opt/apps/gcc/4.9.3/lib64" # Location of correct libstdc++.so.6
-  echo ${LD_LIBRARY_PATH}
-  echo ${LDFLAGS}
+  #export LDFLAGS="-mtune=generic -L/opt/apps/gcc/4.9.3/lib64 -lstdc++ -Wl,-rpath,/opt/apps/gcc/4.9.3/lib64" # Location of correct libstdc++.so.6
+  #echo ${LD_LIBRARY_PATH}
+  #echo ${LDFLAGS}
   # DO NOT preppend $RPM_BUILD_ROOT in prefix
-  ./bootstrap --prefix=%{INSTALL_DIR} --system-curl --parallel=8
+  ./bootstrap --prefix=%{INSTALL_DIR} --system-curl --parallel=48
   #cmake .
-  make -j 8
-  make DESTDIR=$RPM_BUILD_ROOT install -j 8
+  make -j 48
+  make DESTDIR=$RPM_BUILD_ROOT install -j 48
   
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -188,6 +202,14 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_message = [[
+CMake  is an extensible, open-source system that manages the build process in
+an operating system and in a compiler-independent manner. Unlike many cross-
+platform systems, CMake is designed to be used in conjunction with the native
+build environment. Simple configuration files placed in each source directory
+(called CMakeLists.txt files) are used to generate standard build files (e.g.,
+makefiles on Unix and projects/workspaces in Windows MSVC) which are used in
+the usual way.
+
 This module defines the environmental variables TACC_%{MODULE_VAR}_BIN
 and TACC_%{MODULE_VAR}_DIR for the location of the main CMake directory
 and the binaries.

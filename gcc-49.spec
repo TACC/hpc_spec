@@ -53,7 +53,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4
+Release:   1
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.gnu.org/software
@@ -198,7 +198,7 @@ export mpc_version=${mpc_major}.${mpc_minor}.${mpc_patch}
 export binutils_version=${binutils_major}.${binutils_minor}
 export gcc_version=${gcc_major}.${gcc_minor}.${gcc_patch}
 
-export ncores=16
+export ncores=48
 
 export CC=gcc 
 export CFLAGS=-fPIC 
@@ -210,7 +210,8 @@ printf "\n\n************************************************************\n"
 printf "gmp\n"
 printf "************************************************************\n\n"
 
-wget ftp://mirror.vexxhost.com/gnu/gmp/gmp-${gmp_version}.tar.gz
+#wget ftp://mirror.vexxhost.com/gnu/gmp/gmp-${gmp_version}.tar.gz
+wget ftp://ftp.gnu.org/gnu/gmp/gmp-${gmp_version}.tar.gz
 tar xvfz gmp-${gmp_version}.tar.gz
 
 cd gmp-${gmp_version}
@@ -246,7 +247,8 @@ printf "\n\n************************************************************\n"
 printf "mpfr\n"
 printf "************************************************************\n\n"
 
-wget ftp://mirror.vexxhost.com/gnu/mpfr/mpfr-${mpfr_version}.tar.gz
+#wget ftp://mirror.vexxhost.com/gnu/mpfr/mpfr-${mpfr_version}.tar.gz
+wget ftp://ftp.gnu.org/gnu/mpfr/mpfr-${mpfr_version}.tar.gz
 tar xvfz mpfr-${mpfr_version}.tar.gz
 
 cd mpfr-${mpfr_version}
@@ -303,7 +305,8 @@ printf "\n\n************************************************************\n"
 printf "mpc\n"
 printf "************************************************************\n\n"
 
-wget ftp://mirror.vexxhost.com/gnu/mpc/mpc-${mpc_version}.tar.gz
+#wget ftp://mirror.vexxhost.com/gnu/mpc/mpc-${mpc_version}.tar.gz
+wget ftp://ftp.gnu.org/gnu/mpc/mpc-${mpc_version}.tar.gz
 tar xvfz mpc-${mpc_version}.tar.gz
 
 cd mpc-${mpc_version}
@@ -329,6 +332,7 @@ cd binutils-${binutils_version}
 
 ${gcc}/binutils-${binutils_version}/configure \
 --prefix=${gcc_install}                       \
+--enable-install-libiberty                    \
 --with-gmp=${gcc_install}                     \
 --with-mpfr=${gcc_install}                    \
 --with-mpc=${gcc_install}                     \
@@ -344,7 +348,8 @@ printf "gcc\n"
 printf "************************************************************\n\n"
 
 #wget http://mirrors-usa.go-parts.com/gcc/releases/gcc-${gcc_version}/gcc-${gcc_version}.tar.gz
-wget http://mirrors.concertpass.com/gcc/releases/gcc-${gcc_version}/gcc-${gcc_version}.tar.gz
+#wget http://mirrors.concertpass.com/gcc/releases/gcc-${gcc_version}/gcc-${gcc_version}.tar.gz
+wget ftp://gcc.gnu.org/pub/gcc/releases/gcc-${gcc_version}/gcc-${gcc_version}.tar.gz
 tar xvfz gcc-${gcc_version}.tar.gz
 
 cd gcc-${gcc_version}
@@ -353,10 +358,10 @@ ${gcc}/gcc-${gcc_version}/configure \
 --enable-lto                        \
 --enable-libssp                     \
 --enable-gold                       \
---with-arch=core-avx-i              \
---with-tune=core-avx2               \
+--with-tune=generic                 \
 --enable-languages='c,c++,fortran'  \
 --disable-multilib                  \
+--enable-install-libiberty          \
 --prefix=${gcc_install}             \
 --with-gmp=${gcc_install}           \
 --with-mlgmp=${gcc_install}         \

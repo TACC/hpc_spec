@@ -50,7 +50,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   5%{?dist}
+Release:   1%{?dist}
 License:   GPL
 Group:     Module Magic
 Packager:  TACC - cproctor@tacc.utexas.edu
@@ -190,21 +190,33 @@ if [module-info mode load] {
      if { ! [inMPath /opt/modulefiles] } {
         module use   /opt/modulefiles
      }
+     if { ! [inMPath /opt/cray/pe/modulefiles] } {
+        module use   /opt/cray/pe/modulefiles
+     }
      if { ! [inMPath /opt/cray/ari/modulefiles] } {
         module use   /opt/cray/ari/modulefiles
      }
-     if { [file exists /opt/cray/ari/modulefiles/switch] } {
-        module load switch
+     if { ! [inMPath /opt/cray/pe/craype/default/modulefiles] } {
+        module use   /opt/cray/pe/craype/default/modulefiles
      }
+     #if { [file exists /opt/cray/ari/modulefiles/switch] } {
+     #   module load switch
+     #}
      ### WCP 2015-12-01 Don't load Base-opts if you want typical compute module env
      #if { [file exists /opt/modulefiles/Base-opts] } {
      #   module load Base-opts
      #}
 
-     if { ! [inMPath /opt/cray/craype/default/modulefiles] } {
-        module use   /opt/cray/craype/default/modulefiles
-     }
+     #if { ! [inMPath /opt/cray/craype/default/modulefiles] } {
+     #   module use   /opt/cray/craype/default/modulefiles
+     #}
+     #puts stderr "HELLO MONKEY"
+     module load modules
      module load craype-network-aries PrgEnv-intel cray-mpich craype-haswell
+     #module load craype-network-aries
+     #module load PrgEnv-intel
+     #module load cray-mpich
+     #module load craype-haswell
 
      ### WCP 2015-12-01 Don't load cray slurm -- see tacc slurm below
      #if { [file exists /opt/modulefiles/slurm] } {
@@ -215,8 +227,9 @@ if [module-info mode load] {
 if [ module-info mode remove ] {
      #module del slurm craype-haswell cray-mpich PrgEnv-intel craype-network-aries 
      module del craype-haswell cray-mpich PrgEnv-intel craype-network-aries 
+     module del modules
      #module del Base-opts switch
-     module del switch
+     #module del switch
 }
 
 ### WCP 2015-12-01 Add tacc slurm information instead.

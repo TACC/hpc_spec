@@ -215,12 +215,12 @@ if (os.getenv("USER") ~= "root") then
   append_path("PATH",  ".")
 end
 
-load("intel")
-load("cray_mpich")
-load("git")
-load("autotools")
-load("python2")
-load("cmake")
+try_load("intel")
+try_load("cray_mpich")
+try_load("git")
+try_load("autotools")
+try_load("python2")
+try_load("cmake")
 
 setenv("APPS","/opt/apps")
 prepend_path("MANPATH","/usr/local/man:/usr/share/man:/usr/X11R6/man:/usr/kerberos/man:/usr/man")

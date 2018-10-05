@@ -34,7 +34,7 @@ Group:		Productivity/Networking/SSH
 Packager:       TACC - cproctor@tacc.utexas.edu
 BuildRoot:	%{_tmppath}/openssh-%{version}-buildroot
 PreReq:		openssl
-PreReq:		tacc-openssl
+#PreReq:		tacc-openssl
 Obsoletes:	ssh
 Provides:	ssh
 #
@@ -44,7 +44,7 @@ Provides:	ssh
 #   and Gnome (glibdev, gtkdev, and gnlibsd)
 #
 BuildPrereq:	openssl
-BuildPrereq:	tacc-openssl
+#BuildPrereq:	tacc-openssl
 BuildPrereq:	zlib-devel
 #BuildPrereq:	glibdev
 #BuildPrereq:	gtkdev

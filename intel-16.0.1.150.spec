@@ -30,6 +30,9 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
+%define lib_dir 2016.1.150
+%define year 2016
+
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
 #%include compiler-defines.inc
@@ -37,7 +40,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+%include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -48,7 +51,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3%{?dist}
+Release:   1%{?dist}
 License:   proprietary
 Group:     Compiler
 URL:       https://software.intel.com/en-us/intel-compilers
@@ -65,16 +68,20 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
+This is specifically an rpm for the Intel Compiler modulefile
+used on Lonstar5.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
+This is specifically an rpm for the Intel Compiler modulefile
+used on Lonstar5.
 
 %description
 This is specifically an rpm for the Intel Compiler modulefile
-used on LS5.
+used on Lonestar5.
 
 #---------------------------------------
 %prep
@@ -190,6 +197,12 @@ available compiler options and command-line syntax.
 Note: To provide C++11/14 support for the Intel compiler, this module adds the
 paths for the gcc/4.9.3 bin, lib, and lib64 directories to your environment.
 
+Note: The $TACC_VEC_FLAGS environment variable is provided as a convenience
+during your compliation step. This variable specifies instruction sets
+appropriate to build and run on any Lonstar5 node (login node, HSW compute
+node, IVB compute node), and use CPU dispatch to produce a multi-architecture
+binary.
+
 The %{MODULE_VAR} module also defines the following environment variables:
 TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
 TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution,
@@ -198,19 +211,18 @@ libraries, include files, and tools respectively.
 Version %{version}
 ]]
 
---help(help_msg)
 help(help_msg)
 
 whatis("Name: Intel Compiler"                                               )
-whatis("Version: %{version}"                                                     )
+whatis("Version: %{version}"                                                )
 whatis("Category: compiler, Runtime Support"                                )
 whatis("Description: Intel Compiler Family (C/C++/Fortran for x86_64)"      )
 whatis("URL: http://software.intel.com/en-us/articles/intel-compilers"      )
 
 -- Create environment variables.
-local base         = "/opt/apps/intel/16.0.1.150"
+local base         = "/opt/intel"
 local gcc_base     = "/opt/apps/gcc/4.9.3"
-local full_xe      = "compilers_and_libraries_2016.1.150/linux"
+local full_xe      = "compilers_and_libraries_%{lib_dir}/linux"
 local arch         = "intel64"
 local installDir   = pathJoin(base,full_xe)
 local tbbRoot      = pathJoin(installDir,"tbb")
@@ -221,10 +233,10 @@ local ippRoot      = pathJoin(installDir,"ipp")
 setenv( "MKLROOT"      ,                  mklRoot )
 setenv( "TACC_MKL_DIR" ,                  mklRoot )
 setenv( "TACC_MKL_LIB" ,              pathJoin( mklRoot , "lib/intel64" ) )
-setenv( "TACC_MKL_INC" ,              pathJoin( mklRoot , "include" ) )
+setenv( "TACC_MKL_INC" ,              pathJoin( mklRoot , "include"     ) )
 
 --MKLROOT=
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/mkl
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/mkl
 
 prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2016/en/debugger/gdb-ia/man" ) )
 prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2016/en/debugger/gdb-igfx/man" ) )
@@ -232,25 +244,24 @@ prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2016
 prepend_path( "MANPATH" ,             pathJoin( mklRoot ,    "benchmarks/mp_linpack/man" ) )
 
 --MANPATH=
---/opt/apps/intel/16.0.1.150/man/common
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/man/en_US
---/opt/apps/intel/16.0.1.150/documentation_2016/en/debugger/gdb-ia/man
---/opt/apps/intel/16.0.1.150/documentation_2016/en/debugger/gdb-igfx/man
-
+--/opt/intel/man/common
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/man/en_US
+--/opt/intel/documentation_2016/en/debugger/gdb-ia/man
+--/opt/intel/documentation_2016/en/debugger/gdb-igfx/man
+local home = os.getenv("HOME")
+prepend_path( "INTEL_LICENSE_FILE" ,  pathJoin(home,"intel/licenses") )
 prepend_path( "INTEL_LICENSE_FILE" ,  pathJoin( installDir , "licenses" ) )
 prepend_path( "INTEL_LICENSE_FILE" ,  "/opt/intel/licenses" )
 prepend_path( "INTEL_LICENSE_FILE" ,  pathJoin( base , ".." ) )
-local home = os.getenv("HOME")
-prepend_path( "INTEL_LICENSE_FILE" ,  pathJoin(home,"intel/licenses") )
 
 --INTEL_LICENSE_FILE=
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/licenses
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/licenses
 --/opt/intel/licenses
 --${HOME}/intel/licenses
 
 setenv( "IPPROOT" ,                   ippRoot )
 --IPPROOT=
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/ipp
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/ipp
 
 prepend_path( "LIBRARY_PATH" ,        pathJoin( installDir , "ipp/../compiler/lib/intel64" ) )
 prepend_path( "LIBRARY_PATH" ,        pathJoin( installDir , "ipp/lib/intel64" ) )
@@ -262,14 +273,14 @@ prepend_path( "LIBRARY_PATH" ,        pathJoin( installDir , "daal/../tbb/lib/in
 prepend_path( "LIBRARY_PATH" ,        pathJoin( installDir , "daal/../compiler/lib/intel64_lin" ) )
 
 --LIBRARY_PATH=
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/ipp/../compiler/lib/intel64
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/ipp/lib/intel64
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/compiler/lib/intel64
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/mkl/lib/intel64
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/tbb/lib/intel64/gcc4.1
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/daal/lib/intel64_lin
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/daal/../tbb/lib/intel64_lin/gcc4.4
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/daal/../compiler/lib/intel64_lin
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/ipp/../compiler/lib/intel64
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/ipp/lib/intel64
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/compiler/lib/intel64
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/mkl/lib/intel64
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/tbb/lib/intel64/gcc4.1
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/daal/lib/intel64_lin
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/daal/../tbb/lib/intel64_lin/gcc4.4
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/daal/../compiler/lib/intel64_lin
 
 prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( gcc_base , "lib" ) )
 prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( gcc_base , "lib64" ) )
@@ -289,17 +300,17 @@ prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( installDir , "daal/../compiler/l
 --LD_LIBRARY_PATH=
 --/opt/apps/gcc/4.9.3/lib64
 --/opt/apps/gcc/4.9.3/lib
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/compiler/lib/intel64
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/mpi/intel64/lib
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/ipp/../compiler/lib/intel64
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/ipp/lib/intel64
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/compiler/lib/intel64
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/mkl/lib/intel64
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/tbb/lib/intel64/gcc4.1
---/opt/apps/intel/16.0.1.150/debugger_2016/libipt/intel64/lib
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/daal/lib/intel64_lin
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/daal/../tbb/lib/intel64_lin/gcc4.4
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/daal/../compiler/lib/intel64_lin
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/compiler/lib/intel64
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/mpi/intel64/lib
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/ipp/../compiler/lib/intel64
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/ipp/lib/intel64
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/compiler/lib/intel64
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/mkl/lib/intel64
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/tbb/lib/intel64/gcc4.1
+--/opt/intel/debugger_2016/libipt/intel64/lib
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/daal/lib/intel64_lin
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/daal/../tbb/lib/intel64_lin/gcc4.4
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/daal/../compiler/lib/intel64_lin
 
 prepend_path( "CPATH" ,     pathJoin( installDir , "ipp/include" ) )
 prepend_path( "CPATH" ,     pathJoin( installDir , "mkl/include" ) )
@@ -307,35 +318,33 @@ prepend_path( "CPATH" ,     pathJoin( installDir , "tbb/include" ) )
 prepend_path( "CPATH" ,     pathJoin( installDir , "daal/include" ) )
 
 --CPATH=
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/ipp/include
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/mkl/include
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/tbb/include
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/daal/include
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/ipp/include
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/mkl/include
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/tbb/include
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/daal/include
 
 prepend_path( "NLSPATH" ,     pathJoin( installDir , "compiler/lib/intel64/locale/%l_%t/%N" ) )
 prepend_path( "NLSPATH" ,     pathJoin( installDir , "mkl/lib/intel64/locale/%l_%t/%N" ) )
 prepend_path( "NLSPATH" ,     pathJoin( base       , "debugger_2016/gdb/intel64/share/locale/%l_%t/%N" ) )
 
 --NLSPATH=
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/compiler/lib/intel64/locale/%l_%t/%N
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/mkl/lib/intel64/locale/%l_%t/%N
---/opt/apps/intel/16.0.1.150/debugger_2016/gdb/intel64/share/locale/%l_%t/%N
-
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/compiler/lib/intel64/locale/%l_%t/%N
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/mkl/lib/intel64/locale/%l_%t/%N
+--/opt/intel/debugger_2016/gdb/intel64/share/locale/%l_%t/%N
 
 prepend_path( "PATH" ,        pathJoin( gcc_base , "bin" ) )
-
 prepend_path( "PATH" ,        pathJoin( installDir , "bin/intel64" ) )
 --prepend_path( "PATH" ,        pathJoin( installDir , "mpi/intel64/bin" ) )
 
 --PATH=
 --/opt/apps/gcc/4.9.3/bin
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/bin/intel64
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/mpi/intel64/bin
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/bin/intel64
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/mpi/intel64/bin
 
 setenv( "TBBROOT" ,           tbbRoot )
 
 --TBBROOT=
---/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/tbb
+--/opt/intel/compilers_and_libraries_2016.1.150/linux/tbb
 
 setenv( "ICC_BIN" ,           pathJoin(installDir , "bin" , arch ) )
 setenv( "IFC_BIN" ,           pathJoin(installDir , "bin" , arch ) )
@@ -350,8 +359,8 @@ prepend_path( "MODULEPATH" , "/opt/apps/intel16/modulefiles" )
 family("compiler")
 EOF
 
-#cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version << 'EOF'
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
+#cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version << 'EOF'
 #%Module3.1.1#################################################
 ##
 ## version file for %{BASENAME}%{version}

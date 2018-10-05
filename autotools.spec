@@ -25,7 +25,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 # Create some macros (spec file variables)
 %define major_version 1
-%define minor_version 1
+%define minor_version 2
 %define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}
@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4
+Release:   1
 License:   GPL
 Group:     Utility
 URL:       http://www.gnu.org
@@ -65,12 +65,40 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
+Autoconf produces a configuration shell script, named configure, which probes
+the installer platform for portability related information which is required to
+customize makefiles, configuration header files, and other application specific
+files. Then it proceeds to generate customized versions of these files from
+generic templates. This way, the user will not need to customize these files
+manually.  Automake produces makefile templates, Makefile.in to be used by
+Autoconf, from a very high level specification stored in a file called
+Makefile.am. Automake produces makefiles that conform to the GNU makefile
+standards, taking away the extraordinary effort required to produce them by
+hand. Automake requires Autoconf in order to be used properly.  Libtool makes
+it possible to compile position independent code and build shared libraries in
+a portable manner. It does not require either Autoconf, or Automake and can be
+used independently. Automake however supports libtool and interoperates with it
+in a seamless manner.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
+Autoconf produces a configuration shell script, named configure, which probes
+the installer platform for portability related information which is required to
+customize makefiles, configuration header files, and other application specific
+files. Then it proceeds to generate customized versions of these files from
+generic templates. This way, the user will not need to customize these files
+manually.  Automake produces makefile templates, Makefile.in to be used by
+Autoconf, from a very high level specification stored in a file called
+Makefile.am. Automake produces makefiles that conform to the GNU makefile
+standards, taking away the extraordinary effort required to produce them by
+hand. Automake requires Autoconf in order to be used properly.  Libtool makes
+it possible to compile position independent code and build shared libraries in
+a portable manner. It does not require either Autoconf, or Automake and can be
+used independently. Automake however supports libtool and interoperates with it
+in a seamless manner.
 
 %description
 Autoconf produces a configuration shell script, named configure, which probes
@@ -157,13 +185,13 @@ export auto_install=%{INSTALL_DIR}
 
 export m4_major=1
 export m4_minor=4
-export m4_patch=17
+export m4_patch=18
 
 export autoconf_major=2
 export autoconf_minor=69
 
 export automake_major=1
-export automake_minor=14
+export automake_minor=15
 
 export libtool_major=2
 export libtool_minor=4
@@ -174,7 +202,7 @@ export autoconf_version=${autoconf_major}.${autoconf_minor}
 export automake_version=${automake_major}.${automake_minor}
 export  libtool_version=${libtool_major}.${libtool_minor}.${libtool_patch}
 
-export ncores=16
+export ncores=48
 
 export CC=gcc
 #  export CFLAGS="-fPIC -march=core-avx -mtune=core-avx2"

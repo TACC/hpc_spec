@@ -40,7 +40,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+%include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -81,7 +81,7 @@ used on Lonstar5.
 
 %description
 This is specifically an rpm for the Intel Compiler modulefile
-used on Lonstar5.
+used on Lonestar5.
 
 #---------------------------------------
 %prep
