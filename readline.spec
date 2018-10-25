@@ -33,7 +33,6 @@ Summary:        The readline library
 License:        GPL-3.0-or-later
 Group:          Development/Libraries/C and C++
 Url:            http://www.gnu.org/software/readline/
-%include rpm-dir.inc
 # Git:          http://git.savannah.gnu.org/cgit/bash.git
 Source0:        ftp://ftp.gnu.org/gnu/readline/readline-%{version}%{rextend}.tar.gz
 Source1:        readline-%{version}-patches.tar.bz2

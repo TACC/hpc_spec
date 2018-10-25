@@ -6,7 +6,7 @@ Summary: Trilinos install
 
 # Create some macros (spec file variables)
 %define major_version git
-%define minor_version 20180802
+%define minor_version 20181012
 
 %define pkg_version %{major_version}%{minor_version}
 
@@ -30,7 +30,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 2%{?dist}
+Release: 1%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-git%{minor_version}.tar.gz
@@ -144,9 +144,9 @@ export COPTFLAGS="-g -xhost -O2"
 export HAS_HDF5=ON
 export HAS_NETCDF=ON
 export HAS_MUELU=ON
-export HAS_PYTHON=ON
+export HAS_PYTHON=OFF
 export HAS_STK=ON
-export HAS_SUPERLU=ON
+export HAS_SUPERLU=OFF
 %if "%{comp_fam}" == "gcc"
   export HAS_HDF5=OFF
   export HAS_NETCDF=OFF
@@ -235,17 +235,17 @@ echo "are we still in /tmp/trilinos-build?"
 pwd
 popd
 
-( pwd ; ls ; \
-  ls -l \
-    packages/seacas/libraries/ioss/html \
-    packages/seacas/libraries/exodus/topology \
-    packages/seacas/libraries/exodus/html \
-  ; \
-  rm -f \
-    packages/seacas/libraries/ioss/html \
-    packages/seacas/libraries/exodus/topology \
-    packages/seacas/libraries/exodus/html \
-)
+# ( pwd ; ls ; \
+#   ls -l \
+#     packages/seacas/libraries/ioss/html \
+#     packages/seacas/libraries/exodus/topology \
+#     packages/seacas/libraries/exodus/html \
+#   ; \
+#   rm -f \
+#     packages/seacas/libraries/ioss/html \
+#     packages/seacas/libraries/exodus/topology \
+#     packages/seacas/libraries/exodus/html \
+# )
 
 # prevent trouble with #!${PYTHON_EXECUTABLE}
 find packages -name \*.py.in -exec rm -f {} \;
@@ -388,13 +388,5 @@ echo "filtered requires:"
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-
-* Fri Aug 24 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: UNRELEASED activating hdf5/netcdf
-             now in three rpms
-* Fri Aug 03 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: try to use python 2.7.15 throughout
-  TRYING: with python, no Domi
-* Mon Jul 31 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 1: initial release, no pytrilinos
-
+* Fri Oct 12 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial release, no pytrilinos, no superlu

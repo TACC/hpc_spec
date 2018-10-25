@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3
+Release:   5
 License:   GPL
 Group:     Utility
 URL:       http://www.boost.org
@@ -128,7 +128,7 @@ proposed for the upcoming TR2.
 
 module purge
 module load intel/18.0.2
-module load cray_mpich/7.7.0
+module load cray_mpich
 
 %define PNAME       boost-mpi
 

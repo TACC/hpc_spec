@@ -26,7 +26,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 # Create some macros (spec file variables)
 %define major_version 1
 %define minor_version 11
-%define micro_version 1
+%define micro_version 8
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -37,7 +37,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+%include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3
+Release:   1
 License:   BSD-2
 Group:     Development/Tools
 URL:       https://www.open-mpi.org/projects/hwloc
@@ -65,12 +65,28 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
+The Portable Hardware Locality (hwloc) software package provides a portable
+abstraction (across OS, versions, architectures, ...) of the hierarchical
+topology of modern architectures, including NUMA memory nodes, sockets, shared
+caches, cores and simultaneous multithreading. It also gathers various system
+attributes such as cache and memory information as well as the locality of I/O
+devices such as network interfaces, InfiniBand HCAs or GPUs. It primarily aims
+at helping applications with gathering information about modern computing
+hardware so as to exploit it accordingly and efficiently.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
+The Portable Hardware Locality (hwloc) software package provides a portable
+abstraction (across OS, versions, architectures, ...) of the hierarchical
+topology of modern architectures, including NUMA memory nodes, sockets, shared
+caches, cores and simultaneous multithreading. It also gathers various system
+attributes such as cache and memory information as well as the locality of I/O
+devices such as network interfaces, InfiniBand HCAs or GPUs. It primarily aims
+at helping applications with gathering information about modern computing
+hardware so as to exploit it accordingly and efficiently.
 
 %description
 The Portable Hardware Locality (hwloc) software package provides a portable
@@ -121,6 +137,7 @@ hardware so as to exploit it accordingly and efficiently.
 
 # Insert necessary module commands
 module purge
+ml autotools
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -156,9 +173,11 @@ export CFLAGS="-mtune=generic"
 export CXXFLAGS="-mtune=generic"
 export LDFLAGS="-mtune=generic"
 
-cd ${hwloc}/hwloc-${hwloc_version}
+#cd ${hwloc}/hwloc-${hwloc_version}
 
-${hwloc}/hwloc-${hwloc_version}/configure  \
+#${hwloc}/hwloc-${hwloc_version}/configure  \
+./autogen.sh
+./configure  \
 --prefix=${hwloc_install} \
 --enable-doxygen
 

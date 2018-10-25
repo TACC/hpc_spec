@@ -12,10 +12,10 @@ Summary: Dealii install
 # Create some macros (spec file variables)
 %define major_version 9
 %define minor_version 0
-%define micro_version 0
+%define micro_version 1
 
-%define dealiipetscversion 3.9
-%define dealiitrilinosversion git20180802
+%define dealiipetscversion 3.10
+%define dealiitrilinosversion git20181012
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 %define pkg_full_version %{major_version}.%{minor_version}.%{micro_version}
@@ -372,5 +372,5 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 #
-* Mon Aug 20 2018 eijkhout <eijkhout@tacc.utexas.edu>
+* Mon Oct 16 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

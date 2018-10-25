@@ -1,6 +1,11 @@
 #
 # gdal.spec
 # Victor Eijkhout
+####
+#### Is this used? 
+#### it looks like gdal is something inside GMT
+#### http://gmt.soest.hawaii.edu/projects/gmt/wiki/BuildingGMT
+####
 #
 # based on Bar.spec
 # W. Cyrus Proctor

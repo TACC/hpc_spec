@@ -50,7 +50,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3
+Release:   5
 License:   GPL
 Group:     Utility
 URL:       http://www.boost.org
@@ -129,6 +129,7 @@ proposed for the upcoming TR2.
 module purge
 %include compiler-load.inc
 module load intel/18.0.2
+module load python2
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -261,6 +262,7 @@ setenv("TACC_%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
 setenv("TACC_%{MODULE_VAR}_LIB","%{INSTALL_DIR}/lib")
 setenv("TACC_%{MODULE_VAR}_INC","%{INSTALL_DIR}/include")
 
+always_load("python2")
 conflict("boost","boost-mpi")
 
 -- Add boost to the LD_LIBRARY_PATH

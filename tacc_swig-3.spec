@@ -47,7 +47,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2
+Release:   1
 License:   BSD
 Group:     Development/Tools
 URL:       http://www.mcs.anl.gov/swig/
@@ -282,7 +282,5 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Mon Jul 30 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: upgrade to 3.0.12
-* Thu Jan 14 2016 eijkhout <eijkhout@tacc.utexas.edu>
+* Wed Oct 10 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: first release

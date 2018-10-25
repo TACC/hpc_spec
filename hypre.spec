@@ -32,12 +32,12 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 # Create some macros (spec file variables)
 %define major_version 2
-%define minor_version 11
-%define micro_version 1.
+%define minor_version 14
+%define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}
 
-%define petscversion 3.8
+%define petscversion 3.10
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -60,7 +60,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3
+Release:   1
 License:   LGPL
 Vendor: llnl.gov
 Group: Development/Numerical-Libraries
@@ -131,6 +131,8 @@ module purge
 %include compiler-load.inc
 # Load MPI Library
 %include mpi-load.inc
+
+%define BUILD_PACKAGE 0
 
 # Insert further module commands
 
@@ -314,10 +316,5 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Sun Dec 31 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: adding spurious DIR/BIN variables, set to petsc 3.8, 
-    removed complex, added i64
-* Tue Jan 24 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: fixed unexpanded modulefile variables
-* Mon Jan 23 2017 eijkhout <eijkhout@tacc.utexas.edu>
--release 1: first release
+* Fri Oct 12 2018 eijkhout <eijkhout@tacc.utexas.edu>
+-release 1: first release with petsc 3.10

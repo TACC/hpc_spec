@@ -355,6 +355,14 @@ setenv( "TACC_ICC_BIN" ,      pathJoin(installDir , "bin/intel64" ) )
 setenv( "TACC_ICC_LIB" ,      pathJoin(installDir , "compiler/lib/intel64" ) )
 setenv( "TACC_ICC_INC" ,      pathJoin(installDir , "compiler/include/intel64" ) )
 
+if (os.getenv("TACC_SYSTEM") == "stampede2") then
+  setenv( "TACC_VEC_FLAGS" ,      "-xCORE-AVX2 -axCORE-AVX512,MIC-AVX512" )
+elseif (os.getenv("TACC_SYSTEM") == "ls5") then
+  setenv( "TACC_VEC_FLAGS" ,      "-xCORE-AVX-I -axCORE-AVX2" )
+else
+  setenv( "TACC_VEC_FLAGS" ,      "-xCORE-AVX2" )
+end
+
 prepend_path( "MODULEPATH" , "/opt/apps/intel16/modulefiles" )
 family("compiler")
 EOF

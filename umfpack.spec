@@ -31,7 +31,7 @@ Summary: Umfpack spec file by piggy-backing on PETSc
 %define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
-%define petscversion 3.7
+%define petscversion 3.10
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -282,5 +282,5 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Mon Aug 14 2017 eijkhout <eijkhout@tacc.utexas.edu>
+* Mon Oct 15 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: first release

@@ -49,4 +49,15 @@
   exit
 %endif
 
+%if "%{comp_fam}" == "gcc"
+  %define TACC_OPT -march=ivybridge -mtune=haswell
+%endif
+%if "%{comp_fam}" == "intel"
+  %define TACC_OPT -xCORE-AVX-I -axCORE-AVX2
+%endif
+%{!?suf: %define suf default}
+%if "%{suf}" == "default"
+  %define TACC_VEC_OPT %{TACC_OPT}
+  %define dovec 0
+%endif
 

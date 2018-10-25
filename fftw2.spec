@@ -1,12 +1,18 @@
 #
 # Spec file for FFTW2 - Lonestar 5 version
 #
+# ---
+# 2018-10-09
+# Version for major LS5 upgrade
+# Substituted flags for $TACC_VEC_OPT for consistency
+# ---
+
 %define name_prefix tacc
 %define base_name fftw2
 Summary:   %{base_name}
 Name:      %{name_prefix}-%{base_name}
 Version:   2.1.5
-Release:   3
+Release:   1
 License: GPL
 Vendor:    www.fftw.org 
 Group:     System Environment/Base
@@ -73,13 +79,24 @@ unset PHG_CONFIG_PATH
 #make clean
 COMMON_CONFIG_ARGS="--prefix=%{INSTALL_DIR} --enable-type-prefix --enable-threads --enable-mpi"
 
-./configure CFLAGS="-O3 -xAVX" FFLAGS="-O3 -mcmodel=medium" ${COMMON_CONFIG_ARGS}
- make -j 16 
+%if "%is_intel" == "1"
+  export CFLAGS="-O3 %{TACC_VEC_OPT}"
+  export LDFLAGS="%{TACC_VEC_OPT}"
+  echo "I'm intelling"
+%endif
+
+%if "%is_gcc" == "1"
+  export CFLAGS="-O3 %{TACC_VEC_OPT}"
+  export LDFLAGS="%{TACC_VEC_OPT}"
+%endif
+
+./configure FFLAGS="-O3 -mcmodel=medium" ${COMMON_CONFIG_ARGS}
+ make -j 20 
 make DESTDIR=$RPM_BUILD_ROOT install
 
 make clean
-./configure CFLAGS="-O3 -xAVX" FFLAGS="-O3 -mcmodel=medium" ${COMMON_CONFIG_ARGS} --enable-float
-make -j16
+./configure FFLAGS="-O3 -mcmodel=medium" ${COMMON_CONFIG_ARGS} --enable-float
+make -j 20
 make DESTDIR=$RPM_BUILD_ROOT install
 
 

@@ -132,11 +132,13 @@ export USE_NOFSCHECK="TRUE"
 export MA_USE_ARMCI_MEM="1"
 
 #export PYTHONHOME=/opt/apps/intel16/python/2.7.10
+export PYTHONHOME=/opt/apps/intel18/python2/2.7.15/
+export PYTHONVERSION=2.7
+#export PYTHONHOME="/usr/"
 #export PYTHONVERSION=2.7
-export PYTHONHOME="/usr/"
-export PYTHONVERSION=2.6
 export USE_PYTHON=y
 export USE_PYTHONCONFIG=Y
+module load python2/2.7.15
 
 export USE_INTERNALBLAS=y
 

@@ -1,6 +1,28 @@
 # Antia Lamas-Linares
-# 2016-01-11
-#
+# The following versions are built:
+# ---
+# 2018-10-09
+# Version built for major LS5 upgrade
+# Based on S2 spec file.
+# Modified to remove avx512 support
+# --- 
+# 2018-08-14
+# Building for intel18
+# New version of FFTW3 (3.3.8) available
+# ---
+# 2017-11-08
+# Building for phase 2 of Stampede2 deployment - SKX
+# Now using the standard TACC_VEC_OPT flags
+# ---
+# 2017-07-10 
+# User ticket TUP:38819 pointed out incorrect files in libtool files
+# It appears this will not work as a relocatable
+# ---
+# 2017-05-17
+# Modified for Stampede 2 deployment and avx512
+# This version is patch 2 with the missing fortran hearders
+# ---
+
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
 # NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
@@ -16,7 +38,7 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: FFTW is a C subroutine library for computing the discrete Fourier transform
+Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
 %define pkg_base_name fftw3
@@ -25,32 +47,31 @@ Summary: FFTW is a C subroutine library for computing the discrete Fourier trans
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 3
-%define micro_version 6
+%define micro_version 8
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
-%include rpm-dir.inc                  
+%include rpm-dir.inc
 %include compiler-defines.inc
 %include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
-#%include name-defines-noreloc.inc
+#%include name-defines.inc
+%include name-defines-noreloc.inc
 #%include name-defines-hidden.inc
 #%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
-
 ############ Do Not Change #############
 Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   1%{?dist}
 License:   GPL
 Group:     System Environment/Base
 URL:       http://www.fftw.org
@@ -75,10 +96,10 @@ Group: Lmod/Modulefiles
 This is the long description for the modulefile RPM...
 
 %description
-FFTW is a C subroutine library for computing the discrete Fourier                                             |                                                                                                             
-transform (DFT) in one or more dimensions, of arbitrary input size, and of                                    |%package %{PACKAGE}                                                                                          
-both real and complex data (as well as of even/odd data, i.e. the discrete                                    |Summary: The package RPM                                                                                     
-cosine/sine transforms or DCT/DST). 
+FFTW is a C subroutine library for computing the discrete Fourier                                             |                                                     
+transform (DFT) in one or more dimensions, of arbitrary input size, and of                                    |%package %{PACKAGE}                                  
+both real and complex data (as well as of even/odd data, i.e. the discrete                                    |Summary: The package RPM                             
+cosine/sine transforms or DCT/DST).
 
 #---------------------------------------
 %prep
@@ -134,7 +155,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -177,7 +198,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #            --prefix=%{INSTALL_DIR}
 #make -j 4
 #make DESTDIR=$RPM_BUILD_ROOT install
-
 ## Make double-precision version w/ mpi support
 %if "%{is_mvapich2}" == "1"
   export MPICC=mpicc
@@ -194,14 +214,14 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 %endif
 
 %if "%is_intel" == "1"
-  export CFLAGS="-O3 -xAVX -axCORE-AVX2"
-  export LDFLAGS="-xAVX -axCORE-AVX2"
+  export CFLAGS="-O3 %{TACC_VEC_OPT}"
+  export LDFLAGS="%{TACC_VEC_OPT}"
   echo "I'm intelling"
 %endif
 
 %if "%is_gcc" == "1"
-  export CFLAGS="-O3 -march=sandybridge -mtune=haswell"
-  export LDFLAGS="-march=sandybridge -mtune=haswell"
+  export CFLAGS="-O3 %{TACC_VEC_OPT}"
+  export LDFLAGS="%{TACC_VEC_OPT}"
 %endif
 
 ./configure --with-pic \
@@ -212,8 +232,9 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
             --enable-mpi \
             --enable-sse2 \
             --enable-avx \
+            --enable-avx2 \
             --prefix=%{INSTALL_DIR}
-make -j 16
+make -j 20
 make DESTDIR=$RPM_BUILD_ROOT install
 
 ## Make single-precision version w/ mpi support
@@ -228,41 +249,22 @@ make clean
             --enable-sse \
             --enable-sse2 \
             --enable-avx \
+            --enable-avx2 \
             --prefix=%{INSTALL_DIR}
-make -j 16
+make -j 20
 make DESTDIR=$RPM_BUILD_ROOT install
 
-## Make double-long version w/ mpi support (added in v. 3.3.6 at user request - antia)
-#This addition is not finishing properly (the installation). Needs further work.
-#make clean
-#./configure --with-pic \
-#            --enable-long-double \
-#            --enable-shared \
-#            --enable-openmp \
-#            --enable-threads \
-#            --disable-dependency-tracking \
-#            --enable-mpi \
-#            --enable-sse2 \
-#            --enable-avx \           
-#            --prefix=%{INSTALL_DIR}
-#make -j 16
-#make DESTDIR=$RPM_BUILD_ROOT install
-
-
-
   # Copy everything from tarball over to the installation directory
-  
+
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
-
-
 #---------------------------
 %if %{?BUILD_MODULEFILE}
 #---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -270,7 +272,7 @@ make DESTDIR=$RPM_BUILD_ROOT install
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
+
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_message=[[
@@ -281,21 +283,21 @@ libraries, and include files, respectively.
 
 To use the FFTW3 library, compile your source code with:
 
-	-I$TACC_FFTW3_INC
+        -I$TACC_FFTW3_INC
 
 and add the following options to the link step for serial codes:
 
-	-Wl,-rpath,$TACC_FFTW3_LIB  -L$TACC_FFTW3_LIB -lfftw3
+        -Wl,-rpath,$TACC_FFTW3_LIB  -L$TACC_FFTW3_LIB -lfftw3
 
 for MPI codes:
 
-	-Wl,-rpath,$TACC_FFTW3_LIB -L$TACC_FFTW3_LIB -lfftw3_mpi -lfftw3
+        -Wl,-rpath,$TACC_FFTW3_LIB -L$TACC_FFTW3_LIB -lfftw3_mpi -lfftw3
 
 In addition, a single-precision fftw library is also available
 by adding an 'f' suffix to the library names above:
 
-(serial):	-L$TACC_FFTW3_LIB -lfftw3f
-(mpi): 		-L$TACC_FFTW3_LIB -lfftw3f_mpi -lfftw3f
+(serial):       -L$TACC_FFTW3_LIB -lfftw3f
+(mpi):          -L$TACC_FFTW3_LIB -lfftw3f_mpi -lfftw3f
 
 
 Version %{version}
@@ -334,7 +336,7 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 
 set     ModulesVersion      "%{version}"
 EOF
-  
+
   # Check the syntax of the generated lua modulefile only if a visible module
   %if %{?VISIBLE}
     %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
@@ -358,7 +360,7 @@ EOF
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile 
+%files modulefile
 #---------------------------
 
   %defattr(-,root,install,)

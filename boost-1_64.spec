@@ -50,7 +50,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3
+Release:   5
 License:   GPL
 Group:     Utility
 URL:       http://www.boost.org
@@ -129,7 +129,8 @@ proposed for the upcoming TR2.
 module purge
 %include compiler-load.inc
 module load intel/18.0.2 
-module load python2/2.7.15 
+#module load gcc
+module load python2 
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"

@@ -22,12 +22,12 @@ Summary: A Nice little relocatable skeleton spec file for Gromacs.
 %define MODULE_VAR    GROMACS
 %define name_prefix tacc
 # Create some macros (spec file variables)
-%define major_version 2016
+%define major_version 5
 %define minor_version 1
 %define micro_version 2
 
 #%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
-%define pkg_version %{major_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 %define dbg %{nil}
 
 ### Toggle On/Off ###
@@ -138,8 +138,8 @@ libs in gromacs-dev.
 #---------------------------------------
 
 # Setup modules
-module purge
-module load cmake
+#module purge
+#module load cmake
 %include system-load.inc
 %include compiler-load.inc
 %include mpi-load.inc
@@ -272,36 +272,6 @@ make -j 12
 make install
 
 ###############################################################################
-
-export TACC_CUDA_DIR=/work/00770/build/lonestar/cuda/6.5/
-export TACC_CUDA_BIN=$TACC_CUDA_DIR/bin/
-export TACC_CUDA_LIB=$TACC_CUDA_DIR/lib64/
-export TACC_CUDA_INC=$TACC_CUDA_DIR/include/
-#module load boost
-cd ..
-rm -rf g_gpu_parallel
-mkdir g_gpu_parallel
-cd g_gpu_parallel
-env CC=mpicc CXX=mpicxx cmake .. \
--DCMAKE_INSTALL_PREFIX=../install \
--DGMX_FFT_LIBRARY=mkl \
--DCMAKE_EXE_LINKER_FLAGS="-mkl=sequential" \
--DGMX_EXTERNAL_BOOST=OFF \
--DGMX_X11=OFF \
--DGMX_SIMD=AVX_256 \
--DCMAKE_C_FLAGS="-std=gnu99 -O3 -xAVX -axCORE-AVX2" \
--DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xAVX -axCORE-AVX2" \
--DBUILD_SHARED_LIBS=ON \
--DGMX_BUILD_MDRUN_ONLY=ON \
--DGMX_MPI=ON \
--DGMX_GPU=ON \
--DCUDA_TOOLKIT_ROOT_DIR=${TACC_CUDA_DIR} \
--DGMX_DEFAULT_SUFFIX=OFF \
--DGMX_BINARY_SUFFIX=_mpi_gpu \
--DGMX_LIBS_SUFFIX=_mpi_gpu
-
-make -j 12
-make install
 
 
 

@@ -27,11 +27,11 @@ Summary: Mumps spec file by piggy-backing on PETSc
 
 # Create some macros (spec file variables)
 %define major_version 5
-%define minor_version 0
+%define minor_version 1
 %define micro_version 2
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
-%define petscversion 3.7
+%define petscversion 3.10
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -281,7 +281,5 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Thu Jun 01 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: update to petsc 3.7
-* Wed Feb 03 2016 eijkhout <eijkhout@tacc.utexas.edu>
-- release 1: first release
+* Mon Oct 15 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: first release based on petsc 3.10
