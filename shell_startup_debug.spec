@@ -15,7 +15,8 @@ BuildRoot: %{_tmppath}/%{base_name}-%{version}-%{release}-root
 
 
 
-%define PKG_BASE %{APPS}/%{base_name} 
+#%define PKG_BASE %{APPS}/%{base_name} 
+%define PKG_BASE /opt/%{base_name} 
 %define INSTALL_DIR %{PKG_BASE}/%{version}
 
 %description
@@ -47,7 +48,8 @@ export PATH
 
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-./configure --prefix=%{APPS}
+#./configure --prefix=%{APPS}
+./configure --prefix=/opt
 make DESTDIR=$RPM_BUILD_ROOT install
 rm $RPM_BUILD_ROOT/%{INSTALL_DIR}/../shell_startup_debug
 

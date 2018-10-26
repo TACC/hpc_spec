@@ -165,17 +165,17 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #export LD_LIBRARY_PATH=/opt/openssl/1.0.2m/usr/lib:$LD_LIBRARY_PATH
 #export CPPFLAGS="-I/opt/openssl/1.0.2m/usr/include"
  
-  export CC=gcc
-  export CXX=g++
-  export CFLAGS="-mtune=generic"
-  export CXXFLAGS="-mtune=generic -std=c++1y"
+  export CC=gcc-5
+  export CXX=g++-5
+  #export CFLAGS="-mtune=generic"
+  export CXXFLAGS="-std=c++14"
   #export LDFLAGS="-Wl,-rpath,${GCC_LIB} -march=core-avx -mtune=core-avx2" # Location of correct libstdc++.so.6
   #export LDFLAGS="-mtune=generic /opt/openssl/1.0.2m/usr/lib/libssl.a" # Location of correct libstdc++.so.6
   #export LDFLAGS="-mtune=generic -L/opt/apps/gcc/4.9.3/lib64 -lstdc++ -Wl,-rpath,/opt/apps/gcc/4.9.3/lib64" # Location of correct libstdc++.so.6
   #echo ${LD_LIBRARY_PATH}
   #echo ${LDFLAGS}
   # DO NOT preppend $RPM_BUILD_ROOT in prefix
-  ./bootstrap --prefix=%{INSTALL_DIR} --system-curl --parallel=48
+  ./bootstrap --prefix=%{INSTALL_DIR} --system-curl --parallel=48 --verbose
   #cmake .
   make -j 48
   make DESTDIR=$RPM_BUILD_ROOT install -j 48

@@ -1,7 +1,7 @@
 #
 # spec file for package bash
 #
-# Copyright (c) 2018 SUSE LINUX GmbH, Nuernberg, Germany.
+# Copyright (c) 2015 SUSE LINUX GmbH, Nuernberg, Germany.
 #
 # All modifications and additions to the file contributed by third parties
 # remain the property of their copyright owners, unless otherwise agreed
@@ -20,30 +20,35 @@
 %define base_name bash
 Name:           tacc-%{base_name}
 BuildRequires:  audit-devel
-BuildRequires:  autoconf
 BuildRequires:  bison
+%if %suse_version > 1020
+BuildRequires:  autoconf
 BuildRequires:  fdupes
+%endif
+%if %suse_version > 1220
 BuildRequires:  makeinfo
+%endif
 BuildRequires:  ncurses-devel
 BuildRequires:  patchutils
-BuildRequires:  pkg-config
-# This has to be always the same version as included in the bash its self
-BuildRequires:  readline-devel == 7.0
 BuildRequires:  screen
 BuildRequires:  sed
-%define         bextend	 %nil
-Version:        4.4
-Release:        369.18
-Summary:        The GNU Bourne-Again Shell
-License:        GPL-3.0-or-later
-Group:          System/Shells
-Packager:       TACC - cproctor@tacc.utexas.edu
-Recommends:     bash-lang = %version
+%define         bash_vers 4.3
+%define         rl_vers   6.3
+%define         extend    ""
+%if %suse_version > 1020
+Recommends:     bash-lang = %bash_vers
 # The package bash-completion is a source of
 # bugs which will hit at most this package
 #Recommends:	bash-completion
 Suggests:       command-not-found
-Recommends:     bash-doc = %version
+Recommends:     bash-doc = %bash_vers
+%endif
+Version:        %{bash_vers}
+Release:        293.42
+Summary:        The GNU Bourne-Again Shell
+License:        GPL-3.0+
+Group:          System/Shells
+Packager:       TACC - cproctor@tacc.utexas.edu
 Url:            http://www.gnu.org/software/bash/bash.html
 
 %include rpm-dir.inc
@@ -59,8 +64,10 @@ Provides: tacc-bash         = %{version}-%{release}
 Provides: tacc-bash(x86-64) = %{version}-%{release}
                              
 # Git:          http://git.savannah.gnu.org/cgit/bash.git
-Source0:        ftp://ftp.gnu.org/gnu/bash/bash-%{version}%{bextend}.tar.gz
-Source1:        bash-%{version}-patches.tar.bz2
+Source0:        ftp://ftp.gnu.org/gnu/bash/bash-%{bash_vers}.tar.gz
+Source1:        ftp://ftp.gnu.org/gnu/readline/readline-%{rl_vers}.tar.gz
+Source2:        bash-%{bash_vers}-patches.tar.bz2
+Source3:        readline-%{rl_vers}-patches.tar.bz2
 Source4:        run-tests
 Source5:        dot.bashrc
 Source6:        dot.profile
@@ -71,15 +78,15 @@ Source8:        baselibs.conf
 # http://lists.gnu.org/archive/html/bug-bash/2011-03/msg00071.html
 # http://lists.gnu.org/archive/html/bug-bash/2011-03/msg00073.html
 Source9:        bash-4.2-history-myown.dif.bz2
-Patch0:         bash-%{version}.dif
+Patch0:         bash-%{bash_vers}.dif
 Patch1:         bash-2.03-manual.patch
 Patch2:         bash-4.0-security.patch
 Patch3:         bash-4.3-2.4.4.patch
 Patch4:         bash-3.0-evalexp.patch
 Patch5:         bash-3.0-warn-locale.patch
-# Disabled
 Patch6:         bash-4.2-endpw.dif
 Patch7:         bash-4.3-decl.patch
+Patch8:         bash-4.0-async-bnc523667.dif
 Patch9:         bash-4.3-include-unistd.dif
 Patch10:        bash-3.2-printf.patch
 Patch11:        bash-4.3-loadables.dif
@@ -87,9 +94,20 @@ Patch12:        bash-4.1-completion.dif
 Patch13:        bash-4.2-nscdunmap.dif
 Patch14:        bash-4.3-sigrestart.patch
 # PATCH-FIX-UPSTREAM bnc#382214 -- disabled due bnc#806628 by -DBNC382214=0
+Patch15:        bash-3.2-longjmp.dif
 Patch16:        bash-4.0-setlocale.dif
+Patch17:        bash-4.3-headers.dif
 # PATCH-EXTEND-SUSE bnc#828877 -- xterm resizing does not pass to all sub clients
 Patch18:        bash-4.3-winch.dif
+Patch20:        readline-%{rl_vers}.dif
+Patch21:        readline-6.3-input.dif
+Patch22:        readline-6.1-wrap.patch
+Patch23:        readline-5.2-conf.patch
+Patch24:        readline-6.2-metamode.patch
+Patch25:        readline-6.2-endpw.dif
+Patch27:        readline-6.2-xmalloc.dif
+Patch30:        readline-6.3-destdir.patch
+Patch31:        readline-6.3-rltrace.patch
 Patch40:        bash-4.1-bash.bashrc.dif
 Patch46:        man2html-no-timestamp.patch
 Patch47:        bash-4.3-perl522.patch
@@ -97,17 +115,18 @@ Patch47:        bash-4.3-perl522.patch
 Patch48:        bash-4.3-extra-import-func.patch
 # PATCH-EXTEND-SUSE Allow root to clean file system if filled up
 Patch49:        bash-4.3-pathtemp.patch
-Patch50:        bash-memmove.patch
+BuildRoot:      %{_tmppath}/%{base_name}-%{version}-build
 
 
 # TACC WCP 2018-10-02 change paths from /etc to /etc/tacc
-Patch300:bash44_config.patch
+Patch300:bash43_config.patch
 
 
 %global         _sysconfdir /etc
 %global         _incdir     %{_includedir}
 %global         _ldldir     /%{_lib}/bash
 %global         _minsh      0
+%{expand:       %%global rl_major %(echo %{rl_vers} | sed -r 's/.[0-9]+//g')}
 
 %description
 Bash is an sh-compatible command interpreter that executes commands
@@ -121,7 +140,11 @@ Summary:        Documentation how to Use the GNU Bourne-Again Shell
 Group:          Documentation/Man
 Provides:       bash:%{_infodir}/bash.info.gz
 PreReq:         %install_info_prereq
+Version:        %{bash_vers}
+Release:        293.42
+%if %suse_version > 1120
 BuildArch:      noarch
+%endif
 
 %description doc
 This package contains the documentation for using the bourne shell
@@ -134,24 +157,31 @@ interpreter Bash.
 %package lang
 Summary:        Languages for package bash
 Group:          System/Localization
-Requires:       bash = %{version}
+Provides:       bash-lang = %{bash_vers}
+Requires:       bash = %{bash_vers}
 
 %description lang
 Provides translations to the package bash
 %endif
 
+%if 0%suse_version >= 1020
 %package devel
 Summary:        Include Files mandatory for Development of bash loadable builtins
 Group:          Development/Languages/C and C++
+Version:        %{bash_vers}
+Release:        293.42
 
 %description devel
 This package contains the C header files for writing loadable new
 builtins for the interpreter Bash. Use -I /usr/include/bash/<version>
 on the compilers command line.
+%endif
 
 %package loadables
 Summary:        Loadable bash builtins
 Group:          System/Shells
+Version:        %{bash_vers}
+Release:        293.42
 
 %description loadables
 This package contains the examples for the ready-to-dynamic-load
@@ -207,10 +237,68 @@ unlink	      Remove a directory entry.
 whoami	      Print out username of current user.
 
 
+%package -n libreadline6
+Summary:        The Readline Library
+Group:          System/Libraries
+Provides:       bash:/%{_lib}/libreadline.so.%{rl_major}
+Version:        %{rl_vers}
+Release:        293.42
+%if 0%suse_version > 1020
+Recommends:     readline-doc = %{version}
+%endif
+# bug437293
+%ifarch ppc64
+Obsoletes:      readline-64bit
+%endif
+#
+Provides:       readline =  %{rl_vers}
+Obsoletes:      readline <= 6.2
+
+%description -n libreadline6
+The readline library is used by the Bourne Again Shell (bash, the
+standard command interpreter) for easy editing of command lines.  This
+includes history and search functionality.
+
+%package -n readline-devel
+Summary:        Include Files and Libraries mandatory for Development
+Group:          Development/Libraries/C and C++
+Provides:       bash:%{_libdir}/libreadline.a
+Version:        %{rl_vers}
+Release:        293.42
+Requires:       libreadline6 = %{rl_vers}
+Requires:       ncurses-devel
+%if 0%suse_version > 1020
+Recommends:     readline-doc = %{rl_vers}
+%endif
+# bug437293
+%ifarch ppc64
+Obsoletes:      readline-devel-64bit
+%endif
+#
+
+%description -n readline-devel
+This package contains all necessary include files and libraries needed
+to develop applications that require these.
+
+%package -n readline-doc
+Summary:        Documentation how to Use and Program with the Readline Library
+Group:          System/Libraries
+Provides:       readline:%{_infodir}/readline.info.gz
+PreReq:         %install_info_prereq
+Version:        %{rl_vers}
+Release:        293.42
+%if 0%suse_version > 1120
+BuildArch:      noarch
+%endif
+
+%description -n readline-doc
+This package contains the documentation for using the readline library
+as well as programming with the interface of the readline library.
+
 %prep
-%setup -q -n bash-%{version}%{bextend} -b1
+%setup -q -n bash-%{bash_vers}%{extend} -b1 -b2 -b3
 typeset -i level
-for patch in ../bash-%{version}-patches/*; do
+for patch in ../bash-%{bash_vers}-patches/*; do
     test -e $patch || break
     let level=0 || true
     file=$(lsdiff --files=1 $patch)
@@ -219,7 +307,7 @@ for patch in ../bash-%{version}-patches/*; do
 	let level++ || true
     fi
     test -e $file || exit 1
-    sed -ri '/^\*\*\* \.\./{ s@\.\./bash-%{version}[^/]*/@@ }' $patch
+    sed -ri '/^\*\*\* \.\./{ s@\.\./bash-%{bash_vers}[^/]*/@@ }' $patch
     echo Patch $patch
     patch -s -p$level < $patch
 done
@@ -230,30 +318,56 @@ done
 %patch5  -p0 -b .warnlc
 #%patch6  -p0 -b .endpw
 %patch7  -p0 -b .decl
+%patch8  -p0 -b .async
 %patch9  -p0 -b .unistd
 %patch10 -p0 -b .printf
 %patch11 -p0 -b .plugins
 %patch12 -p0 -b .completion
 %patch13 -p0 -b .nscdunmap
 %patch14 -p0 -b .sigrestart
+%patch15 -p0 -b .longjmp
 %patch16 -p0 -b .setlocale
+%patch17 -p0 -b .headers
 %patch18 -p0 -b .winch
+%patch21 -p0 -b .zerotty
+%patch22 -p0 -b .wrap
+%patch23 -p0 -b .conf
+%patch24 -p0 -b .metamode
+#%patch25 -p0 -b .endpw
+%patch31 -p0 -b .tmp
 %patch40 -p0 -b .bashrc
 %patch46 -p0 -b .notimestamp
 %patch47 -p0 -b .perl522
 %if %{with import_function}
-%patch48 -b .eif
+%patch48
 %endif
-%patch49 -p0 -b .pthtmp
-%patch50 -p1 -b .mmv
+%patch49
 %patch0  -p0 -b .0
 
 %patch300 -p1
 
-# This has to be always the same version as included in the bash its self
-rl1=($(sed -rn '/RL_READLINE_VERSION/p' lib/readline/readline.h))
-rl2=($(sed -rn '/RL_READLINE_VERSION/p' /usr/include/readline/readline.h))
-test ${rl1[2]} = ${rl2[2]} || exit 1
+pushd ../readline-%{rl_vers}%{extend}
+for patch in ../readline-%{rl_vers}-patches/*; do
+    test -e $patch || break
+    let level=0 || true
+    file=$(lsdiff --files=1 $patch)
+    if test ! -e $file ; then
+	file=${file#*/}
+	let level++ || true
+    fi
+    sed -ri '/^\*\*\* \.\./{ s@\.\./readline-%{rl_vers}[^/]*/@@ }' $patch
+    echo Patch $patch
+    patch -s -p$level < $patch
+done
+%patch21 -p2 -b .zerotty
+%patch22 -p2 -b .wrap
+%patch23 -p2 -b .conf
+%patch24 -p2 -b .metamode
+#%patch25 -p2 -b .endpw
+%patch31 -p2 -b .tmp
+%patch27 -p0 -b .xm
+%patch30 -p0 -b .destdir
+%patch20 -p0 -b .0
 
 %build
   LANG=POSIX
@@ -266,7 +380,6 @@ test ${rl1[2]} = ${rl2[2]} || exit 1
   SCREENLOG=${SCREENDIR}/log
   cat > $SCREENRC<<-EOF
 	deflogin off
-	deflog on
 	logfile $SCREENLOG
 	logfile flush 1
 	logtstamp off
@@ -280,6 +393,10 @@ test ${rl1[2]} = ${rl2[2]} || exit 1
   HOSTTYPE=${CPU}
   MACHTYPE=${CPU}-suse-linux
   export LANG LC_ALL HOSTTYPE MACHTYPE
+pushd ../readline-%{rl_vers}%{extend}
+%if 0%suse_version >= 1020
+  autoconf
+%endif
   cflags ()
   {
       local flag=$1; shift
@@ -307,6 +424,26 @@ test ${rl1[2]} = ${rl2[2]} || exit 1
       set +o noclobber
   }
   LARGEFILE="$(getconf LFS_CFLAGS)"
+  (cat > dyn.map)<<-'EOF'
+	{
+	    *;
+	    !rl_*stream;
+	};
+	EOF
+  (cat > rl.map)<<-'EOF'
+	READLINE_6.3 {
+	    rl_change_environment;
+	    rl_clear_history;
+	    rl_executing_key;
+	    rl_executing_keyseq;
+	    rl_filename_stat_hook;
+	    rl_history_substr_search_backward;
+	    rl_history_substr_search_forward;
+	    rl_input_available_hook;
+	    rl_print_last_kbd_macro;
+	    rl_signal_event_hook;
+	};
+	EOF
   CFLAGS="$RPM_OPT_FLAGS $LARGEFILE -D_GNU_SOURCE -DRECYCLES_PIDS -Wall -g"
   LDFLAGS=""
   #
@@ -325,10 +462,38 @@ test ${rl1[2]} = ${rl2[2]} || exit 1
   cflags -DIMPORT_FUNCTIONS_DEF=0 CFLAGS
   cflags -Wl,--as-needed         LDFLAGS
   cflags -Wl,-O2                 LDFLAGS
-  cflags -Wl,-rpath,%{_ldldir}		      LDFLAGS
+  cflags -Wl,-rpath,%{_ldldir}/%{bash_vers}   LDFLAGS
+  cflags -Wl,--version-script=${PWD}/rl.map   LDFLAGS
+  cflags -Wl,--dynamic-list=${PWD}/dyn.map    LDFLAGS
+  CC=gcc
+  CC_FOR_BUILD="$CC"
+  CFLAGS_FOR_BUILD="$CFLAGS"
+  LDFLAGS_FOR_BUILD="$LDFLAGS"
+  export CC_FOR_BUILD CFLAGS_FOR_BUILD LDFLAGS_FOR_BUILD CFLAGS LDFLAGS CC
+  ./configure --build=%{_target_cpu}-suse-linux	\
+	--disable-static		\
+	--prefix=%{_prefix}		\
+	--with-curses			\
+	--mandir=%{_mandir}		\
+	--infodir=%{_infodir}		\
+	--docdir=%{_defaultdocdir}/readline	\
+	--libdir=%{_libdir}
+  make
+  make documentation
+  ln -sf shlib/libreadline.so.%{rl_vers} libreadline.so
+  ln -sf shlib/libreadline.so.%{rl_vers} libreadline.so.%{rl_major}
+  ln -sf shlib/libhistory.so.%{rl_vers} libhistory.so
+  ln -sf shlib/libhistory.so.%{rl_vers} libhistory.so.%{rl_major}
+  LDFLAGS=${LDFLAGS/-Wl,--version-script=*rl.map/}
+  LDFLAGS=${LDFLAGS/-Wl,--dynamic-list=*dyn.map/}
+  LDFLAGS_FOR_BUILD="$LDFLAGS"
+popd
   # /proc is required for correct configuration
   test -d /dev/fd || { echo "/proc is not mounted!" >&2; exit 1; }
-  CC=gcc
+  ln -sf ../readline-%{rl_vers} readline
+  LD_LIBRARY_PATH=$PWD/../readline-%{rl_vers}
+  export LD_LIBRARY_PATH
+  CC="gcc -I$PWD -L$PWD/../readline-%{rl_vers}"
 %if %_minsh
   cflags -Os CFLAGS
 # cflags -U_FORTIFY_SOURCE CFLAGS
@@ -343,7 +508,9 @@ test ${rl1[2]} = ${rl2[2]} || exit 1
   CC_FOR_BUILD="$CC"
   CFLAGS_FOR_BUILD="$CFLAGS"
   export CC_FOR_BUILD CFLAGS_FOR_BUILD CFLAGS LDFLAGS CC
+%if 0%suse_version > 1020
   autoconf
+%endif
   #
   # We have a malloc with our glibc
   #
@@ -394,12 +561,11 @@ test ${rl1[2]} = ${rl2[2]} || exit 1
 	--mandir=%{_mandir}		\
 	--infodir=%{_infodir}		\
 	--libdir=%{_libdir}		\
-	--docdir=%{_docdir}/%{base_name}	\
+	--docdir=%{_defaultdocdir}/bash	\
 	--with-curses			\
 	--with-afs			\
 	$SYSMALLOC			\
 	--enable-job-control		\
-	--enable-net-redirections	\
 	--enable-alias			\
 	--enable-readline		\
 	--enable-history		\
@@ -414,44 +580,40 @@ test ${rl1[2]} = ${rl2[2]} || exit 1
 	--enable-command-timing		\
 	--enable-disabled-builtins	\
 	--disable-strict-posix-default	\
-	--enable-multibyte		\
 	--enable-separate-helpfiles=%{_datadir}/bash/helpfiles \
 	$READLINE
-  profilecflags=CFLAGS="$CFLAGS"
-%if 0%{?do_profiling}
-  profilecflags=CFLAGS="$CFLAGS %cflags_profile_generate"
-%endif
-  make "$profilecflags" \
+  make %{?do_profiling:CFLAGS="$CFLAGS %cflags_profile_generate"} \
 	all printenv recho zecho xcase
   TMPDIR=$(mktemp -d /tmp/bash.XXXXXXXXXX) || exit 1
   > $SCREENLOG
   tail -q -s 0.5 -f $SCREENLOG & pid=$!
-  env -i HOME=$PWD TERM=$TERM LD_LIBRARY_PATH=$LD_RUN_PATH TMPDIR=$TMPDIR \
+  env -i HOME=$PWD TERM=$TERM LD_LIBRARY_PATH=$LD_LIBRARY_PATH TMPDIR=$TMPDIR \
 	SCREENRC=$SCREENRC SCREENDIR=$SCREENDIR \
-	screen -D -m make TESTSCRIPT=%{SOURCE4} check
+	screen -L -D -m make TESTSCRIPT=%{SOURCE4} check
   kill -TERM $pid
-%if 0%{?do_profiling}
-  rm -f jobs.gcda
-  profilecflags=CFLAGS="$CFLAGS %cflags_profile_feedback -fprofile-correction"
-  clean=clean
-%endif
-  make "$profilecflags" $clean all
-#mkdir -p -- %{buildroot}/lib64/bash
-#mkdir -p -- %{buildroot}/usr/include/bash
-#mkdir -p -- %{buildroot}/usr/include/bash/builtins
-#mkdir -p -- %{buildroot}/usr/include/bash/include
-#mkdir -p -- %{buildroot}/lib64/pkgconfig
-#sed -i "s:SHELL = /bin/sh:SHELL = /bin/bash:g" %{_builddir}/bash-%{version}%{bextend}/examples/loadables/Makefile
-  mkdir -p %{buildroot}/lib64/bash
+  make %{?do_profiling:CFLAGS="$CFLAGS %cflags_profile_feedback" clean} all
   make -C examples/loadables/
   make documentation
 
 %install
-  %make_install
-  make -C examples/loadables/ install-supported DESTDIR=%{buildroot} libdir=/%{_lib}
-  rm -rf %{buildroot}%{_libdir}/bash
-  rm -rf %{buildroot}/%{_lib}/pkgconfig
-  #sed -ri '/CC = gcc/s@(CC = gcc).*@\1@' %{buildroot}%{_libdir}/pkgconfig/bash.pc
+pushd ../readline-%{rl_vers}%{extend}
+  make install htmldir=%{_defaultdocdir}/readline \
+	       installdir=%{_defaultdocdir}/readline/examples DESTDIR=%{buildroot}
+  make install-shared libdir=/%{_lib} linkagedir=%{_libdir} DESTDIR=%{buildroot}
+  rm -rf %{buildroot}%{_defaultdocdir}/bash
+  mkdir -p %{buildroot}%{_defaultdocdir}/bash
+  chmod 0755 %{buildroot}/%{_lib}/libhistory.so.%{rl_vers}
+  chmod 0755 %{buildroot}/%{_lib}/libreadline.so.%{rl_vers}
+  rm -vf %{buildroot}/%{_lib}/libhistory.so.%{rl_vers}*old
+  rm -vf %{buildroot}/%{_lib}/libreadline.so.%{rl_vers}*old
+  rm -vf %{buildroot}/%{_lib}/libhistory.so
+  rm -vf %{buildroot}/%{_lib}/libreadline.so
+  ln -sf /%{_lib}/libhistory.so.%{rl_vers}  %{buildroot}/%{_libdir}/libhistory.so
+  ln -sf /%{_lib}/libreadline.so.%{rl_vers} %{buildroot}/%{_libdir}/libreadline.so
+popd
+  make install DESTDIR=%{buildroot}
+  make -C examples/loadables/ install-plugins DESTDIR=%{buildroot} libdir=/%{_lib}
+  make -C examples/loadables/ install-headers DESTDIR=%{buildroot}
   mkdir -p %{buildroot}/bin
   mv %{buildroot}%{_bindir}/bash %{buildroot}/bin/
 %if %_minsh
@@ -462,16 +624,16 @@ test ${rl1[2]} = ${rl2[2]} || exit 1
   ln -sf ../../bin/bash %{buildroot}%{_bindir}/sh
 %endif
   ln -sf ../../bin/bash %{buildroot}%{_bindir}/rbash
-  install -m 644 COMPAT NEWS    %{buildroot}%{_docdir}/%{base_name}
-  install -m 644 COPYING        %{buildroot}%{_docdir}/%{base_name}
-  install -m 644 doc/FAQ        %{buildroot}%{_docdir}/%{base_name}
-  install -m 644 doc/INTRO      %{buildroot}%{_docdir}/%{base_name}
-  install -m 644 doc/*.html     %{buildroot}%{_docdir}/%{base_name}
+  install -m 644 COMPAT NEWS    %{buildroot}%{_defaultdocdir}/bash/
+  install -m 644 COPYING        %{buildroot}%{_defaultdocdir}/bash/
+  install -m 644 doc/FAQ        %{buildroot}%{_defaultdocdir}/bash/
+  install -m 644 doc/INTRO      %{buildroot}%{_defaultdocdir}/bash/
+  install -m 644 doc/*.html     %{buildroot}%{_defaultdocdir}/bash/
   install -m 644 doc/builtins.1 %{buildroot}%{_mandir}/man1/bashbuiltins.1
   install -m 644 doc/rbash.1    %{buildroot}%{_mandir}/man1/rbash.1
   gzip -9f %{buildroot}%{_infodir}/*.inf*[^z] || true
   mkdir -p %{buildroot}%{_sysconfdir}/bash_completion.d
-  sed 's/^|//' > %{buildroot}%{_docdir}/%{base_name}/BUGS <<\EOF
+  sed 's/^|//' > %{buildroot}%{_defaultdocdir}/bash/BUGS <<\EOF
 Known problems
 --------------
 |
@@ -480,9 +642,9 @@ that is e.g. wide character support for UTF-8.  This causes
 problems in geting the current cursor position within the
 readline runtime library:
 |
-bash-%{version}> LANG=ja_JP
-bash-%{version}> echo -n "Hello"
-bash-%{version}>
+bash-%{bash_vers}> LANG=ja_JP
+bash-%{bash_vers}> echo -n "Hello"
+bash-%{bash_vers}>
 |
 In other words the prompt overwrites the output of the
 echo comand.  The boolean variable byte-oriented
@@ -490,13 +652,20 @@ set in %{_sysconfdir}/inputrc or $HOME/.inputrc avoids this
 but disables multi byte handling.
 EOF
   # remove unpackaged files
+  rm -fv %{buildroot}%{_libdir}/libhistory.so.*
+  rm -fv %{buildroot}%{_libdir}/libreadline.so.*
+  rm -fv %{buildroot}%{_infodir}/rluserman.info.gz
+  rm -fv %{buildroot}%{_mandir}/man3/history.3*
+  rm -fv %{buildroot}%{_defaultdocdir}/readline/INSTALL
   mkdir -p %{buildroot}%{_sysconfdir}/skel
   install -m 644 %{S:5}    %{buildroot}%{_sysconfdir}/skel/.bashrc
   install -m 644 %{S:6}    %{buildroot}%{_sysconfdir}/skel/.profile
   touch -t 199605181720.50 %{buildroot}%{_sysconfdir}/skel/.bash_history
   chmod 600                %{buildroot}%{_sysconfdir}/skel/.bash_history
   %find_lang bash
+%if %suse_version > 1020
   %fdupes -s %{buildroot}%{_datadir}/bash/helpfiles
+%endif
 
 %post doc
 %install_info --info-dir=%{_infodir} %{_infodir}/bash.info.gz
@@ -504,14 +673,26 @@ EOF
 %preun doc
 %install_info_delete --info-dir=%{_infodir} %{_infodir}/bash.info.gz
 
+%post -n libreadline6 -p /sbin/ldconfig
+
+%postun -n libreadline6 -p /sbin/ldconfig
+
+%post -n readline-doc
+%install_info --info-dir=%{_infodir} %{_infodir}/history.info.gz
+%install_info --info-dir=%{_infodir} %{_infodir}/readline.info.gz
+
+%preun -n readline-doc
+%install_info_delete --info-dir=%{_infodir} %{_infodir}/history.info.gz
+%install_info_delete --info-dir=%{_infodir} %{_infodir}/readline.info.gz
+
 %clean
 LD_LIBRARY_PATH=%{buildroot}/%{_lib} \
 ldd -u -r %{buildroot}/bin/bash || true
+ldd -u -r %{buildroot}/%{_lib}/libreadline.so.* || true
 %{?buildroot: %{__rm} -rf %{buildroot}}
 
 %files
 %defattr(-,root,root)
-%license COPYING
 %config %attr(600,root,root) %{_sysconfdir}/skel/.bash_history
 %config %attr(644,root,root) %{_sysconfdir}/skel/.bashrc
 %config %attr(644,root,root) %{_sysconfdir}/skel/.profile
@@ -530,387 +711,50 @@ ldd -u -r %{buildroot}/bin/bash || true
 
 %files doc
 %defattr(-,root,root)
-%doc %{_infodir}/bash.info*
-%doc %{_mandir}/man1/bash.1*
-%doc %{_mandir}/man1/bashbuiltins.1*
-%doc %{_mandir}/man1/bashbug.1*
-%doc %{_mandir}/man1/rbash.1*
-%doc %{_docdir}/%{base_name}
+%doc %{_infodir}/bash.info.gz
+%doc %{_mandir}/man1/bash.1.gz
+%doc %{_mandir}/man1/bashbuiltins.1.gz
+%doc %{_mandir}/man1/bashbug.1.gz
+%doc %{_mandir}/man1/rbash.1.gz
+%doc %{_defaultdocdir}/bash/
 
 %if 0%suse_version >= 1020
 %files devel
 %defattr(-,root,root)
 %dir /%{_includedir}/bash/
-%dir /%{_includedir}/bash/
-%dir /%{_includedir}/bash/builtins/
-%dir /%{_includedir}/bash/include/
-/%{_incdir}/bash/*.h
-/%{_incdir}/bash/builtins/*.h
-/%{_incdir}/bash/include/*.h
-#%{_libdir}/pkgconfig/bash.pc
+%dir /%{_includedir}/bash/%{bash_vers}/
+%dir /%{_includedir}/bash/%{bash_vers}/builtins/
+/%{_incdir}/bash/%{bash_vers}/*.h
+/%{_incdir}/bash/%{bash_vers}/builtins/*.h
 %endif
 
 %files loadables
 %defattr(-,root,root)
-%{_ldldir}
+%dir %{_ldldir}/
+%dir %{_ldldir}/%{bash_vers}/
+%{_ldldir}/%{bash_vers}/*
+
+%files -n libreadline6
+%defattr(-,root,root)
+/%{_lib}/libhistory.so.%{rl_major}
+/%{_lib}/libhistory.so.%{rl_vers}
+/%{_lib}/libreadline.so.%{rl_major}
+/%{_lib}/libreadline.so.%{rl_vers}
+
+%files -n readline-devel
+%defattr(-,root,root)
+%{_incdir}/readline/
+%{_libdir}/libhistory.so
+%{_libdir}/libreadline.so
+%doc %{_mandir}/man3/readline.3.gz
+
+%files -n readline-doc
+%defattr(-,root,root)
+%doc %{_infodir}/history.info.gz
+%doc %{_infodir}/readline.info.gz
+%doc %{_defaultdocdir}/readline/
 
 %changelog
-* Sat Jul  7 2018 bwiedemann@suse.com
-- Add bash-memmove.patch to make bash.html build reproducible (boo#1100488)
-* Mon Jun  4 2018 werner@suse.de
-- In patch bash-4.4.dif avoid setgroups(2) but use initgroups(3) (boo#1095670)
-* Sat Jun  2 2018 avindra@opensuse.org
-- Add patch 20, 21, 22 and 23 to bash-4.4-patches.tar.bz2
-  * 20: In circumstances involving long-running scripts that create
-    and reap many processes, it is possible for the hash table bash
-    uses to store exit statuses from asynchronous processes to
-    develop loops. This patch fixes the loop causes and adds code
-    to detect any future loops.
-  * 21: A SIGINT received inside a SIGINT trap handler can possibly
-    cause the shell to loop.
-  * 22: There are cases where a failing readline command (e.g.,
-    delete-char at the end of a line) can cause a multi-character
-    key sequence to `back up' and attempt to re-read some of the
-    characters in the sequence.
-  * 23: When sourcing a file from an interactive shell, setting the
-    SIGINT handler to the default and typing ^C will cause the
-    shell to exit.
-- remove bash-4.4-wait-sigint-handler.patch (upstreamed)
-* Wed Apr 18 2018 werner@suse.de
-- Add patch bash-4.4-wait-sigint-handler.patch to fix bug bsc#1086247
-  that is repeating self inserting trap due external command in the
-  trap.
-* Fri Mar 16 2018 werner@suse.de
-- Make sure that correct readline-devel version is used (current 7.0)
-* Fri Mar 16 2018 werner@suse.de
-- Correct documentation path
-* Mon Mar 12 2018 werner@suse.de
-- Due package split removed patches (for the bots)
-  * readline-6.2-xmalloc.dif
-  * readline-6.2-endpw.dif
-  * readline-6.3-destdir.patch
-  * readline-6.2-metamode.patch
-  * readline-7.0.dif
-  * readline-6.3-input.dif
-  * readline-5.2-conf.patch
-  * readline-6.3-rltrace.patch
-* Mon Mar 12 2018 schwab@suse.de
-- Split readline off into its own package
-* Tue Feb 27 2018 werner@suse.de
-- Create readline-devel-static package to re-enable static libraries
-  again (boo#1082913)
-* Thu Feb 22 2018 fvogt@suse.com
-- Use %%license (boo#1082318)
-* Tue Feb  6 2018 avindra@opensuse.org
-- Add patch 19 to bash-4.4-patches.tar.bz2
-  * With certain values for PS1, especially those that wrap onto
-    three or more lines, readline will miscalculate the number of
-    invisible characters, leading to crashes and core dumps.
-* Tue Jan 30 2018 avindra@opensuse.org
-- Add patches 13-18 to bash-4.4-patches.tar.bz2
-  * 13: If a here-document contains a command substitution, the
-    command substitution can get access to the file descriptor used
-    to write the here-document.
-  * 14: Under some circumstances, functions that return via the
-    `return' builtin do not clean up memory they allocated to keep
-    track of FIFOs.
-  * 15: Process substitution can leak internal quoting to the
-    parser in the invoked subshell.
-  * 16: Bash can perform trap processing while reading command
-    substitution output instead of waiting until the command
-    completes.
-  * 17: There is a memory leak when `read -e' is used to read a
-    line using readline.
-  * 18: Under certain circumstances (e.g., reading from /dev/zero),
-    read(2) will not return -1 even when interrupted by a signal.
-    The read builtin needs to check for signals in this case.
-- partial cleanup with spec-cleaner
-* Wed Jan 24 2018 werner@suse.de
-- Modify patch bash-4.3-pathtemp.patch to avoid crash at full
-  file system (boo#1076909)
-* Fri Dec  8 2017 werner@suse.de
-- Enable multibyte characters by default
-* Mon Sep 25 2017 werner@suse.de
-- Modify patch bash-4.4.dif to let bashline.h install as well as
-  this header file is included by general.h due to the same patch
-  (boo#1060069)
-* Thu May 25 2017 bwiedemann@suse.com
-- Make build reproducible in spite of profile based optimizations (boo#1040589)
-* Wed May 24 2017 bwiedemann@suse.com
-- Allow to disable do_profiling in builds (related to boo#1040589)
-* Wed Apr 26 2017 werner@suse.de
-- Simplify patch readline-5.2-conf.patch
-* Tue Apr 25 2017 werner@suse.de
-- Do not throw info and manual pages away
-* Fri Feb 17 2017 werner@suse.de
-- Remove bash-4.0-async-bnc523667.dif as this one is fixed (and
-  was disabled and nobody had reported trouble)
-* Mon Jan 30 2017 werner@suse.de
-- Add upstream patch readline70-002 which replace old one
-  There is a race condition in add_history() that can be triggered by a fatal
-  signal arriving between the time the history length is updated and the time
-  the history list update is completed. A later attempt to reference an
-  invalid history entry can cause a crash.
-- Add upstream patch readline70-003
-  Readline-7.0 uses pselect(2) to allow readline to handle signals that do not
-  interrupt read(2), such as SIGALRM, before reading another character.  The
-  signal mask used in the pselect call did not take into account signals the
-  calling application blocked before calling readline().
-* Fri Jan 27 2017 werner@suse.de
-- Add upstream patch bash44-006
-  Out-of-range negative offsets to popd can cause the shell to crash
-  attempting to free an invalid memory block.
-- Remove patch popd-offset-overflow.patch to use bash44-006
-- Add upstream patch bash44-007
-  When performing filename completion, bash dequotes the directory
-  name being completed, which can result in match failures and
-  potential unwanted expansion.
-- Duplicate bash44-007 as readline70-002 as it seems to be missed
-- Add upstream patch bash44-008
-  Under certain circumstances, bash will evaluate arithmetic
-  expressions as part of reading an expression token even when
-  evaluation is suppressed. This happens while evaluating a
-  conditional expression and skipping over the failed branch of the
-  expression.
-- Add upstream patch bash44-009
-  There is a race condition in add_history() that can be triggered
-  by a fatal signal arriving between the time the history length
-  is updated and the time the history list update is completed.
-  A later attempt to reference an invalid history entry can cause
-  a crash.
-- Add upstream patch bash44-010
-  Depending on compiler optimizations and behavior, the `read'
-  builtin may not save partial input when a timeout occurs.
-- Add upstream patch bash44-011
-  Subshells begun to run command and process substitutions may
-  attempt to set the terminal's process group to an incorrect
-  value if they receive a fatal signal.  This depends on the
-  behavior of the process that starts the shell.
-- Add upstream patch bash44-012
-  When -N is used, the input is not supposed to be split using
-  $IFS, but leading and trailing IFS whitespace was still removed.
-* Thu Jan 19 2017 werner@suse.de
-- Remove -L option on screen call dues API change, now we depend
-  on environment variables only.
-* Fri Dec  9 2016 mliska@suse.cz
-- Enable -fprofile-correction to cover misleading profile created due
-  to terminating_signal which does not return.
-* Mon Nov 28 2016 werner@suse.de
--  Add upstream patch popd-offset-overflow.patch to fix boo#1010845
-  CVE-2016-9401: bash: popd controlled free (Segmentation fault)
-  Remark: this is a simple Segmentation fault, no security risk
-* Thu Nov 17 2016 werner@suse.de
-- Add upstream patch bash44-001
-  Bash-4.4 changed the way the history list is initially allocated to reduce
-  the number of reallocations and copies.  Users who set HISTSIZE to a very
-  large number to essentially unlimit the size of the history list will get
-  memory allocation errors
-- Add upstream patch bash44-002
-  Bash-4.4 warns when discarding NUL bytes in command substitution output
-  instead of silently dropping them.  This patch changes the warnings from
-  one per NUL byte encountered to one warning per command substitution.
-- Drop no-null-warning.patch as bash44-002 is official replacement
-- Add upstream patch bash44-003
-  Specially-crafted input, in this case an incomplete pathname expansion
-  bracket expression containing an invalid collating symbol, can cause the
-  shell to crash.
-- Add upstream patch bash44-004
-  There is a race condition that can result in bash referencing freed memory
-  when freeing data associated with the last process substitution.
-- Add upstream patch bash44-005
-  Under certain circumstances, a simple command is optimized to eliminate a
-  fork, resulting in an EXIT trap not being executed. (boo#1008459)
-- Add upstream patch readline70-001
-  Readline-7.0 changed the way the history list is initially allocated to reduce
-  the number of reallocations and copies.  Users who set the readline
-  history-size variable to a very large number to essentially unlimit the size
-  of the history list will get memory allocation errors
-* Mon Oct 24 2016 schwab@suse.de
-- no-null-warning.patch: Don't warn about null bytes in command
-  substitution
-* Tue Oct  4 2016 werner@suse.de
-- Avoid confusing library path
-* Fri Sep 16 2016 werner@suse.de
-- Update bash 4.4 final
-  * Latest bug fixes since 4.4 rc2
-- Update readline 7.0 final
-  * Latest bug fixes since 7.0 rc2
-  * New application-callable function: rl_pending_signal(): returns the signal
-    number of any signal readline has caught but not yet handled.
-  * New application-settable variable: rl_persistent_signal_handlers: if set
-  to a non-zero value, readline will enable the readline-6.2 signal handler
-  behavior in callback mode: handlers are installed when
-  rl_callback_handler_install is called and removed removed when a complete
-  line has been read.
-- Drop patch bash-4.3-async-bnc971410.dif as this one is part of 4.4
-- Drop patch bash-3.2-longjmp.dif as now long time be fixed
-- Drop patch bash-4.3-headers.dif as loadables now simply work
-- Drop readline-6.1-wrap.patch as this seems to be fixed
-- Disable patch bash-4.0-async-bnc523667.dif for now as it seems to be fixed
-  in an other way
-* Wed Sep 14 2016 werner@suse.de
-- Update bash 4.4 rc2  -- Bugfixes
-- Update readline 7.0 rc2 -- Bugfixes
-* Mon Aug  1 2016 werner@suse.de
-- Make clear that the files /etc/profile as well as /etc/bash.bashrc
-  may source other files as well even if the bash does not.
-  Therefore modify patch bash-4.1-bash.bashrc.dif (bsc#959755)
-* Thu Jul 14 2016 werner@suse.de
-- Update bash 4.4 beta 2
-  * Value conversions (arithmetic expansions, case modification, etc.) now
-    happen when assigning elements of an array using compound assignment.
-  * There is a new option settable in config-top.h that makes multiple
-    directory arguments to `cd' a fatal error.
-  * Bash now uses mktemp() when creating internal temporary files; it produces
-    a warning at build time on many Linux systems.
-- Update to readline library 7.0 beta 2 (not enabled as not standalone)
-  * The default binding for ^W in vi mode now uses word boundaries specified
-    by Posix (vi-unix-word-rubout is bindable command name).
-  * rl_clear_visible_line: new application-callable function; clears all
-    screen lines occupied by the current visible readline line.
-  * rl_tty_set_echoing: application-callable function that controls whether
-    or not readline thinks it is echoing terminal output.
-  * Handle >| and strings of digits preceding and following redirection
-    specifications as single tokens when tokenizing the line for history
-    expansion.
-  * Fixed a bug with displaying completions when the prefix display length
-    is greater than the length of the completions to be displayed.
-  * The :p history modifier now applies to the entire line, so any expansion
-    specifying :p causes the line to be printed instead of expanded.
-* Tue Mar  8 2016 werner@suse.de
-- Update bash 4.4 release candidate 1
-  * There is now a settable configuration #define that will cause the shell
-    to exit if the shell is running setuid without the -p option and setuid
-    to the real uid fails.
-  * Command and process substitutions now turn off the `-v' option when
-    executing, as other shells seem to do.
-  * The default value for the `checkhash' shell option may now be set at
-    compile time with a #define.
-  * The `mapfile' builtin now has a -d option to use an arbitrary character
-    as the record delimiter, and a -t option  to strip the delimiter as
-    supplied with -d.
-  * The maximum number of nested recursive calls to `eval' is now settable in
-    config-top.h; the default is no limit.
-  * The `-p' option to declare and similar builtins will display attributes for
-    named variables even when those variables have not been assigned values
-    (which are technically unset).
-  * The maximum number of nested recursive calls to `source' is now settable
-    in config-top.h; the default is no limit.
-  * All builtin commands recognize the `--help' option and print a usage
-    summary.
-  * Bash does not allow function names containing `/' and `=' to be exported.
-  * The `ulimit' builtin has new -k (kqueues) and -P (pseudoterminals) options.
-  * The shell now allows `time ; othercommand' to time null commands.
-  * There is a new `--enable-function-import' configuration option to allow
-    importing shell functions from the environment; import is enabled by
-    default.
-  * `printf -v var ""' will now set `var' to the empty string, as if `var=""'
-    had been executed.
-  * GLOBIGNORE, the pattern substitution word expansion, and programmable
-    completion match filtering now honor the value of the `nocasematch' option.
-  * There is a new ${parameter@spec} family of operators to transform the
-    value of `parameter'.
-  * Bash no longer attempts to perform compound assignment if a variable on the
-    rhs of an assignment statement argument to `declare' has the form of a
-    compound assignment (e.g., w='(word)' ; declare foo=$w); compound
-    assignments are accepted if the variable was already declared as an array,
-    but with a warning.
-  * The declare builtin no longer displays array variables using the compound
-    assignment syntax with quotes; that will generate warnings when re-used as
-    input, and isn't necessary.
-  * Executing the rhs of && and || will no longer cause the shell to fork if
-    it's not necessary.
-  * The `local' builtin takes a new argument: `-', which will cause it to save
-    and the single-letter shell options and restore their previous values at
-    function return.
-  * `complete' and `compgen' have a new `-o nosort' option, which forces
-    readline to not sort the completion matches.
-  * Bash now allows waiting for the most recent process substitution, since it
-    appears as $!.
-  * The `unset' builtin now unsets a scalar variable if it is subscripted with
-    a `0', analogous to the ${var[0]} expansion.
-  * `set -i' is no longer valid, as in other shells.
-  * BASH_SUBSHELL is now updated for process substitution and group commands
-    in pipelines, and is available with the same value when running any exit
-    trap.
-  * Bash now checks $INSIDE_EMACS as well as $EMACS when deciding whether or
-    not bash is being run in a GNU Emacs shell window.
-  * Bash now treats SIGINT received when running a non-builtin command in a
-    loop the way it has traditionally treated running a builtin command:
-    running any trap handler and breaking out of the loop.
-  * New variable: EXECIGNORE; a colon-separate list of patterns that will
-    cause matching filenames to be ignored when searching for commands.
-  * Aliases whose value ends in a shell metacharacter now expand in a way to
-    allow them to be `pasted' to the next token, which can potentially change
-    the meaning of a command (e.g., turning `&' into `&&').
-  * `make install' now installs the example loadable builtins and a set of
-    bash headers to use when developing new loadable builtins.
-  * `enable -f' now attempts to call functions named BUILTIN_builtin_load when
-    loading BUILTIN, and BUILTIN_builtin_unload when deleting it.  This allows
-    loadable builtins to run initialization and cleanup code.
-  * There is a new BASH_LOADABLES_PATH variable containing a list of directories
-    where the `enable -f' command looks for shared objects containing loadable
-    builtins.
-  * The `complete_fullquote' option to `shopt' changes filename completion to
-    quote all shell metacharacters in filenames and directory names.
-  * The `kill' builtin now has a `-L' option, equivalent to `-l', for
-    compatibility with Linux standalone versions of kill.
-  * BASH_COMPAT and FUNCNEST can be inherited and set from the shell's initial
-    environment.
-  * inherit_errexit: a new `shopt' option that, when set, causes command
-    substitutions to inherit the -e option.  By default, those subshells disable
-  - e.  It's enabled as part of turning on posix mode.
-  * New prompt string: PS0.  Expanded and displayed by interactive shells after
-    reading a complete command but before executing it.
-  * Interactive shells now behave as if SIGTSTP/SIGTTIN/SIGTTOU are set to SIG_DFL
-    when the shell is started, so they are set to SIG_DFL in child processes.
-  * Posix-mode shells now allow double quotes to quote the history expansion
-    character.
-  * OLDPWD can be inherited from the environment if it names a directory.
-  * Shells running as root no longer inherit PS4 from the environment, closing a
-    security hole involving PS4 expansion performing command substitution.
-  * If executing an implicit `cd' when the `autocd' option is set, bash will now
-    invoke a function named `cd' if one exists before executing the `cd' builtin.
-- Update to readline library 7.0 release candidate 1
-  * The history truncation code now uses the same error recovery mechansim as
-    the history writing code, and restores the old version of the history file
-    on error.  The error recovery mechanism handles symlinked history files.
-  * There is a new bindable variable, `enable-bracketed-paste', which enables
-    support for a terminal's bracketed paste mode.
-  * The editing mode indicators can now be strings and are user-settable
-    (new `emacs-mode-string', `vi-cmd-mode-string' and `vi-ins-mode-string'
-    variables).  Mode strings can contain invisible character sequences.
-    Setting mode strings to null strings restores the defaults.
-  * Prompt expansion adds the mode string to the last line of a multi-line
-    prompt (one with embedded newlines).
-  * There is a new bindable variable, `colored-completion-prefix', which, if
-    set, causes the common prefix of a set of possible completions to be
-    displayed in color.
-  * There is a new bindable command `vi-yank-pop', a vi-mode version of emacs-
-    mode yank-pop.
-  * The redisplay code underwent several efficiency improvements for multibyte
-    locales.
-  * The insert-char function attempts to batch-insert all pending typeahead
-    that maps to self-insert, as long as it is coming from the terminal.
-  * rl_callback_sigcleanup: a new application function that can clean up and
-    unset any state set by readline's callback mode.  Intended to be used
-    after a signal.
-  * If an incremental search string has its last character removed with DEL, the
-    resulting empty search string no longer matches the previous line.
-  * If readline reads a history file that begins with `#' (or the value of
-    the history comment character) and has enabled history timestamps, the history
-    entries are assumed to be delimited by timestamps.  This allows multi-line
-    history entries.
-  * Readline now throws an error if it parses a key binding without a terminating
-    `:' or whitespace.
-- Remove patches which are upstream solved
-  bash-3.2-longjmp.dif
-  bash-4.3-headers.dif
-  readline-6.1-wrap.patch
-- Rename patches
-  bash-4.3.dif become bash-4.4.dif
-  readline-6.3.dif become readline-7.0.dif
-- Refresh other patches as well
 * Mon Oct 19 2015 werner@suse.de
 - Define the USE_MKTEMP and USE_MKSTEMP cpp macros as the
   implementation is already there.

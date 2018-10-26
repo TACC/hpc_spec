@@ -9,7 +9,7 @@ License:   Proprietary
 Group:     System Environment/Base
 Source0:   %{base_name}-%{version}.tar.gz
 BuildRoot: /var/tmp/%{base_name}-%{version}-buildroot
-Packager:  TACC - mclay@tacc.utexas.edu
+Packager:  TACC - mclay@tacc.utexas.edu, cproctor@tacc.utexas.edu
 
 %define debug_package %{nil}
 %include rpm-dir.inc
@@ -62,6 +62,8 @@ PROFILE_D_FILES="
                profile.d/zzz90_compute_modules.sh
                profile.d/zzz90_login_modules.csh
                profile.d/zzz90_login_modules.sh
+               profile.d/zzz91_tracker.csh
+               profile.d/zzz91_tracker.sh
 "
 
 find taccinfo fsMounted workdir archive | cpio -pduv --owner=build: $RPM_BUILD_ROOT/etc/tacc
@@ -134,6 +136,8 @@ done
 %{PROFILE_D_PATH}/zzz87_tacc_login.sh
 %{PROFILE_D_PATH}/zzz90_compute_modules.csh
 %{PROFILE_D_PATH}/zzz90_compute_modules.sh
+%{PROFILE_D_PATH}/zzz91_tracker.sh
+%{PROFILE_D_PATH}/zzz91_tracker.csh
 /etc/tacc/bash.bashrc
 /etc/tacc/bash_logout
 /etc/tacc/profile
@@ -167,6 +171,8 @@ done
 %{PROFILE_D_PATH}/zzz89_tacc_tips.sh
 %{PROFILE_D_PATH}/zzz90_login_modules.sh
 %{PROFILE_D_PATH}/zzz90_login_modules.csh
+%{PROFILE_D_PATH}/zzz91_tracker.sh
+%{PROFILE_D_PATH}/zzz91_tracker.csh
 /etc/tacc/bash.bashrc
 /etc/tacc/bash_logout
 /etc/tacc/profile
