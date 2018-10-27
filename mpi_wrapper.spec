@@ -171,6 +171,7 @@ chmod a+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpi_wrapper
 ln -s %{INSTALL_DIR}/bin/mpi_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/mpirun
 ln -s %{INSTALL_DIR}/bin/mpi_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/mpiexec
 ln -s %{INSTALL_DIR}/bin/mpi_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/mpiexec.hydra
+ln -s %{INSTALL_DIR}/bin/mpi_wrapper $RPM_BUILD_ROOT/opt/apps/tacc/bin/mpirun_rsh
 
 
 if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
@@ -220,6 +221,7 @@ umount %{INSTALL_DIR}/
 /opt/apps/tacc/bin/mpirun
 /opt/apps/tacc/bin/mpiexec
 /opt/apps/tacc/bin/mpiexec.hydra
+/opt/apps/tacc/bin/mpirun_rsh
 
 
 #-----------------------
