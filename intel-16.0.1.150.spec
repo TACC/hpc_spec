@@ -220,7 +220,7 @@ whatis("Description: Intel Compiler Family (C/C++/Fortran for x86_64)"      )
 whatis("URL: http://software.intel.com/en-us/articles/intel-compilers"      )
 
 -- Create environment variables.
-local base         = "/opt/intel"
+local base         = "/opt/apps/intel/16.0.1.150"
 local gcc_base     = "/opt/apps/gcc/4.9.3"
 local full_xe      = "compilers_and_libraries_%{lib_dir}/linux"
 local arch         = "intel64"

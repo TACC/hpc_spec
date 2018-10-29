@@ -148,17 +148,17 @@ This package contains an X Window System passphrase dialog for OpenSSH.
 
 %build
 autoreconf
-export PATH=/opt/openssl/1.0.2o/usr/bin:$PATH
-export LD_LIBRARY_PATH=/opt/openssl/1.0.2o/usr/lib:$LD_LIBRARY_PATH
-export LDFLAGS="-Wl,-rpath=/opt/openssl/1.0.2o/usr/lib -L/opt/openssl/1.0.2o/usr/lib"
-CPPFLAGS="-I/opt/openssl/1.0.2o/usr/include" \
+#export PATH=/opt/openssl/1.0.2o/usr/bin:$PATH
+#export LD_LIBRARY_PATH=/opt/openssl/1.0.2o/usr/lib:$LD_LIBRARY_PATH
+#export LDFLAGS="-Wl,-rpath=/opt/openssl/1.0.2o/usr/lib -L/opt/openssl/1.0.2o/usr/lib"
+#CPPFLAGS="-I/opt/openssl/1.0.2o/usr/include" \
 CFLAGS="$RPM_OPT_FLAGS" \
 %configure	--prefix=/usr \
                 --sysconfdir=%{_sysconfdir}/ssh \
                 --libexecdir=%{_libexecdir}/openssh \
                 --datadir=%{_datadir}/openssh \
-                --with-default-path=/usr/local/bin:/bin:/usr/bin:/opt/openssl/1.0.2o/usr/bin \
-                --with-superuser-path=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/opt/openssl/1.0.2o/usr/bin \
+                --with-default-path=/usr/local/bin:/bin:/usr/bin \
+                --with-superuser-path=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin \
                 --with-privsep-path=%{_var}/empty/sshd \
 		--mandir=%{_mandir} \
 		--with-pam \
@@ -167,8 +167,8 @@ CFLAGS="$RPM_OPT_FLAGS" \
                 --with-ssl-engine            \
                 --with-ipaddr-display        \
                 --with-libedit               \
-                --with-nerscmod              \
-                --with-ssl-dir=/opt/openssl/1.0.2o/usr
+                --with-nerscmod              
+
 make
 
 %if %{build_x11_askpass}

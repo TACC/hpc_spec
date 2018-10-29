@@ -32,7 +32,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 %define geos_minor_version 6
 %define geos_micro_version 1
 
-%define python_version 2.7.12
+%define python_version 2.7.15
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 %define geos_pkg_version %{geos_major_version}.%{geos_minor_version}.%{geos_micro_version}
@@ -55,7 +55,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
+Release:   1%{?dist}
 License:   BSD
 Group:     System/Utils
 URL:       http://www.cmake.org
@@ -134,7 +134,7 @@ other libraries that provide similar capabilities in Python.
 # Insert necessary module commands
 module purge
 %include compiler-load.inc
-module load python
+module load python2
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -225,7 +225,8 @@ printf "************************************************************\n\n"
 
 wget https://github.com/matplotlib/basemap/archive/v${basemap_version}.tar.gz
 #wget http://downloads.sourceforge.net/project/matplotlib/matplotlib-toolkits/basemap-${basemap_version}/basemap-${basemap_version}.tar.gz
-tar xvfz v${basemap_version} ### Yes, there is no extension
+#tar xvfz v${basemap_version} ### Yes, there is no extension
+tar xvfz v${basemap_version}.tar.gz ### There is now -- FFS!
 
 cd basemap-${basemap_version}
 python setup.py install --prefix=${basemap_install}
@@ -279,7 +280,7 @@ LD_LIBRARY_PATH while basemap is also added to your PYTHONPATH.
 Version %{version}
 ]]
 
-prereq("python/%{python_version}")
+depends_on("python2/%{python_version}")
 
 help(help_message,"\n")
 
@@ -353,14 +354,14 @@ EOF
 export PACKAGE_POST=1
 %include post-defines.inc
 %post %{MODULEFILE}
-ln -s %{INSTALL_DIR}/lib/python2.7/site-packages/mpl_toolkits/basemap /opt/apps/intel17/python/%{python_version}/lib/python2.7/site-packages/mpl_toolkits/basemap
+ln -s %{INSTALL_DIR}/lib/python2.7/site-packages/mpl_toolkits/basemap /opt/apps/intel18/python2/%{python_version}/lib/python2.7/site-packages/mpl_toolkits/basemap
 export MODULEFILE_POST=1
 %include post-defines.inc
 %preun %{PACKAGE}
 export PACKAGE_PREUN=1
 %include post-defines.inc
 %preun %{MODULEFILE}
-unlink /opt/apps/intel17/python/%{python_version}/lib/python2.7/site-packages/mpl_toolkits/basemap
+unlink /opt/apps/intel18/python2/%{python_version}/lib/python2.7/site-packages/mpl_toolkits/basemap
 ########################################
 ############ Do Not Remove #############
 ########################################

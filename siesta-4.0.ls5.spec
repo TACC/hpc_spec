@@ -36,8 +36,8 @@ Summary: A Nice little relocatable skeleton spec file example.
 ########################################
 ### Construct name based on includes ###
 ########################################
-#%include name-defines.inc
-%include name-defines-noreloc.inc
+%include name-defines.inc
+#%include name-defines-noreloc.inc
 #%include name-defines-hidden.inc
 #%include name-defines-hidden-noreloc.inc
 ########################################
@@ -67,20 +67,12 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
-Siesta (Spanish Initiative for Electronic Simulations with Thousands of Atoms)
-is both a method and its computer program implementation, to perform electronic
-structure calculations and ab initio molecular dynamics simulations of
-molecules and solids.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
-Siesta (Spanish Initiative for Electronic Simulations with Thousands of Atoms)
-is both a method and its computer program implementation, to perform electronic
-structure calculations and ab initio molecular dynamics simulations of
-molecules and solids.
 
 %description
 Siesta (Spanish Initiative for Electronic Simulations with Thousands of Atoms)
@@ -183,15 +175,14 @@ cp -r ../Docs %{INSTALL_DIR}
 # Build Utilities
 cd ../Util
 sh ./build_all.sh
-cp ./COOP/dm_creator      %{INSTALL_DIR}/bin
-cp ./COOP/mprop           %{INSTALL_DIR}/bin
-cp ./TBTrans/tbtrans      %{INSTALL_DIR}/bin/tbtrans
-cp ./TBTrans_rep/tbtrans  %{INSTALL_DIR}/bin/tbtrans_rep
-cp ./Denchar/Src/denchar  %{INSTALL_DIR}/bin
-cp ./STM/ol-stm/Src/stm   %{INSTALL_DIR}/bin
+cp ./COOP/dm_creator %{INSTALL_DIR}/bin
+cp ./COOP/mprop %{INSTALL_DIR}/bin
+cp ./TBTrans/tbtrans %{INSTALL_DIR}/bin
+cp ./Denchar/Src/denchar %{INSTALL_DIR}/bin
+cp ./STM/ol-stm/Src/stm %{INSTALL_DIR}/bin
 cp ./STM/simple-stm/plstm %{INSTALL_DIR}/bin
-cp ./Gen-basis/gen-basis  %{INSTALL_DIR}/bin
-cp ./Gen-basis/ioncat     %{INSTALL_DIR}/bin
+cp ./Gen-basis/gen-basis %{INSTALL_DIR}/bin
+cp ./Gen-basis/ioncat %{INSTALL_DIR}/bin
 cp ./Gen-basis/ionplot.sh %{INSTALL_DIR}/bin
 
 mkdir -p                 $RPM_BUILD_ROOT/%{INSTALL_DIR}
@@ -221,7 +212,7 @@ umount                                   %{INSTALL_DIR}
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_message=[[
-This module loads Siesta built with %{comp_fam_name} %{compV} and %{mpi_fam} %{mpi_module_version}.
+This module loads Siesta built with Intel 17 and Intel MPI 17.
 This module makes available the following executables:
 
 siesta
@@ -230,7 +221,6 @@ transiesta
 as well as the following utilities:
 
 tbtrans
-tbtrans_rep
 denchar
 dm_creator
 mprop
@@ -239,7 +229,7 @@ plstm
 gen-basis
 ioncat
 
-In order to run siesta, please create a link to the binary inside the execution
+In order to run siesta please create a link to the binary inside the execution
 directory, and make sure your submission script contains the lines:
 
 module load siesta
@@ -250,13 +240,13 @@ pseudopotentials. Please go to this addresss in order to obtain one:
 
 http://nninc.cnf.cornell.edu
 
-Version %{version}
+Version 4.0
 ]]
 
 help(help_message,"\n")
 
 whatis("Siesta")
-whatis("Version: %{version}")
+whatis("Version: 4.0")
 whatis("Category: application, chemistry")
 whatis("Keywords: Chemistry, Molecular Dynamics, Application")
 whatis("Description: Spanish Initiative for Electronic Simulations with Thousands of Atoms")

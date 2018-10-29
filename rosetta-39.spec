@@ -155,7 +155,7 @@ module purge
 %include mpi-load.inc
 
 #ml cxx11
-ml python
+ml python2
 #ml scons
 ml boost
 #ml boost-mpi
@@ -196,6 +196,10 @@ ml
 %endif
 %if "%{is_gcc71}" == "1"
   %define comp_ver 7.1
+  %define comp gcc
+%endif
+%if "%{is_gcc73}" == "1"
+  %define comp_ver 7.3
   %define comp gcc
 %endif
 
@@ -244,7 +248,7 @@ export PATH=${PATH}
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
 #export I_MPI_CC=icc
 #${my_mpicc} "\$@"
-/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/bin/intel64/icc -I/opt/cray/mpt/7.3.0/gni/mpich-intel/14.0/include -I/opt/cray/xpmem/default/include -I/opt/cray/ugni/default/include -I/opt/cray/udreg/default/include -I/opt/cray/dmapp/default/include -I/opt/cray/pmi/default/include  -L/opt/cray/xpmem/default/lib64 -L/opt/cray/ugni/default/lib64 -L/opt/cray/udreg/default/lib64 -L/opt/cray/pmi/default/lib64 -L/opt/cray/dmapp/default/lib64 -L/opt/cray/mpt/7.3.0/gni/mpich-intel/14.0/lib -ldl -lmpich_intel -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg "\$@"
+/opt/intel/compilers_and_libraries_2018.2.199/linux/bin/intel64/icc -I/opt/cray/pe/mpt/7.7.3/gni/mpich-intel/16.0/include -I/opt/cray/xpmem/default/include -I/opt/cray/ugni/default/include -I/opt/cray/udreg/default/include -I/opt/cray/dmapp/default/include -I/opt/cray/pe/pmi/default/include  -L/opt/cray/xpmem/default/lib64 -L/opt/cray/ugni/default/lib64 -L/opt/cray/udreg/default/lib64 -L/opt/cray/pe/pmi/default/lib64 -L/opt/cray/dmapp/default/lib64 -L/opt/cray/pe/mpt/7.7.3/gni/mpich-intel/16.0/lib -ldl -lmpich_intel -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg "\$@"
 EOF
 chmod +x ${rosetta}/rosetta_local_bin/mpicc_wrapper
 export my_mpicxx=`which mpicxx`
@@ -255,7 +259,7 @@ export PATH=${PATH}
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
 #export I_MPI_CXX=icpc
 #${my_mpicxx} "\$@"
-/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/bin/intel64/icpc -I/opt/cray/mpt/7.3.0/gni/mpich-intel/14.0/include -I/opt/cray/xpmem/default/include -I/opt/cray/ugni/default/include -I/opt/cray/udreg/default/include -I/opt/cray/dmapp/default/include -I/opt/cray/pmi/default/include -g -L/opt/cray/xpmem/default/lib64 -L/opt/cray/ugni/default/lib64 -L/opt/cray/udreg/default/lib64 -L/opt/cray/pmi/default/lib64 -L/opt/cray/dmapp/default/lib64 -L/opt/cray/mpt/7.3.0/gni/mpich-intel/14.0/lib -ldl -lmpichcxx_intel -lmpich_intel -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg "\$@"
+/opt/intel/compilers_and_libraries_2018.2.199/linux/bin/intel64/icpc -I/opt/cray/pe/mpt/7.7.3/gni/mpich-intel/16.0/include -I/opt/cray/xpmem/default/include -I/opt/cray/ugni/default/include -I/opt/cray/udreg/default/include -I/opt/cray/dmapp/default/include -I/opt/cray/pe/pmi/default/include -g -L/opt/cray/xpmem/default/lib64 -L/opt/cray/ugni/default/lib64 -L/opt/cray/udreg/default/lib64 -L/opt/cray/pe/pmi/default/lib64 -L/opt/cray/dmapp/default/lib64 -L/opt/cray/pe/mpt/7.7.3/gni/mpich-intel/16.0/lib -ldl -lmpichcxx_intel -lmpich_intel -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg "\$@"
 EOF
 chmod +x ${rosetta}/rosetta_local_bin/mpicxx_wrapper
 which mpicc_wrapper
