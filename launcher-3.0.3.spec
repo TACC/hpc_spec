@@ -35,7 +35,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   MIT
 Group:     Development/Tools
 URL:       https://github.com/TACC/launcher
@@ -167,6 +167,8 @@ help(help_msg)
 always_load("python2")
 
 whatis("Name: Launcher")
+whatis("Version: 3.0.3")
+
 whatis("Version: %{pkg_version}%{dbg}")
 %if "%{is_debug}" == "1"
 setenv("TACC_%{MODULE_VAR}_DEBUG","1")

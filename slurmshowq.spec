@@ -24,8 +24,8 @@ Summary: A Nice little relocatable skeleton spec file example.
 %define MODULE_VAR    SLURMSHOWQ
 
 # Create some macros (spec file variables)
-%define major_version 1
-%define minor_version 7
+%define major_version 2
+%define minor_version 1
 
 %define pkg_version %{major_version}.%{minor_version}
 
@@ -88,7 +88,7 @@ TACC SLURM showq and showres
 
 %setup -n %{pkg_base_name}-%{pkg_version}
 
-  %define tacc_bin /usr/local/bin
+  %define tacc_bin /opt/apps/tacc/bin
   mkdir -p $RPM_BUILD_ROOT%{tacc_bin}
 
 #-----------------------
@@ -121,7 +121,7 @@ TACC SLURM showq and showres
 # Load MPI Library
 #%include mpi-load.inc
 
-%define local_bin /usr/local/bin/
+%define local_bin /opt/apps/tacc/bin/
 
 # Insert further module commands
 

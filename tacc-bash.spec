@@ -44,7 +44,7 @@ Suggests:       command-not-found
 Recommends:     bash-doc = %bash_vers
 %endif
 Version:        %{bash_vers}
-Release:        293.42
+Release:        294.42
 Summary:        The GNU Bourne-Again Shell
 License:        GPL-3.0+
 Group:          System/Shells
@@ -119,7 +119,7 @@ BuildRoot:      %{_tmppath}/%{base_name}-%{version}-build
 
 
 # TACC WCP 2018-10-02 change paths from /etc to /etc/tacc
-Patch300:bash43_config.patch
+Patch300:       bash43_config.patch
 
 
 %global         _sysconfdir /etc

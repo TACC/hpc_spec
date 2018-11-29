@@ -52,7 +52,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   3
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.mcs.anl.gov/petsc/
@@ -181,7 +181,8 @@ ls
 export PETSC_DIR=`pwd`
 export SRC_DIR=%{_topdir}/SOURCES
 
-module load cmake valgrind
+module load cmake 
+#valgrind
 %if "%{comp_fam}" == "gcc"
   module load mkl
 %endif
@@ -401,6 +402,14 @@ export SUPERLU_OPTIONS="\
     --with-superlu=1 --download-superlu=${SRC_DIR}/git.superlu.tgz \
     ${PARMETIS_OPTIONS}"
 export SUPERLU_STRING="superlu and superlu_dist"
+
+#
+# DISABLE PARMETIS FOR NOW
+#
+# export PARMETIS_OPTIONS=
+# export ELEMENTAL_OPTIONS=
+# export MUMPS_OPTIONS=
+# export SUPERLU_OPTIONS=
 
 ##
 ## 64-bit indices
@@ -724,6 +733,10 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Fri Nov 16 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: UNRELEASED restoring parmetis?
+* Mon Nov 12 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: rebuild with final version of new ls5 software
 * Tue Oct 09 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release of 3.10
              still disabled: petsc4py

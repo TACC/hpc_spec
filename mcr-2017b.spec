@@ -2,8 +2,8 @@
 
 Summary: Matlab Compiler Runtime (MCR)
 Name: mcr
-Version: v930
-Release: 1
+Version: v93
+Release: 5
 License: Mathworks License
 Vendor: Mathworks
 Group: Matlab

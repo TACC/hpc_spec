@@ -261,8 +261,8 @@ as well as a syntax for looping over runs and breaking out of loops.
   mkliblist=()
 
   # List of additional library to be installed
-  liblist="atc awpmd colvars compress h5md kim linalg meam poems quip smd voronoi"
-
+  liblist="atc awpmd colvars compress      h5md     linalg meam        poems        quip smd voronoi"
+  #liblist="atc awpmd colvars compress gpu h5md kim linalg meam netcdf poems python quip smd voronoi"
   # Include all packages which don't need external libraries
   # Remove the packges that's not in the liblist
 
@@ -933,23 +933,13 @@ National Laboratories.
 
   The following packages were not installed:
 
-    GPU, KOKKOS, LATTE, MSCG, NETCDF, PYTHON, REAX, USER-MOLFILE, USER-QMMM, USER-VTK
+    GPU, KIM, KOKKOS, LATTE, MSCG, NETCDF, PYTHON, REAX, USER-MOLFILE, USER-QMMM, USER-VTK
 
   Library REAX was not compiled with this version, because the default virtual 
   space of the library consumes 1.6 GB/task (for a total of 2.2 GB per task), and
   the TACC monitor kills jobs that use over 2.0 GB/task (32 GB for 16 tasks).
 
   Information of external libraries:
-
-    * OpenKIM
-      kim-api-v%{kimver}
-      https://openkim.org
-
-      Environment variables: 
-      KIM_API_MODELS_DIR        (KIM models)
-      KIM_API_MODEL_DRIVERS_DIR (KIM model drivers)
-
-      Use command 'kim-api-v1-collections-management list' to show all installed models and model drivers.
 
     * QUIP
       https://github.com/libAtoms/QUIP.git
@@ -1009,10 +999,15 @@ setenv("TACC_KIM_DRIVER"           ,kim_driver_dir)
 setenv("KIM_API_MODELS_DIR"        ,kim_model_dir)
 setenv("KIM_API_MODEL_DRIVERS_DIR" ,kim_driver_dir)
 
+load("hdf5")
+load("netcdf")
+load("pnetcdf")
+
 append_path("PATH",pathJoin(lmp_dir,"bin"))
 append_path("PATH",pathJoin(lmp_dir,"tools"))
-append_path("PATH",pathJoin(kim_dir,"kim-api/bin"))   
+append_path("PATH",pathJoin(kim_dir,"kim-api/bin"))
 
+prepend_path("PYTHONPATH", pathJoin(lmp_dir,"python"))
 prepend_path("LD_LIBRARY_PATH","/opt/apps/gcc/7.3.0/lib64")
 
 EOF

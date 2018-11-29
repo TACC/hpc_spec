@@ -3,7 +3,7 @@
 Summary: Matlab
 Name: matlab
 Version: 2017a
-Release: 1
+Release: 5
 License: Mathworks License
 Vendor: Mathworks
 Group: Matlab

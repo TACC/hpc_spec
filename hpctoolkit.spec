@@ -29,10 +29,10 @@ Summary: HPCToolkit
 %define MODULE_VAR    HPCTOOLKIT
 
 # Create some macros (spec file variables)
-%define major_version          2016
-%define external_major_version 2016
-%define minor_version          12
-%define external_minor_version 12
+%define major_version          2017
+%define external_major_version 2017
+%define minor_version          06
+%define external_minor_version 06
 
 %define pkg_version          %{major_version}.%{minor_version}
 %define external_pkg_version %{external_major_version}.%{external_minor_version}

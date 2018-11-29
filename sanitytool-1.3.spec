@@ -1,9 +1,9 @@
-# $Id: sanitytool.spec, v 1.3, 2016/04/01 siliu $ 
+# $Id: sanitytool.spec, v 1.3, 2018/11/01 siliu $ 
 
 Summary: Sanity Tool
 Name: sanitytool
 Version: 1.3
-Release: 1
+Release: 5
 License: TACC
 Vendor: TACC
 Group: TACC-HPC-TOOL
@@ -54,6 +54,8 @@ whatis "Version: 1.3"
 whatis "Category: System tools"
 
 local sanitypath = "/opt/apps/sanitytool/1.3/"
+
+always_load("python2")
 
 append_path("PATH",sanitypath)
 setenv("TACC_SANITYTOOL_DIR", "/opt/apps/sanitytool/1.3/")

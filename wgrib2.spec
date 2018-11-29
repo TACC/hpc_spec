@@ -141,7 +141,8 @@ module purge
 
 
 # Insert further module commands
-module load netcdf/3.6.3
+#module load netcdf/3.6.3
+module load netcdf
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -169,7 +170,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
   
-  %if "%{is_intel}" == "1" || "%{is_intel13}" == "1" || "%{is_intel16}" == "1"
+  %if "%{is_intel}" == "1" || "%{is_intel18}" == "1" || "%{is_intel16}" == "1"
   
   	# environment used for configure with intel compiler
           export CFLAGS="-O3"
@@ -241,7 +242,8 @@ whatis("Description: Application manage and convert grib files.")
 whatis(" URL: www.cpc.ncep.noaa.gov/products/wesley/wgrib2 ")
 
 --Prepend paths
-prepend_path("PATH",           "%{INSTALL_DIR}/bin")
+prepend_path("PATH","%{INSTALL_DIR}/bin")
+prereq("netcdf")
 
 --Env variables 
 setenv("TACC_WGRIB2_DIR", "%{INSTALL_DIR}")

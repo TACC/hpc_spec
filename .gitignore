@@ -13,3 +13,4 @@ CHROOT_ONLY*
 *.orig
 *.rpm
 victor*
+mclay*

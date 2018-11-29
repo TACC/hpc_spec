@@ -337,5 +337,5 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Fri Oct 12 2018 eijkhout <eijkhout@tacc.utexas.edu>
+* Wed Nov 21 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

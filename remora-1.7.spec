@@ -1,7 +1,10 @@
 #
 # remora-1.7.spec
-# 2016-12-02
-# Carlos Rosales (carlos@tacc.utexas.edu)
+
+# 2018-11-01
+# Si Liu (siliu@tacc.utexas.edu)
+
+# 2016-12-02# Carlos Rosales (carlos@tacc.utexas.edu)
 # Antonio Gomez  (agomez@tacc.utexas.edu)
 # See http://github.com/TACC/remora
 

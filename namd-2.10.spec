@@ -33,18 +33,13 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-
 %include compiler-defines.inc
 %include mpi-defines.inc
-
-#%include name-defines-noreloc.inc
 
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
-
-
+%include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -55,7 +50,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2
+Release:   1
 License:   GPL
 Group:     Theoretical and Computational Biophysics Group, UIUC
 URL:       http://www.ks.uiuc.edu/Development/Download/download.cgi?PackageName=NAMD
@@ -67,7 +62,6 @@ Source2:   fftw-crayxt3.tar.gz
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
-
 
 %package %{PACKAGE}
 Summary: The namd distribution for login and compute nodes. Uses charm 6.6.1
@@ -120,29 +114,9 @@ using gigabit ethernet.
 
 %setup -n %{pkg_base_name}-%{pkg_version}
 
-
 #---------------------------------------
 %build
 #---------------------------------------
-%include compiler-load.inc
-%include mpi-load.inc
-
-tar -xvf charm-6.6.1.tar
-cd charm-6.6.1/
-cp src/arch/mpi-linux-x86_64/cc-mpicxx.sh cc-mpicxx.sh.bak
-cat src/arch/mpi-linux-x86_64/cc-mpicxx.sh | sed 's/\-show 2>\/dev\/null/\-v 2>\&1 \| head -n 1/g' > 1 ; mv 1 src/arch/mpi-linux-x86_64/cc-mpicxx.sh
-env MPICXX=mpicxx CC=icc CXX=icpc ./build charm++ mpi-linux-x86_64 mpicxx --no-build-shared --with-production -j10
-cd ..
-
-tar -zxvf $RPM_SOURCE_DIR/fftw-crayxt3.tar.gz
-tar -zxvf $RPM_SOURCE_DIR/tcl8.5.9-crayxe.tar.gz
-
-
-export namd_home=`pwd`
-cat arch/Linux-x86_64-icc.arch  | sed 's/-ip -no-vec/-xhost -ip -no-vec/g' > 1.tmp ; mv 1.tmp arch/Linux-x86_64-icc.arch
-./config Linux-x86_64-icc --charm-arch mpi-linux-x86_64-mpicxx --with-fftw --fftw-prefix $namd_home/fftw-crayxt3 --with-tcl --tcl-prefix $namd_home/tcl8.5.9-crayxe
-cd Linux-x86_64-icc
-make -j 10
 
 
 #---------------------------------------
@@ -154,6 +128,8 @@ make -j 10
 
 # Insert necessary module commands
 module purge
+%include compiler-load.inc
+%include mpi-load.inc
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -175,17 +151,36 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
+
+tar -xvf charm-6.6.1.tar
+cd charm-6.6.1/
+cp src/arch/mpi-linux-x86_64/cc-mpicxx.sh cc-mpicxx.sh.bak
+cat src/arch/mpi-linux-x86_64/cc-mpicxx.sh | sed 's/\-show 2>\/dev\/null/\-v 2>\&1 \| head -n 1/g' > 1 ; mv 1 src/arch/mpi-linux-x86_64/cc-mpicxx.sh
+env MPICXX=mpicxx CC=icc CXX=icpc ./build charm++ mpi-linux-x86_64 mpicxx --no-build-shared --with-production -j10
+cd ..
+
+tar -zxvf $RPM_SOURCE_DIR/fftw-crayxt3.tar.gz
+#tar -zxvf $RPM_SOURCE_DIR/tcl8.5.9-crayxe.tar.gz
+tar -zxvf $RPM_SOURCE_DIR/tcl8.5.9-crayxe-threaded.tar.gz
+
+
+export namd_home=`pwd`
+cat arch/Linux-x86_64-icc.arch  | sed 's/-ip -no-vec/-ip -xCORE-AVX2 -no-vec/g' > 1.tmp ; mv 1.tmp arch/Linux-x86_64-icc.arch
+./config Linux-x86_64-icc --charm-arch mpi-linux-x86_64-mpicxx --with-fftw --fftw-prefix $namd_home/fftw-crayxt3 --with-tcl --tcl-prefix $namd_home/tcl8.5.9-crayxe-threaded
+cd Linux-x86_64-icc
+make -j 20
   
-  # Create some dummy directories and files for fun
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+# Create some dummy directories and files for fun
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
 
-  cp -p Linux-x86_64-icc/{namd2,psfgen,flipbinpdb,flipdcd,sortreplicas} $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
-  cp -r lib $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  chmod -Rf u+rwX,g+rwX,o=rX                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}
+cd ..
+cp -p Linux-x86_64-icc/{namd2,psfgen,flipbinpdb,flipdcd,sortreplicas} $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
+cp -r lib $RPM_BUILD_ROOT/%{INSTALL_DIR}
+chmod -Rf u+rwX,g+rwX,o=rX                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 
-  # Copy everything from tarball over to the installation directory
+# Copy everything from tarball over to the installation directory
 #  cp * $RPM_BUILD_ROOT/%{INSTALL_DIR}
   
 #-----------------------  
@@ -198,8 +193,14 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #---------------------------
   echo "Here: -----"
   echo $RPM_BUILD_ROOT
-  echo %{MODULE_DIR}
-  echo %{MODULE_FILENAME}
+  echo "cyrus %{MODULE_PREFIX}"
+  echo "cyrus %{MODULE_SUFFIX}"
+  echo "cyrus %{MODULE_DIR}"
+  echo "cyrus %{MODULE_FILENAME}"
+  echo "cyrus %{INSTALL_PREFIX}"
+  echo "cyrus %{INSTALL_SUFFIX}"
+  echo "cyrus %{INSTALL_DIR}"
+
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
   
   #######################################
@@ -242,10 +243,11 @@ local namd_dir           = "%{INSTALL_DIR}"
 
 family("namd")
 prepend_path(    "PATH",                pathJoin(namd_dir, "bin"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/namd_1/modulefiles")
 setenv( "TACC_%{MODULE_VAR}_DIR",                namd_dir)
 setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(namd_dir, "bin"))
 EOF
+
+#prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/namd_1/modulefiles")
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################

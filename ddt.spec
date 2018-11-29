@@ -4,7 +4,7 @@
 Summary: DDT is a parallel, symbolic debugger.
 Name: ddt
 Version: 18.1.3
-Release: 1
+Release: 2
 License: Commercial
 Group: tools/debugging
 Source0: ddt_18.1.3.tar.gz
@@ -118,7 +118,7 @@ setenv("DDTROOT","%{INSTALL_DIR}")
 setenv("DDTPATH","%{INSTALL_DIR}/bin")
 setenv("TACC_DDT_DIR","%{INSTALL_DIR}")
 setenv("TACC_DDT_BIN","%{INSTALL_DIR}/bin")
-setenv("ALLINEA_TOOLS_CONFIG_DIR",pathJoin(home,".allinea_${version}"))
+setenv("ALLINEA_TOOLS_CONFIG_DIR",pathJoin(home,".allinea"))
 setenv("ALLINEA_ALLOW_CRAY_DMALLOC_PRELOAD","1")
 prepend_path("PATH","%{INSTALL_DIR}/bin")
 prepend_path("LD_LIBRARY_PATH","%{INSTALL_DIR}/lib")

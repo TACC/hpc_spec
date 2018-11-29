@@ -128,8 +128,8 @@ proposed for the upcoming TR2.
 #%include mpi-defines.inc
 module purge
 %include compiler-load.inc
-module load intel/18.0.2 
-#module load gcc
+#module load intel/18.0.2 
+module load gcc
 module load python2 
 
 echo "Building the package?:    %{BUILD_PACKAGE}"

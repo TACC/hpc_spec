@@ -30,7 +30,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-git%{minor_version}.tar.gz
@@ -139,8 +139,13 @@ export BOOST_ROOT=${TACC_BOOST_DIR}
   export MKLFLAG="-mkl"
 %endif
 
-export COPTFLAGS="-g -xhost -O2"
+%if "%{comp_fam}" == "intel"
+  export COPTFLAGS="-g -xhost -O2"
+%else
+  export COPTFLAGS="-g -O2"
+%endif
 
+export HAS_CUDA=OFF
 export HAS_HDF5=ON
 export HAS_NETCDF=ON
 export HAS_MUELU=ON
@@ -148,16 +153,22 @@ export HAS_PYTHON=OFF
 export HAS_STK=ON
 export HAS_SUPERLU=OFF
 %if "%{comp_fam}" == "gcc"
+  export HAS_CUDA=ON
   export HAS_HDF5=OFF
   export HAS_NETCDF=OFF
   # VLE is this fixed?
-  export HAS_SUPERLU=ON
+  export HAS_SUPERLU=OFF
 %endif
 
-export HAS_SEACAS=${HAS_NETCDF}
+export CXX_COMPILER=`which mpicxx`
+if [ "${HAS_CUDA}" = "ON" ] ; then
+  module load cuda
+  export CXX_COMPILER=%{_topdir}/SOURCES/nvcc_wrapper/nvcc_wrapper_ls5
+fi
 if [ "${HAS_HDF5}" = "ON" ] ; then
   module load phdf5
 fi
+export HAS_SEACAS=${HAS_NETCDF}
 if [ "${HAS_NETCDF}" = "ON" ] ; then
   module load parallel-netcdf phdf5
 fi
@@ -167,9 +178,6 @@ fi
 if [ "${HAS_SUPERLU}" = "ON" ] ; then
   module load superlu_seq
 fi
-
-#module use -a /opt/apps/intel16/modulefiles # for boost
-#module load boost
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -388,5 +396,7 @@ echo "filtered requires:"
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Wed Nov 14 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: adding cuda in the gcc version
 * Fri Oct 12 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release, no pytrilinos, no superlu

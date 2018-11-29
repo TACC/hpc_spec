@@ -117,7 +117,7 @@ if [ ! -f "%{INSTALL_DIR_COMP}/bin/%{PNAME}" ]; then
     ./configure --prefix=%{INSTALL_DIR_COMP} CFLAGS="-O2 -fwrapv -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches" LDFLAGS="-fpic -Xlinker -export-dynamic" --enable-shared --with-system-ffi --with-pth --with-threads --with-computed-gotos --with-ensurepip --with-lto --enable-unicode=ucs4
     %endif
 
-    make -j 16
+    make -j 1
     make sharedinstall
     make -i install
 fi
@@ -204,7 +204,7 @@ fi
 # 	wget -O pycairo-1.15.1.tar.gz https://github.com/pygobject/pycairo/releases/download/v1.15.1/pycairo-1.15.1.tar.gz
 #     fi
 #     rm -rf %{_topdir}/SOURCES/pycairo-1.15.1
-#     tar -xzvf %{_topdir}/SOURCES/pycairo-1.15.1.tar.gz -C %{_topdir}/SOURCES	 
+#     tar -xzvf %{_topdir}/SOURCES/pycairo-1.15.1.tar.gz -C %{_topdir}/SOURCES 
 #     cd %{_topdir}/SOURCES/pycairo-1.15.1
 #     %{INSTALL_DIR_COMP}/bin/%{PNAME} setup.py install --prefix=%{INSTALL_DIR_COMP}
 # fi	   
@@ -227,7 +227,7 @@ fi
 
 ### pygtk
 # if ! $(%{INSTALL_DIR_COMP}/bin/%{PNAME} -c "import pygtk"); then
-#     if [ ! -f "%{_topdir}/SOURCES/pygtk-2.24.0.tar.gz" ]; then		
+#     if [ ! -f "%{_topdir}/SOURCES/pygtk-2.24.0.tar.gz" ]; then	
 # 	wget -O pygtk-2.24.0.tar.gz http://ftp.gnome.org/pub/GNOME/sources/pygtk/2.24/pygtk-2.24.0.tar.gz
 #     fi
 #     rm -rf %{_topdir}/SOURCES/pygtk-2.24.0
@@ -291,9 +291,6 @@ ${PIP} install --no-binary :all: PyYAML
 #----------------------------------------------------------
 # UNMOUNT THE TEMP FILESYSTEM
 #----------------------------------------------------------
-#find %{INSTALL_DIR_COMP} -name *.py | xargs sed -i 's/\/user\/local\/bin\/python/%{INSTALL_DIR_COMP}\/bin\/%{PNAME}'
-#find /opt/apps/intel18/python2/2.7.15 -name '*.py' | xargs sed -i '1s/\/usr\/local/\/opt\/apps\/intel18\/python2\/2.7.15/'
-
 find %{INSTALL_DIR_COMP} -name '*.py' | xargs sed -i '1s|/usr/bin/python|%{INSTALL_DIR_COMP}/bin/%{PNAME}|'
 find %{INSTALL_DIR_COMP} -name '*.py' | xargs sed -i '1s|/usr/local/bin/python|%{INSTALL_DIR_COMP}/bin/%{PNAME}|'
 

@@ -51,7 +51,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_base_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   GPL
 Group:     Development/Tools
 Group: Applications/Biology
@@ -193,8 +193,8 @@ env CC=icc CXX=icpc cmake .. \
 -DGMX_BUILD_MDRUN_ONLY=OFF \
 -DGMX_MPI=OFF -DGMX_OPENMP=OFF \
 -DGMX_XML=OFF \
+-DGMX_OPENMP_MAX_THREADS=256 \
 -DCMAKE_EXE_LINKER_FLAGS=" -mkl=sequential" \
--DGMX_SIMD=AVX_256 \
 -DCMAKE_C_FLAGS="-std=gnu99 -O3 -xAVX -axCORE-AVX2 -g " \
 -DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xAVX -axCORE-AVX2 -g " \
 -DGMX_DEFAULT_SUFFIX=ON \
@@ -207,6 +207,7 @@ make install
 
 
 cd ..
+rm -rf g_single_serial
 rm -rf g_single_parallel
 mkdir g_single_parallel
 cd g_single_parallel
@@ -222,8 +223,8 @@ env CC=mpicc CXX=mpicxx cmake .. \
 -DGMX_OPENMP=ON \
 -DGMX_XML=OFF \
 -DGMX_SKIP_DEFAULT_CFLAGS=ON \
+-DGMX_OPENMP_MAX_THREADS=256 \
 -DCMAKE_EXE_LINKER_FLAGS=" -mkl=sequential" \
--DGMX_SIMD=AVX_256 \
 -DCMAKE_C_FLAGS="-std=gnu99 -O3 -xAVX -axCORE-AVX2 -g " \
 -DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xAVX -axCORE-AVX2 -g " \
 -DGMX_DEFAULT_SUFFIX=ON \
@@ -241,6 +242,7 @@ make install
 
 # Double precision MPI-enabled mdrun
 cd ..
+rm -rf g_single_parallel
 rm -rf g_double_parallel
 mkdir g_double_parallel
 cd g_double_parallel
@@ -256,8 +258,8 @@ env CC=mpicc CXX=mpicxx cmake .. \
 -DGMX_XML=OFF \
 -DGMX_SOFTWARE_INVSQRT=OFF \
 -DGMX_SKIP_DEFAULT_CFLAGS=ON \
+-DGMX_OPENMP_MAX_THREADS=256 \
 -DCMAKE_EXE_LINKER_FLAGS=" -mkl=sequential" \
--DGMX_SIMD=AVX_256 \
 -DCMAKE_C_FLAGS="-std=gnu99 -O3 -xAVX -axCORE-AVX2 -g " \
 -DCMAKE_CXX_FLAGS="-std=c++11 -O3 -xAVX -axCORE-AVX2 -g "  \
 -DGMX_DEFAULT_SUFFIX=OFF \
@@ -274,6 +276,86 @@ make install
 ###############################################################################
 
 
+export TACC_CUDA_DIR=/root/cuda/9.0
+export TACC_CUDA_BIN=$TACC_CUDA_DIR/bin/
+export TACC_CUDA_LIB=$TACC_CUDA_DIR/lib64/
+export TACC_CUDA_INC=$TACC_CUDA_DIR/include/
+
+cd ..
+rm -rf g_double_parallel
+rm -rf g_gpu_serial
+mkdir g_gpu_serial
+cd g_gpu_serial
+env CC=mpicc CXX=mpicxx cmake .. \
+-DCMAKE_INSTALL_PREFIX=../install \
+-DGMX_FFT_LIBRARY=mkl \
+-DCMAKE_EXE_LINKER_FLAGS="-mkl=sequential" \
+-DGMX_EXTERNAL_BOOST=OFF \
+-DGMX_X11=OFF \
+-DCMAKE_C_FLAGS="-O3" \
+-DCMAKE_CXX_FLAGS="-O3" \
+-DBUILD_SHARED_LIBS=ON \
+-DGMX_PREFER_STATIC_LIBS=OFF \
+-DGMX_GPU=ON \
+-DGMX_SIMD=AVX_256 \
+-DGMX_OPENMP_MAX_THREADS=256 \
+-DCUDA_TOOLKIT_ROOT_DIR=${TACC_CUDA_DIR} \
+-DGMX_DEFAULT_SUFFIX=OFF \
+-DGMX_BINARY_SUFFIX=_gpu \
+-DGMX_LIBS_SUFFIX=_gpu
+ 
+make -j 12
+make install
+
+
+
+
+
+
+##############################################################################
+
+
+export TACC_CUDA_DIR=/root/cuda/9.0
+export TACC_CUDA_BIN=$TACC_CUDA_DIR/bin/
+export TACC_CUDA_LIB=$TACC_CUDA_DIR/lib64/
+export TACC_CUDA_INC=$TACC_CUDA_DIR/include/
+#module load boost
+
+cd ..
+rm -rf g_gpu_serial
+rm -f g_gpu_parallel
+mkdir g_gpu_parallel
+cd g_gpu_parallel
+env CC=mpicc CXX=mpicxx cmake .. \
+-DCMAKE_INSTALL_PREFIX=../install \
+-DGMX_FFT_LIBRARY=mkl \
+-DCMAKE_EXE_LINKER_FLAGS="-mkl=sequential" \
+-DGMX_EXTERNAL_BOOST=OFF \
+-DGMX_X11=OFF \
+-DCMAKE_C_FLAGS="-O3" \
+-DCMAKE_CXX_FLAGS="-O3" \
+-DBUILD_SHARED_LIBS=ON \
+-DGMX_PREFER_STATIC_LIBS=OFF \
+-DGMX_MPI=ON \
+-DGMX_GPU=ON \
+-DGMX_SIMD=AVX_256 \
+-DGMX_OPENMP_MAX_THREADS=256 \
+-DCUDA_TOOLKIT_ROOT_DIR=${TACC_CUDA_DIR} \
+-DGMX_DEFAULT_SUFFIX=OFF \
+-DGMX_BUILD_MDRUN_ONLY=ON \
+-DGMX_BINARY_SUFFIX=_mpi_gpu \
+-DGMX_LIBS_SUFFIX=_mpi_gpu
+
+make -j 12
+make install
+
+cd ..
+rm -rf g_double_parallel
+rm -rf g_single_serial
+rm -rf g_single_parallel
+rm -rf g_gpu_serial
+rm -rf g_gpu_parallel
+
 
 ##############################################################################
 
@@ -281,7 +363,7 @@ make install
 
 
   # Copy everything from tarball over to the installation directory
-  cp -r ../install/* $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  cp -r install/* $RPM_BUILD_ROOT/%{INSTALL_DIR}
 #  rm -rf /admin/rpms/BUILD/gromacs*
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -326,7 +408,7 @@ grompp command:
 TACC also provides a double-precision version of the mdrun application,
 called mdrun_mpi_d.  To use the double-precision version, simply replace
 mdrun_mpi in the commands above with mdrun_mpi_d. In addition, TACC provides
-GPU enabled version of mdrun with the suffix of _gpu (you must load cuda/7.5).
+GPU enabled version of mdrun with the suffix of mpi_gpu (you must load cuda/9.0).
 
 OpenMP threads are necessary for GPU runs, but these are only supported with
 cut-off scheme Verlet, not cut-off scheme Group. To choose the number of

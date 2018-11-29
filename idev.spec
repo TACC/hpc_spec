@@ -1,3 +1,6 @@
+# rpmbuild -bb --clean  idev.spec |& tee idev_1.5.5_r1_a.log
+# r=/admin/rpms/RPMS/x86_64
+# rpm -hiv $r/tacc-idev-1.5.5-1.x86_64.rpm
 #
 # Spec file for idev
 #
@@ -5,7 +8,7 @@
 %define base_name idev
 Summary:   %{base_name}: interactive access to production nodes
 Name:      %{name_prefix}-%{base_name}
-Version:   1.5.2
+Version:   1.5.5
 Release:   1
 License:   TACC
 Vendor:    tacc.utexas.edu
@@ -56,15 +59,17 @@ Purpose: For developing MPI or GPU code interactively.
 Features:
 Allows user to work directly on a compute node:
   You can execute the MPI ibrun command interactively.
-  You can execute cuda code interactively (Stampede/Lonestar/Longhorn).
+  You can execute cuda code interactively, too (for Stampede/Lonestar/Maverick).
 
 Usage:
         idev
 
-(First time: users with multiple accounts  must select default account.)
+(First time users with multiple accounts:  must select default account.)
+(First time a queue is used:               must select default tasks per node.)
+(A suggestion is provided for tasks per node, equal to the cores per node.)
 
 
-Idev works for bash and tcsh shells (may not work for zsh).
+Idev works for bash, tcsh ad zsh shells.
 Idev uses a job submission to obtain a node(s) for an interactive session.
 Exiting the idev shell on the compute node will delete the job.
 You can run multiple idev sessions.
@@ -74,6 +79,8 @@ for the batch job (number of cores, time, queue, etc.) .
 For details, execute: 
 
         idev -help
+
+        idev -p normal -m 60  #e.g. normal queue, 60 minutes
 
 User Guide at:
 
@@ -87,7 +94,7 @@ help(help_message,"\n")
 whatis("Name: idev")
 whatis("Version: %{version}")
 whatis("Category: utility, development")
-whatis("URL: http://www.tacc.utexas.edu")
+whatis("URL: https://portal.tacc.utexas.edu/software/idev")
 whatis("Description: Interactive Access to Compute Node(s) for Development via Batch System")
 
 

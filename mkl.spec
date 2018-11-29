@@ -47,7 +47,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3
+Release:   4
 License:   proprietary
 Group:     Compiler
 URL:       https://software.intel.com/en-us/intel-compilers
@@ -191,8 +191,9 @@ whatis("Description: Intel Math Kernel Library"                             )
 whatis("URL: https://software.intel.com/en-us/intel-mkl"                    )
 
 -- Create environment variables.
-local base         = "/opt/apps/intel/16.0.1.150"
-local full_xe      = "compilers_and_libraries_2016.1.150/linux"
+-- /opt/intel/compilers_and_libraries_2018.2.199/linux/mkl/lib/intel64
+local base         = "/opt/intel/"
+local full_xe      = "compilers_and_libraries_2018.2.199/linux/"
 local installDir   = pathJoin(base,full_xe)
 local mklRoot      = pathJoin(installDir,"mkl")
 
@@ -206,9 +207,9 @@ prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( mklRoot    , "lib/intel64" ) )
 
 prepend_path( "INCLUDE" ,             pathJoin( mklRoot    , "include" ) )
 
-prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2016/en/debugger/gdb-ia/man" ) )
-prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2016/en/debugger/gdb-igfx/man" ) )
-prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2016/en/man/common" ) )
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation/en/debugger/gdb-ia/man" ) )
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation/en/debugger/gdb-igfx/man" ) )
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation/en/man/common" ) )
 prepend_path( "MANPATH" ,             pathJoin( mklRoot ,    "benchmarks/mp_linpack/man" ) )
 
 EOF
@@ -277,3 +278,8 @@ export PACKAGE_PREUN=1
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
 
+%changelog
+* Fri Nov 02 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 4: for gcc73
+* Thu Nov 01 2018 proctor <cproctor@tacc.utexas.edu>
+- release 1 through 3

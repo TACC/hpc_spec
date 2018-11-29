@@ -35,7 +35,8 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-%include compiler-defines.inc
+##NOPE!! don't need to tell it use the system gcc!!!
+##%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
@@ -113,6 +114,8 @@ http://www.ncl.ucar.edu/index.shtml
 #------------------------
 %if %{?BUILD_PACKAGE}
 #------------------------
+# system version
+%define INSTALL_DIR %{APPS}/%{pkg_base_name}/%{version}
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
@@ -143,6 +146,7 @@ http://www.ncl.ucar.edu/index.shtml
 #---------------------------
 %if %{?BUILD_MODULEFILE}
 #---------------------------
+  %define MODULE_DIR  %{APPS}/%{MODULES}/%{pkg_base_name}
   #Delete the module installation directory.
   rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 #--------------------------
@@ -163,10 +167,17 @@ http://www.ncl.ucar.edu/index.shtml
 # Setup modules
 %include system-load.inc
 module purge
-# Load Compiler
-%include compiler-load.inc
-# Load MPI Library
-#%include mpi-load.inc
+
+###Nope don't need it using system gcc
+### Load Compiler
+##%include compiler-load.inc
+### Load MPI Library
+###%include mpi-load.inc
+  export CC=gcc
+  export CXX=g++
+  export FC=gfortran
+  export F77=gfortran
+  export FC=gfortran
 
 # Insert further module commands
 
@@ -331,15 +342,15 @@ EOF
 ########################################
 ## Fix Modulefile During Post Install ##
 ########################################
-%post %{PACKAGE}
-export PACKAGE_POST=1
-%include post-defines.inc
-%post %{MODULEFILE}
-export MODULEFILE_POST=1
-%include post-defines.inc
-%preun %{PACKAGE}
-export PACKAGE_PREUN=1
-%include post-defines.inc
+#%post %{PACKAGE}
+#export PACKAGE_POST=1
+#%include post-defines.inc
+#%post %{MODULEFILE}
+#export MODULEFILE_POST=1
+#%include post-defines.inc
+#%preun %{PACKAGE}
+#export PACKAGE_PREUN=1
+#%include post-defines.inc
 ########################################
 ############ Do Not Remove #############
 ########################################

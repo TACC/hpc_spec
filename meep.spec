@@ -158,59 +158,58 @@ make install
 # place for the rest of the RPM.  Then, unmount the tmpfs.
 cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
 umount %{INSTALL_DIR}/
-#tacctmpfs --umount %{INSTALL_DIR}
 
+#%include name-defines-noreloc.inc
+#tacctmpfs --umount %{INSTALL_DIR}
 # Remove any old module files and create anew
 rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version} << 'EOF'
 #%Module1.0#################################################################
 #
 # This module file sets up the environment variables and path for meep.
 #
 #############################################################################
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 
-proc ModulesHelp { } {
-puts stderr "The %{name} module file defines the following environment variables:\n"
-puts stderr "TACC_MEEP_DIR, TACC_MEEP_LIB, TACC_MEEP_INC, and TACC_MEEP_BIN."
-puts stderr ""
-puts stderr "The meep executable is \$TACC_MEEP_BIN/meep-mpi"
-puts stderr ""
-puts stderr "Version %{version}"
-}
--- Prerequisites
+local help_message = [[
+
+The %{name} module file defines the following environment variables:
+TACC_MEEP_DIR, TACC_MEEP_LIB, TACC_MEEP_INC, and TACC_MEEP_BIN.
+
+The meep executable is \$TACC_MEEP_BIN/meep-mpi
+
+Version %{version}
+
+]]
+
+help(help_message,"\n")
+
 prereq("gsl")
 
-module-whatis "Name: Meep"
-module-whatis "Version: %{version}"
-module-whatis "Category: Applications/IO"
-module-whatis "Description: Meep is a free finite-difference time-domain simulation software package" 
-module-whatis "URL: http://ab-initio.mit.edu/wiki/index.php/Meep"
+whatis("Name: Meep")
+whatis("Version: %{version}")
+whatis("Category: Applications/IO")
+whatis("Description: Meep is a free finite-difference time-domain simulation software package" )
+whatis("URL: http://ab-initio.mit.edu/wiki/index.php/Meep")
 
-setenv TACC_MEEP_DIR %{INSTALL_DIR}
-setenv TACC_MEEP_INC %{INSTALL_DIR}/include
-setenv TACC_MEEP_LIB %{INSTALL_DIR}/lib
-setenv TACC_MEEP_BIN %{INSTALL_DIR}/bin
+setenv("TACC_MEEP_DIR", "%{INSTALL_DIR}")
+setenv("TACC_MEEP_INC", "%{INSTALL_DIR}/include")
+setenv("TACC_MEEP_LIB", "%{INSTALL_DIR}/lib")
+setenv("TACC_MEEP_BIN", "%{INSTALL_DIR}/bin")
 
-# Also add libctl env vars.
-setenv TACC_CTL_DIR %{INSTALL_DIR}/libctl
-setenv TACC_CTL_INC %{INSTALL_DIR}/libctl/include
-setenv TACC_CTL_LIB %{INSTALL_DIR}/libctl/lib
-setenv TACC_CTL_BIN %{INSTALL_DIR}/libctl/bin
+setenv("TACC_CTL_DIR", "%{INSTALL_DIR}/libctl")
+setenv("TACC_CTL_INC", "%{INSTALL_DIR}/libctl/include")
+setenv("TACC_CTL_LIB", "%{INSTALL_DIR}/libctl/lib")
+setenv("TACC_CTL_BIN", "%{INSTALL_DIR}/libctl/bin")
 
-# Also add harminv env vars.
-setenv TACC_HARMINV_DIR %{INSTALL_DIR}/harminv
-setenv TACC_HARMINV_INC %{INSTALL_DIR}/harminv/include
-setenv TACC_HARMINV_LIB %{INSTALL_DIR}/harminv/lib
-setenv TACC_HARMINV_BIN %{INSTALL_DIR}/harminv/bin
+setenv("TACC_HARMINV_DIR", "%{INSTALL_DIR}/harminv")
+setenv("TACC_HARMINV_INC", "%{INSTALL_DIR}/harminv/include")
+setenv("TACC_HARMINV_LIB", "%{INSTALL_DIR}/harminv/lib")
+setenv("TACC_HARMINV_BIN", "%{INSTALL_DIR}/harminv/bin")
 
-prepend-path    PATH                %{INSTALL_DIR}/bin
+prepend_path("PATH", "%{INSTALL_DIR}/bin")
 
-# And libctl binary files location.
-prepend-path    PATH                %{INSTALL_DIR}/libctl/bin
-
-# No man pages for meep
-#prepend-path    MANPATH             %{INSTALL_DIR}/man
+prepend_path("PATH", "%{INSTALL_DIR}/libctl/bin")
 
 EOF
 
@@ -223,7 +222,10 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 set     ModulesVersion      "%{version}"
 EOF
 
-%{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}
+  # Check the syntax of the generated lua modulefile only if a visible module
+#  %if %{?VISIBLE}
+     %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}
+#  %endif
 
 
 %files -n tacc-%{name}-%{comp_fam_ver}-%{mpi_fam_ver}

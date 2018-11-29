@@ -115,7 +115,7 @@ The Vienna Ab initio Simulation Package (VASP)
 %include compiler-load.inc
 %include mpi-load.inc
 
-module load cuda
+#module load cuda
 
 cd wannier90-1.2/
 make lib

@@ -152,6 +152,7 @@ autoreconf
 #export LD_LIBRARY_PATH=/opt/openssl/1.0.2o/usr/lib:$LD_LIBRARY_PATH
 #export LDFLAGS="-Wl,-rpath=/opt/openssl/1.0.2o/usr/lib -L/opt/openssl/1.0.2o/usr/lib"
 #CPPFLAGS="-I/opt/openssl/1.0.2o/usr/include" \
+echo "CYRUS %{_libexecdir}"
 CFLAGS="$RPM_OPT_FLAGS" \
 %configure	--prefix=/usr \
                 --sysconfdir=%{_sysconfdir}/ssh \
