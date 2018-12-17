@@ -130,7 +130,7 @@ module purge
 %include compiler-load.inc
 #module load intel/18.0.2 
 module load gcc/5.2.0
-#module load python2 
+module load python2 
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"

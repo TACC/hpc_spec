@@ -1,5 +1,5 @@
 #
-# Ian Wangl
+# Ian Wangl, Si Liu
 # 2018-11-05
 #
 # PROGRAMMING_MODE should be changed to build all three different
@@ -15,11 +15,8 @@ Summary: OpenSees - Local TACC Build
 %define major_version 3
 %define minor_version 0
 %define micro_version 0
-%define year_stamp 2018
-%define month_stamp 11
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}.%{year_stamp}.%{month_stamp}
-
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
 %include compiler-defines.inc
@@ -42,8 +39,8 @@ Release:   1%{?dist}
 License:   LGPL
 Group:     Applications/Geoscience
 URL:       http://opensees.berkeley.edu/
-Packager:  TACC - iwang@tacc.utexas.edu, cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{major_version}.%{minor_version}.%{micro_version}-%{year_stamp}.%{month_stamp}.tar.gz
+Packager:  TACC - iwang@tacc.utexas.edu, siliu@tacc.utexas.edu
+Source:    %{pkg_base_name}-%{major_version}.%{minor_version}.%{micro_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -96,78 +93,21 @@ systems subjected to earthquakes.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -c %{pkg_base_name}-%{pkg_version}
-
-
 #---------------------------------------
 %build
 #---------------------------------------
-
 
 #---------------------------------------
 %install
 #---------------------------------------
 
-%include system-load.inc
-%include compiler-load.inc
-%include mpi-load.inc
-
-module purge
-module load intel/18.0.2
-module load cray_mpich
-
-echo "Building the package?:    %{BUILD_PACKAGE}"
-echo "Building the modulefile?: %{BUILD_MODULEFILE}"
-
-#------------------------
-%if %{?BUILD_PACKAGE}
-#------------------------
-
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
-  #######################################
-  ##### Create TACC Canary Files ########
-  #######################################
-  touch $RPM_BUILD_ROOT/%{INSTALL_DIR}/.tacc_install_canary
-  #######################################
-  ########### Do Not Remove #############
-  #######################################
-
-  export OPENSEES_TMP_BUILD_HOME=`pwd`
-  mkdir bin
-  mkdir lib
-  mv OpenSees-%{major_version}.%{minor_version}.%{micro_version}-%{year_stamp}.%{month_stamp} OpenSees
-  cd OpenSees
-
-  mv Makefile.def_LS5_intel18.0.2 Makefile.def
-
-  sed -i 's/\/home1\/06058\/iwang\/managed/${OPENSEES_TMP_BUILD_HOME}/g' ./Makefile.def
-  unset VERBOSE
-  make -j 28
-
-  echo "OpenSeesSP is built. Proceed to the next..."
-
-  make wipe
-  sed -i 's/PROGRAMMING_MODE = PARALLEL/PROGRAMMING_MODE = PARALLEL_INTERPRETERS/g' ./Makefile.def
-  make -j 28
-
-  echo "OpenSeesMP is built. Proceed to the next..."
-
-  make wipe
-  sed -i 's/PROGRAMMING_MODE = PARALLEL_INTERPRETERS/PROGRAMMING_MODE = SEQUENTIAL/g' ./Makefile.def
-  make -j 28
-
-  cp -r ../bin $RPM_BUILD_ROOT/%{INSTALL_DIR}/
-  cp -r ../lib $RPM_BUILD_ROOT/%{INSTALL_DIR}/
-
-#-----------------------  
-%endif # BUILD_PACKAGE |
-#-----------------------
-
-
 #---------------------------
 %if %{?BUILD_MODULEFILE}
 #---------------------------
+
+
+rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
+mkdir -p $RPM_BUILD_ROOT//%{MODULE_DIR}
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
   
@@ -219,7 +159,7 @@ setenv("TACC_%{MODULE_VAR}_DEBUG","1")
 %endif
 
 -- Create environment variables.
-local opensees_dir           = "%{INSTALL_DIR}"
+local opensees_dir           = "/work/projects/wma_apps/lonestar5/opensees/opensees-3.0.0"
 
 family("opensees")
 prepend_path(    "PATH",                pathJoin(opensees_dir, "bin"))
@@ -244,18 +184,6 @@ EOF
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-
-#------------------------
-%if %{?BUILD_PACKAGE}
-%files package
-#------------------------
-
-  %defattr(-,root,install,)
-  # RPM package contains files within these directories
-  %{INSTALL_DIR}
-
-#-----------------------
-%endif # BUILD_PACKAGE |
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
@@ -269,7 +197,6 @@ EOF
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
 
 ########################################
 ## Fix Modulefile During Post Install ##

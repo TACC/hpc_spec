@@ -557,22 +557,22 @@ local r_inc   = "%{INSTALL_DIR}/include"
 local r_lib   = "%{INSTALL_DIR}/lib64/R/lib"
 local r_man   = "%{INSTALL_DIR}/share/man"
 local snow_bin = "%{INSTALL_DIR}/lib64/R/library/snow/"
-local gdal_bin = "%{INSTALL_DIR}/gdal-1.9.2/bin"
-local gdal_lib = "%{INSTALL_DIR}/gdal-1.9.2/lib"
-local protobuf_bin = "%{INSTALL_DIR}/protobuf-4.7.1/bin"
-local protobuf_lib = "%{INSTALL_DIR}/protobuf-4.7.1/lib"
-local proj_lib = "%{INSTALL_DIR}/proj-4.7.0/lib"
-local jags_bin = "%{INSTALL_DIR}/jags-4.0.1/bin"
-local jags_lib = "%{INSTALL_DIR}/jags-4.0.1/lib64"
-local jags_modules = "%{INSTALL_DIR}/jags-4.0.1/lib64/JAGS/modules-3"
+local gdal_bin = "%{INSTALL_DIR}/gdal-2.3.1/bin"
+local gdal_lib = "%{INSTALL_DIR}/gdal-2.3.1/lib"
+--local protobuf_bin = "%{INSTALL_DIR}/protobuf-4.7.1/bin"
+--local protobuf_lib = "%{INSTALL_DIR}/protobuf-4.7.1/lib"
+local proj_lib = "%{INSTALL_DIR}/proj-5.1.0/lib"
+local jags_bin = "%{INSTALL_DIR}/jags-4.3.0/bin"
+local jags_lib = "%{INSTALL_DIR}/jags-4.3.0/lib64"
+local jags_modules = "%{INSTALL_DIR}/jags-4.3.0/lib64/JAGS/modules-3"
 
 
 prepend_path("PATH", jags_bin)
 prepend_path("PATH", snow_bin)
 prepend_path("PATH", gdal_bin)
-prepend_path("PATH", protobuf_bin)
+--prepend_path("PATH", protobuf_bin)
 prepend_path("LD_LIBRARY_PATH", gdal_lib)
-prepend_path("LD_LIBRARY_PATH", protobuf_lib)
+--prepend_path("LD_LIBRARY_PATH", protobuf_lib)
 prepend_path("LD_LIBRARY_PATH", proj_lib)
 prepend_path("LD_LIBRARY_PATH", jags_lib)
 prepend_path("LD_LIBRARY_PATH", jags_modules)

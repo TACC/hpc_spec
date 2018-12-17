@@ -52,7 +52,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3
+Release:   4
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.mcs.anl.gov/petsc/
@@ -257,7 +257,7 @@ export PLAPACKOPTIONS=
 ##
 export logdir=%{_topdir}/../apps/petsc/logs
 mkdir -p ${logdir}; rm -rf ${logdir}/*
-export dynamiccc="uni unidebug debug i64 i64debug complexi64 complexi64debug"
+export dynamiccc="uni unidebug debug i64 i64debug complexi64 complexi64debug nohdf5"
 export dynamiccxx="cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug cxxi64 cxxi64debug"
 
 export EXTENSIONS="single ${dynamiccc} ${dynamiccxx}"
@@ -311,21 +311,22 @@ export CHACO_STRING=chaco
 export CHACO_OPTIONS="--with-chaco=1 --download-chaco"
 %endif
 
-#
-# hdf5
-# not available with gcc right now
-export hdf5string=
-export hdf5download=
-export hdf5versionextra=
+##
+## hdf5
+##
 
-# %if "%{comp_fam}" == "intel"
-# %if "%{is_cmpich}" == "1"
-#     module load phdf5
-#     export hdf5download="--with-hdf5=1 --with-hdf5-dir=${TACC_HDF5_DIR}"
-#     export hdf5versionextra="; hdf5 support"
-#     export hdf5string="hdf5"
-# %endif
-# %endif
+export HAS_HDF5=1
+export hdf5string="hdf5"
+export hdf5download="--with-hdf5=1 --download-hdf5=1"
+export hdf5versionextra="; hdf5 support"
+
+case "${ext}" in
+*nohdf5* ) export HAS_HDF5=0
+        export hdf5string=
+        export hdf5download=
+        export hdf5versionextra=
+        ;;
+esac
 
 export versionextra="${versionextra}${hdf5versionextra}"
 
@@ -679,6 +680,7 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
   %{INSTALL_DIR}/haswell-i64debug
   %{INSTALL_DIR}/haswell-uni
   %{INSTALL_DIR}/haswell-unidebug
+  %{INSTALL_DIR}/haswell-nohdf5
 
 %files %{PACKAGE}-xx
   %{INSTALL_DIR}/haswell-cxx 
@@ -733,8 +735,10 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Mon Dec 03 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 4: using download hdf5, adding nohdf5 variant
 * Fri Nov 16 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: UNRELEASED restoring parmetis?
+- release 3: restoring parmetis?
 * Mon Nov 12 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: rebuild with final version of new ls5 software
 * Tue Oct 09 2018 eijkhout <eijkhout@tacc.utexas.edu>

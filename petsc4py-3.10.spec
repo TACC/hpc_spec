@@ -52,7 +52,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   GPL
 Group:     Development/Tools
 URL:       https://bitbucket.org/petsc/petsc4py/
@@ -162,7 +162,7 @@ module spider petsc
 module spider petsc/%{version}
 
 for ext in \
-  "" debug complex complex-debug ; do
+  "" debug complex complexdebug ; do
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -314,6 +314,7 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Mon Dec 17 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: because I have no idea what release 1 did.
 * Mon Nov 12 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: first release
-

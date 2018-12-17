@@ -19,8 +19,8 @@
 Summary: Boost spec file (www.boost.org)
 
 # Give the package a base name
-%define pkg_base_name boost
-%define MODULE_VAR    BOOST
+%define pkg_base_name boost-p3
+%define MODULE_VAR    BOOST-P3
 
 # Create some macros (spec file variables)
 %define major_version 1
@@ -130,7 +130,7 @@ module purge
 %include compiler-load.inc
 #module load intel/18.0.2 
 module load gcc/5.2.0
-#module load python2 
+module load python3
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -201,6 +201,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all --without-libraries=mpi"
 #  fi
 
+
+  echo "using python : 3.7 : /opt/apps/gcc5_2/python3/3.7.0/bin/python3 ;" >> user-config.jam 
   ./bootstrap.sh --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
   ./b2 -j 10 --prefix=%{INSTALL_DIR} $EXTRA install
 
@@ -263,8 +265,8 @@ setenv("TACC_%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
 setenv("TACC_%{MODULE_VAR}_LIB","%{INSTALL_DIR}/lib")
 setenv("TACC_%{MODULE_VAR}_INC","%{INSTALL_DIR}/include")
 
-always_load("python2")
-conflict("boost","boost-mpi")
+always_load("python3")
+conflict("boost","boost-mpi","boost-p3")
 
 -- Add boost to the LD_LIBRARY_PATH
 prepend_path("LD_LIBRARY_PATH","%{INSTALL_DIR}/lib")

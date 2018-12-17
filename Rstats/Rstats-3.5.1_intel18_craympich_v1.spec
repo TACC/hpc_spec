@@ -338,7 +338,9 @@ local r_lib   = "%{INSTALL_DIR}/lib64/R/lib"
 local r_man   = "%{INSTALL_DIR}/share/man"
 --local deps_bin = "${DEPS_DIR}/bin"
 --local deps_lib = "${DEPS_DIR}/lib"
+local r_profile = "%{INSTALL_DIR}/etc/Rprofile.site"
 
+setenv("R_PROFILE", r_profile)
 setenv("TACC_R_DIR", r_dir)
 setenv("TACC_R_BIN", r_bin)
 setenv("TACC_R_INC", r_inc)
@@ -356,7 +358,13 @@ prepend_path("LD_LIBRARY_PATH","/opt/apps/gcc/4.9.3/lib")
 prepend_path("LD_LIBRARY_PATH","/opt/apps/gcc/4.9.3/lib64")
 --prepend_path("LD_LIBRARY_PATH", deps_lib)
 
-try_load("RstatsPackages/3.5.1")
+--try_load("RstatsPackages/3.5.1")
+
+local rstatspackages_loaded = isloaded("RstatsPackages/3.5.1")
+if (not rstats_loaded) then
+        try_load("RstatsPackages/3.5.1")
+end
+
 
 EOF
   

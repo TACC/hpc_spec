@@ -30,7 +30,7 @@ Summary:  Qt 4.8.5 local binary install
 %define pkg_version %{major_version}.%{minor_version}
 %define pkg_full_version %{major_version}.%{minor_version}.%{micro_version}
 
-%define is_intel18 1
+%define is_intel16 1
 
 ### Toggle On/Off ###
 %include rpm-dir.inc

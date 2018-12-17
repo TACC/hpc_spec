@@ -1,9 +1,7 @@
 #
-# Ian Wangl
+# Ian Wang
 # 2018-11-05
 #
-# PROGRAMMING_MODE should be changed to build all three different
-# versions of OpenSees.
 
 Summary: OpenSees - Local TACC Build
 
@@ -15,10 +13,8 @@ Summary: OpenSees - Local TACC Build
 %define major_version 3
 %define minor_version 0
 %define micro_version 0
-%define year_stamp 2018
-%define month_stamp 11
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}.%{year_stamp}.%{month_stamp}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -43,7 +39,7 @@ License:   LGPL
 Group:     Applications/Geoscience
 URL:       http://opensees.berkeley.edu/
 Packager:  TACC - iwang@tacc.utexas.edu, cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{major_version}.%{minor_version}.%{micro_version}-%{year_stamp}.%{month_stamp}.tar.gz
+Source:    %{pkg_base_name}-%{major_version}.%{minor_version}.%{micro_version}-2018.11.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -55,23 +51,23 @@ Summary: The package RPM
 Group: Applications/Geoscience
 %description package
 This is the long description for the package RPM...
-This package is a software framework for developing applications 
-to simulate the performance of structural and geotechnical 
-systems subjected to earthquakes. 
+This package is a software framework for developing applications
+to simulate the performance of structural and geotechnical
+systems subjected to earthquakes.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
-This package is a software framework for developing applications 
-to simulate the performance of structural and geotechnical 
-systems subjected to earthquakes. 
+This package is a software framework for developing applications
+to simulate the performance of structural and geotechnical
+systems subjected to earthquakes.
 
 %description
-This package is a software framework for developing applications 
-to simulate the performance of structural and geotechnical 
-systems subjected to earthquakes. 
+This package is a software framework for developing applications
+to simulate the performance of structural and geotechnical
+systems subjected to earthquakes.
 
 
 #---------------------------------------
@@ -108,13 +104,14 @@ systems subjected to earthquakes.
 %install
 #---------------------------------------
 
+# Setup modules
 %include system-load.inc
-%include compiler-load.inc
-%include mpi-load.inc
 
-module purge
+# Insert necessary module commands
 module load intel/18.0.2
-module load cray_mpich
+module load cray_mpich/7.7.3
+module load petsc/3.10
+module list
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -124,7 +121,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -132,33 +129,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-
-  export OPENSEES_TMP_BUILD_HOME=`pwd`
-  mkdir bin
-  mkdir lib
-  mv OpenSees-%{major_version}.%{minor_version}.%{micro_version}-%{year_stamp}.%{month_stamp} OpenSees
-  cd OpenSees
-
-  mv Makefile.def_LS5_intel18.0.2 Makefile.def
-
-  sed -i 's/\/home1\/06058\/iwang\/managed/${OPENSEES_TMP_BUILD_HOME}/g' ./Makefile.def
-  unset VERBOSE
-  make -j 28
-
-  echo "OpenSeesSP is built. Proceed to the next..."
-
-  make wipe
-  sed -i 's/PROGRAMMING_MODE = PARALLEL/PROGRAMMING_MODE = PARALLEL_INTERPRETERS/g' ./Makefile.def
-  make -j 28
-
-  echo "OpenSeesMP is built. Proceed to the next..."
-
-  make wipe
-  sed -i 's/PROGRAMMING_MODE = PARALLEL_INTERPRETERS/PROGRAMMING_MODE = SEQUENTIAL/g' ./Makefile.def
-  make -j 28
-
-  cp -r ../bin $RPM_BUILD_ROOT/%{INSTALL_DIR}/
-  cp -r ../lib $RPM_BUILD_ROOT/%{INSTALL_DIR}/
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -170,7 +140,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -178,26 +148,28 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
+
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_msg=[[
 The %{MODULE_VAR} module file defines the following environment variables:
 TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_BIN for
-the location of the %{name} distribution, 
-libraries, and excutables,respectively. 
+the location of the %{name} distribution,
+libraries, and excutables,respectively.
 It also appends the path to the executables
 to the PATH environment variable.
 
-The %{year_stamp}.%{month_stamp} is appended to the 
-version number due to the rapid development on going.
-We use the date to distinguish the version for now.
-
 The excutables of %{MODULE_VAR} include:
 
-OpenSees	Sequential version
-OpenSeesSP	Parallel version in master-worker mode
-OpenSeesMP	Parallel version for parameter studies
+OpenSees        Sequential version
+OpenSeesSP      Parallel version in master-worker mode
+OpenSeesMP      Parallel version for parameter studies
+
+Note that the libOpenSees.a is the version that goes with OpenSeesMP.
+
+This version is built with the following modules enabled:
+
+intel/18.0.2 cray_mpich/7.7.3 petsc/3.10
 
 Version %{pkg_version}
 ]]
@@ -219,7 +191,7 @@ setenv("TACC_%{MODULE_VAR}_DEBUG","1")
 %endif
 
 -- Create environment variables.
-local opensees_dir           = "%{INSTALL_DIR}"
+local opensees_dir           = "/work/projects/wma_apps/lonestar5/opensees/opensees-3.0.0"
 
 family("opensees")
 prepend_path(    "PATH",                pathJoin(opensees_dir, "bin"))
@@ -227,7 +199,7 @@ setenv( "TACC_%{MODULE_VAR}_DIR",                opensees_dir)
 setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(opensees_dir, "lib"))
 setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(opensees_dir, "bin"))
 EOF
-  
+
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -236,14 +208,13 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 
 set     ModulesVersion      "%{version}"
 EOF
-  
+
   # Check the syntax of the generated lua modulefile
   %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -259,7 +230,7 @@ EOF
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile 
+%files modulefile
 #---------------------------
 
   %defattr(-,root,install,)

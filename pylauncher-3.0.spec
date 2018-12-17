@@ -59,7 +59,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 Group:     Development/Tools
 License: GPL
 Url: https://bitbucket.org/VictorEijkhout/pylauncher
@@ -195,6 +195,7 @@ help(help_msg)
 
 whatis("Name: %{pkg_base_name}")
 whatis("Version: %{pkg_version}%{dbg}")
+whatis("URL: https://github.com/TACC/pylauncher")
 %if "%{is_debug}" == "1"
 setenv("TACC_%{MODULE_VAR}_DEBUG","1")
 %endif
@@ -272,5 +273,7 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Mon Dec 10 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: no longer port number needed
 * Wed Oct 31 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial build

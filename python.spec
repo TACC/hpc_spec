@@ -87,7 +87,7 @@ export PIP=%{INSTALL_DIR_COMP}/bin/pip%{MAJOR}
     export MKL_INC=${TACC_MKL_INC}
     export MKL_LIB=${TACC_MKL_LIB}
     export OMP_LIB=${ICC_LIB}
-    ml gcc
+    ml gcc/5.2.0
     export LD_LIBRARY_PATH=${MKL_LIB}:${OMP_LIB}:${LD_LIBRARY_PATH}
 %endif
 

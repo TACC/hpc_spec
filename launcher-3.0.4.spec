@@ -1,32 +1,29 @@
 #
-# Ian Wangl
-# 2018-11-05
+# Si Liu
+# 2018-08-20
 #
-# PROGRAMMING_MODE should be changed to build all three different
-# versions of OpenSees.
 
-Summary: OpenSees - Local TACC Build
+Summary: Launcher Tool for Simple HTC
 
 # Give the package a base name
-%define pkg_base_name opensees
-%define MODULE_VAR    OPENSEES
+%define pkg_base_name launcher
+%define MODULE_VAR    LAUNCHER
 
 # Create some macros (spec file variables)
 %define major_version 3
-%define minor_version 0
-%define micro_version 0
-%define year_stamp 2018
-%define month_stamp 11
+%define minor_version 0.4
+%define micro_version 1
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}.%{year_stamp}.%{month_stamp}
+%define pkg_version %{major_version}.%{minor_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-%include compiler-defines.inc
-%include mpi-defines.inc
+#%include compiler-defines.inc
+#%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
+
 %include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
@@ -38,12 +35,12 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
-License:   LGPL
-Group:     Applications/Geoscience
-URL:       http://opensees.berkeley.edu/
-Packager:  TACC - iwang@tacc.utexas.edu, cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{major_version}.%{minor_version}.%{micro_version}-%{year_stamp}.%{month_stamp}.tar.gz
+Release:   1
+License:   MIT
+Group:     Development/Tools
+URL:       https://github.com/TACC/launcher
+Packager:  lwilson@tacc.utexas.edu, eijkhout@tacc.utexas.edu
+Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -52,27 +49,18 @@ Source:    %{pkg_base_name}-%{major_version}.%{minor_version}.%{micro_version}-%
 
 %package %{PACKAGE}
 Summary: The package RPM
-Group: Applications/Geoscience
+Group: Development/Tools
 %description package
-This is the long description for the package RPM...
-This package is a software framework for developing applications 
-to simulate the performance of structural and geotechnical 
-systems subjected to earthquakes. 
+Launcher tool for simple HTC on batch scheduled systems
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...
-This package is a software framework for developing applications 
-to simulate the performance of structural and geotechnical 
-systems subjected to earthquakes. 
+Module RPM for Launcher
 
 %description
-This package is a software framework for developing applications 
-to simulate the performance of structural and geotechnical 
-systems subjected to earthquakes. 
-
+The Launcher is a utility for simple HTC workflows on batch scheduled systems where submission of serial jobs is discouraged.
 
 #---------------------------------------
 %prep
@@ -96,7 +84,7 @@ systems subjected to earthquakes.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -c %{pkg_base_name}-%{pkg_version}
+%setup -n %{pkg_base_name}-%{pkg_version}
 
 
 #---------------------------------------
@@ -108,13 +96,11 @@ systems subjected to earthquakes.
 %install
 #---------------------------------------
 
+# Setup modules
 %include system-load.inc
-%include compiler-load.inc
-%include mpi-load.inc
 
+# Insert necessary module commands
 module purge
-module load intel/18.0.2
-module load cray_mpich
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -133,33 +119,13 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   ########### Do Not Remove #############
   #######################################
 
-  export OPENSEES_TMP_BUILD_HOME=`pwd`
-  mkdir bin
-  mkdir lib
-  mv OpenSees-%{major_version}.%{minor_version}.%{micro_version}-%{year_stamp}.%{month_stamp} OpenSees
-  cd OpenSees
-
-  mv Makefile.def_LS5_intel18.0.2 Makefile.def
-
-  sed -i 's/\/home1\/06058\/iwang\/managed/${OPENSEES_TMP_BUILD_HOME}/g' ./Makefile.def
-  unset VERBOSE
-  make -j 28
-
-  echo "OpenSeesSP is built. Proceed to the next..."
-
-  make wipe
-  sed -i 's/PROGRAMMING_MODE = PARALLEL/PROGRAMMING_MODE = PARALLEL_INTERPRETERS/g' ./Makefile.def
-  make -j 28
-
-  echo "OpenSeesMP is built. Proceed to the next..."
-
-  make wipe
-  sed -i 's/PROGRAMMING_MODE = PARALLEL_INTERPRETERS/PROGRAMMING_MODE = SEQUENTIAL/g' ./Makefile.def
-  make -j 28
-
-  cp -r ../bin $RPM_BUILD_ROOT/%{INSTALL_DIR}/
-  cp -r ../lib $RPM_BUILD_ROOT/%{INSTALL_DIR}/
-
+  #========================================
+  # Insert Build/Install Instructions Here
+  #========================================
+  
+  # Copy everything from tarball over to the installation directory
+  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -182,51 +148,43 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_msg=[[
-The %{MODULE_VAR} module file defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_BIN for
-the location of the %{name} distribution, 
-libraries, and excutables,respectively. 
-It also appends the path to the executables
-to the PATH environment variable.
+The Launcher is a utility for construction simple HTC workflows bundled 
+as a single batch job.
 
-The %{year_stamp}.%{month_stamp} is appended to the 
-version number due to the rapid development on going.
-We use the date to distinguish the version for now.
+The %{MODULE_VAR} module defines the %{MODULE_VAR}_DIR environment variable.
 
-The excutables of %{MODULE_VAR} include:
+Make sure to load python before loading the launcher.
 
-OpenSees	Sequential version
-OpenSeesSP	Parallel version in master-worker mode
-OpenSeesMP	Parallel version for parameter studies
+For more information on using the Launcher, please consult 
+%{MODULE_VAR}_DIR/README or go to the Launcher website:
 
-Version %{pkg_version}
+https://www.tacc.utexas.edu/research-development/tacc-software/the-launcher.
 ]]
 
 --help(help_msg)
 help(help_msg)
 
-whatis("OpenSees: Open System for Earthquake Engineering Simulation")
+always_load("python2")
+
+whatis("Name: Launcher")
+whatis("Version: 3.0.4")
+
 whatis("Version: %{pkg_version}%{dbg}")
-whatis("Category: application, geoscience")
-whatis("Keywords: Earthquake, Simulation")
-whatis("Description: Software framework for developing applications to simulate the performance of structural and geotechnical systems subjected to earthquakes")
-whatis("URL: http://opensees.berkeley.edu/")
-prereq("petsc/3.10")
-
-
 %if "%{is_debug}" == "1"
 setenv("TACC_%{MODULE_VAR}_DEBUG","1")
 %endif
 
 -- Create environment variables.
-local opensees_dir           = "%{INSTALL_DIR}"
+local bar_dir           = "%{INSTALL_DIR}"
+local plugin_dir        = "%{INSTALL_DIR}/plugins"
 
-family("opensees")
-prepend_path(    "PATH",                pathJoin(opensees_dir, "bin"))
-setenv( "TACC_%{MODULE_VAR}_DIR",                opensees_dir)
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(opensees_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(opensees_dir, "bin"))
+setenv( "%{MODULE_VAR}_DIR",                bar_dir)
+setenv( "%{MODULE_VAR}_PLUGIN_DIR",         plugin_dir)
+setenv( "%{MODULE_VAR}_RMI",                "SLURM")
+
 EOF
+# removed from modulefile:
+# load("python")
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
@@ -238,7 +196,7 @@ set     ModulesVersion      "%{version}"
 EOF
   
   # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+#  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
@@ -292,3 +250,6 @@ export PACKAGE_PREUN=1
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
 
+%changelog
+* Fri Aug 10 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: removed python load instruction from the modulefile
