@@ -1,6 +1,6 @@
 Summary:    R is a free software environment for statistical computing and graphics.
 Name:       Rstats
-Version:    3.4.0
+Version:    3.5.1
 Release:    2%{?dist}
 License:    GPLv2
 Vendor:     R Foundation for Statistical Computing
@@ -64,6 +64,8 @@ echo "Once more into the breach...."
 
 module purge
 module load TACC
+module swap intel intel/18.0.2
+
 
 # Want default of intel17 and impi17
 
@@ -94,9 +96,10 @@ cd ${SRC_DIR}
 
 
 # Using a custom modified version of R source that should live in SOURCES
-cp /admin/build/admin/rpms/stampede2/SOURCES/R-3.4.0-custom.tar.gz R-3.4.0.tar.gz
-tar zxfp R-3.4.0.tar.gz
-cd R-3.4.0
+R_VERSION='R-3.5.1'
+cp /admin/build/admin/rpms/stampede2/SOURCES/Rstats/${R_VERSION}-custom.tar.gz ${R_VERSION}.tar.gz
+tar zxfp ${R_VERSION}.tar.gz
+cd ${R_VERSION}
 
 # Old: MAIN_FFLAGS="-fPIC -qopenmp -mkl=parallel -O1 -xCORE-AVX2 -axMIC-AVX512  "\
 ./configure --prefix=%{INSTALL_DIR} \
@@ -128,11 +131,18 @@ make install
 
 cd ${SRC_DIR}
 
-rm -r R-3.4.0
+rm -r ${R_VERSION}
 
 # Ensure the R just built is used in the rest of the commands below
 export PATH=%{INSTALL_DIR}/bin:$PATH
 export LD_LIBRARY_PATH=%{INSTALL_DIR}/lib64:%{INSTALL_DIR}/lib:$LD_LIBRARY_PATH
+
+# packagestats tracker
+cp /admin/build/admin/rpms/stampede2/SOURCES/Rstats/packagestats/packagestats_0.0.5.0000.tar.gz packagestats.tar.gz
+R CMD INSTALL packagestats.tar.gz
+
+mkdir %{INSTALL_DIR}/etc
+cp /admin/build/admin/rpms/stampede2/SOURCES/Rstats/packagestats/Rprofile.site %{INSTALL_DIR}/etc/
 
 #----------------------------------------------------------
 # Copy from tmpfs to RPM_BUILD_ROOT so that everything is in the right
@@ -181,8 +191,9 @@ local r_bin   = "%{INSTALL_DIR}/bin"
 local r_inc   = "%{INSTALL_DIR}/include"
 local r_lib   = "%{INSTALL_DIR}/lib64/R/lib"
 local r_man   = "%{INSTALL_DIR}/share/man"
+local r_profile = "%{INSTALL_DIR}/etc/Rprofile.site"
 
-
+setenv("R_PROFILE", r_profile)
 setenv("TACC_R_DIR", r_dir)
 setenv("TACC_R_BIN", r_bin)
 setenv("TACC_R_INC", r_inc)
@@ -195,7 +206,7 @@ prepend_path("MANPATH", r_man)
 
 prepend_path("LD_LIBRARY_PATH", r_lib)
 
-try_load("RstatsPackages/3.4.0")
+try_load("RstatsPackages/3.5.1")
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'

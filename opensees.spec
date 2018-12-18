@@ -1,33 +1,29 @@
 #
-# Damon McDougall
-# 2018-09-22
+# Ian Wang
+# 2018-11-05
 #
-# Important Build-Time Environment Variables (see name-defines.inc)
-# NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
-# NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
-#
-# Important Install-Time Environment Variables (see post-defines.inc)
-# VERBOSE=1       -> Print detailed information at install time
-# RPM_DBPATH      -> Path To Non-Standard RPM Database Location
-#
+# PROGRAMMING_MODE should be changed to build all three different
+# versions of OpenSees.
 
-Summary: PAPI/Perfctr Library - Local TACC Build
+Summary: OpenSees - Local TACC Build
 
 # Give the package a base name
-%define pkg_base_name papi
-%define MODULE_VAR    PAPI
+%define pkg_base_name opensees
+%define MODULE_VAR    OPENSEES
 
 # Create some macros (spec file variables)
-%define major_version 5
-%define minor_version 6
+%define major_version 3
+%define minor_version 0
 %define micro_version 0
+%define year_stamp 2018
+%define month_stamp 11
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}.%{year_stamp}.%{month_stamp}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
-#%include mpi-defines.inc
+%include compiler-defines.inc
+%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
@@ -44,10 +40,10 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
 Release:   1%{?dist}
 License:   LGPL
-Group:     Development/Tools
-URL:       http://icl.cs.utk.edu/papi/
-Packager:  TACC - dmcdougall@tacc.utexas.edu, cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Group:     Applications/Geoscience
+URL:       http://opensees.berkeley.edu/
+Packager:  TACC - iwang@tacc.utexas.edu, cproctor@tacc.utexas.edu
+Source:    %{pkg_base_name}-%{major_version}.%{minor_version}.%{micro_version}-%{year_stamp}.%{month_stamp}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -56,26 +52,26 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 %package %{PACKAGE}
 Summary: The package RPM
-Group: Development/Tools
+Group: Applications/Geoscience
 %description package
 This is the long description for the package RPM...
-This package provides the perfctr hardware counter and PAPI
-library support.  It must be built against a kernel with the
-appropriate perfctr patches.
+This package is a software framework for developing applications 
+to simulate the performance of structural and geotechnical 
+systems subjected to earthquakes. 
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
-This package provides the perfctr hardware counter and PAPI
-library support.  It must be built against a kernel with the
-appropriate perfctr patches.
+This package is a software framework for developing applications 
+to simulate the performance of structural and geotechnical 
+systems subjected to earthquakes. 
 
 %description
-This package provides the perfctr hardware counter and PAPI
-library support.  It must be built against a kernel with the
-appropriate perfctr patches.
+This package is a software framework for developing applications 
+to simulate the performance of structural and geotechnical 
+systems subjected to earthquakes. 
 
 
 #---------------------------------------
@@ -100,7 +96,7 @@ appropriate perfctr patches.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n %{pkg_base_name}-%{pkg_version}
+%setup -c %{pkg_base_name}-%{pkg_version}
 
 
 #---------------------------------------
@@ -116,9 +112,9 @@ appropriate perfctr patches.
 %include system-load.inc
 
 # Insert necessary module commands
-# We purge because papi is considered a 'core' package and is built with
-# system gcc
-module purge
+module load parmetis_petsc/4.0
+module load arpack/3.1.4
+module list
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -137,12 +133,30 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   ########### Do Not Remove #############
   #######################################
 
-  
-  cd src
-  export ARCH=x86_64
-  ./configure --prefix=%{INSTALL_DIR} --with-perf_events
+  export OPENSEES_TMP_BUILD_HOME=`pwd`
+  mkdir bin
+  mkdir lib
+  mv OpenSees-%{major_version}.%{minor_version}.%{micro_version}-%{year_stamp}.%{month_stamp} OpenSees
+  cd OpenSees
+
+  sed -i 's/\/home1\/06058\/iwang\/managed/${OPENSEES_TMP_BUILD_HOME}/g' ./Makefile.def
+  unset VERBOSE
   make -j 28
-  make DESTDIR=$RPM_BUILD_ROOT install
+
+  echo "OpenSeesSP is built. Proceed to the next..."
+
+  make wipe
+  sed -i 's/PROGRAMMING_MODE = PARALLEL/PROGRAMMING_MODE = PARALLEL_INTERPRETERS/g' ./Makefile.def
+  make -j 28
+
+  echo "OpenSeesMP is built. Proceed to the next..."
+
+  make wipe
+  sed -i 's/PROGRAMMING_MODE = PARALLEL_INTERPRETERS/PROGRAMMING_MODE = SEQUENTIAL/g' ./Makefile.def
+  make -j 28
+
+  cp -r ../bin $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+  cp -r ../lib $RPM_BUILD_ROOT/%{INSTALL_DIR}/
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -167,18 +181,16 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_msg=[[
 The %{MODULE_VAR} module file defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC for
-the location of the %{name} distribution, libraries,
-and include files, respectively.
+TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_BIN for
+the location of the %{name} distribution, libraries, and excutables, 
+respectively. It also appends the path to the executables
+to the PATH environment variable.
 
-To use the %{MODULE_VAR} library, compile the source code with the option:
--I\$TACC_%{MODULE_VAR}_INC
-add the following options to the link step:
--Wl,-rpath,\$TACC_%{MODULE_VAR}_LIB -L\$TACC_%{MODULE_VAR}_LIB -lpapi
+The excutables of %{MODULE_VAR} include:
 
-The -Wl,-rpath,\$TACC_%{MODULE_VAR}_LIB option is not required, however,
-if it is used, then this module will not have to be loaded
-to run the program during future login sessions.
+OpenSees	Sequential version
+OpenSeesSP	Parallel version in master-worker mode
+OpenSeesMP	Parallel version for parameter studies
 
 Version %{pkg_version}
 ]]
@@ -186,12 +198,13 @@ Version %{pkg_version}
 --help(help_msg)
 help(help_msg)
 
-whatis("PAPI: Performance Application Programming Interface")
+whatis("OpenSees: Open System for Earthquake Engineering Simulation")
 whatis("Version: %{pkg_version}%{dbg}")
-whatis("Category: library, performance measurement")
-whatis("Keywords: Profiling, Library, Performance Measurement")
-whatis("Description: Interface to monitor performance counter hardware for quantifying application behavior")
-whatis("URL: http://icl.cs.utk.edu/papi/")
+whatis("Category: application, geoscience")
+whatis("Keywords: Earthquake, Simulation")
+whatis("Description: Software framework for developing applications to simulate the performance of structural and geotechnical systems subjected to earthquakes")
+whatis("URL: http://opensees.berkeley.edu/")
+prereq("parmetis_petsc/4.0", "arpack/3.1.4")
 
 
 %if "%{is_debug}" == "1"
@@ -199,16 +212,13 @@ setenv("TACC_%{MODULE_VAR}_DEBUG","1")
 %endif
 
 -- Create environment variables.
-local papi_dir           = "%{INSTALL_DIR}"
+local opensees_dir           = "%{INSTALL_DIR}"
 
-family("papi")
-prepend_path(    "PATH",                pathJoin(papi_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(papi_dir, "lib"))
-prepend_path(    "MANPATH",             pathJoin(papi_dir, "share/man"))
-setenv( "TACC_%{MODULE_VAR}_DIR",                papi_dir)
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(papi_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(papi_dir, "bin"))
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(papi_dir, "include"))
+family("opensees")
+prepend_path(    "PATH",                pathJoin(opensees_dir, "bin"))
+setenv( "TACC_%{MODULE_VAR}_DIR",                opensees_dir)
+setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(opensees_dir, "lib"))
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(opensees_dir, "bin"))
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'

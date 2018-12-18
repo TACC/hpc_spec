@@ -1,15 +1,15 @@
-# $Id: meep.spec,v 1.6 2018/09/26 
+# $Id: meep.spec,v 1.3 2015/04/22 
 
 Summary: Meep is a free finite-difference time-domain simulation software package
 Name: meep
-Version: 1.6
-Release: 1
+Version: 1.3
+Release: 2
 License: GPL
 URL: http://ab-initio.mit.edu/wiki/index.php/Meep
 Group: applications/electromagnetics
-Source: meep-1.6.tar.gz
-Source1: libctl-4.1.3.tar.gz
-Source2: harminv-1.4.1.tar.gz
+Source: meep-1.3.tar.gz
+Source1: libctl-3.2.1.tar.gz
+Source2: harminv-1.3.1.tar.gz
 Packager: cazes@tacc.utexas.edu
 BuildRoot: /var/tmp/%{name}-%{version}-buildroot
 
@@ -61,7 +61,7 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 %setup -T -D -a 1
 
 # We should now have a ../BUILD/meep-<version> and, within that, a
-# ../BUILD/meep-<version>/libctl-4.1.3 directory.
+# ../BUILD/meep-<version>/libctl-3.2.1 directory.
 
 # Third call to setup, untar the third source (harminv) in a subdirectory
 %setup -T -D -a 2
@@ -91,7 +91,7 @@ mount -t tmpfs tmpfs %{INSTALL_DIR}
 # First build libctl.  Requires guile-devel RPM.
 # We will build libctl in its own directory off of the meep install.
 mkdir %{INSTALL_DIR}/libctl
-cd libctl-4.1.3
+cd libctl-3.2.1
 ./configure --prefix=%{INSTALL_DIR}/libctl
 make
 make install
@@ -108,10 +108,9 @@ make install
 #Updated for intel 15/mkl 11.2
 export HARMINV_MKL="-L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm"
 mkdir %{INSTALL_DIR}/harminv
-cd ../harminv-1.4.1
+cd ../harminv-1.3.1
 ./configure \
   CFLAGS="-DINFINITY=1.79769e+308 -O3 -xAVX2 -axCOMMON-AVX512" \
-  --enable-shared \
   --prefix=%{INSTALL_DIR}/harminv \
   --with-blas="$HARMINV_MKL" \
   --with-lapack="$HARMINV_MKL"
@@ -142,7 +141,6 @@ export MY_HARMINV_DIR=%{INSTALL_DIR}/harminv
   LDFLAGS="-L${TACC_FFTW3_LIB} -lfftw3 -L${TACC_HDF5_LIB} -L${TACC_GSL_LIB} -L${MY_CTL_DIR}/lib -L${MY_HARMINV_DIR}/lib" \
   CPPFLAGS="-DMPICH_IGNORE_CXX_SEEK -I${TACC_FFTW3_INC} -I${TACC_HDF5_INC} -I${TACC_GSL_INC} -I${MY_CTL_DIR}/include  -I${MY_HARMINV_DIR}/include" \
   CXXFLAGS="-O3 -xCORE-AVX2 -axCOMMON-AVX512" \
-  --without-python \
   --with-libctl="${MY_CTL_DIR}/share/libctl" \
   --with-mpi \
   --with-blas="-Wl,-rpath,${TACC_MKL_LIB} -L${TACC_MKL_LIB} -lmkl_blas95_lp64 -lmkl_rt -lpthread -lm" \

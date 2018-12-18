@@ -6,9 +6,9 @@ Summary: PETSc install
 
 # Create some macros (spec file variables)
 %define major_version 3
-%define minor_version 9
-%define micro_version 3
-%define versionpatch 3.9.3
+%define minor_version 10
+%define micro_version 2
+%define versionpatch 3.10.2
 
 %define pkg_version %{major_version}.%{minor_version}
 
@@ -32,7 +32,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 5%{?dist}
+Release: 2%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -47,9 +47,9 @@ Source0: %{pkg_base_name}-%{versionpatch}.tar.gz
 %package %{PACKAGE}
 Summary: Petsc local binary install
 Group: System Environment/Base
-# %package %{PACKAGE}-xx
-# Summary: Petsc local binary install
-# Group: System Environment/Base
+%package %{PACKAGE}-xx
+Summary: Petsc local binary install
+Group: System Environment/Base
 %package %{PACKAGE}-sources
 Summary: Petsc local binary install
 Group: System Environment/Base
@@ -61,9 +61,9 @@ Group: System Environment/Base
 %description %{PACKAGE}
 PETSC is the Portable Extendible Toolkit for Scientific Computing.
 It contains solvers and tools mostly for PDE solving.
-# %description %{PACKAGE}-xx
-# PETSC is the Portable Extendible Toolkit for Scientific Computing.
-# It contains solvers and tools mostly for PDE solving.
+%description %{PACKAGE}-xx
+PETSC is the Portable Extendible Toolkit for Scientific Computing.
+It contains solvers and tools mostly for PDE solving.
 %description %{PACKAGE}-sources
 PETSC is the Portable Extendible Toolkit for Scientific Computing.
 It contains solvers and tools mostly for PDE solving.
@@ -167,7 +167,7 @@ export PLAPACKOPTIONS=
 ##
 export logdir=%{_topdir}/../apps/petsc/logs
 mkdir -p ${logdir}; rm -rf ${logdir}/*
-export dynamiccc="i64 debug i64debug complexi64 complexi64debug uni unidebug"
+export dynamiccc="i64 debug i64debug complexi64 complexi64debug uni unidebug nohdf5"
 export dynamiccxx="cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug cxxi64 cxxi64debug"
 #export static="cxxstatic cxxstaticdebug static staticdebug complexstatic complexstaticdebug cxxcomplexstatic cxxcomplexstaticdebug"
 #module load python
@@ -249,22 +249,19 @@ esac
 ## hdf5
 ##
 
-#if [ "%{comp_fam}" = "intel" -a  "%{comp_fam_ver}" != "intel18" ] ; then 
-  export HAS_HDF5=1
-# else
-#   export HAS_HDF5=0
-# fi
+export HAS_HDF5=1
+export hdf5string="hdf5"
+export hdf5download="--with-hdf5=1 --download-hdf5=1"
+#--with-hdf5-dir=${TACC_HDF5_DIR}"
+export hdf5versionextra="; hdf5 support"
 
-if [ ${HAS_HDF5} -eq 1 ] ; then
-    module load phdf5
-    export hdf5string="hdf5"
-    export hdf5download="--with-hdf5=1 --with-hdf5-dir=${TACC_HDF5_DIR}"
-    export hdf5versionextra="; hdf5 support"
-else
-  export hdf5string=
-  export hdf5download=
-  export hdf5versionextra=
-fi
+case "${ext}" in
+*nohdf5* ) export HAS_HDF5=0
+        export hdf5string=
+        export hdf5download=
+        export hdf5versionextra=
+        ;;
+esac
 
 export versionextra="${versionextra}${hdf5versionextra}"
 
@@ -295,19 +292,22 @@ export CHACOSTRING=chaco
 export CHACO_OPTIONS="--with-chaco=1 --download-chaco"
 
 #
+# Parmetis/metis
+# needed for Elemental, Mumps, SuperLU
+#
+export PARMETIS_OPTIONS="--with-parmetis=1 --download-parmetis --with-metis=1 --download-metis"
+export PARMETISSTRING="parmetis"
+
+#
 # Elemental
 #
-export ELEMENTAL_OPTIONS="--with-elemental=1 --download-elemental"
+export ELEMENTAL_OPTIONS="--with-elemental=1 --download-elemental --with-cxx-dialect=C++11 ${PARMETIS_OPTIONS}"
 export ELEMENTAL_STRING=elemental
 
 #
 # Mumps & Superlu depend on parmetis which depends on metis
-export PARMETIS_OPTIONS="--with-parmetis=1 --download-parmetis --with-metis=1 --download-metis"
-export PARMETISSTRING="parmetis"
+#
 export MUMPS_OPTIONS="--with-mumps=1 --download-mumps ${PARMETIS_OPTIONS}"
-export SUPERLU_OPTIONS="--with-superlu_dist=1 --download-superlu_dist \
-   --with-superlu=1 --download-superlu ${PARMETIS_OPTIONS}"
-export superlustring="superlu (distributed/sequential)"
 export SCALAPACK_OPTIONS="--with-scalapack=1 --download-scalapack --with-blacs=1 --download-blacs"
 
 #
@@ -335,6 +335,13 @@ export SUNDIALS_OPTIONS="--with-sundials=1 --download-sundials"
 export SUNDIALSSTRING="sundials"
 
 #
+# SuperLU
+#
+export SUPERLU_OPTIONS="--with-superlu_dist=1 --download-superlu_dist \
+   --with-superlu=1 --download-superlu ${PARMETIS_OPTIONS}"
+export superlustring="superlu (distributed/sequential)"
+
+#
 # Zoltan
 # 
 export ZOLTAN_OPTIONS="--with-zoltan=1 --download-zoltan=1 --download-ptscotch=1"
@@ -344,8 +351,10 @@ export ZOLTANSTRING="zoltan/ptscotch"
 ## 64-bit indices
 ##
 INDEX_OPTIONS=
+INDEX_STRING=
 case "${ext}" in
 *i64* ) INDEX_OPTIONS=--with-64-bit-indices ;
+        INDEX_STRING="64-bit indexing" ;
         CHACO_OPTIONS= ;       CHACOSTRING= ;
         MUMPS_OPTIONS= ;       MUMPSTRING= ;
 	ML_OPTIONS= ;          ML_STRING= ;
@@ -361,7 +370,7 @@ esac
 ##
 ## define packages; some are real & complex, others real only.
 ##
-export complexpackages="${ELEMENTAL_STRING} mumps scalapack ${SPOOLES_STRING} ${SUITESPARSE_STRING} ${superlustring} ${ZOLTANSTRING}"
+export complexpackages="${ELEMENTAL_STRING} mumps scalapack ${SPOOLES_STRING} ${SUITESPARSE_STRING} ${superlustring} ${ZOLTANSTRING} ${hdf5string}"
 export PETSC_COMPLEX_PACKAGES="\
   ${ELEMENTAL_OPTIONS} \
   ${hdf5download} \
@@ -371,7 +380,7 @@ export PETSC_COMPLEX_PACKAGES="\
   ${ZOLTAN_OPTIONS} \
   "
 
-export realonlypackages="${CHACOSTRING} ${hdf5string} ${HYPRESTRING} ${MLSTRING} ${PARMETISSTRING} spai ${PLAPACKSTRING} ${SUNDIALSSTRING}"
+export realonlypackages="${CHACOSTRING} ${HYPRESTRING} ${MLSTRING} ${PARMETISSTRING} spai ${PLAPACKSTRING} ${SUNDIALSSTRING}"
 export PETSC_REALONLY_PACKAGES="\
   ${CHACO_OPTIONS} \
   ${HYPRE_OPTIONS} ${ML_OPTIONS} \
@@ -395,6 +404,8 @@ uni*     )
 	  ;;
 esac
 
+export packageslisting="${packageslisting} ${INDEX_STRING}"
+
 #
 # blas/lapack
 #
@@ -407,11 +418,10 @@ export noblas="\
   "
 
 #
-# cuda makes no sense on a KNL
+# we have no cuda on stampede
 #
 export CUDA_OPTIONS=
 
-export FPIC_OPTIONS=
 #
 # petsc can run single processor with a fake mpi
 # in that case: no external packages, and explicit non-mp cc/fc compilers
@@ -441,12 +451,18 @@ single )
     export packages= ;;
 esac
 
+if [ "%{comp_fam}" = "gcc" ] ; then
+  # this is TACC_INTEL_LIB
+  export LIBS="${LIBS} /opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/libirc.so"
+fi
+
 ##
 ## here we go
 ##
 export PETSC_ARCH=${architecture}
-export EXTERNAL_PACKAGES_DIR=/admin/build/admin/rpms/stampede2/SOURCES/petsc-packages/externalpackages-%{pkg_version}
-mkdir -p ${EXTERNAL_PACKAGES_DIR}
+export EXTERNAL_PACKAGES_DIR=/admin/build/admin/rpms/stampede2/SOURCES/petsc-packages
+export PACKAGES_BUILD_DIR=/tmp/petsc-%{version}/${architecture}
+mkdir -p ${PACKAGES_BUILD_DIR}
 noprefix=--prefix=%{INSTALL_DIR}/${architecture}
 # export packages=
 if [ "${ext}" = "tau" ] ; then
@@ -464,19 +480,25 @@ else
   export I_MPI_FABRICS=shm:tmi
   RPM_BUILD_ROOT=tmpfs PETSC_DIR=`pwd` ./configure \
     ${PETSC_CONFIGURE_OPTIONS} \
-    --with-packages-dir=${EXTERNAL_PACKAGES_DIR} \
-    --with-external-packages-dir=${EXTERNAL_PACKAGES_DIR} \
+    --with-packages-search-path=[${EXTERNAL_PACKAGES_DIR}] \
+    --with-packages-build-dir=${PACKAGES_BUILD_DIR} \
     ${mpi} ${clanguage} ${scalar} ${dynamicshared} ${precision} ${packages} \
     --with-debugging=${usedebug} \
     ${BLAS_LAPACK_OPTIONS} ${MPI_EXTRA_OPTIONS} ${CUDA_OPTIONS} ${INDEX_OPTIONS} \
     COPTFLAGS="${CFLAGS}" FOPTFLAGS="${FFLAGS}" CXXOPTFLAGS="${CXXFLAGS}"
 fi
 
+export noops="\
+    --with-packages-download-dir=${PACKAGE_DOWNLOAD_DIR} \
+    "
 ####
 #### post-processing fixes
 #### <<<<<<<<<<<<<<<<
 ####
 pushd ${architecture}
+pwd
+ls
+ls ./lib
 for f in ./lib/petsc/conf/configure.log \
     ./lib/petsc/conf/petscvariables \
     ./lib/petsc/conf/PETScBuildInternal.cmake \
@@ -485,10 +507,12 @@ for f in ./lib/petsc/conf/configure.log \
   sed -i -e "s/debug-mt/release_mt/" $f
 done
 
-# VLE no longer working or needed in 3.8?
-# for f in ./lib/libsundials*.la ; do
-#   sed -i -e "/dependency_libs/s/lmpi./lmpi/" $f
-# done
+# fix a weird bug that trips up John Peterson
+if [ `ls ./lib/libsundials*.la | wc -l` -gt 0 ] ; then
+  for f in ./lib/libsundials*.la ; do
+    sed -i -e "/dependency_libs/s/lmpi./lmpi/" $f
+  done
+fi
 
 popd
 ####
@@ -622,8 +646,9 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
   %{INSTALL_DIR}/skylake-i64debug
   %{INSTALL_DIR}/skylake-uni
   %{INSTALL_DIR}/skylake-unidebug
-###%files %{PACKAGE}-xx
-###  %defattr(-,root,install,)
+  %{INSTALL_DIR}/skylake-nohdf5
+%files %{PACKAGE}-xx
+  %defattr(-,root,install,)
   %{INSTALL_DIR}/skylake-cxx
   %{INSTALL_DIR}/skylake-cxxi64
   %{INSTALL_DIR}/skylake-complex
@@ -639,11 +664,9 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
-* Tue Aug 14 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 4: DID WE ACTUALLY MAKE AND RELEASE THIS? just to disambiguate for intel 18 update 2
-* Mon Jul 23 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: point update to 3.9.3 and adding complexi64
-* Mon Apr 30 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: point update to 3.9.2
-* Sun Apr 01 2018 eijkhout <eijkhout@tacc.utexas.edu>
+* Thu Nov 15 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: point update to 3.10.2, 
+             download hdf5, added nohdf5 ext
+             go to 4 rpms again.
+* Tue Sep 25 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

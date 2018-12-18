@@ -1,14 +1,14 @@
 Prefix:    /opt/apps
 Summary:   lmod: Lua based Modules
 Name:      lmod
-Version:   7.7.34
+Version:   7.8.11
 Release:   1%{?dist}
 License:   MIT
 Vendor:    Robert McLay
 Group:     System Environment/Base
 Source:    Lmod-%{version}.tar.bz2
 Packager:  TACC - mclay@tacc.utexas.edu
-Buildroot: /var/tmp/%{name}-%{version}-buildroot
+#Buildroot: /var/tmp/%{name}-%{version}-buildroot
 
 %define debug_package %{nil}
 %include rpm-dir.inc

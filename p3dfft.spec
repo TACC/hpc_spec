@@ -1,9 +1,9 @@
 #
 # Spec file for p3dfft 2.7
 #
-Summary: p3dfft 2.7.5
+Summary: p3dfft 2.7.7
 Name: p3dfft
-Version: 2.7.5
+Version: 2.7.7
 Release: 1%{?dist}
 License: GPL V3
 Vendor: https://code.google.com/p/p3dfft/
@@ -57,13 +57,14 @@ sed -i -e's/-lmpichf90 -limf/-limf/' configure
 
 #Default build, stride-1,double precision 
 # make clean
-export FCFLAGS="-O3 -xCORE-AVX2 -axMIC-AVX512 -save-temps" 
-export CFLAGS="-O3 -xCORE-AVX2 -axMIC-AVX512"
-export LDFLAGS="-O3 -xCORE-AVX2 -axMIC-AVX512"
+export FCFLAGS="-O3 -xCORE-AVX2 -axCORE-AVX512,MIC-AVX512 -save-temps" 
+export CFLAGS="-O3 -xCORE-AVX2 -axCORE-AVX512,MIC-AVX512"
+export LDFLAGS="-O3 -xCORE-AVX2 -axCORE-AVX512,MIC-AVX512"
 ./configure \
     FC=$FC \
     CC=$CC  \
   --enable-intel \
+  --enable-openmp \
   --enable-stride1 \
   --enable-fftw \
   --with-fftw=${TACC_FFTW3_DIR} \
@@ -77,6 +78,7 @@ make clean
     FC=$FC \
     CC=$CC  \
   --enable-intel \
+  --enable-openmp \
   --enable-fftw \
   --with-fftw=${TACC_FFTW3_DIR} \
   --prefix=%{INSTALL_DIR}/noncontiguous
@@ -89,6 +91,7 @@ make clean
     FC=$FC \
     CC=$CC  \
   --enable-intel \
+  --enable-openmp \
   --enable-fftw \
   --enable-single \
   --enable-stride1 \
@@ -103,6 +106,7 @@ make clean
     FC=$FC \
     CC=$CC  \
   --enable-intel \
+  --enable-openmp \
   --enable-fftw \
   --enable-single \
   --with-fftw=${TACC_FFTW3_DIR} \

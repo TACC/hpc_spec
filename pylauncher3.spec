@@ -1,11 +1,10 @@
 #
-# Spec file for Gnu Parallel
-# https://www.gnu.org/software/parallel/
+# pylauncher3.spec
+# Victor Eijkhout
 #
-# Victor Eijkhout, 2018
-# based on:
+# based on
 #
-# Bar.spec, 
+# Bar.spec
 # W. Cyrus Proctor
 # Antonio Gomez
 # 2015-08-25
@@ -25,16 +24,18 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary:    Set of tools for manipulating geographic and Cartesian data sets
+Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name gnuparallel
-%define MODULE_VAR    GNUPARALLEL
+%define pkg_base_name pylauncher
+%define MODULE_VAR    PYLAUNCHER
 
 # Create some macros (spec file variables)
-%define major_version git20180620
+%define major_version 3
+%define minor_version 0
 
-%define pkg_version %{major_version}
+%define pkg_version %{major_version}.%{minor_version}
+%define pylauncherversion %{major_version}.%{minor_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -43,8 +44,8 @@ Summary:    Set of tools for manipulating geographic and Cartesian data sets
 ########################################
 ### Construct name based on includes ###
 ########################################
-#%include name-defines.inc
-%include name-defines-noreloc.inc
+%include name-defines.inc
+#%include name-defines-noreloc.inc
 #%include name-defines-hidden.inc
 #%include name-defines-hidden-noreloc.inc
 ########################################
@@ -57,31 +58,39 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3%{?dist}
-License:   GNU
+Release:   1
 Group:     Development/Tools
-Vendor:     GNU Foundation
-Source:	    gnuparallel-%{version}.tgz
-URL:	    https://www.gnu.org/software/parallel/
-Packager:   eijkhout@tacc.utexas.edu
+License: GPL
+Url: https://github.com/TACC/pylauncher
+Group: TACC
+Packager: eijkhout@tacc.utexas.edu 
+Source:    %{pkg_base_name}-%{pkg_version}.tgz
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
-%global _python_bytecompile_errors_terminate_build 0
+
+# Turn off the brp-python-bytecompile script
+%global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
+
 
 %package %{PACKAGE}
-Summary: GNUPARALLEL is a job launcher
+Summary: The package RPM
+Group: Development/Tools
 %description package
 This is the long description for the package RPM...
 
 %package %{MODULEFILE}
-Summary: GNUPARALLEL is a job launcher
+Summary: The modulefile RPM
+Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
 
 %description
-Summary: GNUPARALLEL is a job launcher
+The longer-winded description of the package that will 
+end in up inside the rpm and is queryable if installed via:
+rpm -qi <rpm-name>
+
 
 #---------------------------------------
 %prep
@@ -122,16 +131,12 @@ Summary: GNUPARALLEL is a job launcher
 # Setup modules
 %include system-load.inc
 module purge
-
 # Load Compiler
 #%include compiler-load.inc
-
 # Load MPI Library
 #%include mpi-load.inc
 
 # Insert further module commands
-module load gcc
-module load boost cmake python3
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -154,58 +159,9 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
   
-  # Create some dummy directories and files for fun
-  #mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  #mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/share
+  # Copy everything from tarball over to the installation directory
+  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
   
-#
-# config/make
-#
-
-PARALLEL_VERSION=%{major_version}
-PARALLEL_HOME=${WORK}/parallel/
-PARALLEL_SRC=`pwd`
-PARALLEL_BUILD=/tmp/parallel-stuff
-PARALLEL_INSTALL=$RPM_BUILD_ROOT/%{INSTALL_DIR}
-PARALLEL_BIN=${PARALLEL_INSTALL}/bin
-
-####
-#### we only support gcc installation
-####
-export CC=gcc
-export CXX=g++
-export FC=gfortran
-
-#### configure
-export PATH=${PATH}:/usr/bin
-
-#which pod2man
-#(echo foo | pod2man ) || /bin/true
-#alias pod2man="pod2man -errors=pod"
-
-pushd /tmp && rm -rf gnuparallel && mkdir gnuparallel && cd gnuparallel \
-  && git clone https://github.com/ssimms/pdfapi2.git \
-  && export PERLLIB=`pwd`/pdfapi2/lib \
-  && export PERL5LIB=`pwd`/pdfapi2/lib \
-  && git clone https://github.com/gitpan/pod2pdf.git \
-  && cd pod2pdf && perl Makefile.PL && make \
-  && export PATH=`pwd`/blib/script:${PATH} \
-  && export PERLLIB=`pwd`/blib/lib:${PERLLIB} \
-  && export PERL5LIB=`pwd`/blib/lib:${PERL5LIB} \
-  && popd
-which pod2pdf
-
-./configure --prefix=${PARALLEL_INSTALL} \
-&& make \
-&& ( cd src ; for p in parallel.pdf env_parallel.pdf sem.pdf sql.pdf niceload.pdf parallel_tutorial.pdf parallel_book.pdf parallel_design.pdf parallel_alternatives.pdf parcat.pdf parset.pdf ; do touch $p ; done ) \
-&& ( cd src ; for m in ./parallel_design.7 ; do touch $m ; done ) \
-&& make install
-
-( cd %{_topdir}/SOURCES/gnuparallel_scripts && rm -f *~ )
-cp -r %{_topdir}/SOURCES/gnuparallel_scripts ${PARALLEL_INSTALL}/scripts
-mv ${PARALLEL_INSTALL}/scripts/README ${PARALLEL_INSTALL}/
-chmod -R o+rX ${PARALLEL_INSTALL}/scripts
-
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -226,49 +182,49 @@ chmod -R o+rX ${PARALLEL_INSTALL}/scripts
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
-help( [[
-Module %{name} loads environmental variables defining
-the location of GNUPARALLEL directory and binaries:
-TACC_GNUPARALLEL_DIR TACC_GNUPARALLEL_BIN
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
+local help_msg=[[
+The %{MODULE_VAR} module defines the following environment variables:
+TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_DOC, 
+for the location of the %{MODULE_VAR} distribution, and documentation
+respectively.
 
-Executing a file of commandlines:
+Usage:
+  import pylauncher3
+and use one of the launcher classes. See the examples 
+directory for inspiration. Preferably used with python3.
+]]
 
-gnuparallel_command_file_execute.sh commands
+--help(help_msg)
+help(help_msg)
 
-Version: %{version}
-]] )
+whatis("Name: %{pkg_base_name}")
+whatis("Version: %{pkg_version}%{dbg}")
+%if "%{is_debug}" == "1"
+setenv("TACC_%{MODULE_VAR}_DEBUG","1")
+%endif
 
-whatis( "GNUPARALLEL" )
-whatis( "Version: %{version}" )
-whatis( "Category: system" )
-whatis( "Keywords: System, utilities" )
-whatis( "Description: GNU Parallel utility" )
-whatis( "URL: https://www.gnu.org/software/parallel/" )
+-- Create environment variables.
+local launcher_dir           = "%{INSTALL_DIR}"
 
-local version =  "%{version}"
-local gnuparallel_dir =  "%{INSTALL_DIR}"
-
-setenv("TACC_GNUPARALLEL_DIR",gnuparallel_dir)
-setenv("TACC_GNUPARALLEL_BIN",pathJoin( gnuparallel_dir,"bin" ) )
-
-prepend_path ("PATH",pathJoin( gnuparallel_dir,"bin" ) )
-prepend_path ("PATH",pathJoin( gnuparallel_dir,"scripts" ) )
+prepend_path(    "PYTHONPATH",     launcher_dir )
+setenv( "TACC_%{MODULE_VAR}_DIR",                launcher_dir)
+setenv( "TACC_%{MODULE_VAR}_DOC",       pathJoin(launcher_dir, "docs"))
 EOF
-
+  
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module1.0####################################################################
+#%Module3.1.1#################################################
 ##
-## Version file for %{name} version %{version}
+## version file for %{BASENAME}%{version}
 ##
-set ModulesVersion "%version"
-EOF
 
+set     ModulesVersion      "%{version}"
+EOF
+  
   # Check the syntax of the generated lua modulefile only if a visible module
   %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
   %endif
-
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -321,9 +277,5 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Wed Dec 05 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: UNRELEASED purging emacs backup files
-* Mon Sep 17 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: adding ssh script
-* Thu Jun 14 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 1: initial release
+* Sun Oct 07 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial build

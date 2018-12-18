@@ -5,12 +5,12 @@ Summary: Libmesh install
 %define MODULE_VAR    LIBMESH
 
 # Create some macros (spec file variables)
-%define major_version 1
-%define minor_version 3
-%define micro_version 1
+%define major_version git20181008
+%define minor_version 0
+%define micro_version 0
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
-%define petscversion 3.10
+%define pkg_version %{major_version}
+#.%{minor_version}.%{micro_version}
 
 %include rpm-dir.inc
 %include compiler-defines.inc
@@ -35,7 +35,7 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 Release: 1%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
-Source: %{pkg_base_name}-%{pkg_version}.tar.gz
+Source: %{pkg_base_name}-%{pkg_version}.tgz
 URL: https://github.com/libMesh
 Vendor: CFDlab UT Austin
 Packager: TACC -- eijkhout@tacc.utexas.edu
@@ -90,7 +90,7 @@ mount -t tmpfs tmpfs %{INSTALL_DIR}
 
 export COPTFLAGS="-g %{TACC_OPT} -O2"
 
-module load boost python petsc/%{petscversion}
+module load boost python
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -123,14 +123,10 @@ ${LIBMESH_DIR}/configure --prefix=${LIBMESH_INSTALLATION} \
     2>&1 | tee ${softdir}/configure.log
 
 make 2>&1 | tee ${softdir}/make.log
-
-# small sanity check
-make check -C examples SUBDIRS=introduction/introduction_ex1 || /bin/true
-
 make install
-# this should be fixed in 1.3.1
-#sed -i -e '/make_dependencies/s/@/-@/' ${LIBMESH_INSTALLATION}/contrib/utils/Makefile.in
 
+echo "are we still in /tmp/libmesh-build?"
+pwd
 popd
 
 echo "contents of the tmpfs INSTALL_DIR:"
@@ -222,7 +218,5 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
-* Mon Oct 15 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: 1.3.1
-* Mon Mar 05 2018 eijkhout <eijkhout@tacc.utexas.edu>
+* Mon Oct 08 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

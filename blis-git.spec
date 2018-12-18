@@ -52,10 +52,10 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   BSD
 Group:     Development/Tools
-URL:       https://code.google.com/p/blis/
+URL:       https://github.com/flame/blis
 Packager:  TACC - eijkhout@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tgz
 
@@ -161,7 +161,8 @@ make install
 
 umount %{INSTALL_DIR}
   
-  ls $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+cp -r examples $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+ls $RPM_BUILD_ROOT/%{INSTALL_DIR}/
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -189,6 +190,8 @@ local help_message = [[
 This module provides the BLIS environment variables:
 TACC_BLIS_DIR, TACC_BLIS_LIB, TACC_BLIS_INC
 
+There are examples programs in \$TACC_BLIS_DIR/examples
+
 Version %{version}
 ]]
 
@@ -198,7 +201,7 @@ whatis("Name: BLIS")
 whatis("Version: %{version}")
 whatis("Category: ")
 whatis("Keywords: library, numerics, BLAS")
-whatis("URL: https://code.google.com/p/blis/")
+whatis("URL: https://github.com/flame/blis")
 whatis("Description: BLAS-like Library Instantiation Software")
 
 local blis_dir="%{INSTALL_DIR}"
@@ -291,5 +294,7 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 #---------------------------------------
 #
+* Tue Sep 18 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2 UNRELEASED: module info
 * Fri Aug 10 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 1: initial release of 0.4.0
+- release 1: initial release of git repo version

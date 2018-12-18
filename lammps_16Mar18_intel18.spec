@@ -42,7 +42,7 @@
 %include rpm-dir.inc                  
 %include compiler-defines.inc
 %include mpi-defines.inc
-%include name-defines.inc
+%include name-defines-noreloc.inc
 
 ################################################################
 
@@ -51,7 +51,7 @@ Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
-Release:   3%{?dist}
+Release:   5%{?dist}
 License:   GPL
 Vendor:    Sandia
 Group:     applications/chemistry
@@ -1031,7 +1031,7 @@ setenv("TACC_LAMMPS_SRC"       ,pathJoin(lmp_dir,"src"))
 
 local kim_dir="%{INSTALL_DIR}/lib/kim/"
 local kim_model_dir="%{INSTALL_DIR}/lib/kim/kim_env_collection/models"
-local kim_driver_dir="%{INSTALL_DIR}/lib/kim/kim_env_collection/drivers"    
+local kim_driver_dir="%{INSTALL_DIR}/lib/kim/kim_env_collection/model_drivers"
 
 append_path("PATH",pathJoin(lmp_dir,"bin"))
 append_path("PATH",pathJoin(lmp_dir,"lib/ffmpeg/bin"))

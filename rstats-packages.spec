@@ -1,1 +1,0 @@
-RstatsPackages-3.5.1_intel18_impi18_v1.spec

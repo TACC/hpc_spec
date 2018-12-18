@@ -42,7 +42,8 @@
 %include rpm-dir.inc                  
 %include compiler-defines.inc
 %include mpi-defines.inc
-%include name-defines.inc
+%include name-defines-noreloc-home1.inc
+#%include name-defines.inc
 
 ################################################################
 
@@ -51,7 +52,7 @@ Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   Open source
 Vendor:    Various authors
 Group:     applications/chemistry
@@ -258,7 +259,7 @@ whatis("Keywords: Chemistry, Molecular Dynamics, Application")
 whatis("URL: ")
 whatis("Description: Computational chemistry tools")
 
-local chemtoolkit_dir="%{INSTALL_DIR}/chemtoolkit"
+local chemtoolkit_dir="%{INSTALL_DIR}"
 
 load("hdf5/1.8.16")
 
@@ -266,9 +267,9 @@ setenv("TACC_CHEMTOOLKIT_DIR"    ,chemtoolkit_dir)
 setenv("TACC_CHEMTOOLKIT_LIB"    ,pathJoin(chemtoolkit_dir,"lib"))
 prepend_path("PATH"              ,pathJoin(chemtoolkit_dir,"bin"))
 prepend_path("LD_LIBRARY_PATH"   ,pathJoin(chemtoolkit_dir,"lib"))
-prepend_path("LD_LIBRARY_PATH"   ,pathJoin(chemtoolkit_dir,"lib/python3/site-packages"))
+prepend_path("LD_LIBRARY_PATH"   ,pathJoin(chemtoolkit_dir,"lib/python3.6/site-packages"))
 prepend_path("PYTHONPATH"        ,pathJoin(chemtoolkit_dir,"lib"))
-prepend_path("PYTHONPATH"        ,pathJoin(chemtoolkit_dir,"lib/python3/site-packages"))
+prepend_path("PYTHONPATH"        ,pathJoin(chemtoolkit_dir,"lib/python3.6/site-packages"))
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} <<EOF

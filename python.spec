@@ -1,7 +1,8 @@
 Summary:    Python is a high-level general-purpose programming language.
-Name:       tacc-python3 
-#Version:    2.7.15
-Version:    3.7.0
+Name:      tacc-python2
+#Name:       tacc-python3 
+Version:    2.7.15
+#Version:    3.7.0
 Release:    1%{?dist}
 License:    GPLv2
 Vendor:     Python Software Foundation
@@ -276,7 +277,7 @@ ${PIP} install --no-binary :all: PyYAML
 
   if module load phdf5; then
       export PYTHONPATH=%{INSTALL_DIR_MPI}/lib/python%{MAJOR_MINOR}/site-packages
-      CC="mpicc -ip-no-inlining" HDF5_MPI="ON" HDF5_DIR=$TACC_HDF5_DIR ${PIP} install --no-binary=h5py --no-deps --install-option="--prefix=%{INSTALL_DIR_MPI}" --ignore-installed h5py
+      CC="mpicc" HDF5_MPI="ON" HDF5_DIR=$TACC_HDF5_DIR ${PIP} install --no-binary=h5py --no-deps --install-option="--prefix=%{INSTALL_DIR_MPI}" --ignore-installed h5py
       #${PIP} install tables
   fi
 %endif
@@ -290,6 +291,9 @@ ${PIP} install --no-binary :all: PyYAML
 #----------------------------------------------------------
 # UNMOUNT THE TEMP FILESYSTEM
 #----------------------------------------------------------
+find %{INSTALL_DIR_COMP} -name '*.py' | xargs sed -i '1s|/usr/bin/python|%{INSTALL_DIR_COMP}/bin/%{PNAME}|'
+find %{INSTALL_DIR_COMP} -name '*.py' | xargs sed -i '1s|/usr/local/bin/python|%{INSTALL_DIR_COMP}/bin/%{PNAME}|'
+
 %if "%{build_mpi4py}" == "0"
     mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR_COMP}
     cp -r %{INSTALL_DIR_COMP}/ $RPM_BUILD_ROOT/%{INSTALL_DIR_COMP}/..
@@ -368,6 +372,7 @@ prepend_path("LD_LIBRARY_PATH", omp_lib)
 %endif
 
 prepend_path("PATH",       "%{INSTALL_DIR_COMP}/bin")
+family("python")
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR_COMP}/.version.%{version} << 'EOF'

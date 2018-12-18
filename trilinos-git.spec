@@ -6,8 +6,7 @@ Summary: Trilinos install
 
 # Create some macros (spec file variables)
 %define major_version git
-%define minor_version 20180209
-#20171108
+%define minor_version 20181024
 
 %define pkg_version %{major_version}%{minor_version}
 
@@ -162,11 +161,11 @@ fi
 #------------------------
 
 ##
-## start of configure install loop
+## start of configure install stage
 ##
 
 rm -rf CMakeCache.txt CMakeFiles
-echo "cmaking in" `pwd`
+echo "Cmaking in" `pwd`
 
 ####
 #### Cmake
@@ -182,8 +181,26 @@ pushd /tmp/trilinos-build
 ##  export VERBOSE=1
 export SOURCEVERSION=%{version}
 export PREFIXPATH=%{INSTALL_DIR}
+##
+## cmake script!
+##
 source %{SPEC_DIR}/trilinos-git.cmake
-echo ${trilinos_extra_libs}
+
+cat >sedheader.script <<EOF
+/header =/i\
+    header = os.path.join(MPI_BASE_DIR, "include", "mpi.h")
+/header =/d
+EOF
+
+sed -i \
+    -e '/header/s/\/include\/mpi.h/\/opt\/intel\/compilers_and_libraries_2018.2.199\/linux\/mpi\/intel64\/include\/mpi.h/' \
+    /tmp/trilinos-build/packages/PyTrilinos/src/gen_teuchos_rcp.py
+
+#os.path.join(MPI_BASE_DIR, "intel64", "include", "mpi.h")/'
+
+#-f sedheader.script
+grep "header =" \
+    /tmp/trilinos-build/packages/PyTrilinos/src/gen_teuchos_rcp.py
 
 ####
 #### Compilation
@@ -231,9 +248,6 @@ cp -r demos packages %{INSTALL_DIR}
 echo "contents of the tmpfs INSTALL_DIR:"
 ls %{INSTALL_DIR}
 cp -r %{INSTALL_DIR}/* ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
-
-# VLE why?
-# module unload python 
 
 #-----------------------
 %endif # BUILD_PACKAGE |

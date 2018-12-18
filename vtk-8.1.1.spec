@@ -179,7 +179,7 @@ include files, and tools respectively.
 --help(help_msg)
 
 whatis("Name: vtk")
-whatis("Version: %{pkg_version}%{dgb}")
+whatis("Version: %{pkg_version}")
 whatis("Category: application, visualization")
 whatis("Description: a C++ visualization library")
 whatis("URL: https/www.vtk.org")

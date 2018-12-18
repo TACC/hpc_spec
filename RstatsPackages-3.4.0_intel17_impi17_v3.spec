@@ -1,7 +1,7 @@
 Summary:    RstatsPackages provides pre-installed versions of CRAN packages compatible with the Rstats module.
 Name:       RstatsPackages
-Version:    3.5.1
-Release:    1%{?dist} 
+Version:    3.4.0
+Release:    3%{?dist} 
 License:    GPLv2
 Vendor:     R Foundation for Statistical Computing
 Group:      Applications/Statistics
@@ -59,8 +59,7 @@ mount -t tmpfs tmpfs %{INSTALL_DIR}
 
 module purge
 module load TACC
-module swap intel intel/18.0.2
-module load Rstats/3.5.1
+module load Rstats/3.4.0
 
 # Load other dependent libraries
 module load hdf5
@@ -77,7 +76,7 @@ export WD MKL_HOME
 
 # Set up src directory
 echo 'Setup SRC_DIR'
-export SRC_DIR=${WD}/src
+export SRC_DIR=${WD}/rstats-src
 echo $SRC_DIR
 mkdir -p ${SRC_DIR}
 echo ${SRC_DIR}
@@ -109,7 +108,7 @@ Rscript -e "install.packages('devtools', repos='${CRAN}');"
 ######
 cd ${SRC_DIR}
 wget -q -N http://ab-initio.mit.edu/nlopt/nlopt-2.4.2.tar.gz
-sleep 5
+sleep 10
 tar xvfz nlopt-2.4.2.tar.gz
 NLOPT_HOME=%{INSTALL_DIR}/nlopt-2.4.2
 echo $NLOPT_HOME
@@ -173,7 +172,7 @@ GDAL_HOME=%{INSTALL_DIR}/gdal-2.3.1
 export GDAL_HOME
 mkdir ${GDAL_HOME}
 cd gdal-2.3.1
-./configure --prefix=${GDAL_HOME} CC='icc' CXX='icpc' F77='ifort' FC='ifort'
+./configure --prefix=${GDAL_HOME} CC='gcc' CXX='g++' F77='gfortran' FC='gfortran'
 make -j20
 make install
 cd ${SRC_DIR}
@@ -395,9 +394,9 @@ Version %{version}
 -- Create environment variables.
 --
 
-local rstats_loaded = isloaded("Rstats/3.5.1")
+local rstats_loaded = isloaded("Rstats/3.4.0")
 if (not rstats_loaded) then
-        load("Rstats/3.5.1")
+        load("Rstats/3.4.0")
 end
 
 

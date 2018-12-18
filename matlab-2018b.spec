@@ -1,28 +1,24 @@
 #
-# Damon McDougall
-# 2018-09-22
+# Si Liu
+# 2018-12-16
 #
-# Important Build-Time Environment Variables (see name-defines.inc)
-# NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
-# NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
-#
-# Important Install-Time Environment Variables (see post-defines.inc)
-# VERBOSE=1       -> Print detailed information at install time
-# RPM_DBPATH      -> Path To Non-Standard RPM Database Location
-#
-
-Summary: PAPI/Perfctr Library - Local TACC Build
 
 # Give the package a base name
-%define pkg_base_name papi
-%define MODULE_VAR    PAPI
+%define pkg_base_name matlab
+%define MODULE_VAR    MATLAB
 
 # Create some macros (spec file variables)
-%define major_version 5
-%define minor_version 6
-%define micro_version 0
+%define major_version 2018b
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{major_version}
+
+Summary: Matlab spec file
+Release: 1%{?dist}
+License: Mathworks License
+Vendor: Mathworks
+Group: Utility
+Source: %{name}-%{version}.tar.gz
+Packager:  TACC - siliu@tacc.utexas.edu
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -31,7 +27,7 @@ Summary: PAPI/Perfctr Library - Local TACC Build
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+%include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -42,40 +38,25 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
-License:   LGPL
-Group:     Development/Tools
-URL:       http://icl.cs.utk.edu/papi/
-Packager:  TACC - dmcdougall@tacc.utexas.edu, cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
-
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
 
-
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: Matlab package RPM
+Group: Applications
 %description package
-This is the long description for the package RPM...
-This package provides the perfctr hardware counter and PAPI
-library support.  It must be built against a kernel with the
-appropriate perfctr patches.
+MATLAB is a high-level language and interactive environment that enables you to perform computationally intensive tasks faster than with traditional programming languages such as C, C++, and Fortran.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...
-This package provides the perfctr hardware counter and PAPI
-library support.  It must be built against a kernel with the
-appropriate perfctr patches.
+MATLAB is a high-level language and interactive environment that enables you to perform computationally intensive tasks faster than with traditional programming languages such as C, C++, and Fortran.
 
 %description
-This package provides the perfctr hardware counter and PAPI
-library support.  It must be built against a kernel with the
-appropriate perfctr patches.
+MATLAB is a high-level language and interactive environment that enables you to perform computationally intensive tasks faster than with traditional programming languages such as C, C++, and Fortran.
+
 
 
 #---------------------------------------
@@ -100,8 +81,6 @@ appropriate perfctr patches.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n %{pkg_base_name}-%{pkg_version}
-
 
 #---------------------------------------
 %build
@@ -116,8 +95,6 @@ appropriate perfctr patches.
 %include system-load.inc
 
 # Insert necessary module commands
-# We purge because papi is considered a 'core' package and is built with
-# system gcc
 module purge
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
@@ -128,6 +105,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  mkdir -p %{INSTALL_DIR}
+# mount -t tmpfs tmpfs %{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -137,16 +116,15 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   ########### Do Not Remove #############
   #######################################
 
+  #========================================
+  # Insert Build/Install Instructions Here
+  #========================================
   
-  cd src
-  export ARCH=x86_64
-  ./configure --prefix=%{INSTALL_DIR} --with-perf_events
-  make -j 28
-  make DESTDIR=$RPM_BUILD_ROOT install
-
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
+
+
 
 
 #---------------------------
@@ -164,53 +142,56 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
-The %{MODULE_VAR} module file defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC for
-the location of the %{name} distribution, libraries,
-and include files, respectively.
 
-To use the %{MODULE_VAR} library, compile the source code with the option:
--I\$TACC_%{MODULE_VAR}_INC
-add the following options to the link step:
--Wl,-rpath,\$TACC_%{MODULE_VAR}_LIB -L\$TACC_%{MODULE_VAR}_LIB -lpapi
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 
-The -Wl,-rpath,\$TACC_%{MODULE_VAR}_LIB option is not required, however,
-if it is used, then this module will not have to be loaded
-to run the program during future login sessions.
+help(
+[[
+MATLAB interpreter and compiler MATLAB is a high-level language
+and interactive environment that enables you to perform computationally
+intensive tasks faster than with traditional programming languages
+such as C, C++, and Fortran.
+ 
+Unless you are supplying your own MATLAB license file,
+you are using a license owned by University of Texas at Austin.
 
-Version %{pkg_version}
+The UT license is for ACADEMIC USE ONLY!
+
+Version 2018b
 ]]
+)
 
---help(help_msg)
-help(help_msg)
+whatis("Name: MATLAB")
+whatis("Version: 2018b")
+whatis("Category: library, mathematics")
+whatis("Keywords: Library, Mathematics, Tools")
+whatis("URL: http://www.mathworks.com/")
+whatis("Description: Matlab 2018b from MathWorks")
 
-whatis("PAPI: Performance Application Programming Interface")
-whatis("Version: %{pkg_version}%{dbg}")
-whatis("Category: library, performance measurement")
-whatis("Keywords: Profiling, Library, Performance Measurement")
-whatis("Description: Interface to monitor performance counter hardware for quantifying application behavior")
-whatis("URL: http://icl.cs.utk.edu/papi/")
+prepend_path("PATH", "/home1/apps/matlab/2018b/bin")
 
+append_path("LD_LIBRARY_PATH", "/home1/apps/matlab/2018b/bin/glnxa64")
+append_path("LD_LIBRARY_PATH", "/home1/apps/matlab/2018b/runtime/glnxa64")
+append_path("LD_LIBRARY_PATH", "/home1/apps/matlab/2018b/sys/java/jre/glnxa64/jre/lib/amd64/server/")
 
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
+setenv ("TACC_MATLAB_DIR", "/home1/apps/matlab/2018b")
+setenv ("DVS_CACHE","off")
 
--- Create environment variables.
-local papi_dir           = "%{INSTALL_DIR}"
+--Set MKLROOT, BLAS_VERSION, and LAPACK_VERSION for matlab
+local mklroot=os.getenv("MKLROOT")
 
-family("papi")
-prepend_path(    "PATH",                pathJoin(papi_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(papi_dir, "lib"))
-prepend_path(    "MANPATH",             pathJoin(papi_dir, "share/man"))
-setenv( "TACC_%{MODULE_VAR}_DIR",                papi_dir)
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(papi_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(papi_dir, "bin"))
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(papi_dir, "include"))
+if mklroot then
+  setenv("BLAS_VERSION", pathJoin(mklroot,"lib/intel64/libmkl_rt.so") )
+  setenv("LAPACK_VERSION", pathJoin(mklroot,"lib/intel64/libmkl_rt.so") )
+  setenv("MKL_INTERFACE_LAYER","ILP64")
+end
+
+--License file
+local UserHome=os.getenv("HOME")
+append_path("LM_LICENSE_FILE", pathJoin(UserHome,".tacc_matlab_license") )
+
 EOF
-  
+
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -219,9 +200,11 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 
 set     ModulesVersion      "%{version}"
 EOF
+
   
-  # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+
+# Check the syntax of the generated lua modulefile
+%{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
