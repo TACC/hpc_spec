@@ -1,5 +1,5 @@
 # PARMETIS specfile based on the petsc installation
-# Victor Eijkhout 2017
+# Victor Eijkhout 2019
 #
 # based on Bar.spec
 # W. Cyrus Proctor
@@ -33,7 +33,7 @@ Summary: Parmetis, piggybacking on the PETSc install
 %define micro_version 3
 
 %define pkg_version %{major_version}.%{minor_version}
-%define petscversion 3.7
+%define petscversion 3.10
 ###%define NO_PACKAGE 0
 
 ### Toggle On/Off ###
@@ -58,7 +58,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   3%{?dist}
 License:   BSD-like
 Group:     Development/Numerical-Libraries
 URL:       http://glaros.dtc.umn.edu/gkhome/metis/parmetis/overview
@@ -145,10 +145,10 @@ echo "module file for ${ext}"
 
 module unload petsc
 if [ -z "${ext}" ] ; then
-  export architecture=knightslanding
+  export architecture=skylake
   module load petsc/%{petscversion}
 else
-  export architecture=knightslanding-${ext}
+  export architecture=skylake-${ext}
   module load petsc/%{petscversion}-${ext}
 fi
 
@@ -252,5 +252,9 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Mon Feb 04 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: knightslanding -> skylake
+* Mon Jan 14 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: update to petsc 3.10
 * Mon Jun 05 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

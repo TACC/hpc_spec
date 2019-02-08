@@ -1,6 +1,8 @@
 #
 # Joe Garcia
-# 2018-05-30
+# 2019-02-07
+# changing lib version to 2018.4.0.574913 bc update 4 has a patch that should 
+# with the problems users and Mccalpin have been experiencing #2019-02-07 
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -28,7 +30,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 %define minor_version 0
 %define micro_version 2
 
-%define lib_version 2018.2.0.551022 
+%define lib_version 2018.4.0.574913 
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 %define underscore_version %{major_version}_%{minor_version}

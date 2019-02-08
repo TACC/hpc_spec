@@ -51,7 +51,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   proprietary
 Group:     Compiler
 URL:       https://software.intel.com/en-us/intel-compilers
@@ -377,7 +377,8 @@ prepend_path( "MODULEPATH" , "/opt/apps/intel18/modulefiles" )
 family("compiler")
 EOF
 
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
+#cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version << 'EOF'
 #%Module3.1.1#################################################
 ##
 ## version file for %{BASENAME}%{version}

@@ -1,4 +1,3 @@
-# https://ofiwg.github.io/libfabric/master/man/fi_psm2.7.html
 #
 # W. Cyrus Proctor
 # 2015-11-07
@@ -21,24 +20,33 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name libfabric
-%define MODULE_VAR    LIBFABRIC
+%define pkg_base_name qiskit
+%define MODULE_VAR    QISKIT
 
 # Create some macros (spec file variables)
-%define major_version 1
+%define major_version 0
 %define minor_version 7
 %define micro_version 0
+
+%define python_major 3
+%define python_minor 7
+%define python_micro 0
+
+%global _python_bytecompile_errors_terminate_build 0
+
+%define python_version %{python_major}.%{python_minor}.%{python_micro} 
+%define pip pip%{python_major}
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
+%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines-noreloc.inc
+%include name-defines-noreloc-home1.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -50,9 +58,9 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1%{?dist}
-License:   GPLv2 or BSD
-Group:     System Environment/Libraries
-URL:       http://www.github.com/ofiwg/libfabric
+License:   Apache-2.0
+Group:     System/Utils
+URL:       https://github.com/Qiskit/qiskit
 Packager:  TACC - cproctor@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
@@ -66,29 +74,20 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
-penFabrics Interfaces (OFI) is a framework focused on exporting fabric
-communication services to applications. OFI is best described as a collection
-of libraries and applications used to export fabric services. The key
-components of OFI are: application interfaces, provider libraries, kernel
-services, daemons, and test applications.
+Qiskit is a software development kit for writing quantum computing experiments,
+programs, and applications.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...  OpenFabrics Interfaces
-(OFI) is a framework focused on exporting fabric communication services to
-applications. OFI is best described as a collection of libraries and
-applications used to export fabric services. The key components of OFI are:
-application interfaces, provider libraries, kernel services, daemons, and test
-applications.
+This is the long description for the modulefile RPM...
+Qiskit is a software development kit for writing quantum computing experiments,
+programs, and applications.
 
 %description
-OpenFabrics Interfaces (OFI) is a framework focused on exporting fabric
-communication services to applications. OFI is best described as a collection
-of libraries and applications used to export fabric services. The key
-components of OFI are: application interfaces, provider libraries, kernel
-services, daemons, and test applications.
+Qiskit is a software development kit for writing quantum computing experiments,
+programs, and applications.
 
 #---------------------------------------
 %prep
@@ -112,7 +111,7 @@ services, daemons, and test applications.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n %{pkg_base_name}-%{pkg_version}
+#%setup -n %{pkg_base_name}-%{pkg_version}
 
 
 #---------------------------------------
@@ -129,6 +128,9 @@ services, daemons, and test applications.
 
 # Insert necessary module commands
 module purge
+%include compiler-load.inc
+module load python%{python_major}
+module list
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -139,7 +141,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
   mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
+  #mount -t tmpfs tmpfs %{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -152,21 +154,20 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
+
+
+%{pip} list
+%{pip} install --prefix=%{INSTALL_DIR} --no-binary :all: --install-option="--prefix=%{INSTALL_DIR}" qiskit
+
+
+if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+fi
+
+cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+#umount %{INSTALL_DIR}/
+
  
-  export CC=gcc
-  export ncores=8
-  # DO NOT preppend $RPM_BUILD_ROOT in prefix
-  ./configure \
-  --prefix=%{INSTALL_DIR}
-  make -j ${ncores}
-  make install -j ${ncores}
-  
-  if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-    mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  fi
-  cp -r %{INSTALL_DIR} $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-  umount %{INSTALL_DIR}
-  
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -189,20 +190,21 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_message = [[
-OpenFabrics Interfaces (OFI) is a framework focused on exporting fabric
-communication services to applications. OFI is best described as a collection
-of libraries and applications used to export fabric services. The key
-components of OFI are: application interfaces, provider libraries, kernel
-services, daemons, and test applications.
+
+Qiskit is an open-source framework for quantum computing whose goal is to be
+accessible to people with many backgrounds: quantum researchers, other
+scientists, teachers, developers, and general tech enthusiasts. Our vision for
+Qiskit consists of four foundational elements: Terra (the code foundation, for
+composing quantum programs at the level of circuits and pulses), Aqua (for
+building algorithms and applications), Ignis (for addressing noise and errors),
+and Aer (for accelerating development via simulators, emulators and debuggers).
+Today, we bring you Terra and Aqua, and a commitment to deliver Ignis and Aer
+in the near future.
 
 This module defines the environmental variables TACC_%{MODULE_VAR}_DIR,
-TACC_%{MODULE_VAR}_BIN, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC
-for the location of the main libfabric directory, binaries, libraries,
-and include files respectively.
-
-The location of the binary files is also added to your PATH.
-The location of the library files is also added to your LD_LIBRARY_PATH.
-Documentation is also added to your MANPATH.
+TACC_%{MODULE_VAR}_BIN and TACC_%{MODULE_VAR}_LIB for the location of the main
+%{pkg_name} directory, binaries, and the libraries respectivley. Your $PATH,
+$LD_LIBRARY_PATH, $PYTHONPATH, and $MANPATH variables are also updated.
 
 Version %{version}
 ]]
@@ -211,25 +213,27 @@ help(help_message,"\n")
 
 whatis("Name: %{name}")
 whatis("Version: %{version}")
-whatis("Category: system, environment libaries")
-whatis("Keywords: System, Environment Libraries")
-whatis("Description: Fabric communication services")
-whatis("URL: http://www.github.com/ofiwg/libfabric")
+whatis("Category: Python Package")
+whatis("Keywords: Quantum, Circuit, Simulation")
+whatis("Description: Quantum Circuit Simulation")
+whatis("URL: https://github.com/Qiskit/qiskit")
 
 -- Export environmental variables
-local libfabric_dir="%{INSTALL_DIR}"
-local libfabric_bin=pathJoin(libfabric_dir,"bin")
-local libfabric_lib=pathJoin(libfabric_dir,"lib")
-local libfabric_inc=pathJoin(libfabric_dir,"include")
-setenv("TACC_LIBFABRIC_DIR",libfabric_dir)
-setenv("TACC_LIBFABRIC_BIN",libfabric_bin)
-setenv("TACC_LIBFABRIC_LIB",libfabric_lib)
-setenv("TACC_LIBFABRIC_INC",libfabric_inc)
+local qiskit_dir="%{INSTALL_DIR}"
+local qiskit_bin=pathJoin(qiskit_dir,"bin")
+local qiskit_lib=pathJoin(qiskit_dir,"lib")
 
--- Prepend the libfabric directories to the adequate PATH variables
-prepend_path("PATH",libfabric_bin)
-prepend_path("LD_LIBRARY_PATH",libfabric_lib)
-prepend_path("MANPATH", pathJoin(libfabric_dir, "share/man"))
+setenv("TACC_%{MODULE_VAR}_DIR",qiskit_dir)
+setenv("TACC_%{MODULE_VAR}_BIN",qiskit_bin)
+setenv("TACC_%{MODULE_VAR}_LIB",qiskit_lib)
+
+-- Prepend the qiskit directories to the adequate PATH variables
+prepend_path("PATH",           qiskit_bin)
+prepend_path("LD_LIBRARY_PATH", qiskit_lib)
+prepend_path("MANPATH",         pathJoin(qiskit_dir,"share/man"))
+prepend_path("PYTHONPATH",      pathJoin(qiskit_lib, "python%{python_major}.%{python_minor}/site-packages"))
+
+depends_on("python%{python_major}")
 
 EOF
   
@@ -283,11 +287,14 @@ EOF
 export PACKAGE_POST=1
 %include post-defines.inc
 %post %{MODULEFILE}
+ln -s %{INSTALL_DIR}/lib/python%{python_major}.%{python_minor}/site-packages/qiskit /opt/apps/%{comp_fam_ver}/python%{python_major}/%{python_version}/lib/python%{python_major}.%{python_minor}/site-packages/qiskit
 export MODULEFILE_POST=1
 %include post-defines.inc
 %preun %{PACKAGE}
 export PACKAGE_PREUN=1
 %include post-defines.inc
+%preun %{MODULEFILE}
+unlink /opt/apps/%{comp_fam_ver}/python%{python_major}/%{python_version}/lib/python%{python_major}.%{python_minor}/site-packages/qiskit
 ########################################
 ############ Do Not Remove #############
 ########################################

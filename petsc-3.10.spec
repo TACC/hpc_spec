@@ -7,8 +7,8 @@ Summary: PETSc install
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 10
-%define micro_version 2
-%define versionpatch 3.10.2
+%define micro_version 3
+%define versionpatch %{major_version}.%{minor_version}.%{micro_version}
 
 %define pkg_version %{major_version}.%{minor_version}
 
@@ -32,7 +32,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 2%{?dist}
+Release: 4%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -129,12 +129,6 @@ export MLSTRING=
 # export MLSTRING=
 # %endif
 
-##
-## Hypre
-##
-export HYPRE_OPTIONS="--with-hypre=1 --download-hypre"
-export HYPRESTRING=hypre
-
 %if "%{is_intel}" == "1"
 export LOCALCC=icc
 export LOCALFC=ifort
@@ -167,7 +161,7 @@ export PLAPACKOPTIONS=
 ##
 export logdir=%{_topdir}/../apps/petsc/logs
 mkdir -p ${logdir}; rm -rf ${logdir}/*
-export dynamiccc="i64 debug i64debug complexi64 complexi64debug uni unidebug nohdf5"
+export dynamiccc="i64 debug i64debug complexi64 complexi64debug uni unidebug nohdf5 hyprefei"
 export dynamiccxx="cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug cxxi64 cxxi64debug"
 #export static="cxxstatic cxxstaticdebug static staticdebug complexstatic complexstaticdebug cxxcomplexstatic cxxcomplexstaticdebug"
 #module load python
@@ -303,6 +297,17 @@ export PARMETISSTRING="parmetis"
 #
 export ELEMENTAL_OPTIONS="--with-elemental=1 --download-elemental --with-cxx-dialect=C++11 ${PARMETIS_OPTIONS}"
 export ELEMENTAL_STRING=elemental
+
+#
+# Hypre
+#
+export HYPRE_OPTIONS="--with-hypre=1 --download-hypre"
+export HYPRESTRING=hypre
+case "${ext}" in
+hyprefei ) 
+    export HYPRE_OPTIONS="${HYPRE_OPTIONS} --download-hypre-configure-arguments=--with-fei"
+    ;;
+esac
 
 #
 # Mumps & Superlu depend on parmetis which depends on metis
@@ -485,7 +490,8 @@ else
     ${mpi} ${clanguage} ${scalar} ${dynamicshared} ${precision} ${packages} \
     --with-debugging=${usedebug} \
     ${BLAS_LAPACK_OPTIONS} ${MPI_EXTRA_OPTIONS} ${CUDA_OPTIONS} ${INDEX_OPTIONS} \
-    COPTFLAGS="${CFLAGS}" FOPTFLAGS="${FFLAGS}" CXXOPTFLAGS="${CXXFLAGS}"
+    COPTFLAGS="${CFLAGS}" FOPTFLAGS="${FFLAGS}" CXXOPTFLAGS="${CXXFLAGS}" \
+    LIBS="${LIBS}"
 fi
 
 export noops="\
@@ -647,6 +653,7 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
   %{INSTALL_DIR}/skylake-uni
   %{INSTALL_DIR}/skylake-unidebug
   %{INSTALL_DIR}/skylake-nohdf5
+  %{INSTALL_DIR}/skylake-hyprefei
 %files %{PACKAGE}-xx
   %defattr(-,root,install,)
   %{INSTALL_DIR}/skylake-cxx
@@ -664,6 +671,10 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Tue Jan 29 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 4: adding hypre-fei configuration
+* Wed Jan 09 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: point update to 3.10.3
 * Thu Nov 15 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: point update to 3.10.2, 
              download hdf5, added nohdf5 ext

@@ -1,9 +1,9 @@
 Summary:    Python is a high-level general-purpose programming language.
-Name:      tacc-python2
-#Name:       tacc-python3 
-Version:    2.7.15
-#Version:    3.7.0
-Release:    1%{?dist}
+#Name:      tacc-python2
+Name:       tacc-python3 
+#Version:    2.7.15
+Version:    3.7.0
+Release:    2%{?dist}
 License:    GPLv2
 Vendor:     Python Software Foundation
 Group:      Applications
@@ -13,8 +13,14 @@ Packager:   TACC - rtevans@tacc.utexas.edu
 # Either Python package or mpi4py will be built 
 # based on this switch
 #------------------------------------------------
-%define build_mpi4py     1
+%define build_mpi4py     0
 %global _python_bytecompile_errors_terminate_build 0
+#%global __strip /opt/apps/gcc/7.1.0/bin/strip
+#%undefine __brp_strip_static_archive
+%if 0%{?scl:1}
+%define __strip %{_bindir}/strip
+%endif
+
 #------------------------------------------------
 # BASIC DEFINITIONS
 #------------------------------------------------
@@ -100,7 +106,7 @@ if [ ! -f "%{INSTALL_DIR_COMP}/bin/%{PNAME}" ]; then
         mkdir -p %{INSTALL_DIR_COMP}
         mount -t tmpfs tmpfs %{INSTALL_DIR_COMP}
     fi
-
+    echo `which strip`
     if [ ! -f "%{_topdir}/BUILD/Python-%{version}.tgz" ]; then
      	wget http://www.python.org/ftp/python/%{version}/Python-%{version}.tgz
     fi	
@@ -114,10 +120,10 @@ if [ ! -f "%{INSTALL_DIR_COMP}/bin/%{PNAME}" ]; then
     ./configure --prefix=%{INSTALL_DIR_COMP} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc -lssp' CFLAGS="-Wformat -Wformat-security -D_FORTIFY_SOURCE=2 -fstack-protector -fwrapv -fpic -O3" LDFLAGS="-Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth --without-gcc --with-libm=-limf --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip --enable-unicode=ucs4    
     %endif
     %if "%{comp_fam_name}" == "GNU"
-    ./configure --prefix=%{INSTALL_DIR_COMP} CFLAGS="-O2 -fwrapv -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches" LDFLAGS="-fpic -Xlinker -export-dynamic" --enable-shared --with-system-ffi --with-pth --with-threads --with-computed-gotos --with-ensurepip --with-lto --enable-unicode=ucs4
+    ./configure --prefix=%{INSTALL_DIR_COMP} CC=gcc CXX=g++  LD=ld   AR=ar   LIBS='-lpthread' CFLAGS="-Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -fwrapv -fpic -O2" LDFLAGS="-fpic -Xlinker -export-dynamic" --with-system-ffi --enable-shared --with-pth --with-threads --with-ensurepip --with-computed-gotos --with-lto --enable-optimizations --enable-unicode=ucs4
     %endif
 
-    make -j 16
+    make -j 24
     make sharedinstall
     make -i install
 fi
@@ -136,7 +142,10 @@ ${PIP} install virtualenv
 ${PIP} install virtualenvwrapper    
 ${PIP} install sympy
 ${PIP} install brewer2mpl
+%if "%{MAJOR}" == "2"
 ${PIP} install futures
+%endif
+${PIP} uninstall futures
 ${PIP} install simpy    
 ${PIP} install jsonpickle
 ${PIP} install meld3
@@ -144,8 +153,8 @@ ${PIP} install meld3
 ${PIP} install paramiko
 ${PIP} install readline
 ${PIP} install pybind11
-#${PIP} install egenix-mx-base
-
+${PIP} install --upgrade pip
+${PIP} install --upgrade setuptools
 #############################################################
 # scipy stack: use INSTALL_DIR_COMP . 
 # We need to know which pip modules are compiler specific.  
@@ -155,16 +164,14 @@ ${PIP} install pybind11
 ### Numpy
 if ! $(%{INSTALL_DIR_COMP}/bin/%{PNAME} -c "import numpy"); then
     cd %{_topdir}/SOURCES	
-    if [ ! -f "%{_topdir}/SOURCES/numpy-1.14.5.tar.gz" ]; then	
-	wget https://github.com/numpy/numpy/releases/download/v1.14.5/numpy-1.14.5.tar.gz
+    if [ ! -f "%{_topdir}/SOURCES/numpy-1.16.1.tar.gz" ]; then	
+	wget https://github.com/numpy/numpy/releases/download/v1.16.1/numpy-1.16.1.tar.gz
     fi	   
     
-    rm -rf %{_topdir}/SOURCES/numpy-1.14.5 	   
-    tar -xzvf %{_topdir}/SOURCES/numpy-1.14.5.tar.gz -C %{_topdir}/SOURCES	
-    cd %{_topdir}/SOURCES/numpy-1.14.5
+    rm -rf %{_topdir}/SOURCES/numpy-1.16.1 	   
+    tar -xzvf %{_topdir}/SOURCES/numpy-1.16.1.tar.gz -C %{_topdir}/SOURCES	
+    cd %{_topdir}/SOURCES/numpy-1.16.1
 
-    sed -i 's/-openmp/-fopenmp '"%{TACC_OPT}"'/' numpy/distutils/intelccompiler.py
-    sed -i 's/-openmp/-fopenmp '"%{TACC_OPT}"'/' numpy/distutils/fcompiler/intel.py
     echo "[mkl]
 library_dirs = ${MKL_LIB}:${OMP_LIB}
 include_dirs = ${MKL_INC}
@@ -172,6 +179,11 @@ mkl_libs = mkl_rt
 lapack_libs = " > site.cfg
 
     %if "%{comp_fam_name}" == "Intel"
+    sed -i 's/-O3/-O3 %{TACC_OPT}/' numpy/distutils/intelccompiler.py
+    sed -i 's/-m64/-g/' numpy/distutils/intelccompiler.py
+    sed -i 's/-O1/-O1 %{TACC_OPT} -fPIC/' numpy/distutils/fcompiler/intel.py    
+    sed -i 's/check_output(version_cmd)/check_output(version_cmd, stderr=subprocess.STDOUT)/' numpy/distutils/ccompiler.py
+
     %{INSTALL_DIR_COMP}/bin/%{PNAME} setup.py config --compiler=intelem --fcompiler=intelem build_clib --compiler=intelem --fcompiler=intelem build_ext --compiler=intelem --fcompiler=intelem install
     %endif
     %if "%{comp_fam_name}" == "GNU"
@@ -182,13 +194,13 @@ fi
 ### Scipy
 if ! $(%{INSTALL_DIR_COMP}/bin/%{PNAME} -c "import scipy"); then
     cd %{_topdir}/SOURCES	
-    if [ ! -f "%{_topdir}/SOURCES/scipy-1.1.0.tar.gz" ]; then	
-	wget -O scipy-1.1.0.tar.gz https://github.com/scipy/scipy/releases/download/v1.1.0/scipy-1.1.0.tar.gz
+    if [ ! -f "%{_topdir}/SOURCES/scipy-1.2.0.tar.gz" ]; then	
+	wget -O scipy-1.2.0.tar.gz https://github.com/scipy/scipy/releases/download/v1.2.0/scipy-1.2.0.tar.gz
     fi	   
 
-    rm -rf %{_topdir}/SOURCES/scipy-1.1.0
-    tar -xzvf scipy-1.1.0.tar.gz -C %{_topdir}/SOURCES	 
-    cd %{_topdir}/SOURCES/scipy-1.1.0
+    rm -rf %{_topdir}/SOURCES/scipy-1.2.0
+    tar -xzvf scipy-1.2.0.tar.gz -C %{_topdir}/SOURCES	 
+    cd %{_topdir}/SOURCES/scipy-1.2.0
 
     %if "%{comp_fam_name}" == "Intel"
     %{INSTALL_DIR_COMP}/bin/%{PNAME} setup.py config --compiler=intelem --fcompiler=intelem build_clib --compiler=intelem --fcompiler=intelem build_ext --compiler=intelem --fcompiler=intelem install
@@ -243,7 +255,7 @@ CFLAGS="-O2" ${PIP} install --no-binary :all: pandas
 ${PIP} install --no-binary :all: psutil
 ${PIP} install --no-binary :all: numexpr
 ${PIP} install --no-binary :all: rpyc	
-${PIP} install --no-binary :all: ipython
+#${PIP} install --no-binary :all: ipython
 ${PIP} install jupyter	
 ${PIP} install --no-binary :all: mako
 CFLAGS="-O2" ${PIP} install --no-binary :all: lxml

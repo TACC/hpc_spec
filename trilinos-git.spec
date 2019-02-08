@@ -136,8 +136,8 @@ export HAS_PYTHON=ON
 export HAS_STK=ON
 export HAS_SUPERLU=ON
 %if "%{comp_fam}" == "gcc"
-  export HAS_HDF5=OFF
-  export HAS_NETCDF=OFF
+  #export HAS_NETCDF=OFF
+  #export HAS_HDF5=OFF
   # VLE is this fixed?
   export HAS_SUPERLU=ON
 %endif

@@ -34,6 +34,8 @@ Summary: A Nice little non-relocatable skeleton spec file example.
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 %define gcc_ver gcc8_1
 
+%global __os_install_post %{nil}
+
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
 #%include compiler-defines.inc
