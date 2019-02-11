@@ -172,18 +172,25 @@ export CFLAGS="-std=c++11"
 export LINKER="${CXX} -L${TACC_BOOST_LIB}"
 export LDFLAGS="-L${TACC_BOOST_LIB}"
 
+# the first sed is because I can not get setup.py to accept these paths
+#     through its regular parameter mechanism
+# the second sed is needed for intel because of problems with boost
 ( \
   cd ${MINI_SRC} \
   && sed -i \
      -e '/import/s/sys,/os,sys,/' \
      -e "/include_dirs.*eigen/s/\[.*\]/[ os.environ['TACC_EIGEN_INC'], os.environ['TACC_BOOST_INC'] ]/" \
-     -e "/libraries.*boost/s/\[.*\]/[ 'boost_python' ]/" \
      setup.py \
+  && sed -i \
+     -e '/common.hpp/i#include "boost/type_traits.hpp"' \
+     src/visitors.hpp \
   && python3 setup.py \
      install --prefix=%{INSTALL_DIR} \
      build_ext "-I${TACC_EIGEN_INC} -I${TACC_BOOST_INC} \
                 -I${TACC_PYTHON2_INC}/python${TACC_PYTHON_VER} -L${TACC_BOOST_LIB}" \
 )
+#     -e "/libraries.*boost/s/\[.*\]/[ 'boost_python' ]/" \
+#
 
 cp -r %{INSTALL_DIR}/* ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
 umount tmpfs

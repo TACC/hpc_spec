@@ -75,6 +75,16 @@ Packager:   eijkhout@tacc.utexas.edu
 %define dbg           %{nil}
 %global _python_bytecompile_errors_terminate_build 0
 
+# Prevent weird relocation type 42 error
+# . parsimonious solution: use the correct strip
+# https://bugzilla.redhat.com/show_bug.cgi?id=1545386
+# https://stackoverflow.com/questions/48706962/unresolvable-r-x86-64-none-relocation
+%if 0%{?scl:1}
+%define __strip %{_bindir}/strip
+%endif
+# . better? not strip at all
+# %undefine __brp_strip_static_archive
+
 %package %{PACKAGE}
 Summary: SUPERLUSEQ is a single processor sparse direct solver
 Group: Libraries

@@ -1,9 +1,27 @@
-Summary: TACC base module
+#
+# W. Cyrus Proctor
+# 2016-02-06
+#
+# Important Build-Time Environment Variables (see name-defines.inc)
+# NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
+# NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
+#
+# Important Install-Time Environment Variables (see post-defines.inc)
+# VERBOSE=1       -> Print detailed information at install time
+# RPM_DBPATH      -> Path To Non-Standard RPM Database Location
+#
+# Typical Command-Line Example:
+# ./build_rpm.sh Bar.spec
+# cd ../RPMS/x86_64
+# rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+# rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+# rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
+
+Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name tacc
+%define pkg_base_name TACC
 %define MODULE_VAR    TACC
-%define pkg_name      tacc_base_modules
 
 # Create some macros (spec file variables)
 %define major_version 1
@@ -13,37 +31,73 @@ Summary: TACC base module
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
+#%include compiler-defines.inc
+#%include mpi-defines.inc
+########################################
+### Construct name based on includes ###
+########################################
+%include name-defines-noreloc.inc
+########################################
+############ Do Not Remove #############
+########################################
+
+############ Do Not Change #############
+#Name:      %{pkg_name}
+# 2016-02-06 Hacked name to keep TACC
 Name:      tacc-base_modules
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4%{?dist}
+Release:   5%{?dist}
 License:   GPL
 Group:     Module Magic
-Packager:  TACC - mclay@tacc.utexas.edu
+Packager:  TACC - cproctor@tacc.utexas.edu
+Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
-%define MODULES        modulefiles
-%define APPS           /opt/apps
-%define MODULE_DIR     %{APPS}/%{MODULES}/
-%define MODULE_VAR     TACC
 
-%package -n %{pkg_name}
+
+%package %{PACKAGE}
 Summary: The package RPM
 Group: Development/Tools
+%description package
+This is the long description for the package RPM...
+Welcome to the TACC Module way!
 
-%description 
-%description -n %{pkg_name}
-Tacc base module package
+%package %{MODULEFILE}
+Summary: The modulefile RPM
+Group: Lmod/Modulefiles
+%description modulefile
+This is the long description for the modulefile RPM...
+Welcome to the TACC Module way!
+
+%description
+Welcome to the TACC Module way!
 
 #---------------------------------------
 %prep
 #---------------------------------------
 
-rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
+#------------------------
+%if %{?BUILD_PACKAGE}
+#------------------------
+  # Delete the package installation directory.
+  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+#-----------------------
+%endif # BUILD_PACKAGE |
+#-----------------------
+
+#---------------------------
+%if %{?BUILD_MODULEFILE}
+#---------------------------
+  #Delete the module installation directory.
+  rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
+#--------------------------
+%endif # BUILD_MODULEFILE |
+#--------------------------
 
 
 #---------------------------------------
@@ -56,8 +110,52 @@ rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 #---------------------------------------
 
 # Setup modules
+# Nothing to do!
 
-mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
+# Insert necessary module commands
+# None to have!
+
+echo "Building the package?:    %{BUILD_PACKAGE}"
+echo "Building the modulefile?: %{BUILD_MODULEFILE}"
+
+#------------------------
+%if %{?BUILD_PACKAGE}
+#------------------------
+
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  
+  #######################################
+  ##### Create TACC Canary Files ########
+  #######################################
+  touch $RPM_BUILD_ROOT/%{INSTALL_DIR}/.tacc_install_canary
+  #######################################
+  ########### Do Not Remove #############
+  #######################################
+
+  #========================================
+  # Insert Build/Install Instructions Here
+  #========================================
+  # Nothing to see here!
+
+#-----------------------  
+%endif # BUILD_PACKAGE |
+#-----------------------
+
+
+#---------------------------
+%if %{?BUILD_MODULEFILE}
+#---------------------------
+
+%define MODULE_DIR %{MODULE_PREFIX}/modulefiles
+  mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
+  
+  #######################################
+  ##### Create TACC Canary Files ########
+  #######################################
+  touch $RPM_BUILD_ROOT/%{MODULE_DIR}/.tacc_module_canary
+  #######################################
+  ########### Do Not Remove #############
+  #######################################
   
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/TACC.lua << 'EOF'
@@ -79,7 +177,7 @@ load("intel")
 load("impi")
 load("git")
 load("autotools")
-load("python")
+load("python2")
 load("cmake")
 try_load("xalt")
 
@@ -93,13 +191,53 @@ end
 --prepend_path{ "PATH", "/opt/apps/tacc/bin", priority=10 }
 
 EOF
-  
+
+#--------------------------
+%endif # BUILD_MODULEFILE |
+#--------------------------
 
 
-%files -n %{pkg_name}
-%defattr(-,root,install,)
-# RPM modulefile contains files within these directories
-%{MODULE_DIR}/TACC.lua
+#------------------------
+%if %{?BUILD_PACKAGE}
+%files package
+#------------------------
+
+  %defattr(-,root,install,)
+  # RPM package contains files within these directories
+  %{INSTALL_DIR}
+
+#-----------------------
+%endif # BUILD_PACKAGE |
+#-----------------------
+#---------------------------
+%if %{?BUILD_MODULEFILE}
+%files modulefile 
+#---------------------------
+
+  %defattr(-,root,install,)
+  # RPM modulefile contains files within these directories
+  %{MODULE_DIR}
+
+#--------------------------
+%endif # BUILD_MODULEFILE |
+#--------------------------
+
+
+########################################
+## Fix Modulefile During Post Install ##
+########################################
+%post %{PACKAGE}
+export PACKAGE_POST=1
+%include post-defines.inc
+%post %{MODULEFILE}
+export MODULEFILE_POST=1
+%include post-defines.inc
+%preun %{PACKAGE}
+export PACKAGE_PREUN=1
+%include post-defines.inc
+########################################
+############ Do Not Remove #############
+########################################
 
 #---------------------------------------
 %clean
