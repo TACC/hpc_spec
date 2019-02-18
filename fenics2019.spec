@@ -93,26 +93,17 @@ echo "contents of install-dir before installation"
 ls
 export FENICS_DIR=`pwd`
 
-module load cmake
+module load cmake python3
 %if "%{comp_fam}" == "gcc"
   module load mkl
 %endif
-export BLAS_LAPACK_LOAD=--with-blas-lapack-dir=${MKLROOT}
 
-# From source 
-# according to
-# https://fenics.readthedocs.io/en/latest/installation.html
-
-# FEniCS consists of Python components FIAT, dijitso, UFL,
-# FFC, and C++/Python components DOLFIN and optional mshr. DOLFIN is
-# the main user interface of FEniCS, both for C++ and Python.
-
-# FEniCS needs Python 3. For building CMake is needed and pip is recommended.
+# fenics-specific modules
+module load pybind
 
 ####
 #### time saving: disable some rebuilds
 ####
-INSTALL_PYBIND=0
 INSTALL_FFC=0
 DOWNLOAD_FENICS=1
 INSTALL_DOLFIN=1
@@ -183,38 +174,7 @@ export FENICS_PYTHON=${FENICS_DIR}/python
 export FENICS_PYTHON_PACKAGES=${FENICS_PYTHON}/lib/python${TACC_PYTHON_VER}/site-packages/
 
 # For building optional Python interface of DOLFIN and mshr, pybind11
-# is needed since version 2018.1.0. To install it:
-
-####
-#### pybind11
-####
-PYBIND11_VERSION=2.2.3
-PYBIND_SRC=${FENICS_DIR}/pybind11-${PYBIND11_VERSION}
-#PYBIND_BUILD=${PYBIND_SRC}/pybind-build
-PYBIND_BUILD=${FENICS_DIR}/pybind-build
-PYBIND_INSTALL=${FENICS_DIR}/pybind-installation
-
-if [ ${INSTALL_PYBIND} -gt 0 ] ; then 
-  echo ; echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" ; echo
-  echo ; echo "                Installing PYBIND"  ; echo 
-  echo ; echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" ; echo
-  if [ ! -f v${PYBIND11_VERSION}.tar.gz ] ; then
-    wget -nc --quiet https://github.com/pybind/pybind11/archive/v${PYBIND11_VERSION}.tar.gz
-  fi
-  rm -rf ${PYBIND_SRC} ${PYBIND_BUILD} ${PYBIND_INSTALL}
-  tar -xf v${PYBIND11_VERSION}.tar.gz 
-  mkdir ${PYBIND_BUILD} ${PYBIND_INSTALL}
-  ( \
-    cd ${PYBIND_BUILD} \
-    && cmake \
-       -DCMAKE_INSTALL_PREFIX=${PYBIND_INSTALL} \
-       -DPYBIND11_TEST=off \
-       ${PYBIND_SRC} \
-    && make && make install \
-  )
-  if [ $? -ne 0 ] ; then exit 1 ; fi
-fi
-
+# is needed since version 2018.1.0.
 export CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:${PYBIND_INSTALL}/share/cmake/pybind11
 
 ####

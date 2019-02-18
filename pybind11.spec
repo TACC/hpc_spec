@@ -1,7 +1,7 @@
 #
-# Spec file for SUPERLU_SEQ:
-# Sequential version of SuperLU
-# (needed for Trilinos, as opposed to PETSc which needs distributed.)
+# Spec file for PYBIND11:
+# interface generator utility 
+# which is always too old for trilinos
 #
 # Victor Eijkhout, 2017
 # based on:
@@ -29,20 +29,19 @@
 Summary:    Set of tools for manipulating geographic and Cartesian data sets
 
 # Give the package a base name
-%define pkg_base_name superlu_seq
-%define MODULE_VAR    SUPERLUSEQ
+%define pkg_base_name pybind11
+%define MODULE_VAR    PYBIND11
 
 # Create some macros (spec file variables)
-%define major_version 5
+%define major_version 2
 %define minor_version 2
-%define micro_version 1
+%define micro_version 3
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
 %include compiler-defines.inc
-## being sequential this does not use MPI
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
@@ -61,13 +60,13 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   7%{?dist}
+Release:   1%{?dist}
 License:   GNU
-Group: Development/Numerical-Libraries
-Vendor:     Argonne National Lab
+Group:     Development/Tools
+Vendor:     Pybind11
 Group:      Libraries/maps
-Source:	    superlu_seq-%{version}.tar.gz
-URL:	    http://crd-legacy.lbl.gov/~xiaoye/SuperLU/
+Source:	    pybind11-%{version}.tar.gz
+URL:	    https://pybind1111.readthedocs.io/en/latest/
 Packager:   eijkhout@tacc.utexas.edu
 
 # Turn off debug package mode
@@ -75,32 +74,21 @@ Packager:   eijkhout@tacc.utexas.edu
 %define dbg           %{nil}
 %global _python_bytecompile_errors_terminate_build 0
 
-# Prevent weird relocation type 42 error
-# . parsimonious solution: use the correct strip
-# https://bugzilla.redhat.com/show_bug.cgi?id=1545386
-# https://stackoverflow.com/questions/48706962/unresolvable-r-x86-64-none-relocation
-%if 0%{?scl:1}
-%define __strip %{_bindir}/strip
-%endif
-# . better? not strip at all
-%undefine __brp_strip_static_archive
-
 %package %{PACKAGE}
-Summary: SUPERLUSEQ is a single processor sparse direct solver
-Group: Libraries
+Summary: PYBIND11 install
+Group: System Environment/Base
 %description package
-This is the long description for the package RPM...
+PYBIND11 exposes C++11 functionality to Python
+
 
 %package %{MODULEFILE}
-Summary: SUPERLUSEQ is a single processor sparse direct solver
-Group: Libraries
+Summary: PYBIND11 install
+Group: System Environment/Base
 %description modulefile
-This is the long description for the modulefile RPM...
+PYBIND11 exposes C++11 functionality to Python
 
 %description
-Summary: SUPERLUSEQ is a single processor sparse direct solver
-Group: Libraries
-
+PYBIND11 exposes C++11 functionality to Python
 
 #---------------------------------------
 %prep
@@ -140,16 +128,12 @@ Group: Libraries
 
 # Setup modules
 %include system-load.inc
-module purge
 # Load Compiler
 %include compiler-load.inc
 # Load MPI Library
 #%include mpi-load.inc
 
-# Insert further module commands
-
-echo "Building the package?:    %{BUILD_PACKAGE}"
-echo "Building the modulefile?: %{BUILD_MODULEFILE}"
+module load python3
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -173,67 +157,33 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 # Use mount temp trick
 #
 mkdir -p             %{INSTALL_DIR}
-mkdir -p ${RPM_BUILD_ROOT}/%{INSTALL_DIR}
 mount -t tmpfs tmpfs %{INSTALL_DIR}
-export SLU_INSTALLATION=%{INSTALL_DIR}
 
-#
-# make a copy of the source tree in which to build
-# (later try doing everything in BUILD?)
-#
-export SLU_SRC=/tmp/superlu-build
-rm -rf ${SLU_SRC}
-mkdir -p ${SLU_SRC}
-cp -r * ${SLU_SRC}
-cp %{SPEC_DIR}/superlu_seq-%{version}.inc ${SLU_SRC}/make.inc
-pushd ${SLU_SRC} # place for cmake crap
-mkdir build
-cd build
 
-#
-# config/make
-#
-%if "%{is_intel}" == "1"
-  export CC=icc
-  export CXX=icpc
-  export FC=ifort
-  export CFLAGS="-mkl -O2 -fPIC"
-  export LOADOPTS=-mkl
-%endif
-%if "%{is_gcc}" == "1"
-  module load mkl
-  # /opt/intel/compilers_and_libraries_2017.4.196/linux/mkl/lib/intel64
-  export CC="gcc"
-  export CXX=g++
-  export FC="gfortran"
-  export CFLAGS="-g -O2 -fPIC"
-%endif
+#wget -nc --quiet https://github.com/pybind11/pybind1111/archive/v%{version}.tar.gz
+
+####
+#### pybind1111
+####
+PYBIND11_SRC=`pwd`
+PYBIND11_INSTALL=%{INSTALL_DIR}
+PYBIND11_BUILD=/tmp/pybind11-build
+rm -rf ${PYBIND11_BUILD}
+mkdir -p ${PYBIND11_BUILD}
+pushd ${PYBIND11_BUILD}
 
 cmake \
-    -D CMAKE_INSTALL_PREFIX:PATH="${SLU_INSTALLATION}" \
-    -D CMAKE_BUILD_TYPE:STRING=RELEASE \
-    -D CMAKE_C_COMPILER:FILEPATH=`which ${CC}` \
-    -D CMAKE_Fortran_COMPILER:FILEPATH="`which ${FC}`" \
-    -D CMAKE_C_FLAGS:STRING="-g -std=c99 -DNDEBUG -fPIC" \
-    -D CMAKE_Fortran_FLAGS:STRING="-g -shared -fPIC" \
-    -D enable_blaslib:BOOL=OFF \
-    -D TPL_BLAS_LIBRARIES="-L${TACC_MKL_LIB} -lmkl_core -lmkl_sequential -lmkl_rt" \
-    ${SLU_SRC}
+   -DCMAKE_INSTALL_PREFIX=${PYBIND11_INSTALL} \
+    -DPYTHON_EXECUTABLE=`which python3` \
+   -DPYBIND1111_TEST=off \
+   ${PYBIND11_SRC} \
+&& make && make install
 
-make && make install
+popd
 
-popd # from /tmp back to BUILD
-cp -r %{INSTALL_DIR}/* ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
+cp -r %{INSTALL_DIR}/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+
 umount %{INSTALL_DIR}
-
-#/opt/apps/gcc/7.1.0/bin/gcc  -DUSE_VENDOR_BLAS -DPRNTlevel=0 -DAdd_ -g -std=c99 -DNDEBUG -fPIC -O3 -DNDEBUG    CMakeFiles/z_test.dir/sp_ienv.c.o CMakeFiles/z_test.dir/zdrive.c.o CMakeFiles/z_test.dir/sp_zconvert.c.o CMakeFiles/z_test.dir/zgst01.c.o CMakeFiles/z_test.dir/zgst02.c.o CMakeFiles/z_test.dir/zgst04.c.o CMakeFiles/z_test.dir/zgst07.c.o  -o z_test  -L"/opt/intel/compilers_and_libraries_2017.4.196/linux/mkl/lib/intel64/libmkl_sequential.so /opt/intel/compilers_and_libraries_2017.4.196/linux/mkl/lib/intel64" -rdynamic ../SRC/libsuperlu.a MATGEN/libmatgen.a -lmkl_core -lm -Wl,-rpath,"/opt/intel/compilers_and_libraries_2017.4.196/linux/mkl/lib/intel64/libmkl_sequential.so /opt/intel/compilers_and_libraries_2017.4.196/linux/mkl/lib/intel64"
-#../build/TESTING/CMakeFiles/z_test.dir/link.txt
-
-# make CC="${CC}" FORTRAN="${FC}" CFLAGS="${CFLAGS}" \
-#           LOADOPTS=${LOADOPTS} NOOPTS="-O0 -fPIC" \
-#           ARCH=ar RANLIB=ranlib \
-#           SuperLUroot=${SLU_BUILD} SUPERLULIB=${SLU_INSTALLATION}/lib/libsuperlu.a \
-#           clean install lib
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -257,32 +207,25 @@ umount %{INSTALL_DIR}
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
 help( [[
-Module %{name} loads environmental variables defining
-the location of SUPERLUSEQ directory, libraries, and binaries:
-TACC_SUPERLUSEQ_DIR TACC_SUPERLUSEQ_LIB TACC_SUPERLUSEQ_BIN
+Python bindins to C++11. This module provides variables
+TACC_PYBIND11_DIR, TACC_PYBIND11_INC, and TACC_PYBIND11_SHARE.
+It also update the CMAKE_PREFIX_PATH.
 
-Version: %{version}
+Version %{version}
 ]] )
 
-whatis( "SUPERLUSEQ" )
+whatis( "Python bindings for C++11" )
 whatis( "Version: %{version}" )
-whatis( "Category: system, development" )
-whatis( "Keywords: System, Cartesian Grids" )
-whatis( "Description: Supernodal LU factorization" )
-whatis( "URL: http://crd-legacy.lbl.gov/~xiaoye/SuperLU/" )
+whatis( "Category: Development/Tools" )
+whatis( "Description: PYBIND11 exposes C++11 functionality to Python" )
+whatis( "URL: https://pybind1111.readthedocs.io/en/latest/" )
 
-local version =  "%{version}"
-local superlu_seq_dir =  "%{INSTALL_DIR}"
+local pybind11_dir = "%{INSTALL_DIR}"
 
-setenv("TACC_SUPERLUSEQ_DIR",superlu_seq_dir)
--- setenv("TACC_SUPERLUSEQ_BIN",pathJoin( superlu_seq_dir,"bin" ) )
-setenv("TACC_SUPERLUSEQ_INC",pathJoin( superlu_seq_dir,"include" ) )
-setenv("TACC_SUPERLUSEQ_LIB",pathJoin( superlu_seq_dir,"lib64" ) )
-setenv("TACC_SUPERLUSEQ_SHARE",pathJoin( superlu_seq_dir,"share" ) )
-
-prepend_path ("PATH",pathJoin( superlu_seq_dir,"share" ) )
--- prepend_path ("PATH",pathJoin( superlu_seq_dir,"bin" ) )
-prepend_path ("LD_LIBRARY_PATH",pathJoin( superlu_seq_dir, "lib64" ) )
+setenv("TACC_PYBIND11_DIR", pybind11_dir )
+setenv("TACC_PYBIND11_INC", pathJoin(pybind11_dir,"include" ) )
+setenv("TACC_PYBIND11_SHARE", pathJoin(pybind11_dir,"share" ) )
+append_path( "CMAKE_PREFIX_PATH", pathJoin( pybind11_dir,"share","cmake","pybind11" ) )
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
@@ -350,17 +293,5 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Wed Feb 13 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 7: let's try to get that strip correct
-* Tue Aug 28 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 6: just to disambiguate for intel18
-* Wed Jul 18 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 5: TACC_SUPERLU_LIB: lib -> lib64
-* Tue Apr 03 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 4: using cmake
-* Mon Mar 12 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: fPIC really fixed
-* Tue Feb 13 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: fPIC option
-* Sat Jan 20 2018 eijkhout <eijkhout@tacc.utexas.edu>
+* Tue Feb 12 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

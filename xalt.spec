@@ -2,8 +2,8 @@
 
 Summary: XALT
 Name: xalt
-Version: 2.4
-Release: 2
+Version: 2.6.4
+Release: 1
 License: LGPLv2
 Group: System Environment/Base
 Source0:  xalt-%{version}.tar.bz2
@@ -69,13 +69,13 @@ whatis("Keywords: System, TOOLS")
 whatis("URL: http://xalt.sf.net")
 whatis("Description: Collects system usage data")
 
-prepend_path{"PATH",                          "%{GENERIC_IDIR}/bin", priority = 100}
-prepend_path("COMPILER_PATH",                 "%{GENERIC_IDIR}/bin")
-prepend_path("LD_PRELOAD",                    "%{GENERIC_IDIR}/lib64/libxalt_init.so")
-setenv (     "%{MODULE_VAR}_DIR",             "%{GENERIC_IDIR}/")
-setenv (     "%{MODULE_VAR}_BIN",             "%{GENERIC_IDIR}/bin")
-setenv (     "XALT_EXECUTABLE_TRACKING",      "yes")
-setenv (     "XALT_SCALAR_AND_SPSR_SAMPLING", "yes")
+prepend_path{"PATH",                      "%{GENERIC_IDIR}/bin", priority = 100}
+prepend_path("COMPILER_PATH",             "%{GENERIC_IDIR}/bin")
+prepend_path("LD_PRELOAD",                "%{GENERIC_IDIR}/lib64/libxalt_init.so")
+setenv (     "%{MODULE_VAR}_DIR",         "%{GENERIC_IDIR}/")
+setenv (     "%{MODULE_VAR}_BIN",         "%{GENERIC_IDIR}/bin")
+setenv (     "XALT_EXECUTABLE_TRACKING",  "yes")
+setenv (     "XALT_SCALAR_SAMPLING",      "yes")
 EOF
 
 #--------------
