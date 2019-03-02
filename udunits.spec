@@ -4,7 +4,7 @@
 Summary:   Udunits is a utility for netcdf
 Name:      udunits
 Version:   2.2.25
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GPL
 Group:     applications/io
 Source:    udunits-%{version}.tar.gz
@@ -130,6 +130,8 @@ EOF
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Thu Feb 28 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: NOT SUBMITTED BECAUSE NOT NEEDED rebuild for changed hdf5
 * Mon Apr 27 2015 cazes <cazes@tacc.utexas.edu>
 - release 1: updated version 2.2.19
 * Fri Apr 12 2013 eijkhout <eijkhout@tacc.utexas.edu>

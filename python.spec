@@ -145,7 +145,7 @@ ${PIP} install brewer2mpl
 %if "%{MAJOR}" == "2"
 ${PIP} install futures
 %endif
-${PIP} uninstall futures
+#${PIP} uninstall futures
 ${PIP} install simpy    
 ${PIP} install jsonpickle
 ${PIP} install meld3
@@ -367,16 +367,17 @@ local mkl_lib      = "${MKL_LIB}"
 local omp_lib      = "${OMP_LIB}"
 %endif
 
-setenv("TACC_PYTHON%{MAJOR}_DIR", python_dir)
-setenv("TACC_PYTHON%{MAJOR}_BIN", python_bin)
-setenv("TACC_PYTHON%{MAJOR}_INC", python_inc)
-setenv("TACC_PYTHON%{MAJOR}_LIB", python_lib)
-setenv("TACC_PYTHON%{MAJOR}_MAN", python_man)
+setenv("TACC_PYTHON_DIR", python_dir)
+setenv("TACC_PYTHON_BIN", python_bin)
+setenv("TACC_PYTHON_INC", python_inc)
+setenv("TACC_PYTHON_LIB", python_lib)
+setenv("TACC_PYTHON_MAN", python_man)
 setenv("TACC_PYTHON_VER", "%{MAJOR_MINOR}")
 
 prepend_path("PATH", python_bin)
 prepend_path("MANPATH", python_man)
 prepend_path("LD_LIBRARY_PATH", python_lib)
+prepend_path("MODULEPATH", "%{APPS}/%{comp_fam_ver}/%{PNAME}/modulefiles")
 
 %if "%{comp_fam_name}" == "GNU"
 prepend_path("LD_LIBRARY_PATH", mkl_lib)
@@ -402,6 +403,7 @@ cat >    $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}/%{version}.lua << 'EOF'
 inherit()
 whatis("Version-notes: Compiler:%{comp_fam_ver}. MPI:%{mpi_fam_ver}")
 prepend_path("PYTHONPATH", "%{INSTALL_DIR_MPI}/lib/python%{MAJOR_MINOR}/site-packages")
+prepend_path("MODULEPATH", "%{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{PNAME}/modulefiles")
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}/.version.%{version} << 'EOF'

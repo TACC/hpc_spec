@@ -4,7 +4,7 @@
 Summary:   Ncview is a library for generating platform-independent data files
 Name:      ncview
 Version:   2.1.7
-Release: 1%{?dist}
+Release:   2%{?dist}
 License:   GPL
 Group:     applications/io
 Source:    ncview-%{version}.tar.gz
@@ -114,6 +114,7 @@ EOF
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Thu Feb 28 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: rebuild with intel 18
 * Mon Jul 31 2017 cazes <cazes@tacc.utexas.edu>
 - release 1: Initial build.
-

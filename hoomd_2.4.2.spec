@@ -52,7 +52,7 @@ Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   Open Source Software License Copyright 2009-2018
 Vendor:    University of Michigan
 Group:     applications/chemistry
@@ -233,7 +233,7 @@ local hoomd_dir="%{INSTALL_DIR}/hoomd"
 setenv("TACC_HOOMD_DIR"              ,hoomd_dir)
 setenv("TACC_HOOMD_LIB"              ,pathJoin(hoomd_dir,"lib"))
 prepend_path("PYTHONPATH",            pathJoin(hoomd_dir,"lib/python3"))
-depends_on("python3/3.7")
+depends_on("python3/3.7.0")
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} <<EOF

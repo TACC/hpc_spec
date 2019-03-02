@@ -35,11 +35,13 @@ Summary: A Nice little relocatable skeleton spec file example.
 %include rpm-dir.inc                  
 %include compiler-defines.inc
 #%include mpi-defines.inc
+%include python-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+#%include name-defines.inc
 #%include name-defines-noreloc.inc
+%include name-defines-noreloc-python.inc
 #%include name-defines-hidden.inc
 #%include name-defines-hidden-noreloc.inc
 ########################################
@@ -122,9 +124,11 @@ rpm -qi <rpm-name>
 %include system-load.inc
 module purge
 # Load Compiler
-#%include compiler-load.inc
+%include compiler-load.inc
 # Load MPI Library
 #%include mpi-load.inc
+# Load Python Library
+%include python-load.inc
 
 # Insert further module commands
 
@@ -136,6 +140,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  mkdir -p $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -153,8 +158,17 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
+  
+  # And/or create some dummy directories and files for fun
+  mkdir -p $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}/bin
+  mkdir -p $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}/lib
+  mkdir -p $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}/include
 
   echo "TACC_OPT %{TACC_OPT}"
+  echo "MODULE_DIR %{MODULE_DIR}"
+  echo "PYTHON_MODULE_DIR %{PYTHON_MODULE_DIR}"
+  echo "INSTALL_DIR %{INSTALL_DIR}"
+  echo "PYTHON_INSTALL_DIR %{PYTHON_INSTALL_DIR}"
   
   # Copy everything from tarball over to the installation directory
   cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
@@ -169,6 +183,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
+  mkdir -p $RPM_BUILD_ROOT/%{PYTHON_MODULE_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -177,20 +192,25 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
-# Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
+
+# Modulefile Help Message
+HELP_MSG=$(cat << EOM
+This is the help message.
+
 The %{MODULE_VAR} module defines the following environment variables:
 TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
 TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
 include files, and tools respectively.
-]]
 
---help(help_msg)
-help(help_msg)
+Version %{version}
+EOM
+)
 
-whatis("Name: bar")
+# Write out the modulefile associated with the application
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << EOF
+help([[${HELP_MSG}]])
+
+whatis("Name: %{pkg_base_name}")
 whatis("Version: %{pkg_version}%{dbg}")
 %if "%{is_debug}" == "1"
 setenv("TACC_%{MODULE_VAR}_DEBUG","1")
@@ -202,19 +222,30 @@ local bar_dir           = "%{INSTALL_DIR}"
 family("bar")
 prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
 prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "lib"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/bar1_1/modulefiles")
+prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/%{pkg_base_name}%{major_version}_%{minor_version}/modulefiles")
 setenv( "TACC_%{MODULE_VAR}_DIR",                bar_dir)
 setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(bar_dir, "include"))
 setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(bar_dir, "lib"))
 setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(bar_dir, "bin"))
 EOF
+
+# Write out the python-enabled modulefile associated with the application
+%if %{?WITH_PYTHON}
+cat > $RPM_BUILD_ROOT/%{PYTHON_MODULE_DIR}/%{MODULE_FILENAME} << EOF
+inherit()
+help([["${HELP_MSG}"]])
+local python_bar_dir           = "%{PYTHON_INSTALL_DIR}"
+prepend_path("PATH"            , pathJoin(python_bar_dir,"bin"))
+prepend_path("LD_LIBRARY_PATH" , pathJoin(python_bar_dir,"lib"))
+prepend_path("PYTHONPATH"      , pathJoin(python_bar_dir,"lib/python%{python_major_version}.%{python_minor_version}/site-packages"))
+EOF
+%endif
   
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << EOF
 #%Module3.1.1#################################################
 ##
-## version file for %{BASENAME}%{version}
+## version file for %{pkg_base_name}%{version}
 ##
-
 set     ModulesVersion      "%{version}"
 EOF
   
@@ -236,6 +267,10 @@ EOF
   # RPM package contains files within these directories
   %{INSTALL_DIR}
 
+  %if %{?WITH_PYTHON}
+    %{PYTHON_INSTALL_DIR}
+  %endif
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -247,6 +282,10 @@ EOF
   %defattr(-,root,install,)
   # RPM modulefile contains files within these directories
   %{MODULE_DIR}
+
+  %if %{?WITH_PYTHON}
+    %{PYTHON_MODULE_DIR}
+  %endif
 
 #--------------------------
 %endif # BUILD_MODULEFILE |

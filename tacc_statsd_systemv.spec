@@ -1,7 +1,7 @@
 Summary: Job-level Tracking and Analysis System
 Name: tacc_statsd
 Version: 2.3.3
-Release: 5%{?dist}
+Release: 7%{?dist}
 License: GPL
 Vendor: Texas Advanced Computing Center
 Group: System Environment/Base

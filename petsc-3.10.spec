@@ -163,8 +163,6 @@ export logdir=%{_topdir}/../apps/petsc/logs
 mkdir -p ${logdir}; rm -rf ${logdir}/*
 export dynamiccc="i64 debug i64debug complexi64 complexi64debug uni unidebug nohdf5 hyprefei"
 export dynamiccxx="cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug cxxi64 cxxi64debug"
-#export static="cxxstatic cxxstaticdebug static staticdebug complexstatic complexstaticdebug cxxcomplexstatic cxxcomplexstaticdebug"
-#module load python
 
 for ext in \
   "" \
@@ -458,7 +456,8 @@ esac
 
 if [ "%{comp_fam}" = "gcc" ] ; then
   # this is TACC_INTEL_LIB
-  export LIBS="${LIBS} /opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/libirc.so"
+  export LIBS=
+#"${LIBS} -L/opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/ -lirc"
 fi
 
 ##
@@ -671,8 +670,9 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+# remember to notify OpenSees: Ian Wang
 * Tue Jan 29 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 4: adding hypre-fei configuration
+- release 4: adding hyprefei configuration
 * Wed Jan 09 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 3: point update to 3.10.3
 * Thu Nov 15 2018 eijkhout <eijkhout@tacc.utexas.edu>

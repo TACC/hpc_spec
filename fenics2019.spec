@@ -5,7 +5,7 @@ Summary: Fenics install
 %define MODULE_VAR    FENICS
 
 # Create some macros (spec file variables)
-%define major_version 2018
+%define major_version 2019
 %define minor_version 1
 %define micro_version 0
 %define versionpatch %{major_version}.%{minor_version}.%{micro_version}
@@ -51,6 +51,7 @@ Group: System Environment/Base
 Summary: Fenics local binary install
 Group: System Environment/Base
 
+%description
 %description %{PACKAGE}
 FEniCS is a popular open-source (LGPLv3) computing platform for solving partial differential equations (PDEs).
 %description %{MODULEFILE}
@@ -87,10 +88,8 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 mkdir -p %{INSTALL_DIR}
 mount -t tmpfs tmpfs %{INSTALL_DIR}
-cp -r * %{INSTALL_DIR}
+# nothing here! cp -r * %{INSTALL_DIR}
 pushd %{INSTALL_DIR}
-echo "contents of install-dir before installation"
-ls
 export FENICS_DIR=`pwd`
 
 module load cmake python3
@@ -99,7 +98,7 @@ module load cmake python3
 %endif
 
 # fenics-specific modules
-module load pybind
+module load pybind11
 
 ####
 #### time saving: disable some rebuilds
@@ -145,9 +144,10 @@ module load petsc/${PETSCVERSION} slepc/${PETSCVERSION}
 ####
 #### required: eigen
 ####
-EIGEN_DIR=${WORK}/eigen
 EIGEN_VERSION=3.3.4
-EIGEN_INSTALL_DIR=${EIGEN_DIR}/installation-${EIGEN_VERSION}-${TACC_FAMILY_COMPILER}
+module load eigen/${EIGEN_VERSION}
+EIGEN_DIR=${TACC_EIGEN_DIR}
+EIGEN_INSTALL_DIR=${TACC_EIGEN_DIR}
 
 ####
 #### optional: hdf5
@@ -163,7 +163,7 @@ module load phdf5
 ####
 #### go to the install place
 ####
-FENICS_DIR=${WORK}/fenics2019
+FENICS_DIR=%{INSTALL_DIR}
 LOGDIR=`pwd`
 cd ${FENICS_DIR}
 
@@ -171,11 +171,8 @@ cd ${FENICS_DIR}
 #### declare paths
 ####
 export FENICS_PYTHON=${FENICS_DIR}/python
+mkdir -p ${FENICS_PYTHON}
 export FENICS_PYTHON_PACKAGES=${FENICS_PYTHON}/lib/python${TACC_PYTHON_VER}/site-packages/
-
-# For building optional Python interface of DOLFIN and mshr, pybind11
-# is needed since version 2018.1.0.
-export CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:${PYBIND_INSTALL}/share/cmake/pybind11
 
 ####
 #### FFC
@@ -184,44 +181,40 @@ export CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:${PYBIND_INSTALL}/share/cmake/pybi
 # Stable version
 # To install the Python components of FEniCS:
 
-if [ -z ${TACC_PYTHON_VER} ] ; then
-  echo ; echo "what is the python version?" ; echo ; exit 1
-fi
-if [ ${INSTALL_FFC} -gt 0 ] ; then
-  echo ; echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" ; echo
-  echo ; echo "                Installing FFC"  ; echo 
-  echo ; echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" ; echo
-  mkdir -p ${FENICS_PYTHON}
-  module list
-  which ${PIP}
-  echo "Python version: ${TACC_PYTHON_VER}"
-  ${PIP} install fenics-ffc \
+echo ; echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" ; echo
+echo ; echo "                Installing FFC"  ; echo 
+echo ; echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" ; echo
+
+echo "Using pip: ${PIP}"
+echo "Python version: ${TACC_PYTHON_VER}"
+
+( \
+  FFC_DIR=/tmp/ffc \
+  && rm -rf ${FFC_DIR} \
+  && mkdir -p ${FFC_DIR} \
+  && cd ${FFC_DIR} \
+  && ${PIP} install fenics-ffc \
     --upgrade \
-    --prefix=${FENICS_PYTHON}
-  # fix
-  ( \
-    cd ${FENICS_PYTHON_PACKAGES}/FIAT \
-    && sed -i '49s/AttributeError/(AttributeError, ValueError)/' \
+    --prefix=${FENICS_PYTHON} \
+  && echo "this fix should go away" \
+  && cd ${FENICS_PYTHON_PACKAGES}/FIAT \
+  && sed -i '49s/AttributeError/(AttributeError, ValueError)/' \
 	 expansions.py \
-  )
-fi
+)
 
 export PYTHONPATH=${PYTHONPATH}:${FENICS_PYTHON_PACKAGES}
-
-# This will install FFC and its dependencies. It may be useful to add
-# flag --user or --prefix=<prefix> to install to a user location. 
 
 ####
 #### Dolfin and Mshr
 ####
 
-FENICS_INSTALL=${FENICS_DIR}/fenics-installation
+FENICS_INSTALL=${FENICS_DIR}
+# /fenics-installation
 
 # To
 # install DOLFIN, and optionally mshr and/or Python interface of
 # DOLFIN/mshr:
 
-echo $PYTHONPATH
 FENICS_VERSION=$(python3 -c"import ffc; print(ffc.__version__)")
 if [ ${DOWNLOAD_FENICS} -gt 0 ] ; then
   echo ; echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" ; echo

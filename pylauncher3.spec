@@ -58,7 +58,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 Group:     Development/Tools
 License: GPL
 Url: https://github.com/TACC/pylauncher
@@ -277,5 +277,7 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Mon Feb 25 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: removing old launcher script
 * Sun Oct 07 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial build

@@ -207,7 +207,7 @@ umount %{INSTALL_DIR}
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
 help( [[
-Python bindins to C++11. This module provides variables
+Python bindings to C++11. This module provides variables
 TACC_PYBIND11_DIR, TACC_PYBIND11_INC, and TACC_PYBIND11_SHARE.
 It also update the CMAKE_PREFIX_PATH.
 

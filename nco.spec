@@ -4,7 +4,7 @@
 Summary: NetCDF operators
 Name: nco
 Version: 4.6.9
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPL 3
 Source: nco-4.6.9.tar.gz
 Source1: antlr-2.7.7.tar.gz
@@ -12,7 +12,7 @@ Source1: antlr-2.7.7.tar.gz
 #  Source2: udunits-2.1.20.tar.gz
 Source3: antlr_patches_2.7.7.tar.gz
 URL:  http://nco.sourceforge.net/
-Packager: TACC - cazes@tacc.utexas.edu
+Packager: TACC - cazes@tacc.utexas.edu,eijkhout@tacc.utexas.edu
 
 %include rpm-dir.inc
 
@@ -242,3 +242,7 @@ EOF
 
 %clean
 rm -rf $RPM_BUILD_ROOT
+
+%changelog
+* Thu Feb 28 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: rebuild with intel 18

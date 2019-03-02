@@ -1,7 +1,7 @@
 Summary: TACC system statistics collector
 Name: tacc_statsd
 Version: 2.3.2
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPL
 Vendor: Texas Advanced Computing Center
 Group: System Environment/Base

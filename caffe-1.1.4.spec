@@ -52,7 +52,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   BSD-2
 Group:     Data/Deep Learning
 URL:       https://github.com/intel/caffe
@@ -124,7 +124,7 @@ module purge
 module load TACC
 module swap intel/17.0.4 intel/18.0.2
 module load boost/1.68
-module load hdf5/1.8.16
+module load hdf5/1.10.4
 
 # Load Compiler
 #%include compiler-load.inc
