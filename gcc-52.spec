@@ -52,7 +52,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2%{?dist}
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.gnu.org/software
@@ -442,8 +442,8 @@ setenv(       "TACC_%{MODULE_VAR}_INC"   , pathJoin(gcc_dir,"include"   )       
 family("compiler")
 EOF
 
- 
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version << 'EOF'
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF' 
+#cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version << 'EOF'
 #%Module3.1.1#################################################
 ##
 ## version file for %{BASENAME}%{version}
