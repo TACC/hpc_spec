@@ -51,9 +51,11 @@ debug="%{nil}"
 comp="none"
 mpi="none"
 mpiV="%{nil}"
+python="none"
+pythonV="%{nil}"
 build=b
 
-TEMP=`getopt -o hb:fdlg:i:j:p:m:M:o:c:v --long help,build:,debug,log,gcc:,intel:,pgi:,impi:,,mvapich2:,openmpi:,cmpich:,force,show,version \
+TEMP=`getopt -o hb:fdlg:i:j:p:m:o:v --long help,build:,debug,log,gcc:,intel:,pgi:,impi:,,mvapich2:,openmpi:,cmpich:,python:,force,show,version \
      -n 'build' -- "$@"`
 if [ $? != 0 ] ; then
   echo "For usage of $0 do: $0 --help"
@@ -80,7 +82,8 @@ while true ; do
     -j|--impi)     mpi="impi";     impiV="$2";     shift 2 ;;
     -c|--cmpich)   mpi="cmpich";   cmpichV="$2";   shift 2 ;;
     -o|--openmpi)  mpi="openmpi";  openmpiV="$2";  shift 2 ;;
-    --show)        show=1;                                                  shift   ;;
+    --python)      python="python"; pythonV=$2;    shift 2 ;;
+    --show)        show=1;                         shift   ;;
     --) shift; break;;
     *) break;;
   esac
@@ -112,12 +115,16 @@ if [ -n "$help" ]; then
   echo "  -mV | --mvapich2=V : build with mvapich2    with version V"
   echo "  -cV | --cmpich=V   : build with cray-mpich  with version V"
   echo "  -oV | --openmpi=V  : build with openmpi     with version V"
+  echo "        --python=V   : build with python      with version V"
   echo ""
   echo "To specify a version of a compiler or MPI stack do:"
   echo "     $0 -i15 -m2_1 name.spec"
   echo "OR"
   echo "     $0 --intel=15 --mvapich2=2_1 name.spec"
   echo "will use intel 15 and mvapich2 version 2.1"
+  echo "OR"
+  echo "     $0 --intel=18 --impi=18_0 --python=3_7 name.spec"
+  echo "will use intel 18, intel mpi version 18, and python version 3.7"
   echo ""
   exit
 fi
@@ -125,9 +132,11 @@ fi
 
 eval "compV=\$${comp}V"
 eval "mpiV=\$${mpi}V"
+eval "pythonV=\$${python}V"
 
-mpiV=$(echo $mpiV | sed -e 's/\./_/g')
 compV=$(echo $compV | sed -e 's/\./_/g')
+mpiV=$(echo $mpiV | sed -e 's/\./_/g')
+pythonV=$(echo $pythonV | sed -e 's/\./_/g')
 
 # Build command line:
 
@@ -148,6 +157,13 @@ if [ "$mpi" != "none" ]; then
    argA=(${argA[@]}          "--define 'is_$mpi 1'" "--define 'mpiV $mpiV'") 
    pSargA=(${pSargA[@]} "-m" "--define 'is_$mpi 1'" "--define 'mpiV $mpiV'")
    logA=(${logA[@]} "${mpi}_$mpiV")
+fi
+
+# Python
+if [ "$python" != "none" ]; then
+   argA=(${argA[@]}          "--define 'is_$python 1'" "--define 'pythonV $pythonV'") 
+   pSargA=(${pSargA[@]} "-m" "--define 'is_$python 1'" "--define 'pythonV $pythonV'")
+   logA=(${logA[@]} "${python}_$pythonV")
 fi
 
 # Debug
