@@ -39,7 +39,7 @@ Release:   1
 License:   MIT
 Group:     Development/Tools
 URL:       https://github.com/TACC/launcher
-Packager:  lwilson@tacc.utexas.edu, eijkhout@tacc.utexas.edu
+Packager:  siliu@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode

@@ -59,7 +59,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2
+Release:   3
 Group:     Development/Tools
 License: GPL
 Url: https://bitbucket.org/VictorEijkhout/pylauncher
@@ -273,6 +273,8 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Mon Mar 04 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: remove old script
 * Mon Dec 10 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: no longer port number needed
 * Wed Oct 31 2018 eijkhout <eijkhout@tacc.utexas.edu>

@@ -55,8 +55,17 @@ ADCIRC is a system of computer programs for solving time dependent, free surface
 # Modules Section 
 #-----------------
 
-rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
-mkdir -p $RPM_BUILD_ROOT//%{MODULE_DIR}
+  rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
+  mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
+
+  #######################################
+  ##### Create TACC Canary Files ########
+  #######################################
+  touch $RPM_BUILD_ROOT/%{MODULE_DIR}/.tacc_module_canary
+  #######################################
+  ########### Do Not Remove #############
+  #######################################
+
 cat   >  $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 
 local help_msg=[[

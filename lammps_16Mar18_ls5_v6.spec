@@ -5,7 +5,7 @@
 #    MACHINE       :   TACC LONESTAR 5
 #    VERSION       :   16 MAR 2018
 #    AUTHOR        :   Albert Lu
-#    LAST MODIFIED :   11-4-2018
+#    LAST MODIFIED :   1-25-2019
 #
 ################################################################
 
@@ -25,7 +25,7 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 #
-# ./build_rpm.sh -l -i18 -c7_7_3 lammps_16Mar18_ls5_v4.spec
+# ./build_rpm.sh -l -i18 -c7_7_3 lammps_16Mar18_ls5_v6.spec
 
 %define pkg_base_name lammps
 %define MODULE_VAR    LAMMPS 
@@ -648,7 +648,7 @@ EOF
     echo "Working on netcdf ..."
     cd lib/netcdf
 
-    module load netcdf
+    module load netcdf/4.3.3.1
     module load pnetcdf
 
     cat > Makefile.lammps <<EOF

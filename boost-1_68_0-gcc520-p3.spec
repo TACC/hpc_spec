@@ -20,7 +20,7 @@ Summary: Boost spec file (www.boost.org)
 
 # Give the package a base name
 %define pkg_base_name boost-p3
-%define MODULE_VAR    BOOST-P3
+%define MODULE_VAR    BOOST_P3
 
 # Create some macros (spec file variables)
 %define major_version 1
@@ -50,7 +50,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   GPL
 Group:     Utility
 URL:       http://www.boost.org
@@ -201,10 +201,13 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all --without-libraries=mpi"
 #  fi
 
+# Python 3 setup examples:
+# using python : 3.1 : /usr/bin/python3 : /usr/include/python3.1 : /usr/lib ;
 
-  echo "using python : 3.7 : /opt/apps/gcc5_2/python3/3.7.0/bin/python3 ;" >> user-config.jam 
-  ./bootstrap.sh --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
-  ./b2 -j 10 --prefix=%{INSTALL_DIR} $EXTRA install
+  echo "using python : 3.7 : /opt/apps/gcc5_2/python3/3.7.0/bin/python3.7 : /opt/apps/gcc5_2/python3/3.7.0/include/python3.7m:  /opt/apps/gcc5_2/python3/3.7.0/lib ;" >> tools/build/example/user-config.jam 
+  echo "using python : 3.7 : /opt/apps/gcc5_2/python3/3.7.0/bin/python3.7 : /opt/apps/gcc5_2/python3/3.7.0/include/python3.7m:  /opt/apps/gcc5_2/python3/3.7.0/lib ;" >> user-config.jam
+  ./bootstrap.sh --with-python=/opt/apps/gcc5_2/python3/3.7.0/bin/python3.7  --with-python-version=3.7 --with-python-root=/opt/apps/gcc5_2/python3/3.7.0 --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
+  ./b2 -j 10  include="/opt/apps/gcc5_2/python3/3.7.0/include/python3.7m" --prefix=%{INSTALL_DIR} $EXTRA install
 
   mkdir -p              $RPM_BUILD_ROOT/%{INSTALL_DIR}
   cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..

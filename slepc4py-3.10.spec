@@ -16,20 +16,20 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: Petsc4py rpm build scxript
+Summary: Slepc4py rpm build scxript
 
 # Give the package a base name
-%define pkg_base_name petsc4py
-%define MODULE_VAR    PETSC4PY
+%define pkg_base_name slepc4py
+%define MODULE_VAR    SLEPC4PY
 
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 10
 %define micro_version 0
 
-%define petscversion %{major_version}.%{minor_version}
-%define petsc_full_version %{major_version}.%{minor_version}.%{micro_version}
-%define pkg_version %{pythonV}.%{petscversion}
+%define slepcversion %{major_version}.%{minor_version}
+%define slepc_full_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{pythonV}.%{slepcversion}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -53,12 +53,12 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4
+Release:   1
 License:   GPL
 Group:     Development/Tools
-URL:       https://bitbucket.org/petsc/petsc4py/
+URL:       https://bitbucket.org/slepc/slepc4py/
 Packager:  TACC - eijkhout@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{petsc_full_version}.tar.gz
+Source:    %{pkg_base_name}-%{slepc_full_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -66,19 +66,19 @@ Source:    %{pkg_base_name}-%{petsc_full_version}.tar.gz
 
 
 %package %{PACKAGE}
-Summary: PETSC4PYc rpm building
+Summary: SLEPC4PYc rpm building
 Group: HPC/libraries
 %description package
-Python interface to PETSc
+Python interface to Slepc
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-Python interface to PETSc
+Python interface to Slepc
 
 %description
-Python interface to PETSc
+Python interface to Slepc
 
 
 #---------------------------------------
@@ -91,7 +91,7 @@ Python interface to PETSc
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%setup -n %{pkg_base_name}-%{petsc_full_version}
+%setup -n %{pkg_base_name}-%{slepc_full_version}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -154,13 +154,13 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 %endif # BUILD_PACKAGE |
 #-----------------------
 
-# same as in petsc
+# same as in slepc
 export dynamiccc="debug uni unidebug i64 i64debug"
 export dynamiccxx="cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug cxxi64 cxxi64debug"
 
-echo "See what petsc versions there are"
-module spider petsc
-module spider petsc/%{petscversion}
+echo "See what slepc versions there are"
+module spider slepc
+module spider slepc/%{slepcversion}
 
 for ext in \
   "" debug complex complexdebug ; do
@@ -171,9 +171,11 @@ for ext in \
 
 export architecture=haswell
 if [ -z "${ext}" ] ; then
-  module load petsc/%{petscversion}
+  module load petsc/%{slepcversion}
+  module load slepc/%{slepcversion}
 else
-  module load petsc/%{petscversion}-${ext}
+  module load petsc/%{slepcversion}-${ext}
+  module load slepc/%{slepcversion}-${ext}
   export architecture=${architecture}-${ext}
 fi
 
@@ -185,7 +187,7 @@ mkdir -p %{INSTALL_DIR}/${architecture}
 python%{pythonV} setup.py build
 python%{pythonV} setup.py install --prefix=%{INSTALL_DIR}/${architecture}
 
-module unload petsc
+module unload petsc slepc
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -208,39 +210,41 @@ module unload petsc
   
 if [ -z "${ext}" ] ; then
   export moduleversion=%{version}
-  export modulepetscversion=%{petscversion}
+  export moduleslepcversion=%{slepcversion}
 else
   export moduleversion=%{version}-${ext}
-  export modulepetscversion=%{petscversion}-${ext}
+  export moduleslepcversion=%{slepcversion}-${ext}
 fi
 
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/${moduleversion}.lua << EOF
 help( [[
-The PETSC4PY modulefile defines the following environment variables:
-TACC_PETSC4PY_DIR for the package location
+The SLEPC4PY modulefile defines the following environment variables:
+TACC_SLEPC4PY_DIR for the package location
 and it updates the PYTHONPATH
 
-Version ${moduleversion} is for python%{pythonV} and PETSc %{petscversion}
+Version ${moduleversion} is for python%{pythonV} and Slepc %{slepcversion}
 ]] )
 
-whatis( "Name: Petsc4py" )
+whatis( "Name: Slepc4py" )
 whatis( "Version: %{moduleversion}" )
 whatis( "Version-notes: ${moduleversion}" )
 whatis( "Category: library, mathematics" )
-whatis( "URL: https://bitbucket.org/petsc/petsc4py/" )
-whatis( "Description: Python interface to PETSc" )
+whatis( "URL: https://bitbucket.org/slepc/slepc4py/" )
+whatis( "Description: Python interface to Slepc" )
 
-local             petsc_arch =    "${architecture}"
-local             petsc4py_dir =     "%{INSTALL_DIR}"
+local             slepc_arch =    "${architecture}"
+local             slepc4py_dir =     "%{INSTALL_DIR}"
 
 prepend_path("PYTHONPATH",
-    pathJoin(petsc4py_dir,petsc_arch,"lib","python${TACC_PYTHON_VER}","site-packages") )
+    pathJoin(slepc4py_dir,slepc_arch,"lib","python${TACC_PYTHON_VER}","site-packages") )
 
-setenv(          "TACC_PETSC4PY_DIR",        petsc4py_dir)
+setenv(          "TACC_SLEPC4PY_DIR",        slepc4py_dir)
 
 prereq     ("python%{pythonV}")
-always_load("petsc/${modulepetscversion}")
+always_load("petsc/${moduleslepcversion}")
+always_load("slepc/${moduleslepcversion}")
+always_load("petsc4py/${moduleversion}")
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${moduleversion} << EOF
@@ -323,11 +327,5 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Thu Jan 03 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 4: fixed the site-packages
-* Mon Jan 02 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: include python version
-* Mon Dec 17 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: because I have no idea what release 1 did.
-* Mon Nov 12 2018 eijkhout <eijkhout@tacc.utexas.edu>
+* Mon Jan 14 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: first release

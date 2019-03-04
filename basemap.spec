@@ -29,10 +29,15 @@ Summary: A Nice little relocatable skeleton spec file example.
 %define micro_version 0
 
 %define geos_major_version 3
-%define geos_minor_version 6
+%define geos_minor_version 7
 %define geos_micro_version 1
 
-%define python_version 2.7.15
+%define python_major 2
+%define python_minor 7
+%define python_micro 15
+
+%define python_version %{python_major}.%{python_minor}.%{python_micro} 
+%define pip pip%{python_major}
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 %define geos_pkg_version %{geos_major_version}.%{geos_minor_version}.%{geos_micro_version}
@@ -55,10 +60,10 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   BSD
 Group:     System/Utils
-URL:       http://www.cmake.org
+URL:       https://github.com/matplotlib/basemap
 Packager:  TACC - cproctor@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
@@ -134,7 +139,7 @@ other libraries that provide similar capabilities in Python.
 # Insert necessary module commands
 module purge
 %include compiler-load.inc
-module load python2
+module load python%{python_major}
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -171,13 +176,13 @@ export geos_major=%{geos_major_version}
 export geos_minor=%{geos_minor_version}
 export geos_patch=%{geos_micro_version}
 export geos_version=${geos_major}.${geos_minor}.${geos_patch}
-
+export PYTHON=`which python%{python_major}`
 
 export CC=icc
 export CXX=icpc
-export CFLAGS="-xCORE-AVX2"
-export CXXFLAGS="-xCORE-AVX2"
-export LDFLAGS="-xCORE-AVX2"
+export CFLAGS="%{TACC_VEC_OPT}"
+export CXXFLAGS="%{TACC_VEC_OPT}"
+export LDFLAGS="%{TACC_VEC_OPT}"
 
 mkdir -p ${geos}
 cd ${geos}
@@ -190,9 +195,17 @@ wget http://download.osgeo.org/geos/geos-${geos_version}.tar.bz2
 tar xvfj geos-${geos_version}.tar.bz2
 
 cd geos-${geos_version}
+
+# GEOS doesn't know how to handle libpython$VERm.so libraries.
+# Do not expand
+#sed -i 's:$base_python_path/libs/:$base_python_path/lib/:g'     ${geos}/geos-${geos_version}/configure
+#sed -i 's/libpython$PYTHON_VERSION/libpython$PYTHON_VERSIONm/g' ${geos}/geos-${geos_version}/configure
+#sed -i 's/-lpython$PYTHON_VERSION/-lpython$PYTHON_VERSIONm/g'   ${geos}/geos-${geos_version}/configure
+
 ${geos}/geos-${geos_version}/configure \
---prefix=${geos_install}               \
---enable-python
+--prefix=${geos_install}
+
+#--enable-python
 
 make -j ${ncores}
 make -j ${ncores} install
@@ -212,9 +225,9 @@ export basemap_version=${basemap_major}.${basemap_minor}.${basemap_patch}
 
 export CC=icc
 export CXX=icpc
-export CFLAGS="-shared -lpthread -xCORE-AVX2"
-export CXXFLAGS="-shared -lpthread -xCORE-AVX2"
-export LDFLAGS="-xCORE-AVX2"
+export CFLAGS="-shared -lpthread %{TACC_VEC_OPT}"
+export CXXFLAGS="-shared -lpthread %{TACC_VEC_OPT}"
+export LDFLAGS="%{TACC_VEC_OPT}"
 
 mkdir -p ${basemap}
 cd ${basemap}
@@ -225,13 +238,12 @@ printf "************************************************************\n\n"
 
 wget https://github.com/matplotlib/basemap/archive/v${basemap_version}.tar.gz
 #wget http://downloads.sourceforge.net/project/matplotlib/matplotlib-toolkits/basemap-${basemap_version}/basemap-${basemap_version}.tar.gz
-#tar xvfz v${basemap_version} ### Yes, there is no extension
-tar xvfz v${basemap_version}.tar.gz ### There is now -- FFS!
+tar xvfz v${basemap_version}.tar.gz
 
 cd basemap-${basemap_version}
-python setup.py install --prefix=${basemap_install}
+python%{python_major} setup.py install --prefix=${basemap_install}
 
-pip install --trusted-host pypi.python.org --prefix=%{INSTALL_DIR} --no-binary :all: --install-option="--prefix=%{INSTALL_DIR}" pyproj
+%{pip} install --prefix=%{INSTALL_DIR} --no-binary :all: --install-option="--prefix=%{INSTALL_DIR}" pyproj
 
 
 if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
@@ -280,8 +292,6 @@ LD_LIBRARY_PATH while basemap is also added to your PYTHONPATH.
 Version %{version}
 ]]
 
-depends_on("python2/%{python_version}")
-
 help(help_message,"\n")
 
 whatis("Name: %{name}")
@@ -300,7 +310,9 @@ setenv("TACC_GEOS_LIB",geos_lib)
 -- Prepend the basemap directories to the adequate PATH variables
 prepend_path("LD_LIBRARY_PATH", geos_lib)
 prepend_path("LD_LIBRARY_PATH", pathJoin(basemap_dir,"lib"))
-prepend_path("PYTHONPATH",      pathJoin(basemap_dir,"lib/python2.7/site-packages"))
+prepend_path("PYTHONPATH",      pathJoin(basemap_dir,"lib/python%{python_major}.%{python_minor}/site-packages"))
+
+depends_on("python%{python_major}")
 
 EOF
   
@@ -354,14 +366,18 @@ EOF
 export PACKAGE_POST=1
 %include post-defines.inc
 %post %{MODULEFILE}
-ln -s %{INSTALL_DIR}/lib/python2.7/site-packages/mpl_toolkits/basemap /opt/apps/intel18/python2/%{python_version}/lib/python2.7/site-packages/mpl_toolkits/basemap
+#set -x
+ln -s %{INSTALL_DIR}/lib/python%{python_major}.%{python_minor}/site-packages/mpl_toolkits/basemap /opt/apps/%{comp_fam_ver}/python%{python_major}/%{python_version}/lib/python%{python_major}.%{python_minor}/site-packages/mpl_toolkits/basemap
+#set +x
 export MODULEFILE_POST=1
 %include post-defines.inc
 %preun %{PACKAGE}
 export PACKAGE_PREUN=1
 %include post-defines.inc
 %preun %{MODULEFILE}
-unlink /opt/apps/intel18/python2/%{python_version}/lib/python2.7/site-packages/mpl_toolkits/basemap
+#set -x
+unlink /opt/apps/%{comp_fam_ver}/python%{python_major}/%{python_version}/lib/python%{python_major}.%{python_minor}/site-packages/mpl_toolkits/basemap
+#set +x
 ########################################
 ############ Do Not Remove #############
 ########################################

@@ -1,5 +1,14 @@
 #
-# Adapted from Bar.spec by Victor Eijkhout 2018/12/17
+# Spec file for EIGEN:
+# C++ linear algebra library
+#
+# Victor Eijkhout, 2019
+# based on:
+#
+# Bar.spec, 
+# W. Cyrus Proctor
+# Antonio Gomez
+# 2015-08-25
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -16,33 +25,27 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: Petsc4py rpm build scxript
+Summary:    Set of tools for manipulating geographic and Cartesian data sets
 
 # Give the package a base name
-%define pkg_base_name petsc4py
-%define MODULE_VAR    PETSC4PY
+%define pkg_base_name eigen
+%define MODULE_VAR    EIGEN
 
 # Create some macros (spec file variables)
 %define major_version 3
-%define minor_version 10
-%define micro_version 0
+%define minor_version 3
+%define micro_version 4
 
-%define petscversion %{major_version}.%{minor_version}
-%define petsc_full_version %{major_version}.%{minor_version}.%{micro_version}
-%define pkg_version %{pythonV}.%{petscversion}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
 %include compiler-defines.inc
-%include mpi-defines.inc
-
+#%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-#%include name-defines.inc
 %include name-defines-noreloc.inc
-#%include name-defines-hidden.inc
-#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -53,32 +56,35 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4
-License:   GPL
+Release:   1%{?dist}
+License:   GNU
 Group:     Development/Tools
-URL:       https://bitbucket.org/petsc/petsc4py/
-Packager:  TACC - eijkhout@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{petsc_full_version}.tar.gz
+Vendor:     Tuxfamily
+Group:      Libraries/maps
+Source:	    eigen-%{version}.tar.gz
+URL:	    http://eigen.tuxfamily.org/
+Packager:   eijkhout@tacc.utexas.edu
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
-
+%global _python_bytecompile_errors_terminate_build 0
 
 %package %{PACKAGE}
-Summary: PETSC4PYc rpm building
-Group: HPC/libraries
+Summary: Eigen is a C++ template library for linear algebra: matrices, vectors, numerical solvers, and related algorithms.
+Group: Applications
 %description package
-Python interface to PETSc
+This is the long description for the package RPM...
 
 %package %{MODULEFILE}
-Summary: The modulefile RPM
-Group: Lmod/Modulefiles
+Summary: Eigen is a C++ template library for linear algebra: matrices, vectors, numerical solvers, and related algorithms.
+Group: Applications
 %description modulefile
-Python interface to PETSc
+This is the long description for the modulefile RPM...
 
-%description
-Python interface to PETSc
+%description 
+Eigen is a C++ template library for linear algebra:
+matrices, vectors, numerical solvers, and related algorithms.
 
 
 #---------------------------------------
@@ -91,7 +97,7 @@ Python interface to PETSc
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%setup -n %{pkg_base_name}-%{petsc_full_version}
+%setup -n %{pkg_base_name}-%{pkg_version}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -120,11 +126,13 @@ Python interface to PETSc
 # Setup modules
 %include system-load.inc
 module purge
+# Load Compiler
 %include compiler-load.inc
-%include mpi-load.inc
+# Load MPI Library
+#%include mpi-load.inc
 
 # Insert further module commands
-module load python%{pythonV}
+ module load boost cmake
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -135,6 +143,18 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
   
+export EIGEN_SRC_DIR=`pwd`
+export EIGEN_BUILD_DIR=/tmp/eigen-build
+rm -rf ${EIGEN_BUILD_DIR}
+mkdir ${EIGEN_BUILD_DIR}
+export EIGEN_INSTALL_DIR=%{INSTALL_DIR}
+
+#
+# Use mount temp trick
+#
+mkdir -p             %{INSTALL_DIR}
+mount -t tmpfs tmpfs %{INSTALL_DIR}
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -147,45 +167,21 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
   
-  # Create some dummy directories and files for fun
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
-#-----------------------  
-%endif # BUILD_PACKAGE |
-#-----------------------
+( \
+  cd ${EIGEN_BUILD_DIR} \
+  && echo "using CC=${CC}, CXX=${CXX}, FC=${FC}" \
+  && cmake -D CMAKE_INSTALL_PREFIX:PATH=${EIGEN_INSTALL_DIR} \
+        -D CMAKE_C_COMPILER:FILEPATH=${CC} \
+        -D CMAKE_CXX_COMPILER:FILEPATH=${CXX} \
+        -D CMAKE_Fortran_COMPILER:FILEPATH=${FC} \
+        ${EIGEN_SRC_DIR} \
+  && make && make install \
+  && mkdir ${EIGEN_INSTALL_DIR}/cmake \
+  && cp -r CMake* *cmake ${EIGEN_INSTALL_DIR}/cmake \
+)
 
-# same as in petsc
-export dynamiccc="debug uni unidebug i64 i64debug"
-export dynamiccxx="cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug cxxi64 cxxi64debug"
-
-echo "See what petsc versions there are"
-module spider petsc
-module spider petsc/%{petscversion}
-
-for ext in \
-  "" debug complex complexdebug ; do
-
-#------------------------
-%if %{?BUILD_PACKAGE}
-#------------------------
-
-export architecture=haswell
-if [ -z "${ext}" ] ; then
-  module load petsc/%{petscversion}
-else
-  module load petsc/%{petscversion}-${ext}
-  export architecture=${architecture}-${ext}
-fi
-
-echo "What do we currently have loaded"
-module list
-
-pwd
-mkdir -p %{INSTALL_DIR}/${architecture}
-python%{pythonV} setup.py build
-python%{pythonV} setup.py install --prefix=%{INSTALL_DIR}/${architecture}
-
-module unload petsc
+cp -r %{INSTALL_DIR}/* ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
+umount tmpfs
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -206,79 +202,56 @@ module unload petsc
   ########### Do Not Remove #############
   #######################################
   
-if [ -z "${ext}" ] ; then
-  export moduleversion=%{version}
-  export modulepetscversion=%{petscversion}
-else
-  export moduleversion=%{version}-${ext}
-  export modulepetscversion=%{petscversion}-${ext}
-fi
-
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/${moduleversion}.lua << EOF
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
 help( [[
-The PETSC4PY modulefile defines the following environment variables:
-TACC_PETSC4PY_DIR for the package location
-and it updates the PYTHONPATH
+Module %{name} loads environmental variables defining
+the location of EIGEN directory, libraries, and binaries:
+TACC_EIGEN_DIR TACC_EIGEN_BIN TACC_EIGEN_SHARE
 
-Version ${moduleversion} is for python%{pythonV} and PETSc %{petscversion}
+Version: %{version}
 ]] )
 
-whatis( "Name: Petsc4py" )
-whatis( "Version: %{moduleversion}" )
-whatis( "Version-notes: ${moduleversion}" )
-whatis( "Category: library, mathematics" )
-whatis( "URL: https://bitbucket.org/petsc/petsc4py/" )
-whatis( "Description: Python interface to PETSc" )
+whatis( "EIGEN" )
+whatis( "Version: %{version}" )
+whatis( "Category: system, development" )
+whatis( "Keywords: Linear Algebra, C++" )
+whatis( "Description: C++ template library for linear algebra" )
+whatis( "URL: http://eigen.tuxfamily.org/" )
 
-local             petsc_arch =    "${architecture}"
-local             petsc4py_dir =     "%{INSTALL_DIR}"
+local version =  "%{version}"
+local eigen_dir =  "%{INSTALL_DIR}"
 
-prepend_path("PYTHONPATH",
-    pathJoin(petsc4py_dir,petsc_arch,"lib","python${TACC_PYTHON_VER}","site-packages") )
+setenv("TACC_EIGEN_DIR",eigen_dir)
+setenv("TACC_EIGEN_BIN",pathJoin( eigen_dir,"bin" ) )
+setenv("TACC_EIGEN_INC",pathJoin( eigen_dir,"include","eigen3" ) )
+setenv("TACC_EIGEN_SHARE",pathJoin( eigen_dir,"share" ) )
 
-setenv(          "TACC_PETSC4PY_DIR",        petsc4py_dir)
-
-prereq     ("python%{pythonV}")
-always_load("petsc/${modulepetscversion}")
+prepend_path ("PATH",pathJoin( eigen_dir,"share" ) )
+prepend_path ("PATH",pathJoin( eigen_dir,"bin" ) )
 EOF
-  
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${moduleversion} << EOF
-#%Module3.1.1#################################################
-##
-## version file for %{BASENAME}/%{version}
-##
 
-set     ModulesVersion      "${moduleversion}"
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
+#%Module1.0####################################################################
+##
+## Version file for %{name} version %{version}
+##
+set ModulesVersion "%version"
 EOF
-  
+
   # Check the syntax of the generated lua modulefile only if a visible module
   %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/${moduleversion}.lua
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
   %endif
+
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
 
-done # end of for ext loop
-
 #------------------------
 %if %{?BUILD_PACKAGE}
-#------------------------
-
-  # Copy everything from tarball over to the installation directory
-  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  # Copy the installation  over to the installation directory
-  cp -r %{INSTALL_DIR}/* $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-#-----------------------  
-%endif # BUILD_PACKAGE |
-#-----------------------
-
-#------------------------
-%if %{?BUILD_PACKAGE}
-%files %{PACKAGE}
+%files package
 #------------------------
 
   %defattr(-,root,install,)
@@ -290,7 +263,7 @@ done # end of for ext loop
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files %{MODULEFILE}
+%files modulefile 
 #---------------------------
 
   %defattr(-,root,install,)
@@ -323,11 +296,5 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Thu Jan 03 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 4: fixed the site-packages
-* Mon Jan 02 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: include python version
-* Mon Dec 17 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: because I have no idea what release 1 did.
-* Mon Nov 12 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 1: first release
+* Mon Feb 04 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial release
