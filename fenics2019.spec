@@ -196,7 +196,7 @@ echo "Python version: ${TACC_PYTHON_VER}"
   && ${PIP} install fenics-ffc \
     --upgrade \
     --prefix=${FENICS_PYTHON} \
-  && echo "this fix should go away" \
+  && echo "VLE this fix should go away" \
   && cd ${FENICS_PYTHON_PACKAGES}/FIAT \
   && sed -i '49s/AttributeError/(AttributeError, ValueError)/' \
 	 expansions.py \
@@ -211,31 +211,24 @@ export PYTHONPATH=${PYTHONPATH}:${FENICS_PYTHON_PACKAGES}
 FENICS_INSTALL=${FENICS_DIR}
 # /fenics-installation
 
-# To
-# install DOLFIN, and optionally mshr and/or Python interface of
+# To install DOLFIN, and optionally mshr and/or Python interface of
 # DOLFIN/mshr:
 
 FENICS_VERSION=$(python3 -c"import ffc; print(ffc.__version__)")
-if [ ${DOWNLOAD_FENICS} -gt 0 ] ; then
-  echo ; echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" ; echo
-  echo ; echo "                Downloading FENICS"  ; echo 
-  echo ; echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" ; echo
-  rm -rf dolfin mshr
-  git clone --branch=$FENICS_VERSION https://bitbucket.org/fenics-project/dolfin
-  ( cd dolfin \
-    && cp cmake/templates/dolfin.pc.in dolfin.pc.bak \
-    && git checkout origin/master -- cmake/templates/dolfin.pc.in \
-    && diff dolfin.pc.bak cmake/templates/dolfin.pc.in \
-  )
-  git clone --branch=$FENICS_VERSION https://bitbucket.org/fenics-project/mshr
-  ( \
-    cd mshr/python \
-    && sed -i \
+( \
+  git clone --branch=$FENICS_VERSION https://bitbucket.org/fenics-project/dolfin \
+  && cd dolfin \
+  && cp cmake/templates/dolfin.pc.in dolfin.pc.bak \
+  && git checkout origin/master -- cmake/templates/dolfin.pc.in \
+  && diff dolfin.pc.bak cmake/templates/dolfin.pc.in || /bin/true \
+)
+( \
+  git clone --branch=$FENICS_VERSION https://bitbucket.org/fenics-project/mshr \
+  && cd mshr/python \
+  && sed -i \
        -e 's/include_dirs = /include_dirs = [ "\/opt\/apps\/intel18\/boost\/1.65\/include" ] +/' \
 	   setup.py \
-  )
-  if [ $? -ne 0 ] ; then exit 1; fi
-fi
+)
 
 if [ -z "${EIGEN_INSTALL_DIR}" -o ! -d "${EIGEN_INSTALL_DIR}" ] ; then
   echo "Could not find EIGEN_INSTALL_DIR: ${EIGEN_INSTALL_DIR}"

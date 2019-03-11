@@ -1,8 +1,8 @@
 Summary:    Python is a high-level general-purpose programming language.
-Name:      tacc-python2
-#Name:       tacc-python3 
-Version:    2.7.15
-#Version:    3.7.0
+#Name:      tacc-python2
+Name:       tacc-python3 
+#Version:    2.7.15
+Version:    3.7.0
 Release:    2%{?dist}
 License:    GPLv2
 Vendor:     Python Software Foundation
@@ -34,8 +34,8 @@ Packager:   TACC - rtevans@tacc.utexas.edu
 %include compiler-defines.inc
 %include mpi-defines.inc	
 
-%define MAJOR_MINOR 2.7
-%define MAJOR 2
+%define MAJOR_MINOR 3.7
+%define MAJOR 3
 %define PNAME python%{MAJOR}
 
 %define INSTALL_DIR_COMP %{APPS}/%{comp_fam_ver}/%{PNAME}/%{version}
@@ -192,15 +192,15 @@ lapack_libs = " > site.cfg
 fi
 
 ### Scipy
-if ! $(%{INSTALL_DIR_COMP}/bin/%{PNAME} -c "import scipy"); then
+if ! $(%{INSTALL_DIR_COMP}/bin/%{PNAME} -c "import scipy.stats"); then
     cd %{_topdir}/SOURCES	
-    if [ ! -f "%{_topdir}/SOURCES/scipy-1.2.0.tar.gz" ]; then	
-	wget -O scipy-1.2.0.tar.gz https://github.com/scipy/scipy/releases/download/v1.2.0/scipy-1.2.0.tar.gz
+    if [ ! -f "%{_topdir}/SOURCES/scipy-1.2.1.tar.gz" ]; then	
+	wget -O scipy-1.2.1.tar.gz https://github.com/scipy/scipy/releases/download/v1.2.1/scipy-1.2.1.tar.gz
     fi	   
 
-    rm -rf %{_topdir}/SOURCES/scipy-1.2.0
-    tar -xzvf scipy-1.2.0.tar.gz -C %{_topdir}/SOURCES	 
-    cd %{_topdir}/SOURCES/scipy-1.2.0
+    rm -rf %{_topdir}/SOURCES/scipy-1.2.1
+    tar -xzvf scipy-1.2.1.tar.gz -C %{_topdir}/SOURCES	 
+    cd %{_topdir}/SOURCES/scipy-1.2.1
 
     %if "%{comp_fam_name}" == "Intel"
     %{INSTALL_DIR_COMP}/bin/%{PNAME} setup.py config --compiler=intelem --fcompiler=intelem build_clib --compiler=intelem --fcompiler=intelem build_ext --compiler=intelem --fcompiler=intelem install
@@ -255,7 +255,6 @@ CFLAGS="-O2" ${PIP} install --no-binary :all: pandas
 ${PIP} install --no-binary :all: psutil
 ${PIP} install --no-binary :all: numexpr
 ${PIP} install --no-binary :all: rpyc	
-#${PIP} install --no-binary :all: ipython
 ${PIP} install jupyter	
 ${PIP} install --no-binary :all: mako
 CFLAGS="-O2" ${PIP} install --no-binary :all: lxml
@@ -328,8 +327,9 @@ fi
 # Create the module file
 #----------------------------------------------------------
 %if "%{build_mpi4py}" == "0"
-#------- Serial Module
+#------- Serial Module File
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR_COMP}
+mkdir -p $RPM_BUILD_ROOT/%{APPS}/%{comp_fam_ver}/%{PNAME}/modulefiles
 
 cat >    $RPM_BUILD_ROOT/%{MODULE_DIR_COMP}/%{version}.lua << EOF
 help(
@@ -398,7 +398,9 @@ EOF
 %endif
 
 %if "%{build_mpi4py}" == "1"
+#------- Parallel Module File
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}
+mkdir -p $RPM_BUILD_ROOT/%{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{PNAME}/modulefiles
 cat >    $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}/%{version}.lua << 'EOF'
 inherit()
 whatis("Version-notes: Compiler:%{comp_fam_ver}. MPI:%{mpi_fam_ver}")

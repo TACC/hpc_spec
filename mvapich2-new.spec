@@ -1,6 +1,6 @@
 #
 # Si Liu
-# 2018-08-18
+# 2019-03-18
 #
 
 Summary: MVvapich2 new spec file 
@@ -11,8 +11,8 @@ Summary: MVvapich2 new spec file
 
 # Create some macros (spec file variables)
 
-%define pkg_version 2.3rc2
-%define underscore_version 2_3
+%define pkg_version 2.3.1
+%define underscore_version 2_3_1
 
 ### Toggle On/Off ###
 %include rpm-dir.inc

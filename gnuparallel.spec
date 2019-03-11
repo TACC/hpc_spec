@@ -322,7 +322,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 * Wed Dec 05 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: UNRELEASED purging emacs backup files
+- release 3: UNRELEASED purging emacs backup files, delay parameter
 * Mon Sep 17 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: adding ssh script
 * Thu Jun 14 2018 eijkhout <eijkhout@tacc.utexas.edu>

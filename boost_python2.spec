@@ -1,6 +1,6 @@
 #
-# Antonio Gomez-Iglesias
-# 2017-05-15
+# Si Liu
+# 2019-03-01
 #
 
 Summary: Boost spec file (www.boost.org)
@@ -11,7 +11,7 @@ Summary: Boost spec file (www.boost.org)
 
 # Create some macros (spec file variables)
 %define major_version 1
-%define minor_version 64
+%define minor_version 69
 %define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}
@@ -22,11 +22,14 @@ Summary: Boost spec file (www.boost.org)
 %include rpm-dir.inc
 %include compiler-defines.inc
 #%include mpi-defines.inc
+%include python-defines.inc
+
 ########################################
 ### Construct name based on includes ###
 ########################################
 #%include name-defines.inc
-%include name-defines-noreloc.inc
+#%include name-defines-noreloc.inc
+%include name-defines-noreloc-python.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -41,8 +44,8 @@ Release:   3%{?dist}
 License:   GPL
 Group:     Utility
 URL:       http://www.boost.org
-Packager:  TACC - agomez@tacc.utexas.edu
-Source0:   boost_1_64_0.tar.gz
+Packager:  TACC - siliu@tacc.utexas.edu
+Source0:   boost_1_69_0.tar.gz
 Source1:   icu4c-59_1-src.tgz
 
 # Turn off debug package mode
@@ -86,6 +89,7 @@ proposed for the upcoming TR2.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  rm -rf $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}
 
 %setup -n boost_%{major_version}_%{minor_version}_%{micro_version}  %{name}-%{version}
 %setup -n boost_%{major_version}_%{minor_version}_%{micro_version}  -T -D -a 1
@@ -98,7 +102,7 @@ proposed for the upcoming TR2.
 %if %{?BUILD_MODULEFILE}
 #---------------------------
   #Delete the module installation directory.
-  rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
+  rm -rf $RPM_BUILD_ROOT/%{PYTHON_MODULE_DIR}
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -115,11 +119,14 @@ proposed for the upcoming TR2.
 
 # Setup modules
 %include system-load.inc
-%include compiler-defines.inc
-#%include mpi-defines.inc
 module purge
+# Load Compiler
 %include compiler-load.inc
-#module load intel
+# Load MPI Library
+#%include mpi-load.inc
+# Load Python Library
+%include python-load.inc
+
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -129,13 +136,20 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
+  mkdir -p $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}
+  mkdir -p %{PYTHON_INSTALL_DIR}
+  mount -t tmpfs tmpfs %{PYTHON_INSTALL_DIR}
+
+  echo "TACC_OPT %{TACC_OPT}"
+  echo "MODULE_DIR %{MODULE_DIR}"
+  echo "PYTHON_MODULE_DIR %{PYTHON_MODULE_DIR}"
+  echo "INSTALL_DIR %{INSTALL_DIR}"
+  echo "PYTHON_INSTALL_DIR %{PYTHON_INSTALL_DIR}"
 
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
-  touch $RPM_BUILD_ROOT/%{INSTALL_DIR}/.tacc_install_canary
+  touch $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}/.tacc_install_canary
   #######################################
   ########### Do Not Remove #############
   #######################################
@@ -160,33 +174,35 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   %endif
 
   WD=`pwd`
-
+  
+ TACC_OPT="-xCORE-AVX2 -axCORE-AVX512,MIC-AVX512"
+ 
   cd icu/source
-  CXXFLAGS="%{TACC_OPT}" CFLAGS="%{TACC_OPT}" ./runConfigureICU  $ICU_MODE --prefix=%{INSTALL_DIR}
-  make -j 28
+  CXXFLAGS="%{TACC_OPT}" CFLAGS="%{TACC_OPT}" ./runConfigureICU  $ICU_MODE --prefix=%{PYTHON_INSTALL_DIR}
+  make -j 24
   make install
   rm -f ~/user-config.jam
 
   cd $WD
-  EXTRA="-sICU_PATH=%{INSTALL_DIR}"
-  CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all --without-libraries=mpi"
+  EXTRA="-sICU_PATH=%{PYTHON_INSTALL_DIR}"
+  CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all"
 
-  ./bootstrap.sh --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
+  ./bootstrap.sh --prefix=%{PYTHON_INSTALL_DIR} ${CONFIGURE_FLAGS}
 
-  ./b2 -j 28 --prefix=%{INSTALL_DIR} $EXTRA cxxflags="%{TACC_OPT}" cflags="%{TACC_OPT}" linkflags="%{TACC_OPT}" install
+  ./b2 -j 28 --prefix=%{PYTHON_INSTALL_DIR} $EXTRA cxxflags="%{TACC_OPT}" cflags="%{TACC_OPT}" linkflags="%{TACC_OPT}" install
   
-  mkdir -p              $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+  mkdir -p              $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}
+  cp -r %{PYTHON_INSTALL_DIR}/ $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}/..
 
 
   rm -f ~/tools/build/v2/user-config.jam
 
-  if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-        mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  if [ ! -d $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR} ]; then
+        mkdir -p $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}
   fi
 
-  cp -r %{INSTALL_DIR} $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-  umount %{INSTALL_DIR}
+  cp -r %{PYTHON_INSTALL_DIR} $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}/..
+  umount %{PYTHON_INSTALL_DIR}
 
 #---------------------- -
 %endif # BUILD_PACKAGE |
@@ -197,25 +213,26 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
+  mkdir -p $RPM_BUILD_ROOT/%{PYTHON_MODULE_DIR}
 
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
-  touch $RPM_BUILD_ROOT/%{MODULE_DIR}/.tacc_module_canary
+  touch $RPM_BUILD_ROOT/%{PYTHON_MODULE_DIR}/.tacc_module_canary
   #######################################
   ########### Do Not Remove #############
   #######################################
 
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
+cat > $RPM_BUILD_ROOT/%{PYTHON_MODULE_DIR}/%{version}.lua << 'EOF'
 help([[
-The boost module file defines the following environment variables:"
-BOOST_ROOT, TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC for"
-the location of the boost distribution."
+The boost module file defines the following environment variables:
+BOOST_ROOT, TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC for
+the location of the boost distribution.
 
-boost-mpi is not currently supported.
+To load the rest of boost  do "module load boost"
 
-Version %{version}"
+Version %{version}
 ]])
 
 whatis("Name: boost")
@@ -226,19 +243,20 @@ whatis("URL: http://www.boost.org")
 whatis("Description: Boost provides free peer-reviewed portable C++ source libraries.")
 
 
-setenv("TACC_%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
-setenv("TACC_%{MODULE_VAR}_LIB","%{INSTALL_DIR}/lib")
-setenv("TACC_%{MODULE_VAR}_INC","%{INSTALL_DIR}/include")
-setenv("TACC_%{MODULE_VAR}_BIN","%{INSTALL_DIR}/bin")
-setenv("BOOST_ROOT","%{INSTALL_DIR}")
+setenv("TACC_%{MODULE_VAR}_DIR","%{PYTHON_INSTALL_DIR}")
+setenv("TACC_%{MODULE_VAR}_LIB","%{PYTHON_INSTALL_DIR}/lib")
+setenv("TACC_%{MODULE_VAR}_INC","%{PYTHON_INSTALL_DIR}/include")
+setenv("TACC_%{MODULE_VAR}_BIN","%{PYTHON_INSTALL_DIR}/bin")
+setenv("BOOST_ROOT","%{PYTHON_INSTALL_DIR}")
+
+conflict("boost","boost-mpi")
 
 -- Add boost to the LD_LIBRARY_PATH
-prepend_path("LD_LIBRARY_PATH","%{INSTALL_DIR}/lib")
-prepend_path("PATH", "%{INSTALL_DIR}/bin")
-
+prepend_path("LD_LIBRARY_PATH","%{PYTHON_INSTALL_DIR}/lib")
+prepend_path("PATH", "%{PYTHON_INSTALL_DIR}/bin")
 EOF
 
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
+cat > $RPM_BUILD_ROOT/%{PYTHON_MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
 ## version file for %{MODULE_VAR}%{version}
@@ -248,7 +266,7 @@ set     ModulesVersion      "%{version}"
 EOF
 
   # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{PYTHON_MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
@@ -262,7 +280,7 @@ EOF
 
   %defattr(-,root,install,)
   # RPM package contains files within these directories
-  %{INSTALL_DIR}
+  %{PYTHON_INSTALL_DIR}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -274,7 +292,7 @@ EOF
 
   %defattr(-,root,install,)
   # RPM modulefile contains files within these directories
-  %{MODULE_DIR}
+  %{PYTHON_MODULE_DIR}
 
 #--------------------------
 %endif # BUILD_MODULEFILE |

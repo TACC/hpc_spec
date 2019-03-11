@@ -33,7 +33,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
+Release:   3%{?dist}
 License: BSD Open Source License
 Group:   Data/Visualization
 Packager: TACC - siliu@tacc.utexas.edu
@@ -142,7 +142,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   ./configure --prefix=$INSTALL_DIR   \
   --enable-static --enable-shared \
-  --with-hdf5=/opt/apps/intel18/hdf5/1.8.16/x86_64/include,/opt/apps/intel18/hdf5/1.8.16/x86_64/lib
+  --with-hdf5=/opt/apps/intel18/hdf5/1.10.4/x86_64/include,/opt/apps/intel18/hdf5/1.10.4/x86_64//lib
 
   make -j 16
 
@@ -190,6 +190,10 @@ whatis("Version: 4.10.2")
 whatis("Category: Library, Visualization")
 whatis("Description: a scalable mesh and field I/O library and scientific database")
 whatis("URL: https://wci.llnl.gov/codes/silo/")
+
+prepend_path("PATH",    "%{INSTALL_DIR}/bin")
+prepend_path("INCLUDE", "%{INSTALL_DIR}/include")
+prepend_path("LD_LIBRARY_PATH", "%{INSTALL_DIR}/lib")
 
 setenv("TACC_%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
 setenv("TACC_%{MODULE_VAR}_LIB","%{INSTALL_DIR}/lib")
