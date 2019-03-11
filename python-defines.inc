@@ -47,6 +47,8 @@
   %define python_fam     python
   %define python_fam_ver %{python_fam}%{python_label}
   %define python_module  %{python_fam}%{python_major_version}/%{python_module_version}
+  %define python_exec    python%{python_major_version}
+  %define pip_exec       pip%{python_major_version}
 %endif
 
 %if "%{python_fam}" == "error"

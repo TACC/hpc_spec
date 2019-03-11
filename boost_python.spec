@@ -1,6 +1,7 @@
 #
 # Si Liu
 # 2017-11-01
+# 2019-03-03 WCP Clean up; add in Python
 #
 
 Summary: Boost spec file (www.boost.org)
@@ -43,7 +44,7 @@ Summary: Boost spec file (www.boost.org)
 ### Construct name based on includes ###
 ########################################
 #%include name-defines.inc
-%include name-defines-noreloc-python.inc
+%include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -230,11 +231,9 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
       export EXTRA="-sICU_PATH=${INSTALL_LOC}"
       # Everything but python and mpi
       export BOOST_WHITELIST="${BOOST_LIBS}"
-      export BOOST_BLACKLIST="mpi,python"
     %else
       # Just python
       export BOOST_WHITELIST="python"
-      export BOOST_BLACKLIST="${BOOST_LIBS},mpi"
       export INSTALL_LOC=%{PYTHON_INSTALL_DIR}
       export CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-python=$(which ${PYTHON_EXEC}) \
                                                  --with-python-root=${TACC_PYTHON_DIR} \
@@ -245,11 +244,9 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
     %if %{undefined python_fam}
       # Just mpi
       export BOOST_WHITELIST="mpi"
-      export BOOST_BLACKLIST="${BOOST_LIBS},python"
     %else
       # Both mpi and python
       export BOOST_WHITELIST="mpi,python"
-      export BOOST_BLACKLIST="${BOOST_LIBS}"
       export INSTALL_LOC=%{PYTHON_INSTALL_DIR}
       export CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-python=$(which ${PYTHON_EXEC}) \
                                                  --with-python-root=${TACC_PYTHON_DIR} \

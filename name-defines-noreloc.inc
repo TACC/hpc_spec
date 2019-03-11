@@ -57,6 +57,10 @@
 %define MODULE_FILENAME %{version}.lua
 %if "%{?python_fam_ver}"
   %define PYTHON_MODULE_DIR %{MODULE_PREFIX}/%{PYTHON_MODULE_SUFFIX}
+  %if "%{?unified_directories}"
+    %define MODULE_SUFFIX %{PYTHON_MODULE_SUFFIX}
+    %define MODULE_DID    %{PYTHON_MODULE_DIR}
+  %endif
 %endif
 
 # Install macros
@@ -64,6 +68,10 @@
 %define INSTALL_DIR     %{INSTALL_PREFIX}/%{INSTALL_SUFFIX}
 %if "%{?python_fam_ver}"
   %define PYTHON_INSTALL_DIR %{INSTALL_PREFIX}/%{PYTHON_INSTALL_SUFFIX}
+  %if "%{?unified_directories}"
+    %define INSTALL_SUFFIX %{PYTHON_INSTALL_SUFFIX}
+    %define INSTALL_DIR    %{PYTHON_INSTALL_DIR}
+  %endif
 %endif
 
 # Subpackage macros
