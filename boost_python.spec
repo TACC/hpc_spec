@@ -1,7 +1,6 @@
 #
 # Si Liu
 # 2017-11-01
-# 2019-03-03 WCP Clean up; add in Python
 #
 
 Summary: Boost spec file (www.boost.org)
@@ -171,11 +170,8 @@ module purge
 # Load Python Library
 %if %{defined python_fam}
   %include python-load.inc
-  IFS=.; VER=(${TACC_PYTHON_VER##*-}); unset IFS
-  export PYTHON_MAJOR_VERSION="${VER[0]}"
-  export PYTHON_MINOR_VERSION="${VER[1]}"
-  export PYTHON_EXEC=python"${PYTHON_MAJOR_VERSION}"
-  export TACC_PYTHON_DIR=$(eval echo "\${TACC_PYTHON${PYTHON_MAJOR_VERSION}_DIR}")
+  export PYTHON_EXEC=%{python_exec}
+  export TACC_PYTHON_DIR=$(eval echo "\${TACC_PYTHON%{python_major_version}_DIR}")
 %endif
 #########################################
 ###### Add Additional Modules Here ######
@@ -231,9 +227,11 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
       export EXTRA="-sICU_PATH=${INSTALL_LOC}"
       # Everything but python and mpi
       export BOOST_WHITELIST="${BOOST_LIBS}"
+      export BOOST_BLACKLIST="mpi,python"
     %else
       # Just python
       export BOOST_WHITELIST="python"
+      export BOOST_BLACKLIST="${BOOST_LIBS},mpi"
       export INSTALL_LOC=%{PYTHON_INSTALL_DIR}
       export CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-python=$(which ${PYTHON_EXEC}) \
                                                  --with-python-root=${TACC_PYTHON_DIR} \
@@ -244,9 +242,11 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
     %if %{undefined python_fam}
       # Just mpi
       export BOOST_WHITELIST="mpi"
+      export BOOST_BLACKLIST="${BOOST_LIBS},python"
     %else
       # Both mpi and python
       export BOOST_WHITELIST="mpi,python"
+      export BOOST_BLACKLIST="${BOOST_LIBS}"
       export INSTALL_LOC=%{PYTHON_INSTALL_DIR}
       export CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-python=$(which ${PYTHON_EXEC}) \
                                                  --with-python-root=${TACC_PYTHON_DIR} \
@@ -254,6 +254,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
     %endif
   %endif
 
+  #export CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-libraries=${BOOST_WHITELIST} --without-libraries=${BOOST_BLACKLIST}"
   export CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-libraries=${BOOST_WHITELIST}"
   ./bootstrap.sh --prefix=${INSTALL_LOC} ${CONFIGURE_FLAGS}
   %if %{defined mpi_fam}

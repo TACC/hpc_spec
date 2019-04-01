@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   11%{?dist}
+Release:   12%{?dist}
 License:   GPL
 Group:     Module Magic
 Packager:  TACC - cproctor@tacc.utexas.edu
@@ -241,21 +241,21 @@ end
 
 
 -- Create slurm environment variables.
-local base_dir           = "/opt/slurm/default"
+local base_dir           = "/usr"
 
-prepend_path( "PATH"            , pathJoin( base_dir, "bin")      )
+-- prepend_path( "PATH"            , pathJoin( base_dir, "bin")      )
 -- append_path("LD_LIBRARY_PATH" , pathJoin(base_dir, "lib")       )
 prepend_path("MANPATH"         , pathJoin(base_dir, "share/man") )
 prepend_path("MANPATH"         , "/usr/share/man"                )
-prepend_path("PERL5LIB"        , pathJoin(base_dir,"lib/perl5/site_perl/5.10.0/x86_64-linux-thread-multi"))
+prepend_path("PERL5LIB"        , pathJoin(base_dir,"lib/perl5/site_perl/5.18.2/x86_64-linux-thread-multi"))
 
 setenv( "TACC_SLURM_DIR" ,                base_dir)
 setenv( "TACC_SLURM_INC" ,       pathJoin(base_dir, "include"))
 setenv( "TACC_SLURM_LIB" ,       pathJoin(base_dir, "lib"))
 setenv( "TACC_SLURM_BIN" ,       pathJoin(base_dir, "bin"))
-setenv( "TACC_SLURM_CONF",       "/etc/opt/slurm/slurm_LG.conf")
+setenv( "TACC_SLURM_CONF",       "/etc/slurm/slurm_LG.conf")
 setenv( "TACC_SHOWQ_CONF",      "/opt/apps/tacc/bin/showq_LG.conf")
-setenv( "SLURM_CONF"     ,       "/etc/opt/slurm/slurm_LG.conf")
+setenv( "SLURM_CONF"     ,       "/etc/slurm/slurm_LG.conf")
 setenv( "SQUEUE_FORMAT"  ,       "%.18i %.15P %.8j %.8u %.2t %.10M %.6D %R")
 
 -- "Wimmy Wham Wham Wozzle!" -- Slurms MacKenzie

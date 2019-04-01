@@ -20,14 +20,16 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name mvapich2
-%define MODULE_VAR    MVAPICH2
+%define base_name     mvapich2
+%define pkg_base_name %{base_name}-largemem
+%define MODULE_VAR    MVAPICH2-LARGEMEM
 
 # Create some macros (spec file variables)
 %define major_version 2
-%define minor_version 1
+%define minor_version 3
+%define micro_version 1
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 %define pkgi_und_version %{major_version}_%{minor_version}
 
 ### Toggle On/Off ###
@@ -38,9 +40,9 @@ Summary: A Nice little relocatable skeleton spec file example.
 ### Construct name based on includes ###
 ########################################
 #%include name-defines.inc
-#%include name-defines-noreloc.inc
+%include name-defines-noreloc.inc
 #%include name-defines-hidden.inc
-%include name-defines-hidden-noreloc.inc
+#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -51,12 +53,12 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3
+Release:   1
 License:   Freely Distributable
 Group:     MPI
 URL:       http://mvapich.cse.ohio-state.edu
 Packager:  TACC - cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Source:    %{base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -127,7 +129,6 @@ information.
 module purge
 # Load Compiler
 %include compiler-load.inc
-ml hwloc
 # Load MPI Library
 #%include mpi-load.inc
 
@@ -142,7 +143,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
   mkdir -p %{INSTALL_DIR}
-#  mount -t tmpfs tmpfs %{INSTALL_DIR}
+  mount -t tmpfs tmpfs %{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -161,39 +162,40 @@ export         mv2=`pwd`
 export mv2_install=%{INSTALL_DIR}
 ##################################################
 
-export   mv2_major=2
-export   mv2_minor=1
-export mv2_version=${mv2_major}.${mv2_minor}
+export   mv2_major=%{major_version}
+export   mv2_minor=%{minor_version}
+export   mv2_micro=%{micro_version}
+export mv2_version=${mv2_major}.${mv2_minor}.${mv2_micro}
 
 if [ "%{comp_fam}" == "gcc" ]; then
-  export   CFLAGS="-L/opt/slurm/default/lib64 -lpmi2 -march=sandybridge -mtune=haswell"
-  export CXXFLAGS="-L/opt/slurm/default/lib64 -lpmi2 -march=sandybridge -mtune=haswell"
-  export  FCFLAGS="-L/opt/slurm/default/lib64 -lpmi2 -march=sandybridge -mtune=haswell"
-  export   FFLAGS="-L/opt/slurm/default/lib64 -lpmi2 -march=sandybridge -mtune=haswell"
-  export  LDFLAGS="-Wl,--verbose -march=sandybridge -mtune=haswell -L/opt/slurm/default/lib64"
+  export   CFLAGS="-L/usr/lib64/slurmpmi -lpmi2 -march=sandybridge -mtune=haswell"
+  export CXXFLAGS="-L/usr/lib64/slurmpmi -lpmi2 -march=sandybridge -mtune=haswell"
+  export  FCFLAGS="-L/usr/lib64/slurmpmi -lpmi2 -march=sandybridge -mtune=haswell"
+  export   FFLAGS="-L/usr/lib64/slurmpmi -lpmi2 -march=sandybridge -mtune=haswell"
+  export  LDFLAGS="-Wl,--verbose -march=sandybridge -mtune=haswell -L/usr/lib64"
   export     LIBS="-lpmi2"
-  export    MPICHLIB_CFLAGS="-L/opt/slurm/default/lib64 -lpmi2 -march=sandybridge -mtune=haswell"
-  export  MPICHLIB_CXXFLAGS="-L/opt/slurm/default/lib64 -lpmi2 -march=sandybridge -mtune=haswell"
-  export    MPICHLIB_FFLAGS="-L/opt/slurm/default/lib64 -lpmi2 -march=sandybridge -mtune=haswell"
-  export   MPICHLIB_FCFLAGS="-L/opt/slurm/default/lib64 -lpmi2 -march=sandybridge -mtune=haswell"
-  export   MPICHLIB_LDFLAGS="-Wl,--verbose -march=sandybridge -mtune=haswell -L/opt/slurm/default/lib64"
+  export    MPICHLIB_CFLAGS="-L/usr/lib64/slurmpmi -lpmi2 -march=sandybridge -mtune=haswell"
+  export  MPICHLIB_CXXFLAGS="-L/usr/lib64/slurmpmi -lpmi2 -march=sandybridge -mtune=haswell"
+  export    MPICHLIB_FFLAGS="-L/usr/lib64/slurmpmi -lpmi2 -march=sandybridge -mtune=haswell"
+  export   MPICHLIB_FCFLAGS="-L/usr/lib64/slurmpmi -lpmi2 -march=sandybridge -mtune=haswell"
+  export   MPICHLIB_LDFLAGS="-Wl,--verbose -march=sandybridge -mtune=haswell -L/usr/lib64"
   export      MPICHLIB_LIBS="-lpmi2"
   export       CC=gcc
   export      CXX=g++
   export       FC=gfortran
   export       FF=gfortran
 elif [ "%{comp_fam}" == "intel" ]; then
-  export    MPICHLIB_CFLAGS="-Wl,-rpath,/opt/cray/pmi/default/lib64 -L/opt/cray/pmi/default/lib64 -lpmi -lpmi2 -xAVX -axCORE-AVX2"
-  export  MPICHLIB_CXXFLAGS="-Wl,-rpath,/opt/cray/pmi/default/lib64 -L/opt/cray/pmi/default/lib64 -lpmi -lpmi2 -xAVX -axCORE-AVX2"
-  export    MPICHLIB_FFLAGS="-Wl,-rpath,/opt/cray/pmi/default/lib64 -L/opt/cray/pmi/default/lib64 -lpmi -lpmi2 -xAVX -axCORE-AVX2"
-  export   MPICHLIB_FCFLAGS="-Wl,-rpath,/opt/cray/pmi/default/lib64 -L/opt/cray/pmi/default/lib64 -lpmi -lpmi2 -xAVX -axCORE-AVX2"
-  export   MPICHLIB_LDFLAGS="-Wl,-rpath,/opt/cray/pmi/default/lib64 -L/opt/cray/pmi/default/lib64 -lpmi -lpmi2 -xAVX -axCORE-AVX2"
+  export    MPICHLIB_CFLAGS="-Wl,-rpath,/opt/cray/pe/pmi/default/lib64 -L/opt/cray/pe/pmi/default/lib64 -lpmi -Wl,-rpath,/usr/lib64/slurmpmi -L/usr/lib64/slurmpmi -lpmi2 -xAVX -axCORE-AVX2"
+  export  MPICHLIB_CXXFLAGS="-Wl,-rpath,/opt/cray/pe/pmi/default/lib64 -L/opt/cray/pe/pmi/default/lib64 -lpmi -Wl,-rpath,/usr/lib64/slurmpmi -L/usr/lib64/slurmpmi -lpmi2 -xAVX -axCORE-AVX2"
+  export    MPICHLIB_FFLAGS="-Wl,-rpath,/opt/cray/pe/pmi/default/lib64 -L/opt/cray/pe/pmi/default/lib64 -lpmi -Wl,-rpath,/usr/lib64/slurmpmi -L/usr/lib64/slurmpmi -lpmi2 -xAVX -axCORE-AVX2"
+  export   MPICHLIB_FCFLAGS="-Wl,-rpath,/opt/cray/pe/pmi/default/lib64 -L/opt/cray/pe/pmi/default/lib64 -lpmi -Wl,-rpath,/usr/lib64/slurmpmi -L/usr/lib64/slurmpmi -lpmi2 -xAVX -axCORE-AVX2"
+  export   MPICHLIB_LDFLAGS="-Wl,-rpath,/opt/cray/pe/pmi/default/lib64 -L/opt/cray/pe/pmi/default/lib64 -lpmi -Wl,-rpath,/usr/lib64/slurmpmi -L/usr/lib64/slurmpmi -lpmi2 -xAVX -axCORE-AVX2"
   export      MPICHLIB_LIBS="-lpmi2"
-  export   CFLAGS="-Wl,-rpath,/opt/cray/pmi/default/lib64 -L/opt/cray/pmi/default/lib64 -lpmi -lpmi2"
-  export CXXFLAGS="-Wl,-rpath,/opt/cray/pmi/default/lib64 -L/opt/cray/pmi/default/lib64 -lpmi -lpmi2"
-  export  FCFLAGS="-Wl,-rpath,/opt/cray/pmi/default/lib64 -L/opt/cray/pmi/default/lib64 -lpmi -lpmi2"
-  export   FFLAGS="-Wl,-rpath,/opt/cray/pmi/default/lib64 -L/opt/cray/pmi/default/lib64 -lpmi -lpmi2"
-  export  LDFLAGS="-Wl,-rpath,/opt/cray/pmi/default/lib64 -L/opt/cray/pmi/default/lib64 -lpmi -lpmi2"
+  export   CFLAGS="-Wl,-rpath,/opt/cray/pe/pmi/default/lib64 -L/opt/cray/pe/pmi/default/lib64 -lpmi -Wl,-rpath,/usr/lib64/slurmpmi -L/usr/lib64/slurmpmi -lpmi2 "
+  export CXXFLAGS="-Wl,-rpath,/opt/cray/pe/pmi/default/lib64 -L/opt/cray/pe/pmi/default/lib64 -lpmi -Wl,-rpath,/usr/lib64/slurmpmi -L/usr/lib64/slurmpmi -lpmi2 "
+  export  FCFLAGS="-Wl,-rpath,/opt/cray/pe/pmi/default/lib64 -L/opt/cray/pe/pmi/default/lib64 -lpmi -Wl,-rpath,/usr/lib64/slurmpmi -L/usr/lib64/slurmpmi -lpmi2 "
+  export   FFLAGS="-Wl,-rpath,/opt/cray/pe/pmi/default/lib64 -L/opt/cray/pe/pmi/default/lib64 -lpmi -Wl,-rpath,/usr/lib64/slurmpmi -L/usr/lib64/slurmpmi -lpmi2 "
+  export  LDFLAGS="-Wl,-rpath,/opt/cray/pe/pmi/default/lib64 -L/opt/cray/pe/pmi/default/lib64 -lpmi -Wl,-rpath,/usr/lib64/slurmpmi -L/usr/lib64/slurmpmi -lpmi2 "
   export       CC=icc
   export      CXX=icpc
   export       FC=ifort
@@ -214,7 +216,7 @@ ${mv2}/mvapich2-${mv2_version}/configure \
 --prefix=${mv2_install}                  \
 --with-pmi=pmi2                          \
 --with-pm=slurm                          \
---with-slurm=/opt/slurm/default          \
+--with-slurm=/usr                        \
 --enable-romio                           \
 --with-file-system=lustre+nfs            \
 --disable-mcast                          \
@@ -231,7 +233,7 @@ if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
 fi
 
 cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-#umount %{INSTALL_DIR}/
+umount %{INSTALL_DIR}/
 
 
   
@@ -292,7 +294,7 @@ prepend_path("MANPATH"         , pathJoin(base, "share/man")  )
 prepend_path("INFOPATH"        , pathJoin(base, "doc")        )
 prepend_path("LD_LIBRARY_PATH" , pathJoin(base, "lib/shared") )
 prepend_path("LD_LIBRARY_PATH" , pathJoin(base, "lib")        )
-prepend_path("LD_LIBRARY_PATH" , "/opt/cray/pmi/default/lib64")
+prepend_path("LD_LIBRARY_PATH" , "/opt/cray/pe/pmi/default/lib64")
 setenv("MV2_USE_OLD_BCAST","0")
 setenv("MV2_USE_UD_HYBRID","0")
 family("MPI")

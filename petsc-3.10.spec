@@ -28,7 +28,7 @@ Summary: PETSc rpm build script
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 10
-%define micro_version 2
+%define micro_version 4
 
 %define pkg_version %{major_version}.%{minor_version}
 %define pkg_full_version %{major_version}.%{minor_version}.%{micro_version}
@@ -52,7 +52,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4
+Release:   5
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.mcs.anl.gov/petsc/
@@ -735,6 +735,8 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Fri Mar 15 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 5: point update to 3.10.4 because 3.10.3 has a SuperLU update
 * Mon Dec 03 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 4: using download hdf5, adding nohdf5 variant
 * Fri Nov 16 2018 eijkhout <eijkhout@tacc.utexas.edu>

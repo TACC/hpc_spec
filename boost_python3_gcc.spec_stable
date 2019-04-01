@@ -1,20 +1,7 @@
 #
-# Si Liu 
-# 2018-08-10
+# Si Liu
+# 2019-03-21
 #
-# Important Build-Time Environment Variables (see name-defines.inc)
-# NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
-# NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
-#
-# Important Install-Time Environment Variables (see post-defines.inc)
-# VERBOSE=1       -> Print detailed information at install time
-# RPM_DBPATH      -> Path To Non-Standard RPM Database Location
-#
-# Typical Command-Line Example:
-# cd ../RPMS/x86_64
-# rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
-# rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
-# rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
 Summary: Boost spec file (www.boost.org)
 
@@ -24,7 +11,7 @@ Summary: Boost spec file (www.boost.org)
 
 # Create some macros (spec file variables)
 %define major_version 1
-%define minor_version 68
+%define minor_version 69
 %define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}
@@ -32,9 +19,11 @@ Summary: Boost spec file (www.boost.org)
 %define mpi_fam none
 
 ### Toggle On/Off ###
-%include rpm-dir.inc                  
+%include rpm-dir.inc
 %include compiler-defines.inc
 #%include mpi-defines.inc
+%include python-defines.inc
+%define  unified_directories 1
 ########################################
 ### Construct name based on includes ###
 ########################################
@@ -50,11 +39,13 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   1%{?dist}
 License:   GPL
 Group:     Utility
 URL:       http://www.boost.org
 Packager:  TACC - siliu@tacc.utexas.edu
+Source0:   boost_1_69_0.tar.gz
+Source1:   icu4c-63_1-src.tgz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -96,8 +87,10 @@ proposed for the upcoming TR2.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  rm -rf $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}
 
-#%setup -n %{pkg_base_name}-%{pkg_version}
+%setup -n boost_%{major_version}_%{minor_version}_%{micro_version}  %{name}-%{version}
+%setup -n boost_%{major_version}_%{minor_version}_%{micro_version}  -T -D -a 1
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -124,13 +117,13 @@ proposed for the upcoming TR2.
 
 # Setup modules
 %include system-load.inc
-%include compiler-defines.inc
-#%include mpi-defines.inc
 module purge
+# Load Compiler
 %include compiler-load.inc
-#module load intel/18.0.2 
-module load gcc/5.2.0
-module load python2 
+# Load MPI Library
+#%include mpi-load.inc
+# Load Python Library
+%include python-load.inc
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -170,39 +163,27 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
         export CONFIGURE_FLAGS=--with-toolset=gcc
   %endif
 
-  rm -f icu4c-56_1-src.tgz*
-  rm -f boost_1_68_0.tar.gz*
-  wget http://download.icu-project.org/files/icu4c/56.1/icu4c-56_1-src.tgz
-  wget http://downloads.sourceforge.net/project/boost/boost/1.68.0/boost_1_68_0.tar.gz 
-  tar -xzf icu4c-56_1-src.tgz
-  tar -xzf boost_1_68_0.tar.gz
   WD=`pwd`
 
-#  if [ "$CXX" != mpicxx ]; then
-    	cd icu/source
-    	./runConfigureICU  $ICU_MODE --prefix=%{INSTALL_DIR}
-    	make -j 10
-    	make install
-    	rm -f ~/user-config.jam
-#  fi
+  TACC_OPT="-xAVX -axCORE-AVX2"
+
+  cd icu/source
+  CXXFLAGS="%{TACC_OPT}" CFLAGS="%{TACC_OPT}" ./runConfigureICU  $ICU_MODE --prefix=%{INSTALL_DIR}
+  make -j 24
+  make install
+  rm -f ~/user-config.jam
 
   cd $WD
-  cd boost_1_68_0
   EXTRA="-sICU_PATH=%{INSTALL_DIR}"
-  #if [ "$CXX" = mpicxx ]; then
- # 	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=mpi"
- # 	EXTRA=""
- # 	mpipath=`which mpicxx`
-#	cat > $WD/tools/build/v2/user-config.jam << EOF
-#	#using mpi $mpipath ;
-#	using mpi ;
-#	EOF
-#  else
-  	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all --without-libraries=mpi"
-#  fi
+  CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all --without-libraries=mpi"
 
-  ./bootstrap.sh --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
-  ./b2 -j 10 --prefix=%{INSTALL_DIR} $EXTRA install
+# Python 3 setup examples:
+# using python : 3.1 : /usr/bin/python3 : /usr/include/python3.1 : /usr/lib ;
+
+  echo "using python : 3.7 : /opt/apps/gcc5_2/python3/3.7.0/bin/python3.7 : /opt/apps/gcc5_2/python3/3.7.0/include/python3.7m:  /opt/apps/gcc5_2/python3/3.7.0/lib ;" >> tools/build/example/user-config.jam 
+  echo "using python : 3.7 : /opt/apps/gcc5_2/python3/3.7.0/bin/python3.7 : /opt/apps/gcc5_2/python3/3.7.0/include/python3.7m:  /opt/apps/gcc5_2/python3/3.7.0/lib ;" >> user-config.jam
+  ./bootstrap.sh --with-python=/opt/apps/gcc5_2/python3/3.7.0/bin/python3.7  --with-python-version=3.7 --with-python-root=/opt/apps/gcc5_2/python3/3.7.0 --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
+  ./b2 -j 10  include="/opt/apps/gcc5_2/python3/3.7.0/include/python3.7m" --prefix=%{INSTALL_DIR} $EXTRA install
 
   mkdir -p              $RPM_BUILD_ROOT/%{INSTALL_DIR}
   cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
@@ -263,8 +244,8 @@ setenv("TACC_%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
 setenv("TACC_%{MODULE_VAR}_LIB","%{INSTALL_DIR}/lib")
 setenv("TACC_%{MODULE_VAR}_INC","%{INSTALL_DIR}/include")
 
-always_load("python2")
-conflict("boost","boost-mpi")
+always_load("python3")
+conflict("boost","boost-mpi","boost-p3")
 
 -- Add boost to the LD_LIBRARY_PATH
 prepend_path("LD_LIBRARY_PATH","%{INSTALL_DIR}/lib")

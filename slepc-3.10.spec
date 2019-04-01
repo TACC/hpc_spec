@@ -25,7 +25,7 @@ Summary: SLEPc rpm build scxript
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 10
-%define micro_version 4
+%define micro_version 2
 
 %define pkg_version %{major_version}.%{minor_version}
 %define pkg_full_version %{major_version}.%{minor_version}.%{micro_version}
@@ -52,7 +52,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2
+Release:   3
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.gnu.org/software/bar
@@ -334,7 +334,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 * Fri Mar 01 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: update to 3.10.4 because 3.10.3 has a SuperLU update
+- release 3: update to 3.10.2
 * Mon Jan 14 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: point update
 * Wed Oct 10 2018 eijkhout <eijkhout@tacc.utexas.edu>

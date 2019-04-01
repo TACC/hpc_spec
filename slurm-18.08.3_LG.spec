@@ -1,11 +1,12 @@
-#2# reset && rpmbuild -ba slurm-17.11.5_LG.spec 2>&1 | tee slurm-17.11.5_LG.log
+# I finally found the json-c parser lib: libjson-c-devel-0.11-2.22.x86_64.rpm
+
 %include rpm-dir.inc
 %define pkgbasename slurm
 %define suf _LG
 
 Name:		%{pkgbasename}%{suf}
-Version:	17.11.5
-%global rel	1
+Version:	18.08.3
+%define rel	1
 Release:	%{rel}%{?dist}
 Summary:	Slurm Workload Manager
 Packager: TACC - cproctor@tacc.utexas.edu
@@ -21,12 +22,7 @@ URL:		https://slurm.schedmd.com/
 %endif
 
 Source:		%{slurm_source_dir}.tar.bz2
-Patch100: slurm-%{version}.patch
-Patch101: slurm-%{version}_LG.configure.patch
-
-## WCP Added in for ls5
-%global _prefix /opt/slurm/%{version}
-%global _slurm_sysconfdir /etc/opt/slurm
+Patch100: slurm-%{version}-%{rel}.patch
 
 # build options		.rpmmacros options	change to default action
 # ====================  ====================	========================
@@ -42,6 +38,7 @@ Patch101: slurm-%{version}_LG.configure.patch
 # --with openssl	%_with_openssl 1	require openssl RPM to be installed
 #						ensures auth/openssl and crypto/openssl are built
 # --without pam		%_without_pam 1		don't require pam-devel RPM to be installed
+# --without x11		%_without_x11 1		disable internal X11 support
 
 #  Options that are off by default (enable with --with <opt>)
 %bcond_with cray
@@ -50,11 +47,12 @@ Patch101: slurm-%{version}_LG.configure.patch
 
 # These options are only here to force there to be these on the build.
 # If they are not set they will still be compiled if the packages exist.
-%bcond_with hwloc
-%bcond_with mysql
-%bcond_with hdf5
-%bcond_with lua
-%bcond_with numa
+%bcond_without hwloc
+%bcond_without mysql
+%bcond_without hdf5
+%bcond_without lua
+%bcond_without numa
+%bcond_without x11
 
 # Build with OpenSSL by default on all platforms (disable using --without openssl)
 %bcond_without openssl
@@ -67,9 +65,8 @@ Patch101: slurm-%{version}_LG.configure.patch
 
 Requires: munge
 
-## WCP Comment that nonsense out!
-##%{?systemd_requires}
-##BuildRequires: systemd
+%{?systemd_requires}
+BuildRequires: systemd
 BuildRequires: munge-devel munge-libs
 BuildRequires: python
 BuildRequires: readline-devel
@@ -111,7 +108,7 @@ BuildRequires: mariadb-devel
 %endif
 BuildRequires: cray-libalpscomm_cn-devel
 BuildRequires: cray-libalpscomm_sn-devel
-BuildRequires: libhwloc-devel
+BuildRequires: hwloc-devel
 BuildRequires: gtk2-devel
 BuildRequires: glib2-devel
 BuildRequires: pkgconfig
@@ -124,7 +121,7 @@ BuildRequires: pkgconfig(lua) >= 5.1.0
 %endif
 
 %if %{with hwloc}
-BuildRequires: libhwloc-devel
+BuildRequires: hwloc-devel
 %endif
 
 %if %{with numa}
@@ -286,35 +283,40 @@ running on the node, or any user who has allocated resources on the node
 according to the Slurm
 %endif
 
+%if %{with cray}
+%package slurmsmwd
+Summary: support daemons and software for the Cray SMW
+Group: System Environment/Base
+Requires: %{name}%{?_isa} = %{version}-%{release}
+Obsoletes: craysmw
+%description slurmsmwd
+support daeamons and software for the Cray SMW.  Includes slurmsmwd which
+notifies slurm about failed nodes.
+%endif
+
 #############################################################################
 
 %prep
 # when the rel number is one, the tarball filename does not include it
 %setup -n %{slurm_source_dir}
 %patch100 -p1
-%patch101 -p1
 
 %build
-%if %{with cray}
-  echo "CYRUS WITH CRAY"
-%endif
-#%include system-load.inc
-#ml purge
-#ml autotools
-#./autogen.sh
 %configure \
 	%{?_without_debug:--disable-debug} \
 	%{?_with_pam_dir} \
 	%{?_with_cpusetdir} \
 	%{?_with_mysql_config} \
 	%{?_with_ssl} \
-	%{?_without_cray:--disable-native-cray}\
-	%{?_with_cray_network:--enable-cray-network}\
+	--disable-native-cray \
+	--disable-cray-network \
+	--enable-really-no-cray \
 	%{?_with_multiple_slurmd:--enable-multiple-slurmd} \
 	%{?_with_pmix} \
 	%{?_with_freeipmi} \
 	%{?_with_hdf5} \
 	%{?_with_shared_libslurm} \
+	%{?_without_x11:--disable-x11} \
 	%{?_with_cflags}
 
 make %{?_smp_mflags}
@@ -334,21 +336,9 @@ rm -rf %{buildroot}
 make install DESTDIR=%{buildroot}
 make install-contrib DESTDIR=%{buildroot}
 
-## WCP Add in init.d back
-if [ -d /usr/lib/systemd/system ]; then
-  echo "You might want to handle this"
-  exit -1
-##  install -D -m644 etc/slurmctld.service %{buildroot}/%{_unitdir}/slurmctld.service
-##  install -D -m644 etc/slurmd.service    %{buildroot}/%{_unitdir}/slurmd.service
-##  install -D -m644 etc/slurmdbd.service  %{buildroot}/%{_unitdir}/slurmdbd.service
-elif [ -d /etc/init.d ]; then
-   install -D -m755 etc/init.d.slurm    $RPM_BUILD_ROOT/etc/init.d/slurm
-   install -D -m755 etc/init.d.slurmdbd $RPM_BUILD_ROOT/etc/init.d/slurmdbd
-   mkdir -p "$RPM_BUILD_ROOT/usr/sbin"
-   ln -s ../../etc/init.d/slurm    $RPM_BUILD_ROOT/usr/sbin/rcslurm
-   ln -s ../../etc/init.d/slurmdbd $RPM_BUILD_ROOT/usr/sbin/rcslurmdbd
-fi
-
+install -D -m644 etc/slurmctld.service %{buildroot}/%{_unitdir}/slurmctld.service
+install -D -m644 etc/slurmd.service    %{buildroot}/%{_unitdir}/slurmd.service
+install -D -m644 etc/slurmdbd.service  %{buildroot}/%{_unitdir}/slurmdbd.service
 
 # Do not package Slurm's version of libpmi on Cray systems in the usual location.
 # Cray's version of libpmi should be used. Move it elsewhere if the site still
@@ -361,23 +351,24 @@ fi
    mkdir -p %{buildroot}/opt/modulefiles/slurm
    test -f contribs/cray/opt_modulefiles_slurm &&
       install -D -m644 contribs/cray/opt_modulefiles_slurm %{buildroot}/opt/modulefiles/slurm/%{version}-%{rel}
+   install -D -m644 contribs/cray/slurmsmwd/slurmsmwd.service %{buildroot}/%{_unitdir}/slurmsmwd.service
    echo -e '#%Module\nset ModulesVersion "%{version}-%{rel}"' > %{buildroot}/opt/modulefiles/slurm/.version
 %else
    rm -f contribs/cray/opt_modulefiles_slurm
+   rm -f contribs/cray/slurmsmwd/slurmsmwd.service
    rm -f %{buildroot}/%{_sysconfdir}/plugstack.conf.template
    rm -f %{buildroot}/%{_sysconfdir}/slurm.conf.template
    rm -f %{buildroot}/%{_sbindir}/capmc_suspend
    rm -f %{buildroot}/%{_sbindir}/capmc_resume
    rm -f %{buildroot}/%{_sbindir}/slurmconfgen.py
+   rm -f %{buildroot}/%{_sbindir}/slurmsmwd
 %endif
 
 install -D -m644 etc/cgroup.conf.example %{buildroot}/%{_sysconfdir}/cgroup.conf.example
-install -D -m644 etc/cgroup_allowed_devices_file.conf.example %{buildroot}/%{_sysconfdir}/cgroup_allowed_devices_file.conf.example
 install -D -m644 etc/layouts.d.power.conf.example %{buildroot}/%{_sysconfdir}/layouts.d/power.conf.example
 install -D -m644 etc/layouts.d.power_cpufreq.conf.example %{buildroot}/%{_sysconfdir}/layouts.d/power_cpufreq.conf.example
 install -D -m644 etc/layouts.d.unit.conf.example %{buildroot}/%{_sysconfdir}/layouts.d/unit.conf.example
 install -D -m644 etc/slurm.conf.example %{buildroot}/%{_sysconfdir}/slurm.conf.example
-install -D -m755 etc/slurm.epilog.clean %{buildroot}/%{_sysconfdir}/slurm.epilog.clean
 install -D -m644 etc/slurmdbd.conf.example %{buildroot}/%{_sysconfdir}/slurmdbd.conf.example
 install -D -m755 contribs/sjstat %{buildroot}/%{_bindir}/sjstat
 
@@ -400,12 +391,8 @@ rm -f %{buildroot}/%{_mandir}/man5/bluegene*
 rm -f %{buildroot}/%{_sbindir}/sfree
 rm -f %{buildroot}/%{_sbindir}/slurm_epilog
 rm -f %{buildroot}/%{_sbindir}/slurm_prolog
-## WCP Are you kidding me?!
-##rm -f %{buildroot}/%{_sysconfdir}/init.d/slurm
-##rm -f %{buildroot}/%{_sysconfdir}/init.d/slurmdbd
-rm -f %{buildroot}/%{_unitdir}/slurmctld.service
-rm -f %{buildroot}/%{_unitdir}/slurmd.service
-rm -f %{buildroot}/%{_unitdir}/slurmdbd.service
+rm -f %{buildroot}/%{_sysconfdir}/init.d/slurm
+rm -f %{buildroot}/%{_sysconfdir}/init.d/slurmdbd
 rm -f %{buildroot}/%{_perldir}/auto/Slurm/.packlist
 rm -f %{buildroot}/%{_perldir}/auto/Slurm/Slurm.bs
 rm -f %{buildroot}/%{_perlarchlibdir}/perllocal.pod
@@ -422,24 +409,21 @@ rm -f %{buildroot}/%{_mandir}/man1/sjstat.1
 # Build conditional file list for main package
 LIST=./slurm.files
 touch $LIST
-test -f $RPM_BUILD_ROOT/etc/init.d/slurm                     &&
-  echo /etc/init.d/slurm                                >> $LIST
-test -f $RPM_BUILD_ROOT/usr/sbin/rcslurm                     &&
-  echo /usr/sbin/rcslurm                                >> $LIST
 test -f %{buildroot}/%{_libexecdir}/slurm/cr_checkpoint.sh   &&
   echo %{_libexecdir}/slurm/cr_checkpoint.sh	        >> $LIST
 test -f %{buildroot}/%{_libexecdir}/slurm/cr_restart.sh      &&
   echo %{_libexecdir}/slurm/cr_restart.sh	        >> $LIST
-test -f %{buildroot}/%{_sbindir}/capmc_suspend		     &&
+test -f %{buildroot}/%{_sbindir}/capmc_suspend		&&
   echo %{_sbindir}/capmc_suspend			>> $LIST
-test -f %{buildroot}/%{_sbindir}/capmc_resume		     &&
+test -f %{buildroot}/%{_sbindir}/capmc_resume		&&
   echo %{_sbindir}/capmc_resume				>> $LIST
-test -f %{buildroot}/%{_bindir}/netloc_to_topology           &&
+test -f %{buildroot}/%{_bindir}/netloc_to_topology		&&
   echo %{_bindir}/netloc_to_topology			>> $LIST
+
 test -f %{buildroot}/opt/modulefiles/slurm/%{version}-%{rel} &&
-  echo /opt/modulefiles/slurm/%{version}-%{rel}         >> $LIST
-test -f %{buildroot}/opt/modulefiles/slurm/.version          &&
-  echo /opt/modulefiles/slurm/.version                  >> $LIST
+  echo /opt/modulefiles/slurm/%{version}-%{rel} >> $LIST
+test -f %{buildroot}/opt/modulefiles/slurm/.version &&
+  echo /opt/modulefiles/slurm/.version >> $LIST
 
 
 LIST=./example.configs
@@ -483,23 +467,12 @@ touch $LIST
     test -f %{buildroot}/lib64/security/pam_slurm_adopt.so		&&
 	echo /lib64/security/pam_slurm_adopt.so		>>$LIST
 %endif
-
-## WCP
-LIST=./slurmdbd.files
-touch $LIST
-test -f $RPM_BUILD_ROOT/etc/init.d/slurmdbd                     &&
-  echo /etc/init.d/slurmdbd                             >> $LIST
-test -f $RPM_BUILD_ROOT/usr/sbin/rcslurmdbd                     &&
-  echo /usr/sbin/rcslurmdbd                             >> $LIST
-test -f $RPM_BUILD_ROOT/usr/lib/systemd/system/slurmdbd.service &&
-  echo /usr/lib/systemd/system/slurmdbd.service         >> $LIST
-
 #############################################################################
 
 %clean
 rm -rf %{buildroot}
 #############################################################################
-## WCP added with cray logic for pmi files
+
 %files -f slurm.files
 %defattr(-,root,root,0755)
 %{_datadir}/doc
@@ -508,11 +481,7 @@ rm -rf %{buildroot}
 %exclude %{_bindir}/sjobexitmod
 %exclude %{_bindir}/sjstat
 %exclude %{_bindir}/smail
-%if %{with cray}
-%exclude %{_libdir}/slurmpmi/*
-%else
 %exclude %{_libdir}/libpmi*
-%endif
 %{_libdir}/*.so*
 %{_libdir}/slurm/src/*
 %{_libdir}/slurm/*.so
@@ -536,12 +505,10 @@ rm -rf %{buildroot}
 %config %{_sysconfdir}/slurm.conf.template
 %endif
 %config %{_sysconfdir}/cgroup.conf.example
-%config %{_sysconfdir}/cgroup_allowed_devices_file.conf.example
 %config %{_sysconfdir}/layouts.d/power.conf.example
 %config %{_sysconfdir}/layouts.d/power_cpufreq.conf.example
 %config %{_sysconfdir}/layouts.d/unit.conf.example
 %config %{_sysconfdir}/slurm.conf.example
-%config %{_sysconfdir}/slurm.epilog.clean
 %config %{_sysconfdir}/slurmdbd.conf.example
 #############################################################################
 
@@ -572,21 +539,21 @@ rm -rf %{buildroot}
 %files slurmctld
 %defattr(-,root,root)
 %{_sbindir}/slurmctld
-#%{_unitdir}/slurmctld.service
+%{_unitdir}/slurmctld.service
 #############################################################################
 
 %files slurmd
 %defattr(-,root,root)
 %{_sbindir}/slurmd
 %{_sbindir}/slurmstepd
-#%{_unitdir}/slurmd.service
+%{_unitdir}/slurmd.service
 #############################################################################
 
-%files -f slurmdbd.files slurmdbd
+%files slurmdbd
 %defattr(-,root,root)
 %{_sbindir}/slurmdbd
 %{_libdir}/slurm/accounting_storage_mysql.so
-#%{_unitdir}/slurmdbd.service
+%{_unitdir}/slurmdbd.service
 #############################################################################
 
 %files libpmi
@@ -638,64 +605,40 @@ rm -rf %{buildroot}
 %endif
 #############################################################################
 
+%if %{with cray}
+%files slurmsmwd
+%{_sbindir}/slurmsmwd
+%{_unitdir}/slurmsmwd.service
+%endif
+#############################################################################
+
 %pre
 
 %post
-##/sbin/ldconfig
-if [ -x /sbin/ldconfig ]; then
-    /sbin/ldconfig %{_libdir}
-    if [ $1 = 1 ]; then
-        if [ -x /etc/init.d/slurm ]; then
-            [ -x /sbin/chkconfig ] && /sbin/chkconfig --add slurm
-        fi
-    fi
-fi
-
+/sbin/ldconfig
 
 %preun
-if [ "$1" -eq 0 ]; then
-    if [ -x /etc/init.d/slurm ]; then
-        [ -x /sbin/chkconfig ] && /sbin/chkconfig --del slurm
-        if /etc/init.d/slurm status | grep -q running; then
-            /etc/init.d/slurm stop
-        fi
-    fi
-fi
-
 
 %postun
-##/sbin/ldconfig
-if [ "$1" -gt 1 ]; then
-    if [ -x /etc/init.d/slurmdbd ]; then
-        /etc/init.d/slurm condrestart
-    fi
-elif [ "$1" -eq 0 ]; then
-    if [ -x /sbin/ldconfig ]; then
-        /sbin/ldconfig %{_libdir}
-    fi
-fi
-%if %{?insserv_cleanup:1}0
-%insserv_cleanup
-%endif
+/sbin/ldconfig
 
+%post slurmctld
+%systemd_post slurmctld.service
+%preun slurmctld
+%systemd_preun slurmctld.service
+%postun slurmctld
+%systemd_postun_with_restart slurmctld.service
 
-## %post slurmctld
-## %systemd_post slurmctld.service
-## %preun slurmctld
-## %systemd_preun slurmctld.service
-## %postun slurmctld
-## %systemd_postun_with_restart slurmctld.service
-## 
-## %post slurmd
-## %systemd_post slurmd.service
-## %preun slurmd
-## %systemd_preun slurmd.service
-## %postun slurmd
-## %systemd_postun_with_restart slurmd.service
-## 
-## %post slurmdbd
-## %systemd_post slurmdbd.service
-## %preun slurmdbd
-## %systemd_preun slurmdbd.service
-## %postun slurmdbd
-## %systemd_postun_with_restart slurmdbd.service
+%post slurmd
+%systemd_post slurmd.service
+%preun slurmd
+%systemd_preun slurmd.service
+%postun slurmd
+%systemd_postun_with_restart slurmd.service
+
+%post slurmdbd
+%systemd_post slurmdbd.service
+%preun slurmdbd
+%systemd_preun slurmdbd.service
+%postun slurmdbd
+%systemd_postun_with_restart slurmdbd.service

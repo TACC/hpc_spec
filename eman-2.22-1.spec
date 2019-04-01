@@ -1,6 +1,6 @@
 #
-# Si Liu 
-# 2018-08-10
+# Joe Allen
+# 2019-03-11
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -11,35 +11,38 @@
 # RPM_DBPATH      -> Path To Non-Standard RPM Database Location
 #
 # Typical Command-Line Example:
+# ./build_rpm.sh Bar.spec
 # cd ../RPMS/x86_64
 # rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: Boost spec file (www.boost.org)
+Summary: EMAN2 is a scientific image processing suite for single particle reconstruction from cryoEM
 
 # Give the package a base name
-%define pkg_base_name boost
-%define MODULE_VAR    BOOST
+%define pkg_base_name eman
+%define MODULE_VAR    EMAN
 
 # Create some macros (spec file variables)
-%define major_version 1
-%define minor_version 68
-%define micro_version 0
+%define major_version 2
+%define minor_version 22
+#%define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}
 
-%define mpi_fam none
-
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-%include compiler-defines.inc
+#%include compiler-defines.inc
 #%include mpi-defines.inc
+#%include python-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-#%include name-defines.inc
-%include name-defines-noreloc.inc
+%include name-defines.inc
+#%include name-defines-noreloc.inc
+#%include name-defines-noreloc-python.inc
+#%include name-defines-hidden.inc
+#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -51,10 +54,11 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1
-License:   GPL
-Group:     Utility
-URL:       http://www.boost.org
-Packager:  TACC - siliu@tacc.utexas.edu
+License:   GPLv2
+Group:     Applications/Life Sciences
+URL:       http://blake.bcm.tmc.edu/EMAN2/
+Packager:  TACC - wallen@tacc.utexas.edu
+#Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -62,30 +66,32 @@ Packager:  TACC - siliu@tacc.utexas.edu
 
 
 %package %{PACKAGE}
-Summary: Boost RPM
-Group: Development/System Environment
+Summary: The package RPM
+Group: Applications/Life Sciences
 %description package
-Boost provides free peer-reviewed portable C++ source libraries.
+EMAN2 is a scientific image processing suite for single particle reconstruction from cryoEM
+
+%package %{PACKAGE}-python
+Summary: The package RPM
+Group: Applications/Life Sciences
+%description package-python
+EMAN2 is a scientific image processing suite for single particle reconstruction from cryoEM
+
+%package %{PACKAGE}-mkllibs
+Summary: The package RPM
+Group: Applications/Life Sciences
+%description package-mkllibs
+EMAN2 is a scientific image processing suite for single particle reconstruction from cryoEM
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-Module RPM for Boost
+EMAN2 is a scientific image processing suite for single particle reconstruction from cryoEM
 
 %description
+EMAN2 is a scientific image processing suite for single particle reconstruction from cryoEM
 
-Boost emphasizes libraries that work well with the C++ Standard
-Library. Boost libraries are intended to be widely useful, and usable
-across a broad spectrum of applications. The Boost license encourages
-both commercial and non-commercial use.
-
-Boost aims to establish "existing practice" and provide reference
-implementations so that Boost libraries are suitable for eventual
-standardization. Ten Boost libraries are already included in the C++
-Standards Committee's Library Technical Report (TR1) as a step toward
-becoming part of a future C++ Standard. More Boost libraries are
-proposed for the upcoming TR2.
 
 #---------------------------------------
 %prep
@@ -113,6 +119,7 @@ proposed for the upcoming TR2.
 #--------------------------
 
 
+
 #---------------------------------------
 %build
 #---------------------------------------
@@ -124,13 +131,15 @@ proposed for the upcoming TR2.
 
 # Setup modules
 %include system-load.inc
-%include compiler-defines.inc
-#%include mpi-defines.inc
 module purge
-%include compiler-load.inc
-#module load intel/18.0.2 
-module load gcc/5.2.0
-#module load python2 
+# Load Compiler
+#%include compiler-load.inc
+# Load MPI Library
+#%include mpi-load.inc
+# Load Python Library
+#%include python-load.inc
+
+# Insert further module commands
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -140,8 +149,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
+  #mkdir -p $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -154,70 +162,37 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
+  
+  module purge
+  module load TACC
+  module unload python2
 
-  ICU_MODE=Linux
-  %if "%{comp_fam}" == "intel"
-        export CONFIGURE_FLAGS=--with-toolset=intel-linux
-        ICU_MODE=Linux/ICC
-  %endif
+  # And/or create some dummy directories and files for fun
+  echo "TACC_OPT %{TACC_OPT}"
+  echo "MODULE_DIR %{MODULE_DIR}"
+  echo "INSTALL_DIR %{INSTALL_DIR}"
+  echo "RPM_BUILD_ROOT $RPM_BUILD_ROOT"
 
+  wget https://cryoem.bcm.edu/cryoem/static/software/release-2.22/eman2.22.linux64.sh
+  #bash eman2.22.linux64.sh -b -f -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-  %if "%{mpi_fam}" != "none"
-        CXX=mpicxx
-  %endif
+  bash eman2.22.linux64.sh -b -f -p /opt/apps/eman/2.22
+  mv /opt/apps/eman/2.22/* $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-  %if "%{comp_fam}" == "gcc"
-        export CONFIGURE_FLAGS=--with-toolset=gcc
-  %endif
-
-  rm -f icu4c-56_1-src.tgz*
-  rm -f boost_1_68_0.tar.gz*
-  wget http://download.icu-project.org/files/icu4c/56.1/icu4c-56_1-src.tgz
-  wget http://downloads.sourceforge.net/project/boost/boost/1.68.0/boost_1_68_0.tar.gz 
-  tar -xzf icu4c-56_1-src.tgz
-  tar -xzf boost_1_68_0.tar.gz
-  WD=`pwd`
-
-#  if [ "$CXX" != mpicxx ]; then
-    	cd icu/source
-    	./runConfigureICU  $ICU_MODE --prefix=%{INSTALL_DIR}
-    	make -j 10
-    	make install
-    	rm -f ~/user-config.jam
-#  fi
-
-  cd $WD
-  cd boost_1_68_0
-  EXTRA="-sICU_PATH=%{INSTALL_DIR}"
-  #if [ "$CXX" = mpicxx ]; then
- # 	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=mpi"
- # 	EXTRA=""
- # 	mpipath=`which mpicxx`
-#	cat > $WD/tools/build/v2/user-config.jam << EOF
-#	#using mpi $mpipath ;
-#	using mpi ;
-#	EOF
-#  else
-  	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all --without-libraries=mpi"
-#  fi
-
-  ./bootstrap.sh --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
-  ./b2 -j 10 --prefix=%{INSTALL_DIR} $EXTRA install
-
-  mkdir -p              $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}/doc
+  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}/envs
+  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}/examples
+  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}/man
+  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}/mkspecs
+  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}/pkgs
+  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}/recipes
+  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}/test
+  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}/utils
+  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}/var
 
 
-  rm -f ~/tools/build/v2/user-config.jam
-
-  if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-  	mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  fi
-
-  cp -r %{INSTALL_DIR} $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-  umount %{INSTALL_DIR}
-
-#---------------------- - 
+  
+#-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
 
@@ -227,6 +202,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
+  #mkdir -p $RPM_BUILD_ROOT/%{PYTHON_MODULE_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -235,55 +211,57 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
+
+# Modulefile Help Message
+HELP_MSG=$(cat << EOM
+This module file defines the following environment variables:
+
+ - TACC_%{MODULE_VAR}_DIR
+ - TACC_%{MODULE_VAR}_BIN
+
+for the location of the EMAN2 distribution.
+
+To use all of the features of e2display.py, you may need to connect through a
+VNC session as described in the Lonestar5 user guide:
+
+https://portal.tacc.utexas.edu/user-guides/lonestar5
+
+Documentation: %{url}
+
+Version %{version}
+EOM
+)
+
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
-help([[
-The boost module file defines the following environment variables:"
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC for"
-the location of the boost distribution."
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << EOF
+help([[${HELP_MSG}]])
 
-To load the mpi boost      do "module load boost-mpi"
-To load the rest of boost  do "module load boost"
-
-It is save to load both.
-
-Version %{version}"
-]])
-
-whatis("Name: boost")
+whatis("Name: %{pkg_base_name}")
 whatis("Version: %{version}")
-whatis("Category: %{group}")
-whatis("Keywords: System, Library, C++")
-whatis("URL: http://www.boost.org")
-whatis("Description: Boost provides free peer-reviewed portable C++ source libraries %{BOOST_TYPE}.")
+whatis("Category: computational biology, chemistry")
+whatis("Keywords: Computational Biology, Chemistry, Structural Biology, Image Processing, Image Reconstruction, CryoEM")
+whatis("Description: EMAN2 is a scientific image processing suite for single particle reconstruction from cryoEM")
+whatis("URL: %{url}")
 
-
-setenv("TACC_%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
-setenv("TACC_%{MODULE_VAR}_LIB","%{INSTALL_DIR}/lib")
-setenv("TACC_%{MODULE_VAR}_INC","%{INSTALL_DIR}/include")
-
-always_load("python2")
-conflict("boost","boost-mpi")
-
--- Add boost to the LD_LIBRARY_PATH
-prepend_path("LD_LIBRARY_PATH","%{INSTALL_DIR}/lib")
+setenv("TACC_%{MODULE_VAR}_DIR",     "%{INSTALL_DIR}")
+setenv("TACC_%{MODULE_VAR}_BIN",     "%{INSTALL_DIR}/bin")
+prepend_path("PATH", "%{INSTALL_DIR}/bin")
 
 EOF
 
   
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << EOF
 #%Module3.1.1#################################################
 ##
-## version file for %{MODULE_VAR}%{version}
+## version file for %{pkg_base_name}%{version}
 ##
-
 set     ModulesVersion      "%{version}"
 EOF
   
-  # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %endif
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -297,6 +275,18 @@ EOF
   %defattr(-,root,install,)
   # RPM package contains files within these directories
   %{INSTALL_DIR}
+  %exclude %{INSTALL_DIR}/lib/python2.7 
+  %exclude %{INSTALL_DIR}/lib/libmkl*
+
+%files package-python
+
+  %defattr(-,root,install,)
+  %{INSTALL_DIR}/lib/python2.7
+
+%files package-mkllibs
+
+  %defattr(-,root,install,)
+  %{INSTALL_DIR}/lib/libmkl*
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -313,7 +303,6 @@ EOF
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
 
 ########################################
 ## Fix Modulefile During Post Install ##
