@@ -10,4 +10,5 @@ tacctmpfs*
 *.bak
 *.cmake-cache
 *.orig
-s1victor
+is1victor
+mclay/
