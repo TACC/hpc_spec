@@ -231,7 +231,7 @@ local mkldnn_inc=pathJoin(mkldnn_dir,"include")
 local mkldnn_lib=pathJoin(mkldnn_dir,"lib64")
 setenv("TACC_%{MODULE_VAR}_DIR",mkldnn_dir)
 setenv("TACC_%{MODULE_VAR}_INC",mkldnn_inc)
-setenv("TACC_%{MODULE_VAR}_LIB",mkldnn_bin)
+setenv("TACC_%{MODULE_VAR}_LIB",mkldnn_lib)
 
 EOF
   
