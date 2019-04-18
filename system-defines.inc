@@ -3,5 +3,5 @@
 
 # System-level defines
 %define system linux
-%define PLATFORM stampede-knl-15
+%define PLATFORM frontera
 

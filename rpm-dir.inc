@@ -5,7 +5,7 @@
 #-------------------------------------------------------------------
 
 Buildroot:       /var/tmp/%{name}-%{version}-buildroot
-%define _topdir  /admin/build/admin/rpms/stampede2
+%define _topdir  /admin/build/admin/rpms/frontera
 %define APPS     /opt/apps
 %define MODULES  modulefiles
 %define SPEC_DIR %{_topdir}/SPECS
