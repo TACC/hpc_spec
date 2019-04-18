@@ -6,9 +6,11 @@ Summary: PETSc install
 
 # Create some macros (spec file variables)
 %define major_version 3
-%define minor_version 10
-%define micro_version 4
+%define minor_version 11
+%define micro_version 0
 %define versionpatch %{major_version}.%{minor_version}.%{micro_version}
+
+#### NOTE this incorporates one patch on the regular 3.11.0 release.
 
 %define pkg_version %{major_version}.%{minor_version}
 
@@ -32,7 +34,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 5%{?dist}
+Release: 1%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -105,6 +107,11 @@ mkdir -p %{INSTALL_DIR}
 mount -t tmpfs tmpfs %{INSTALL_DIR}
 cp -r * %{INSTALL_DIR}
 pushd %{INSTALL_DIR}
+
+# patch for elemental i64
+wget https://bitbucket.org/petsc/petsc/commits/6042f227ea50491e9afb70b084b0f7117c89ea5a/raw
+patch -Np1 < raw
+
 echo "contents of install-dir before installation"
 ls
 export PETSC_DIR=`pwd`
@@ -429,17 +436,25 @@ export CUDA_OPTIONS=
 # petsc can run single processor with a fake mpi
 # in that case: no external packages, and explicit non-mp cc/fc compilers
 #
+export MPICC=`which mpicc`
+export MPICXX=`which mpicxx`
+export MPIF90=`which mpif90`
+echo "setting mpicc=${MPICC}"
+ls -l ${MPICC}
+
+export MPI_OPTIONS="--with-mpi=1 --with-cc=${MPICC} --with-cxx=${MPICXX} --with-fc=${MPIF90}"
 %if "%{is_impi}" == "1"
   export PETSC_MPICH_HOME="${MPICH_HOME}/intel64"
-  export mpi="--with-mpi-compilers=1 --with-mpi-include=${TACC_IMPI_INC} --with-mpi-lib=${TACC_IMPI_LIB}/release_mt/libmpi.so"
+  export MPI_OPTIONS="${MPI_OPTIONS} \
+    --with-mpi-include=${TACC_IMPI_INC} --with-mpi-lib=${TACC_IMPI_LIB}/release_mt/libmpi.so"
 %else
   export PETSC_MPICH_HOME="${MPICH_HOME}"
-  export mpi="--with-mpi-compilers=1 --with-mpi-dir=${PETSC_MPICH_HOME}"
+  export MPI_OPTIONS="${MPI_OPTIONS} --with-mpi-dir=${MPICH_HOME}"
 %endif
-echo "Finding mpi in ${PETSC_MPICH_HOME}"
+echo "Finding mpi in ${MPICH_HOME}"
 
 case "${ext}" in
-uni* ) export mpi="--with-mpi=0 --with-cc=${CC} --with-fc=${FC} --with-cxx=0";
+uni* ) export MPI_OPTIONS="--with-mpi=0 --with-cc=${CC} --with-fc=${FC} --with-cxx=0";
        export packages= ;;
 esac
 
@@ -456,13 +471,16 @@ esac
 
 if [ "%{comp_fam}" = "gcc" ] ; then
   # this is TACC_INTEL_LIB
-  export LIBS=
-#"${LIBS} -L/opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/ -lirc"
+  # -L/opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/ -lirc
+  # /opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/libirc.so
+  export LIBS="/opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/libirc.so"
 fi
 
 ##
 ## here we go
 ##
+ls /opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/libirc.so
+
 export PETSC_ARCH=${architecture}
 export EXTERNAL_PACKAGES_DIR=/admin/build/admin/rpms/stampede2/SOURCES/petsc-packages
 export PACKAGES_BUILD_DIR=/tmp/petsc-%{version}/${architecture}
@@ -486,11 +504,10 @@ else
     ${PETSC_CONFIGURE_OPTIONS} \
     --with-packages-search-path=[${EXTERNAL_PACKAGES_DIR}] \
     --with-packages-build-dir=${PACKAGES_BUILD_DIR} \
-    ${mpi} ${clanguage} ${scalar} ${dynamicshared} ${precision} ${packages} \
+    ${MPI_OPTIONS} ${clanguage} ${scalar} ${dynamicshared} ${precision} ${packages} \
     --with-debugging=${usedebug} \
     ${BLAS_LAPACK_OPTIONS} ${MPI_EXTRA_OPTIONS} ${CUDA_OPTIONS} ${INDEX_OPTIONS} \
-    COPTFLAGS="${CFLAGS}" FOPTFLAGS="${FFLAGS}" CXXOPTFLAGS="${CXXFLAGS}" \
-    LIBS="${LIBS}"
+    COPTFLAGS="${CFLAGS}" FOPTFLAGS="${FFLAGS}" CXXOPTFLAGS="${CXXFLAGS}"
 fi
 
 export noops="\
@@ -672,15 +689,5 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 rm -rf $RPM_BUILD_ROOT
 %changelog
 # remember to notify OpenSees: Ian Wang
-* Mon Mar 04 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 5: update to 3.10.4, defining TACC_PETSC_INC
-* Tue Jan 29 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 4: adding hyprefei configuration
-* Wed Jan 09 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: point update to 3.10.3
-* Thu Nov 15 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: point update to 3.10.2, 
-             download hdf5, added nohdf5 ext
-             go to 4 rpms again.
-* Tue Sep 25 2018 eijkhout <eijkhout@tacc.utexas.edu>
+* Mon Apr 01 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

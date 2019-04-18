@@ -1,8 +1,8 @@
 # W. Cyrus Proctor
 # 2016-03-06
 
-%define ver 7.5p1
-%define rel 2
+%define ver 7.6p1
+%define rel 1
 
 # TACC tag version
 %define tacc_tag v3.19.1-tacc-5
@@ -81,7 +81,7 @@ Release: %{rel}rescue
 Release: %{rel}%{?dist}
 %endif
 URL: http://www.openssh.com/portable.html
-Source0:tacc-openssh-hpn-isshd-%{tacc_tag}.tar.gz
+Source0:openssh-hpn-isshd-%{ver}.tar.gz
 %if ! %{no_x11_askpass}
 Source1: x11-ssh-askpass-%{aversion}.tar.gz
 %endif
@@ -182,9 +182,9 @@ environment.
 %prep
 
 %if ! %{no_x11_askpass}
-%setup -q -a 1 -n tacc-openssh-hpn-isshd-%{tacc_tag}
+%setup -q -a 1 -n openssh-hpn-isshd-%{ver}
 %else
-%setup -q -n tacc-openssh-hpn-isshd-%{tacc_tag}
+%setup -q -n openssh-hpn-isshd-%{ver}
 %endif
 
 %build

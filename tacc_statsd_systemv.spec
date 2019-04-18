@@ -1,7 +1,7 @@
 Summary: Job-level Tracking and Analysis System
 Name: tacc_statsd
-Version: 2.3.3
-Release: 7%{?dist}
+Version: 2.3.4
+Release: 1%{?dist}
 License: GPL
 Vendor: Texas Advanced Computing Center
 Group: System Environment/Base
@@ -25,7 +25,7 @@ unit file.
 %setup -n tacc_stats-%{version}
 
 %build
-./configure --bindir=%{_bindir} --sysconfdir=%{_sysconfdir} --disable-infiniband --enable-opa CPPFLAGS=-I/admin/build/admin/rpms/stampede2/SOURCES/opa-ff/builtinclude.OPENIB_FF.release LDFLAGS=-L/admin/build/admin/rpms/stampede2/SOURCES/opa-ff/builtlibs.OPENIB_FF.release --enable-rabbitmq
+./configure --bindir=%{_bindir} --sysconfdir=%{_sysconfdir} --disable-infiniband --enable-opa CPPFLAGS=-I/home1/02561/rtevans/opa-ff/builtinclude.OPENIB_FF.release LDFLAGS=-L/home1/02561/rtevans/opa-ff/builtlibs.OPENIB_FF.release --enable-rabbitmq
 make
 
 %install

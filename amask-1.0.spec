@@ -11,9 +11,11 @@
 # NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
 
 
-# install rpm in /opt/apps # install r= RPMS/x86-64 directory
-# rpm -hiv --relocate /tmprpm=/opt/apps $r/tacc-amask-package...
-# rpm -hiv --relocate /tmpmod=/opt/apps  $r/tacc-amask-modulefile...
+# install rpm in /opt/apps # install 
+# r=/admin/build/admin/rpms/stampede2/RPMS/x86_64
+# rpm -hiv --relocate /tmprpm=/opt/apps  $r/tacc-amask-intel18-impi18_0-package-1.0-4.el7.x86_64.rpm
+# rpm -hiv --relocate /tmpmod=/opt/apps  $r/tacc-amask-intel18-impi18_0-modulefile-1.0-4.el7.x86_64.rpm
+
 
 # remove rpm
 # rpm -e tacc-amask-package......el7.centos.x86_64
@@ -51,7 +53,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
 
-Release:   3%{?dist}
+Release:   4%{?dist}
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.gnu.org/software/bar

@@ -1,7 +1,7 @@
 Prefix:    /opt/apps
 Summary:   lmod: Lua based Modules
 Name:      lmod
-Version:   7.8.21
+Version:   8.0.5
 Release:   1%{?dist}
 License:   MIT
 Vendor:    Robert McLay
@@ -119,13 +119,8 @@ EOF
 #  Version file.
 #--------------
 
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module3.1.1#################################################
-##
-## version file for %{pkg_base_name}-%{version}
-##
-
-set     ModulesVersion      "%{version}"
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.modulerc-%{version}.lua << 'EOF'
+module_version("%{version}","default")
 EOF
 
 rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR_ST}

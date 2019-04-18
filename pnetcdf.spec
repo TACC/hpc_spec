@@ -4,13 +4,13 @@
 %define version_short 1.8
 
 Summary:   Parallel NetCDF is a parallel version of netcdf(NOT NetCDF 4.)
-Name:      parallel-netcdf
-Version:   1.8.1
+Name:      pnetcdf
+Version:   1.11.0
 Release:   1
 License:   BSD
 Group:     applications/io
-Source:    parallel-netcdf-%{version}.tar.gz
-URL:       trac.mcs.anl.gov/projects/parallel-netcdf
+Source:    pnetcdf-%{version}.tar.gz
+URL:       https://parallel-netcdf.github.io/
 Distribution: RedHat Linux
 Vendor:    Unidata Program Center, UCAR
 Packager:  TACC - cazes@tacc.utexas.edu
@@ -101,7 +101,7 @@ pwd
 #tacctmpfs --mount %{INSTALL_DIR}
 
 pwd
-./configure --prefix=%{INSTALL_DIR} --enable-fortran --with-mpi=$MPICH_HOME
+./configure --prefix=%{INSTALL_DIR} --enable-fortran --with-mpi=$MPICH_HOME/intel64
 make 
 make install
 

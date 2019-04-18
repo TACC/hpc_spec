@@ -31,7 +31,7 @@ Summary:    Set of tools for manipulating geographic and Cartesian data sets
 %define pkg_base_name gnuparallel
 %define MODULE_VAR    GNUPARALLEL
 
-# Create some macros (spec file variables)
+# Version corresponds to when we downloaded the gnu parallel source
 %define major_version git20180620
 
 %define pkg_version %{major_version}
@@ -201,10 +201,11 @@ which pod2pdf
 && ( cd src ; for m in ./parallel_design.7 ; do touch $m ; done ) \
 && make install
 
-( cd %{_topdir}/SOURCES/gnuparallel_scripts && rm -f *~ )
-cp -r %{_topdir}/SOURCES/gnuparallel_scripts ${PARALLEL_INSTALL}/scripts
-mv ${PARALLEL_INSTALL}/scripts/README ${PARALLEL_INSTALL}/
-chmod -R o+rX ${PARALLEL_INSTALL}/scripts
+## ( cd %{_topdir}/SOURCES/gnuparallel_scripts && rm -f *~ )
+## cp -r %{_topdir}/SOURCES/gnuparallel_scripts ${PARALLEL_INSTALL}/scripts
+## mv ${PARALLEL_INSTALL}/scripts/README ${PARALLEL_INSTALL}/
+## chmod -R o+rX ${PARALLEL_INSTALL}/scripts
+git clone https://github.com/TACC/gnuparallel_scripts.git ${PARALLEL_INSTALL}/scripts
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -322,7 +323,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 * Wed Dec 05 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: UNRELEASED purging emacs backup files, delay parameter
+- release 3: scripts from github, delay parameter
 * Mon Sep 17 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: adding ssh script
 * Thu Jun 14 2018 eijkhout <eijkhout@tacc.utexas.edu>

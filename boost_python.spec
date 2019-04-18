@@ -43,7 +43,7 @@ Summary: Boost spec file (www.boost.org)
 ### Construct name based on includes ###
 ########################################
 #%include name-defines.inc
-%include name-defines-noreloc-python.inc
+%include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -170,11 +170,8 @@ module purge
 # Load Python Library
 %if %{defined python_fam}
   %include python-load.inc
-  IFS=.; VER=(${TACC_PYTHON_VER##*-}); unset IFS
-  export PYTHON_MAJOR_VERSION="${VER[0]}"
-  export PYTHON_MINOR_VERSION="${VER[1]}"
-  export PYTHON_EXEC=python"${PYTHON_MAJOR_VERSION}"
-  export TACC_PYTHON_DIR=$(eval echo "\${TACC_PYTHON${PYTHON_MAJOR_VERSION}_DIR}")
+  export PYTHON_EXEC=%{python_exec}
+  export TACC_PYTHON_DIR=$(eval echo "\${TACC_PYTHON%{python_major_version}_DIR}")
 %endif
 #########################################
 ###### Add Additional Modules Here ######

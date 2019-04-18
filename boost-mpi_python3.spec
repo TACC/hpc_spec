@@ -6,8 +6,8 @@
 Summary: Boost spec file (www.boost.org)
 
 # Give the package a base name
-%define pkg_base_name boost
-%define MODULE_VAR    BOOST
+%define pkg_base_name boost-mpi
+%define MODULE_VAR    BOOST_MPI
 
 # Create some macros (spec file variables)
 %define major_version 1
@@ -23,13 +23,13 @@ Summary: Boost spec file (www.boost.org)
 %include compiler-defines.inc
 %include mpi-defines.inc
 %include python-defines.inc
-
+%define  unified_directories 1
 ########################################
 ### Construct name based on includes ###
 ########################################
 #%include name-defines.inc
-#%include name-defines-noreloc.inc
-%include name-defines-noreloc-python.inc
+%include name-defines-noreloc.inc
+#%include  name-defines-python-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -40,13 +40,13 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3%{?dist}
+Release:   1%{?dist}
 License:   GPL
 Group:     Utility
 URL:       http://www.boost.org
 Packager:  TACC - siliu@tacc.utexas.edu
 Source0:   boost_1_69_0.tar.gz
-Source1:   icu4c-59_1-src.tgz
+Source1:   icu4c-63_1-src.tgz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -169,7 +169,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   WD=`pwd`
   
- TACC_OPT="-xCORE-AVX2 -axCORE-AVX512,MIC-AVX512"
+  TACC_OPT="-xCORE-AVX2 -axCORE-AVX512,MIC-AVX512"
  
   cd icu/source
   CXXFLAGS="%{TACC_OPT}" CFLAGS="%{TACC_OPT}" ./runConfigureICU  $ICU_MODE --prefix=%{PYTHON_INSTALL_DIR}
@@ -187,14 +187,12 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   echo "using python : 3.7 : /opt/apps/intel18/python3/3.7.0/bin/python3.7 : /opt/apps/intel18/python3/3.7.0/include/python3.7m :  /opt/apps/intel18/python3/3.7.0/lib ;" >> tools/build/example/user-config.jam
   echo "using python : 3.7 : /opt/apps/intel18/python3/3.7.0/bin/python3.7 : /opt/apps/intel18/python3/3.7.0/include/python3.7m :  /opt/apps/intel18/python3/3.7.0/lib ;" >> user-config.jam
-  ./bootstrap.sh --with-python=/opt/apps/intel18/python3/3.7.0/bin/python3.7  --with-python-version=3.7 --with-python-root=/opt/apps/intel18/python3/3.7.0 --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
-  ./b2 -j 10  include="/opt/apps/intel18/python3/3.7.0/include/python3.7m" --prefix=%{INSTALL_DIR} $EXTRA install
 
-  ./bootstrap.sh --prefix=%{PYTHON_INSTALL_DIR} ${CONFIGURE_FLAGS}
+  ./bootstrap.sh --with-python=/opt/apps/intel18/python3/3.7.0/bin/python3.7  --with-python-version=3.7 --with-python-root=/opt/apps/intel18/python3/3.7.0 --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
 
   echo "using mpi : /opt/apps/intel18/impi/18.0.2/bin/mpicxx ;" >> ~/projet-config.jam
 
-  ./b2 -j 24 --prefix=%{PYTHON_INSTALL_DIR} $EXTRA cxxflags="%{TACC_OPT}" cflags="%{TACC_OPT}" linkflags="%{TACC_OPT}" install
+  ./b2 -j 24 include="/opt/apps/intel18/python3/3.7.0/include/python3.7m" --prefix=%{PYTHON_INSTALL_DIR} $EXTRA cxxflags="%{TACC_OPT}" cflags="%{TACC_OPT}" linkflags="%{TACC_OPT}" install
   
   mkdir -p              $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}
   cp -r %{PYTHON_INSTALL_DIR}/ $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}/..
@@ -216,6 +214,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 %if %{?BUILD_MODULEFILE}
 #---------------------------
 
+  mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
   mkdir -p $RPM_BUILD_ROOT/%{PYTHON_MODULE_DIR}
 
   #######################################
@@ -235,7 +234,7 @@ the location of the boost distribution.
 
 To load the rest of boost  do "module load boost"
 
-Version %{version}"
+Version %{version}
 ]])
 
 whatis("Name: boost")
@@ -264,7 +263,7 @@ EOF
 cat > $RPM_BUILD_ROOT/%{PYTHON_MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
-## version file for %{MODULE_VAR}%{version}
+## version file for %{PYTHON_MODULE_VAR}%{version}
 ##
 
 set     ModulesVersion      "%{version}"
@@ -285,7 +284,13 @@ EOF
 
   %defattr(-,root,install,)
   # RPM package contains files within these directories
-  %{PYTHON_INSTALL_DIR}
+  %{INSTALL_DIR}
+
+  %if %{?WITH_PYTHON}
+    %if %{undefined unified_directories}
+      %{PYTHON_INSTALL_DIR}
+    %endif
+  %endif
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -297,7 +302,13 @@ EOF
 
   %defattr(-,root,install,)
   # RPM modulefile contains files within these directories
-  %{PYTHON_MODULE_DIR}
+  %{MODULE_DIR}
+
+  %if %{?WITH_PYTHON}
+    %if %{undefined unified_directories}
+      %{PYTHON_MODULE_DIR}
+    %endif
+  %endif
 
 #--------------------------
 %endif # BUILD_MODULEFILE |

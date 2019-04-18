@@ -24,7 +24,7 @@ Summary: Petsc4py install
 ### Construct name based on includes ###
 ########################################
 #%include name-defines.inc
-%include name-defines-noreloc-home1.inc
+%include name-defines-noreloc-home2.inc
 
 ########################################
 ############ Do Not Remove #############
@@ -78,10 +78,17 @@ PETSC4PY is the python interface to petsc
 %include system-load.inc
 %include compiler-defines.inc
 %include mpi-defines.inc
+%include python-defines.inc
 
 %include compiler-load.inc
 %include mpi-load.inc
 %include python-load.inc
+
+echo %{PYTHON_INSTALL_DIR}
+if [ -z "%{PYTHON_INSTALL_DIR}" ] ; then
+  echo "No PYTHON INSTALL DIR defined"
+  exit 1
+fi
 
 module avail petsc
 
@@ -99,6 +106,8 @@ for ext in \
   single "" \
   ${dynamiccc} ${dynamiccxx} ; do
 
+module list
+module avail petsc
 export architecture=skylake
 if [ -z "${ext}" ] ; then
   module load petsc/%{version}

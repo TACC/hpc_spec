@@ -1,9 +1,9 @@
 Summary:    Python is a high-level general-purpose programming language.
 #Name:      tacc-python2
 Name:       tacc-python3 
-#Version:    2.7.15
+#Version:    2.7.16
 Version:    3.7.0
-Release:    2%{?dist}
+Release:    1%{?dist}
 License:    GPLv2
 Vendor:     Python Software Foundation
 Group:      Applications
@@ -117,6 +117,7 @@ if [ ! -f "%{INSTALL_DIR_COMP}/bin/%{PNAME}" ]; then
     ls
 
     %if "%{comp_fam_name}" == "Intel"
+    #./configure --prefix=%{INSTALL_DIR_COMP} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc -lssp' CFLAGS="-Wformat -Wformat-security -D_FORTIFY_SOURCE=2 -fstack-protector -fwrapv -fpic -O3 -no-inline-max-total-size -no-inline-max-size" LDFLAGS="-Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth --without-gcc --with-libm=-limf --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip --enable-unicode=ucs4    
     ./configure --prefix=%{INSTALL_DIR_COMP} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc -lssp' CFLAGS="-Wformat -Wformat-security -D_FORTIFY_SOURCE=2 -fstack-protector -fwrapv -fpic -O3" LDFLAGS="-Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth --without-gcc --with-libm=-limf --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip --enable-unicode=ucs4    
     %endif
     %if "%{comp_fam_name}" == "GNU"
@@ -270,10 +271,10 @@ ${PIP} install --no-binary :all: ply
 ${PIP} install --no-binary :all: PyYAML
 #CFLAGS="-O2" ${PIP} install --no-binary :all: scikit_learn
 
-#if module load hdf5; then
-#    ${PIP} install h5py
-#    ${PIP} install tables
-#fi
+if module load hdf5; then
+    HDF5_DIR=$TACC_HDF5_DIR ${PIP} install --no-binary :all: h5py
+    ${PIP} install tables
+fi
 #############################################################
 # mpi4py: use INSTALL_DIR_MPI
 ############################################################
@@ -395,6 +396,7 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR_COMP}/.version.%{version} << 'EOF'
 ##
 set ModulesVersion "%version"
 EOF
+
 %endif
 
 %if "%{build_mpi4py}" == "1"
@@ -438,11 +440,13 @@ fi
 %if "%{build_mpi4py}" == "0"
     %{INSTALL_DIR_COMP}
     %{MODULE_DIR_COMP}
+    %{APPS}/%{comp_fam_ver}/%{PNAME}/modulefiles
 %endif
 
 %if "%{build_mpi4py}" == "1"
     %{INSTALL_DIR_MPI}
     %{MODULE_DIR_MPI}
+    %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{PNAME}/modulefiles
 %endif
 
 %post -n %{PACKAGE_NAME}

@@ -10,7 +10,7 @@ Summary: Fenics install
 %define micro_version 0
 %define versionpatch %{major_version}.%{minor_version}.%{micro_version}
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}
 
 %include rpm-dir.inc
 %include compiler-defines.inc
@@ -103,11 +103,11 @@ module load pybind11
 ####
 #### time saving: disable some rebuilds
 ####
-INSTALL_FFC=0
-DOWNLOAD_FENICS=1
-INSTALL_DOLFIN=1
-INSTALL_MSHR=1
-INSTALL_PYTHON=1
+# INSTALL_FFC=0
+# DOWNLOAD_FENICS=1
+# INSTALL_DOLFIN=1
+# INSTALL_MSHR=1
+# INSTALL_PYTHON=1
 
 ################################################################
 ####
@@ -118,7 +118,7 @@ INSTALL_PYTHON=1
 ####
 #### compilers
 ####
-module load intel/18.0.2
+#module load intel/18.0.2
 export CC=`which mpicc`
 export CXX=`which mpicxx`
 export FC=`which mpif90`\
@@ -128,7 +128,8 @@ export FC=`which mpif90`\
 ####
 export PYTHONLEVEL=3
 module load cmake
-module load boost/1.65 # 1.68 is too new!
+export BOOSTMODULE=boost/1.65
+module load ${BOOSTMODULE} # 1.68 is too new!
 export BOOST_ROOT=${TACC_BOOST_DIR}
 module load python${PYTHONLEVEL}
 # note that gcc + python3.6 gives a non-functional pip3
@@ -139,7 +140,9 @@ module load swig
 #### required: petsc, slepc
 ####
 PETSCVERSION=3.9
-module load petsc/${PETSCVERSION} slepc/${PETSCVERSION}
+export PETSCMODULE=petsc/${PETSCVERSION}
+export SLEPCMODULE=slepc/${PETSCVERSION}
+module load ${PETSCMODULE} ${SLEPCMODULE}
 
 ####
 #### required: eigen
@@ -152,7 +155,8 @@ EIGEN_INSTALL_DIR=${TACC_EIGEN_DIR}
 ####
 #### optional: hdf5
 ####
-module load phdf5
+export HDF5MODULE=phdf5/1.8.16
+module load ${HDF5MODULE}
 
 ################################################################
 ####
@@ -239,87 +243,87 @@ if [ -z "${PETSC_DIR}" -o ! -d "${PETSC_DIR}" ] ; then
   exit 1
 fi
 
-if [ ${INSTALL_DOLFIN} -gt 0 ] ; then
-  echo ; echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" ; echo
-  echo ; echo "                Installing DOLFIN"  ; echo 
-  echo ; echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" ; echo
-  rm -rf dolfin/build && mkdir -p dolfin/build 
-  ( cd dolfin/build \
-    && cmake \
-       -D CMAKE_INSTALL_PREFIX=${FENICS_INSTALL} \
-       -D DOLFIN_SKIP_BUILD_TESTS:BOOL=TRUE \
-       -D CMAKE_C_COMPILER:FILEPATH=${CC} \
-       -D CMAKE_CXX_COMPILER:FILEPATH=${CXX} \
-       -D BOOST_ROOT:FILEPATH="${TACC_BOOST_DIR}" \
-       -D EIGEN3_INCLUDE_DIR:FILEPATH="${EIGEN_INSTALL_DIR}/include/eigen3" \
-       -D PETSC_DIR:PATH=${PETSC_DIR} \
-       -D DOLFIN_ENABLE_SUNDIALS=OFF \
-       .. \
-    && make install \
-  ) 2>&1 | tee ${LOGDIR}/dolfin-install.log
-  if [ $? -ne 0 ] ; then exit 1; fi
-fi
+echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+echo "                Installing DOLFIN" 
+echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
 
-if [ ${INSTALL_MSHR} -gt 0 ] ; then
-  echo ; echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" ; echo
-  echo ; echo "                Installing MSHR"  ; echo 
-  echo ; echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" ; echo
-  rm -rf mshr/build && mkdir -p mshr/build
-  ( cd mshr/build \
-    && cmake \
-       -D CMAKE_INSTALL_PREFIX=${FENICS_INSTALL} \
-       -D CMAKE_C_COMPILER:FILEPATH=${CC} \
-       -D CMAKE_CXX_COMPILER:FILEPATH=${CXX} \
-       -D BOOST_ROOT:FILEPATH="${TACC_BOOST_DIR}" \
-       -D EIGEN3_INCLUDE_DIR:FILEPATH="${EIGEN_INSTALL_DIR}/include/eigen3" \
-       -D PETSC_DIR:PATH=${PETSC_DIR} \
-       .. \
-    && make install \
-  ) 2>&1 | tee ${LOGDIR}/mshr-install.log
-  if [ $? -ne 0 ] ; then exit 1; fi
-fi
+rm -rf dolfin/build && mkdir -p dolfin/build 
+( \
+  cd dolfin/build \
+  && cmake \
+     -D CMAKE_INSTALL_PREFIX=${FENICS_INSTALL} \
+     -D DOLFIN_SKIP_BUILD_TESTS:BOOL=TRUE \
+     -D CMAKE_C_COMPILER:FILEPATH=${CC} \
+     -D CMAKE_CXX_COMPILER:FILEPATH=${CXX} \
+     -D BOOST_ROOT:FILEPATH="${TACC_BOOST_DIR}" \
+     -D EIGEN3_INCLUDE_DIR:FILEPATH="${EIGEN_INSTALL_DIR}/include/eigen3" \
+     -D PETSC_DIR:PATH=${PETSC_DIR} \
+     -D DOLFIN_ENABLE_SUNDIALS=OFF \
+     .. \
+  && make install \
+) 
+
+echo  "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" 
+echo  "                Installing MSHR"   
+echo  "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" 
+rm -rf mshr/build && mkdir -p mshr/build
+( cd mshr/build \
+  && cmake \
+     -D CMAKE_INSTALL_PREFIX=${FENICS_INSTALL} \
+     -D CMAKE_C_COMPILER:FILEPATH=${CC} \
+     -D CMAKE_CXX_COMPILER:FILEPATH=${CXX} \
+     -D BOOST_ROOT:FILEPATH="${TACC_BOOST_DIR}" \
+     -D EIGEN3_INCLUDE_DIR:FILEPATH="${EIGEN_INSTALL_DIR}/include/eigen3" \
+     -D PETSC_DIR:PATH=${PETSC_DIR} \
+     .. \
+  && make install \
+) 
 
 export CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:${FENICS_INSTALL}/share/dolfin/cmake
 
 export CXXFLAGS="-I${TACC_BOOST_INC}"
 
-if [ ${INSTALL_PYTHON} -gt 0 ] ; then
-  echo ; echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" ; echo
-  echo ; echo "                Installing PYTHON"  ; echo 
-  echo ; echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" ; echo
-  ( \
-    cd dolfin/python \
-    && ${PIP} install . \
-       --prefix=${FENICS_PYTHON} \
-  ) 2>&1 | tee -a ${LOGDIR}/dolfin-install.log
-  if [ $? -ne 0 ] ; then exit 1; fi
+echo  "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" 
+echo  "                Installing PYTHON"   
+echo  "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" 
+( \
+  cd dolfin/python \
+  && ${PIP} install . \
+     --prefix=${FENICS_PYTHON} \
+) 
 
-  ( \
-    cd mshr/python \
-    && ${PIP} install . \
-       --prefix=${FENICS_PYTHON} \
-  ) 2>&1 | tee -a ${LOGDIR}/mshr-install.log
-  if [ $? -ne 0 ] ; then exit 1; fi
-fi
+( \
+  cd mshr/python \
+  && ${PIP} install . \
+     --prefix=${FENICS_PYTHON} \
+) 
 
 # It may be useful to add cmake flag -DCMAKE_INSTALL_PREFIX=<prefix> and pip3 flag --user or --prefix=<prefix> to install to a user location.
 
-cp ${LOGDIR}/fenicssetup.sh ${FENICS_DIR}
+##cp ${LOGDIR}/fenicssetup.sh ${FENICS_DIR}
+cat >fenicssetup.sh <<EOF
+export FENICS_DIR=%{INSTALL_DIR}
+
+# set PATH and LD_LIBRARY_PATH
+source \${FENICS_DIR}/fenics-installation/share/dolfin/dolfin.conf
+
+# set PYTHONPATH
+export PYTHONPATH=\${PYTHONPATH}:\${FENICS_DIR}/python/lib/python${TACC_PYTHON_VER}/site-packages:\${FENICS_DIR}/dolfin/python
+EOF
 
 chmod -R g+rX,o+rX ${FENICS_DIR}
+
 ##
 ## modulefile
 ##
 
+export modulefilename=%{version}
+
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua << EOF
 help( [[
-The fenics module defines the Fenics variables
-FENICS_DIR and FENICS_ARCH
-as well as the following environment variables:
-TACC_FENICS_DIR, TACC_FENICS_BIN, and
-TACC_FENICS_LIB for the location
-of the Fenics distribution, documentation, binaries,
-and libraries. It also updates PATH and LD_LIBRARY_PATH.
+The fenics module defines the Fenics variable
+TACC_FENICS_DIR for the location
+of the Fenics distribution. It also updates PYTHONPATH.
 
 Version %{version}${versionextra}
 external packages installed: ${packageslisting}
@@ -332,17 +336,21 @@ whatis( "Category: library, mathematics" )
 whatis( "URL: https://fenicsproject.org/" )
 whatis( "Description: Portable Extendible Toolkit for Scientific Computing, Numerical library for sparse linear algebra" )
 
-local             fenics_arch =    "${architecture}"
 local             fenics_dir =     "%{INSTALL_DIR}/"
 
-prepend_path("PATH",            pathJoin(fenics_dir,fenics_arch,"bin") )
-prepend_path("LD_LIBRARY_PATH", pathJoin(fenics_dir,fenics_arch,"lib") )
+prepend_path("PYTHONPATH",      pathJoin(fenics_dir,"dolfin","python") )
+prepend_path("PYTHONPATH",      pathJoin(fenics_dir,"dolfin","python","src") )
+prepend_path("PYTHONPATH",
+      pathJoin(fenics_dir,"python","lib","python${TACC_PYTHON_VER}","site-packages") )
 
-setenv("FENICS_ARCH",            fenics_arch)
 setenv("FENICS_DIR",             fenics_dir)
 setenv("TACC_FENICS_DIR",        fenics_dir)
-setenv("TACC_FENICS_BIN",        pathJoin(fenics_dir,fenics_arch,"bin") )
-setenv("TACC_FENICS_LIB",        pathJoin(fenics_dir,fenics_arch,"lib") )
+
+prereq("${BOOSTMODULE}")
+prereq("python${PYTHONLEVEL}")
+prereq("${PETSCMODULE}")
+prereq("${SLEPCMODULE}")
+prereq("${HDF5MODULE}")
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
@@ -356,9 +364,7 @@ EOF
 
 %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua 
 
-cp -r config include lib makefile src \
-    $RPM_BUILD_ROOT/%{INSTALL_DIR}
-cp -r skylake* \
+cp -r %{INSTALL_DIR}/* \
     $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 popd

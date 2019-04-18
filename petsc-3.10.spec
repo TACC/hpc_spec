@@ -7,7 +7,7 @@ Summary: PETSc install
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 10
-%define micro_version 3
+%define micro_version 5
 %define versionpatch %{major_version}.%{minor_version}.%{micro_version}
 
 %define pkg_version %{major_version}.%{minor_version}
@@ -32,7 +32,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 4%{?dist}
+Release: 6%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -144,7 +144,7 @@ export MPI_EXTRA_OPTIONS="--with-mpiexec=mpirun_rsh"
 
 export PETSC_CONFIGURE_OPTIONS="\
   --with-x=0 -with-pic \
-  --with-make-np=12 \
+  --with-make-np=8 \
   "
 mkdir -p %{INSTALL_DIR}/externalpackages
 mkdir -p %{MODULE_DIR}
@@ -429,17 +429,25 @@ export CUDA_OPTIONS=
 # petsc can run single processor with a fake mpi
 # in that case: no external packages, and explicit non-mp cc/fc compilers
 #
+export MPICC=`which mpicc`
+export MPICXX=`which mpicxx`
+export MPIF90=`which mpif90`
+echo "setting mpicc=${MPICC}"
+ls -l ${MPICC}
+
+export MPI_OPTIONS="--with-mpi=1 --with-cc=${MPICC} --with-cxx=${MPICXX} --with-fc=${MPIF90}"
 %if "%{is_impi}" == "1"
   export PETSC_MPICH_HOME="${MPICH_HOME}/intel64"
-  export mpi="--with-mpi-compilers=1 --with-mpi-include=${TACC_IMPI_INC} --with-mpi-lib=${TACC_IMPI_LIB}/release_mt/libmpi.so"
+  export MPI_OPTIONS="${MPI_OPTIONS} \
+    --with-mpi-include=${TACC_IMPI_INC} --with-mpi-lib=${TACC_IMPI_LIB}/release_mt/libmpi.so"
 %else
   export PETSC_MPICH_HOME="${MPICH_HOME}"
-  export mpi="--with-mpi-compilers=1 --with-mpi-dir=${PETSC_MPICH_HOME}"
+  export MPI_OPTIONS="${MPI_OPTIONS} --with-mpi-dir=${MPICH_HOME}"
 %endif
-echo "Finding mpi in ${PETSC_MPICH_HOME}"
+echo "Finding mpi in ${MPICH_HOME}"
 
 case "${ext}" in
-uni* ) export mpi="--with-mpi=0 --with-cc=${CC} --with-fc=${FC} --with-cxx=0";
+uni* ) export MPI_OPTIONS="--with-mpi=0 --with-cc=${CC} --with-fc=${FC} --with-cxx=0";
        export packages= ;;
 esac
 
@@ -456,8 +464,7 @@ esac
 
 if [ "%{comp_fam}" = "gcc" ] ; then
   # this is TACC_INTEL_LIB
-  export LIBS=
-#"${LIBS} -L/opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/ -lirc"
+  export LIBS="/opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/libirc.so"
 fi
 
 ##
@@ -486,11 +493,10 @@ else
     ${PETSC_CONFIGURE_OPTIONS} \
     --with-packages-search-path=[${EXTERNAL_PACKAGES_DIR}] \
     --with-packages-build-dir=${PACKAGES_BUILD_DIR} \
-    ${mpi} ${clanguage} ${scalar} ${dynamicshared} ${precision} ${packages} \
+    ${MPI_OPTIONS} ${clanguage} ${scalar} ${dynamicshared} ${precision} ${packages} \
     --with-debugging=${usedebug} \
     ${BLAS_LAPACK_OPTIONS} ${MPI_EXTRA_OPTIONS} ${CUDA_OPTIONS} ${INDEX_OPTIONS} \
-    COPTFLAGS="${CFLAGS}" FOPTFLAGS="${FFLAGS}" CXXOPTFLAGS="${CXXFLAGS}" \
-    LIBS="${LIBS}"
+    COPTFLAGS="${CFLAGS}" FOPTFLAGS="${FFLAGS}" CXXOPTFLAGS="${CXXFLAGS}"
 fi
 
 export noops="\
@@ -599,6 +605,7 @@ setenv("PETSC_ARCH",            petsc_arch)
 setenv("PETSC_DIR",             petsc_dir)
 setenv("TACC_PETSC_DIR",        petsc_dir)
 setenv("TACC_PETSC_BIN",        pathJoin(petsc_dir,petsc_arch,"bin") )
+setenv("TACC_PETSC_INC",        pathJoin(petsc_dir,petsc_arch,"include") )
 setenv("TACC_PETSC_LIB",        pathJoin(petsc_dir,petsc_arch,"lib") )
 EOF
 
@@ -671,6 +678,10 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 rm -rf $RPM_BUILD_ROOT
 %changelog
 # remember to notify OpenSees: Ian Wang
+* Sat Apr 06 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 6: (only gcc): finally fix that LIBS thing, also update to 3.10.5
+* Mon Mar 04 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 5: update to 3.10.4, defining TACC_PETSC_INC
 * Tue Jan 29 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 4: adding hyprefei configuration
 * Wed Jan 09 2019 eijkhout <eijkhout@tacc.utexas.edu>

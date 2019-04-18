@@ -60,7 +60,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GNU
 Group:     Development/Tools
 Vendor:     Pybind11
@@ -133,7 +133,7 @@ PYBIND11 exposes C++11 functionality to Python
 # Load MPI Library
 #%include mpi-load.inc
 
-module load python3
+module load cmake python3
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -153,6 +153,8 @@ module load python3
   # Insert Build/Install Instructions Here
   #========================================
   
+SPEC_DIR=`pwd`/../SPECS
+
 #
 # Use mount temp trick
 #
@@ -161,6 +163,8 @@ mount -t tmpfs tmpfs %{INSTALL_DIR}
 
 
 #wget -nc --quiet https://github.com/pybind11/pybind1111/archive/v%{version}.tar.gz
+
+find . -name pybind11\*cmake
 
 ####
 #### pybind1111
@@ -172,12 +176,27 @@ rm -rf ${PYBIND11_BUILD}
 mkdir -p ${PYBIND11_BUILD}
 pushd ${PYBIND11_BUILD}
 
+( \
 cmake \
-   -DCMAKE_INSTALL_PREFIX=${PYBIND11_INSTALL} \
-    -DPYTHON_EXECUTABLE=`which python3` \
-   -DPYBIND1111_TEST=off \
+    -D CMAKE_INSTALL_PREFIX=${PYBIND11_INSTALL} \
+    -D PYTHON_EXECUTABLE=`which python3` \
+    -D PYBIND11_INSTALL=ON \
+    -D PYBIND11_TEST=OFF \
+    -D OLD_CONFIG_FILES=0 \
    ${PYBIND11_SRC} \
-&& make && make install
+&& make \
+&& find . -name pybind11\*cmake \
+&& sed -i \
+       -e '/cmake_install.cmake/s/\/opt/-\/opt/' \
+       Makefile \
+&& make install || /bin/true \
+) || /bin/true
+echo "really done make install" \
+
+# export nomake="\
+#     -D PYBIND11_MASTER_PROJECT=ON \
+#     -D PYBIND11_EXPORT_NAME=OFF \
+#     "
 
 popd
 
@@ -293,5 +312,7 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Tue Mar 26 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: managed to get Tools included
 * Tue Feb 12 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release
