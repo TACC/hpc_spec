@@ -11,6 +11,7 @@ Directory                 | Content
 
 Current Branches                                           | Description
 :--------------------------------------------------------: | :----------------
+[ft1](https://github.com/TACC/hpc_spec/tree/frontera/)| Frontera spec files
 [st4](https://github.com/TACC/hpc_spec/tree/knl2/)| Stampede 4 spec files
 [st3.5](https://github.com/TACC/hpc_spec/tree/knl15)| Stampede 3.5 spec files
 [hk1](https://github.com/TACC/hpc_spec/tree/hk1/) | Hikari   1 spec files
