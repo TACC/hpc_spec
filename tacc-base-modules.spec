@@ -18,7 +18,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4%{?dist}
+Release:   5%{?dist}
 License:   GPL
 Group: tacc-stampede2-base
 Packager:  TACC - mclay@tacc.utexas.edu, cproctor@tacc.utexas.edu
@@ -79,7 +79,7 @@ try_load("intel")
 try_load("impi")
 try_load("git")
 try_load("autotools")
-try_load("python")
+try_load("python2")
 try_load("cmake")
 try_load("xalt")
 

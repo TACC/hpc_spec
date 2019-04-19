@@ -131,6 +131,9 @@ module purge
 
 %include compiler-load.inc
 ml cmake
+%if "%is_gcc" == "1"
+  ml mkl
+%endif
 ml
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
@@ -157,17 +160,22 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   export ncores=24
   mkdir -p build
   cd build
-  
+
+export LDFLAGS="-Wl,-rpath,${TACC_MKL_DIR}/../compiler/lib/intel64"
+
 cmake                                       \
 -DCMAKE_INSTALL_PREFIX="%{INSTALL_DIR}"     \
+_DCMAKE_C_FLAGS="${LDFLAGS}"                \
 -DCMAKE_C_COMPILER="${CC}"                  \
+_DCMAKE_CXX_FLAGS="${LDFLAGS}"              \
 -DCMAKE_CXX_COMPILER="${CXX}"               \
 -DMKLINC="${TACC_MKL_INC}"                  \
--DMKLIOMP5LIB="${TACC_MKL_LIB}/libiomp5.so" \
+-DMKLIOMP5LIB="${TACC_MKL_DIR}/../compiler/lib/intel64/libiomp5.so" \
 -DMKLLIB="${TACC_MKL_LIB}/libmkl_rt.so"     \
--DARCH_OPT_FLAGS="${TACC_VEC_FLAGS}"        \
+-DARCH_OPT_FLAGS="-march=haswell -mtune=haswell"        \
 ../
   
+##-DARCH_OPT_FLAGS="${TACC_VEC_FLAGS}"        \
   make -j ${ncores} VERBOSE=1
   make DESTDIR=$RPM_BUILD_ROOT install
   
@@ -207,7 +215,9 @@ The value of MKLDNNROOT is also set to TACC_%{MODULE_VAR}_DIR.
 
 A simple compile and link step might look like:
 
-icpc -std=c++11 -I${MKLDNNROOT}/include -L${MKLDNNROOT}/lib simple_net.cpp -lmkldnn
+$CXX -std=c++11 -I${MKLDNNROOT}/include -L${MKLDNNROOT}/lib simple_net.cpp -lmkldnn
+
+where $CXX may be set to "icpc" or "g++" for Intel or GCC compilers respectively.
 
 More information can be found here:
 
@@ -217,6 +227,7 @@ Version %{version}
 ]]
 
 help(help_message,"\n")
+try_load("mkl")
 
 whatis("Name: %{name}")
 whatis("Version: %{version}")
