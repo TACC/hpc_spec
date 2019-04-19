@@ -26,7 +26,7 @@
 # To remove the packages type the following:
 # rpm -e tacc-vtk-intel18-impi18_0-package-8.1.1-0.el7.centos.x86_64 tacc-vtk-intel18-impi18_0-modulefile-8.1.1-0.el7.centos.x86_64
 
-Summary:  vtk 8.1.1 local binary install
+Summary:  vtk 8.2.0 local binary install
 
 # Give the package a base name
 %define pkg_base_name vtk
@@ -47,6 +47,7 @@ Summary:  vtk 8.1.1 local binary install
 %include rpm-dir.inc
 %include compiler-defines.inc
 %include mpi-defines.inc
+%include name-defines.inc
 
 ############ Do Not Change #############
 Name:      %{pkg_name}
@@ -62,9 +63,9 @@ Packager:  TACC - semeraro@tacc.utexas.edu
 
 # Turn off debug package mode
 %define debug_package %{nil}
-%define dgg           %{nil}
+%define dbg           %{nil}
 
-%define VTK_SRC vtk.%{version}.%comp_fam_ver}.%{mpi_fam_ver}.%{release}.tar.gz
+%define VTK_SRC vtk.%{version}.%{comp_fam_ver}.%{mpi_fam_ver}.%{release}.tar.gz
 
 %package %{PACKAGE}
 Summary: The package RPM
@@ -125,6 +126,8 @@ module purge
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
+echo "MODULE_DIR:    %{MODULE_DIR}"
+echo "MODULE_FILENAME:    %{MODULE_FILENAME}"
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -149,19 +152,11 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 %endif # BUILD_PACKAGE |
 #-----------------------
 
-
-
-%define MODULES modulefiles
-
-
-%define MODULE_DIR  %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{MODULES}/%{name}
-
 #-----------------------
 %if %{?BUILD_MODULEFILE}
 #-----------------------
 
- mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-
+  mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -172,6 +167,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
 
 
+echo "MODULE_DIR:    %{MODULE_DIR}"
+echo "MODULE_FILENAME:    %{MODULE_FILENAME}"
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 help([[
 The %{MODULE_VAR} module defines the following environment variables:
@@ -184,7 +181,7 @@ include files, and tools respectively.
 --help(help_msg)
 
 whatis("Name: vtk")
-whatis("Version: %{pkg_version}")
+whatis("Version: %{pkg_version}%{dbg}")
 whatis("Category: application, visualization")
 whatis("Description: a C++ visualization library")
 whatis("URL: https/www.vtk.org")
@@ -198,14 +195,18 @@ local vtk_dir ="%{INSTALL_DIR}"
 family("vtk")
 
 --conflict vtk
-prereq("qt5")
-prereq("swr")
+depends_on("qt5")
+depends_on("swr")
+local SWRLIB = os.getenv("TACC_SWR_LIB") or " "
+local QT5LIB = os.getenv("TACC_QT5_LIB") or " "
 
 prepend_path("PATH",pathJoin(vtk_dir,"bin"))
 prepend_path("LD_LIBRARY_PATH",pathJoin(vtk_dir,"lib64"))
+prepend_path("LD_LIBRARY_PATH",SWRLIB)
+prepend_path("LD_LIBRARY_PATH",QT5LIB)
 prepend_path("INCLUDE",pathJoin(vtk_dir,"include"))
-prepend_path("PYTHONPATH",pathJoin(vtk_dir,"lib/python2.7/site-packages/vtkmodules"))
-prepend_path("PYTHONPATH",pathJoin(vtk_dir,"lib/site-packages/mpi4py"))
+prepend_path("PYTHONPATH",pathJoin(vtk_dir,"lib64/python2.7/site-packages/vtkmodules"))
+prepend_path("PYTHONPATH",pathJoin(vtk_dir,"lib64/site-packages/mpi4py"))
 
 setenv("TACC_%{MODULE_VAR}_DIR", vtk_dir)
 setenv("TACC_%{MODULE_VAR}_INC", pathJoin(vtk_dir,"include"))
@@ -229,7 +230,7 @@ EOF
 
 #-----------------------
 %if %{?BUILD_PACKAGE}
-%files
+%files package
 #-----------------------
 
 %defattr(-,root,install)
@@ -251,6 +252,14 @@ EOF
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-%post
+%post %{PACKAGE}
+export PACKAGE_POST=1
+%include post-defines.inc
+%post %{MODULEFILE}
+export MODULEFILE_POST=1
+%include post-defines.inc
+%prerun %{PACKAGE}
+export PACKAGE_PRERUN=1
+%include post-defines.inc
 %clean
 rm -rf $RPM_BUILD_ROOT

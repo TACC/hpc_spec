@@ -52,7 +52,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.gnu.org/software
@@ -215,7 +215,10 @@ cd gmp-${gmp_version}
 
 ${gcc}/gmp-${gmp_version}/configure \
 --prefix=${gcc_install} \
---enable-cxx
+--enable-cxx \
+--enable-fat
+exit -1 check that this is appropriate
+
 
 make -j ${ncores}
 make install -j ${ncores}

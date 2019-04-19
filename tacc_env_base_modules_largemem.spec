@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   12%{?dist}
+Release:   15%{?dist}
 License:   GPL
 Group:     Module Magic
 Packager:  TACC - cproctor@tacc.utexas.edu
@@ -186,34 +186,34 @@ if (mode() == "load") then
      num = tonumber(num)
      -- Aries network (cray) computes are all nid numbers less than 2000 on LS5 
      if (num < 2000) then
-        LmodMessage("\n=================================================================================")
-        LmodMessage("WARNING:                                                                 :WARNING")
-        LmodMessage("WARNING:        You have loaded the \"TACC-largemem\" module.              :WARNING")
-        LmodMessage("WARNING:                                                                 :WARNING")
-        LmodMessage("WARNING: This module is intended for compiling and running on Lonestar 5 :WARNING")
-        LmodMessage("WARNING:               large memory compute nodes only.                  :WARNING")
-        LmodMessage("WARNING:                                                                 :WARNING")
-        LmodMessage("WARNING:     You are currently not on a large memory compute node.       :WARNING")
-        LmodMessage("WARNING:                                                                 :WARNING")
-        LmodMessage("WARNING:           Please use \"module load TACC\" instead.                :WARNING")
-        LmodMessage("WARNING:                                                                 :WARNING")
-        LmodMessage("WARNING:                         Navigate to:                            :WARNING")
-        LmodMessage("WARNING:     https://portal.tacc.utexas.edu/user-guides/lonestar5        :WARNING")
-        LmodMessage("WARNING:                      for more information.                      :WARNING")
-        LmodMessage("WARNING:                                                                 :WARNING")
-        LmodMessage("WARNING:                This message is worth repeating.                 :WARNING")
-        LmodMessage("WARNING:                                                                 :WARNING")
-        LmodMessage("=================================================================================\n")
+        io.stderr:write("\n=================================================================================\n")
+        io.stderr:write("WARNING:                                                                 :WARNING\n")
+        io.stderr:write("WARNING:        You have loaded the \"TACC-largemem\" module.              :WARNING\n")
+        io.stderr:write("WARNING:                                                                 :WARNING\n")
+        io.stderr:write("WARNING: This module is intended for compiling and running on Lonestar 5 :WARNING\n")
+        io.stderr:write("WARNING:               large memory compute nodes only.                  :WARNING\n")
+        io.stderr:write("WARNING:                                                                 :WARNING\n")
+        io.stderr:write("WARNING:     You are currently not on a large memory compute node.       :WARNING\n")
+        io.stderr:write("WARNING:                                                                 :WARNING\n")
+        io.stderr:write("WARNING:           Please use \"module load TACC\" instead.                :WARNING\n")
+        io.stderr:write("WARNING:                                                                 :WARNING\n")
+        io.stderr:write("WARNING:                         Navigate to:                            :WARNING\n")
+        io.stderr:write("WARNING:     https://portal.tacc.utexas.edu/user-guides/lonestar5        :WARNING\n")
+        io.stderr:write("WARNING:                      for more information.                      :WARNING\n")
+        io.stderr:write("WARNING:                                                                 :WARNING\n")
+        io.stderr:write("WARNING:                This message is worth repeating.                 :WARNING\n")
+        io.stderr:write("WARNING:                                                                 :WARNING\n")
+        io.stderr:write("=================================================================================\n\n")
      end
   -- else
-  --   LmodMessage("\n========================================================================")
-  --   LmodMessage("                                                                        ")
-  --   LmodMessage("            You have loaded the \"TACC-largemem\" module.                 ")
-  --   LmodMessage("                                                                        ")
-  --   LmodMessage("     This module is intended for compiling and running on Lonestar 5    ")
-  --   LmodMessage("                   large memory compute nodes only.                     ")
-  --   LmodMessage("                                                                        ")
-  --   LmodMessage("========================================================================\n")
+  --   io.stderr:write("\n========================================================================")
+  --   io.stderr:write("                                                                        ")
+  --   io.stderr:write("            You have loaded the \"TACC-largemem\" module.                 ")
+  --   io.stderr:write("                                                                        ")
+  --   io.stderr:write("     This module is intended for compiling and running on Lonestar 5    ")
+  --   io.stderr:write("                   large memory compute nodes only.                     ")
+  --   io.stderr:write("                                                                        ")
+  --   io.stderr:write("========================================================================\n")
   end
 end
 
@@ -224,12 +224,12 @@ if (os.getenv("USER") ~= "root") then
   append_path("PATH",  ".")
 end
 
-load("intel")
-load("mvapich2-largemem")
-load("git")
-load("autotools")
-load("python2")
-load("cmake")
+try_load("intel")
+try_load("impi-largemem")
+try_load("git")
+try_load("autotools")
+try_load("python2")
+try_load("cmake")
 
 setenv("APPS","/opt/apps")
 prepend_path("MANPATH","/usr/local/man:/usr/share/man:/usr/X11R6/man:/usr/kerberos/man:/usr/man")

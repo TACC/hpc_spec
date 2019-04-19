@@ -66,7 +66,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GPL
 Vendor:    Ames Lab
 Group:     applications/chemistry
@@ -258,7 +258,7 @@ The input file must have an .inp suffix (e.g. h2.inp)
 For a single node  make NCPUS should be 12.
 When using N nodes make NCPUS = N * 12 and TPN (tasks/node) 12.
 
-This will create 12 compute and 12 server processes on each node.
+This will create 12 compute and 12 data server processes on each node.
 But check performance using 24 instead of 12.
 
 e.g. for an h2.inp input file you can run gamess with

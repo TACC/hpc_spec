@@ -23,8 +23,8 @@
 Summary: A Nice little non-relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name gcc
-%define MODULE_VAR    GCC
+%define pkg_base_name gccdev
+%define MODULE_VAR    GCCDEV
 
 # Create some macros (spec file variables)
 %define major_version 6
@@ -225,8 +225,14 @@ ${gcc}/gmp-${gmp_version}/configure \
 --enable-cxx \
 --enable-fat
 
+#--build=ivybridge \
+#--host=ivybridge \
+#--enable-static=no \
+#--enable-shared=yes
+
 make -j ${ncores}
 make install -j ${ncores}
+#make check
 
 ls -lart ${gcc_install}/lib/libgmp*
 objdump -d -M x86-64 ${gcc_install}/lib/libgmp.so | grep mulx | wc -l

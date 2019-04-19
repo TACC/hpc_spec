@@ -20,7 +20,7 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name impi
+%define pkg_base_name impi-largemem
 %define MODULE_VAR    IMPI
 
 # Create some macros (spec file variables)
@@ -40,7 +40,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+%include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -69,7 +69,7 @@ Group: Development/Tools
 %description package
 This is the long description for the package RPM...
 This is specifically an rpm for the Intel MPI modulefile
-used on Stampede2.
+used on Lonestar5.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
@@ -77,11 +77,11 @@ Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
 This is specifically an rpm for the Intel MPI modulefile
-used on Stampede2.
+used on Lonestar5.
 
 %description
 This is specifically an rpm for the Intel MPI modulefile
-used on Stampede2.
+used on Lonestar5.
 
 #---------------------------------------
 %prep
@@ -258,6 +258,9 @@ if (os.getenv("TACC_SYSTEM") == "stampede2") then
   setenv(     "FI_PROVIDER"            , "psm2"                                  )
   setenv(     "I_MPI_FABRICS"          , "shm:ofi"                               )
   setenv(     "I_MPI_STARTUP_MODE"     , "pmi_shm_netmod"                        )
+
+elseif (os.getenv("TACC_SYSTEM") == "ls5") then
+  setenv(     "I_MPI_FABRICS"          , "shm:ofa"                               )
 end
 
 EOF

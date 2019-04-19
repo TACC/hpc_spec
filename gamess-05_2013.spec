@@ -22,7 +22,7 @@ Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
-Release:   2
+Release:   3
 License:   GPL
 Vendor:    Ames Lab 
 Group:     applications/chemistry
@@ -232,9 +232,9 @@ e.g. for an h2.inp input file you can run gamess with
       rungms h2.inp  or rungms h2
 
 (rungms uses a special mpirun command, mpiexec.hydra, to launch gamess, so you do not
-need to use ibrun.)  Because gamess uses one DDI memory server for each MPI task, 
-request only 1/2 the available cores on a node (e.g. 12/node on lonestar and 8/node
-on stampede). rungms will automatically use the other cores for memory servers.
+need to use ibrun.)  Because gamess uses one DDI data server for each MPI task, 
+request only 1/2 the available cores on a node (e.g. 12 tasks/node on lonestar and 24/node
+on stampede2). rungms will automatically use the other cores for data servers.
 
 NCPUS is number of computing processes you want to use and the default value is the total
 tasks requested in the slurm job script. If you need to use the QUANPOL/RXNFLD3840.DAT

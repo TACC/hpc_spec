@@ -218,7 +218,10 @@ cd gmp-${gmp_version}
 
 ${gcc}/gmp-${gmp_version}/configure \
 --prefix=${gcc_install} \
---enable-cxx
+--enable-cxx \
+--enable-fat
+exit -1 check that this is appropriate
+
 
 make -j ${ncores}
 make install -j ${ncores}
