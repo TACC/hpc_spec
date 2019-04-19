@@ -199,7 +199,7 @@ whatis("Description: Intel Math Kernel Library"                             )
 whatis("URL: https://software.intel.com/en-us/intel-mkl"                    )
 
 -- Create environment variables.
-local base         = "/home1/apps/intel/18.0.2"
+local base         = "/admin/build/admin/rpms/frontera/intel/install/18.0.2"
 local full_xe      = "compilers_and_libraries_2018.2.199/linux"
 local installDir   = pathJoin(base,full_xe)
 local mklRoot      = pathJoin(installDir,"mkl")

@@ -51,7 +51,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
+Release:   3%{?dist}
 License:   proprietary
 Group:     Compiler
 URL:       https://software.intel.com/en-us/intel-compilers
@@ -220,7 +220,7 @@ whatis("Description: Intel Compiler Family (C/C++/Fortran for x86_64)"      )
 whatis("URL: http://software.intel.com/en-us/articles/intel-compilers"      )
 
 -- Create environment variables.
-local base         = "/home1/apps/intel/18.0.2"
+local base         = "/admin/build/admin/rpms/frontera/intel/install/18.0.2"
 local gcc_base     = "/opt/apps/gcc/6.3.0"
 local full_xe      = "compilers_and_libraries_%{lib_dir}/linux"
 local arch         = "intel64"
