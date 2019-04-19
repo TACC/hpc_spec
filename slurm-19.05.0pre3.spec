@@ -2,8 +2,8 @@
 %include rpm-dir.inc
 
 Name:		slurm
-Version:	18.08.5
-%define rel	2
+Version:	19.05.0
+%define rel	0pre3
 Release:	%{rel}%{?dist}
 Summary:	Slurm Workload Manager
 Packager: TACC - cproctor@tacc.utexas.edu
@@ -32,8 +32,6 @@ Patch100: slurm-%{version}-%{rel}.patch
 # --with lua		%_with_lua path		build Slurm lua bindings
 # --with mysql		%_with_mysql 1		require mysql/mariadb support
 # --with numa		%_with_numa 1		require NUMA support
-# --with openssl	%_with_openssl 1	require openssl RPM to be installed
-#						ensures auth/openssl and crypto/openssl are built
 # --without pam		%_without_pam 1		don't require pam-devel RPM to be installed
 # --without x11		%_without_x11 1		disable internal X11 support
 
@@ -50,9 +48,6 @@ Patch100: slurm-%{version}-%{rel}.patch
 %bcond_with lua
 %bcond_with numa
 %bcond_with x11
-
-# Build with OpenSSL by default on all platforms (disable using --without openssl)
-%bcond_without openssl
 
 # Use debug by default on all systems
 %bcond_without debug
@@ -71,10 +66,6 @@ Obsoletes: slurm-lua slurm-munge slurm-plugins
 
 # fake systemd support when building rpms on other platforms
 %{!?_unitdir: %global _unitdir /lib/systemd/systemd}
-
-%if %{with openssl}
-BuildRequires: openssl-devel >= 0.9.6 openssl >= 0.9.6
-%endif
 
 %define use_mysql_devel %(perl -e '`rpm -q mariadb-devel`; print $?;')
 
@@ -299,6 +290,8 @@ notifies slurm about failed nodes.
 %patch100 -p1
 
 %build
+export LDFLAGS="-L/opt/apps/cuda/10.1/targets/x86_64-linux/lib/stubs"
+export CPPFLAGS="-I/opt/apps/cuda/10.1/targets/x86_64-linux/include"
 %configure \
 	%{?_without_debug:--disable-debug} \
 	%{?_with_pam_dir} \
@@ -386,7 +379,6 @@ rm -f %{buildroot}/%{_libdir}/slurm/libsched_if64.so
 rm -f %{buildroot}/%{_libdir}/slurm/proctrack_sgi_job.so
 rm -f %{buildroot}/%{_libdir}/slurm/runjob_plugin.so
 rm -f %{buildroot}/%{_libdir}/slurm/select_bluegene.so
-rm -f %{buildroot}/%{_libdir}/slurm/switch_nrt.so
 rm -f %{buildroot}/%{_mandir}/man5/bluegene*
 rm -f %{buildroot}/%{_sbindir}/sfree
 rm -f %{buildroot}/%{_sbindir}/slurm_epilog
