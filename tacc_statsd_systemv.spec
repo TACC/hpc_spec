@@ -1,7 +1,7 @@
 Summary: Job-level Tracking and Analysis System
 Name: tacc_statsd
-Version: 2.3.3
-Release: 2%{?dist}
+Version: 2.3.4
+Release: 1%{?dist}
 License: GPL
 Vendor: Texas Advanced Computing Center
 Group: System Environment/Base
@@ -9,9 +9,7 @@ Packager: TACC - rtevans@tacc.utexas.edu
 Source: tacc_stats-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 
-#%include rpm-dir.inc
-%_topdir /admin/build/rpms
-
+%include rpm-dir.inc
 %define debug_package %{nil}
 %{!?rmqserver: %{error: define rmqserver!} exit 1 }
 %{!?system:    %{error: define system name!} exit 1}
@@ -27,7 +25,7 @@ unit file.
 %setup -n tacc_stats-%{version}
 
 %build
-./configure --bindir=%{_bindir} --sysconfdir=%{_sysconfdir} --enable-rabbitmq
+./configure --bindir=%{_bindir} --sysconfdir=%{_sysconfdir} --enable-infiniband --enable-rabbitmq
 make
 
 %install
@@ -39,9 +37,10 @@ install -m 6755 tacc_stats %{buildroot}/%{_bindir}/tacc_stats
 install -m 0664 taccstats.service %{buildroot}/%{_sysconfdir}/taccstats.service
 
 %post
-systemctl enable taccstats
 sed -i 's/localhost/%{rmqserver}/' %{_sysconfdir}/taccstats.service
 sed -i 's/default/%{system}/' %{_sysconfdir}/taccstats.service
+systemctl daemon-reload
+systemctl enable taccstats
 systemctl restart taccstats
 
 %preun
@@ -57,6 +56,6 @@ rm -rf %{buildroot}
 %defattr(-,root,root,-)
 %dir %{_bindir}/
 %attr(6755,root,root) %{_bindir}/tacc_stats
-%attr(0744,root,root) %{_sysconfdir}/taccstats.service
+%attr(0644,root,root) %{_sysconfdir}/taccstats.service
 
 
