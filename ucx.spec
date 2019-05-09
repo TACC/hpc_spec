@@ -1,6 +1,6 @@
 #
 # W. Cyrus Proctor
-# 2016-01-06
+# 2015-11-07
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -20,29 +20,24 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define base_name     mvapich2
-%define pkg_base_name %{base_name}
-%define MODULE_VAR    MVAPICH2
+%define pkg_base_name ucx
+%define MODULE_VAR    UCX
 
 # Create some macros (spec file variables)
-%define major_version 2
-%define minor_version 3
+%define major_version 1
+%define minor_version 5
 %define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
-%define pkg_und_version %{major_version}_%{minor_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-%include compiler-defines.inc
+#%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-#%include name-defines.inc
 %include name-defines-noreloc.inc
-#%include name-defines-hidden.inc
-#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -53,12 +48,12 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
-License:   Freely Distributable
-Group:     MPI
-URL:       http://mvapich.cse.ohio-state.edu
+Release:   4%{?dist}
+License:   BSD3
+Group:     System Environment/Libraries
+URL:       https://github.com/openucx/ucx
 Packager:  TACC - cproctor@tacc.utexas.edu
-Source:    %{base_name}-%{pkg_version}.tar.gz
+Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -70,26 +65,26 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
+Unified Communication X (UCX) provides an optimized communication layer for
+Message Passing (MPI), PGAS/OpenSHMEM libraries and RPC/data-centric
+applications.  UCX utilizes high-speed networks for inter-node communication,
+and shared memory mechanisms for efficient intra-node communication.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...
+This is the long description for the modulefile RPM...  OpenFabrics Interfaces
+Unified Communication X (UCX) provides an optimized communication layer for
+Message Passing (MPI), PGAS/OpenSHMEM libraries and RPC/data-centric
+applications.  UCX utilizes high-speed networks for inter-node communication,
+and shared memory mechanisms for efficient intra-node communication.
 
 %description
-MPICH is an open-source and portable implementation of the Message-Passing
-Interface (MPI, www.mpi-forum.org).  MPI is a library for parallel programming,
-and is available on a wide range of parallel machines, from single laptops to
-massively parallel vector parallel processors.
-
-MPICH includes all of the routines in MPI 1.2, along with the I/O routines from
-MPI-2 and some additional routines from MPI-3, including those supporting MPI
-Info and some of the additional datatype constructors.  MPICH  was developed by
-Argonne National Laboratory. See www.mcs.anl.gov/mpi/mpich for more
-information.
-
-
+Unified Communication X (UCX) provides an optimized communication layer for
+Message Passing (MPI), PGAS/OpenSHMEM libraries and RPC/data-centric
+applications.  UCX utilizes high-speed networks for inter-node communication,
+and shared memory mechanisms for efficient intra-node communication.
 
 #---------------------------------------
 %prep
@@ -113,6 +108,7 @@ information.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
+%setup -n %{pkg_base_name}-%{pkg_version}
 
 
 #---------------------------------------
@@ -126,11 +122,9 @@ information.
 
 # Setup modules
 %include system-load.inc
-module purge
-# Load Compiler
-%include compiler-load.inc
 
-# Insert further module commands
+# Insert necessary module commands
+module purge
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -141,7 +135,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
   mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -154,47 +147,46 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
+ 
+export CC=gcc
+export CXX=g++
+
+export ncores=48
+
+./configure             \
+--prefix=%{INSTALL_DIR} \
+--enable-logging        \
+--enable-debug          \
+--enable-debug-data     \
+--enable-profiling      \
+--enable-stats          \
+--enable-assertions     \
+--enable-params-check   \
+--enable-static=yes     \
+--enable-shared=yes     
+
+#export   CFLAGS="-march=native -mtune=native"
+#export CXXFLAGS="-march=native -mtune=native"
+#
+#export ncores=48
+#
+#./configure             \
+#--prefix=%{INSTALL_DIR} \
+#--enable-compiler-opt=3 \
+#--enable-optimizations  \
+#--disable-logging       \
+#--disable-debug         \
+#--disable-assertions    \
+#--disable-params-check  \
+#--with-march            \
+#--with-mlx5-dv          \
+#--enable-static=yes     \
+#--enable-shared=yes     
+
+
+make V=1 -j ${ncores}
+make DESTDIR=$RPM_BUILD_ROOT install -j ${ncores}
   
-##################################################
-export         mv2=`pwd`
-export mv2_install=%{INSTALL_DIR}
-##################################################
-
-export   mv2_major=%{major_version}
-export   mv2_minor=%{minor_version}
-export   mv2_micro=%{micro_version}
-export mv2_version=${mv2_major}.${mv2_minor}.${mv2_micro}
-
-export   ncores=96
-
-cd ${mv2}
-wget http://mvapich.cse.ohio-state.edu/download/mvapich/mv2/mvapich2-${mv2_version}.tar.gz
-tar xvfz mvapich2-${mv2_version}.tar.gz
-cd mvapich2-${mv2_version}
-
-${mv2}/mvapich2-${mv2_version}/configure \
---prefix=${mv2_install}                  \
-
-##--with-pmi=pmi2                          \
-##--enable-romio                           \
-##--with-file-system=lustre+nfs            \
-##--with-pm=slurm                          \
-##--with-slurm=/usr                        \
-#--disable-mcast                          \
-#--disable-silent-rules
-
-make VERBOSE=1 -j ${ncores}
-make VERBOSE=1 -j ${ncores} install
-
-
-if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-fi
-
-cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-umount %{INSTALL_DIR}/
-
-
   
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -217,50 +209,48 @@ umount %{INSTALL_DIR}/
   
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
-This module loads the MVAPICH2 MPI environment built with %{comp_fam_name} compilers. 
-By loading this module, the following commands will be automatically available
-for compiling MPI applications:
+local help_message = [[
+Unified Communication X (UCX) provides an optimized communication layer for
+Message Passing (MPI), PGAS/OpenSHMEM libraries and RPC/data-centric
+applications.  UCX utilizes high-speed networks for inter-node communication,
+and shared memory mechanisms for efficient intra-node communication.
 
-mpif77       (F77 source)
-mpif90       (F90 source)
-mpicc        (C   source)
-mpiCC/mpicxx (C++ source)
+This module defines the environmental variables TACC_%{MODULE_VAR}_DIR,
+TACC_%{MODULE_VAR}_BIN, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC
+for the location of the main libfabric directory, binaries, libraries,
+and include files respectively.
 
-The %{MODULE_VAR} module defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
-TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
-include files, and tools respectively.
+The location of the binary files is also added to your PATH.
+The location of the library files is also added to your LD_LIBRARY_PATH.
+Documentation is also added to your MANPATH.
 
-Version %{pkg_version}
+Version %{version}
 ]]
 
---help(help_msg)
-help(help_msg)
+help(help_message,"\n")
 
--- Create environment variables.
-local base           = "%{INSTALL_DIR}"
-whatis("Name: MVAPICH2")
-whatis("Version: %{pkg_version}")
-whatis("Category: library, runtime support ")
-whatis("Keywords: System, Library ")
-whatis("Description: MPI-2 implementation for Infiniband ")
-whatis("URL: http://mvapich.cse.ohio-state.edu/overview/mvapich2")
-setenv("MPICH_HOME",base)
-setenv("TACC_MPI_GETMODE","mvapich2_ssh")
-prepend_path("PATH"            , pathJoin(base, "bin")        )
-prepend_path("MANPATH"         , pathJoin(base, "share/man")  )
-prepend_path("INFOPATH"        , pathJoin(base, "doc")        )
-prepend_path("LD_LIBRARY_PATH" , pathJoin(base, "lib/shared") )
-prepend_path("LD_LIBRARY_PATH" , pathJoin(base, "lib")        )
-family("MPI")
+whatis("Name: %{name}")
+whatis("Version: %{version}")
+whatis("Category: system, environment libaries")
+whatis("Keywords: System, Environment Libraries")
+whatis("Description: Fabric communication services")
+whatis("URL: https://github.com/openucx/ucx")
 
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/mvapich2_%{pkg_und_version}/modulefiles")
+-- Export environmental variables
+local ucx_dir="%{INSTALL_DIR}"
+local ucx_bin=pathJoin(ucx_dir,"bin")
+local ucx_lib=pathJoin(ucx_dir,"lib")
+local ucx_inc=pathJoin(ucx_dir,"include")
+setenv("TACC_%{MODULE_VAR}_DIR",ucx_dir)
+setenv("TACC_%{MODULE_VAR}_BIN",ucx_bin)
+setenv("TACC_%{MODULE_VAR}_LIB",ucx_lib)
+setenv("TACC_%{MODULE_VAR}_INC",ucx_inc)
 
-setenv( "TACC_%{MODULE_VAR}_DIR",                base )
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(base, "include"))
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(base, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(base, "bin"))
+-- Prepend the ucx directories to the adequate PATH variables
+prepend_path("PATH",ucx_bin)
+prepend_path("LD_LIBRARY_PATH",ucx_lib)
+prepend_path("MANPATH", pathJoin(ucx_dir, "share/man"))
+
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
@@ -272,10 +262,9 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 set     ModulesVersion      "%{version}"
 EOF
   
-  # Check the syntax of the generated lua modulefile only if a visible module
-  %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-  %endif
+  # Check the syntax of the generated lua modulefile
+  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -306,6 +295,7 @@ EOF
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
+
 ########################################
 ## Fix Modulefile During Post Install ##
 ########################################
@@ -325,5 +315,5 @@ export PACKAGE_PREUN=1
 #---------------------------------------
 %clean
 #---------------------------------------
-#rm -rf $RPM_BUILD_ROOT
+rm -rf $RPM_BUILD_ROOT
 

@@ -22,6 +22,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
 %define pkg_base_name ompi
+%define pkg_full_name openmpi
 %define MODULE_VAR    OMPI
 
 # Create some macros (spec file variables)
@@ -31,6 +32,12 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 %define pkg_version_dash %{major_version}_%{minor_version}
+
+%define ucx_version 1.5.1
+%define ucx_install /opt/apps/ucx/%{ucx_version}
+
+%define pmix_version 3.1.2
+%define pmix_install /opt/apps/pmix/%{pmix_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -50,12 +57,12 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   16%{?dist}
 License:   BSD
 Group:     MPI
 URL:       https://www.open-mpi.org
 Packager:  TACC - cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Source:    %{pkg_full_name}-%{pkg_version}.tar.bz2
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -100,6 +107,7 @@ Open-MPI development library.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
+%setup -n %{pkg_full_name}-%{pkg_version}
 
 #---------------------------------------
 %build
@@ -116,6 +124,9 @@ Open-MPI development library.
 # Insert necessary module commands
 ml purge
 %include compiler-load.inc
+ml ucx
+ml pmix
+ml hwloc/1.11.12
 ml
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
@@ -127,7 +138,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
   mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
     
   #######################################
   ##### Create TACC Canary Files ########
@@ -140,32 +150,37 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
+
+#sed -i '30i#include "orte/mca/errmgr/errmgr.h"' ./oshmem/mca/memheap/base/memheap_base_mkey.c
  
  
-export openmpi=`pwd`
-export openmpi_install=%{INSTALL_DIR}
 export ncores=96
-export openmpi_major=%{major_version}
-export openmpi_minor=%{minor_version}
-export openmpi_patch=%{micro_version}
-export openmpi_version=${openmpi_major}.${openmpi_minor}.${openmpi_patch}
 
-cd ${openmpi}
-wget https://download.open-mpi.org/release/open-mpi/v${openmpi_major}.${openmpi_minor}/openmpi-${openmpi_version}.tar.gz
-
-tar xvfz openmpi-${openmpi_version}.tar.gz
-cd openmpi-${openmpi_version}
-
-${openmpi}/openmpi-${openmpi_version}/configure \
---prefix=${openmpi_install}                      \
---enable-orterun-prefix-by-default               \
---with-pic                                       \
---disable-dlopen                                 \
---enable-shared                                  \
---enable-static=yes                              \
---enable-shared=yes
+./configure                                      \
+--prefix=%{INSTALL_DIR}                          \
+--disable-static                                 \
+--enable-builtin-atomics                         \
+--with-ucx=${TACC_UCX_DIR}                       \
+--with-pmix=${TACC_PMIX_DIR}                     \
+--with-libevent=external                         \
+--with-hwloc=${TACC_HWLOC_DIR}                   \
+--with-slurm                                     \
+--enable-mpi-cxx                                 \
+--without-verbs                                  \
+--disable-dlopen                   
 
 
+#--enable-orterun-prefix-by-default \
+#--enable-mpirun-prefix-by-default  \
+#--with-ompi-pmix-rte               \
+#--disable-oshmem                   \
+#--without-verbs                    \
+
+#sed -i 's#$(OSHMEM_TOP_BUILDDIR)/ompi/libmpi.la#$(OSHMEM_TOP_BUILDDIR)/ompi/libmpi.la $(top_srcdir)/orte/libopen-rte.la#g' ./oshmem/Makefile
+
+#--with-pic                         \
+#--with-ucx=%{ucx_install}          \
+#--with-pmix=%{pmix_install}        \
 ## --with-slurm
 ## 29 ${openmpi}/openmpi-${version}/configure \
 ##  30 --prefix=${openmpi_install}             \
@@ -182,18 +197,8 @@ ${openmpi}/openmpi-${openmpi_version}/configure \
 ##  43 #--with-psm                              \
 
 
-make -j ${ncores}
-make -j ${ncores} install
-
-if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-fi
-
-cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-umount %{INSTALL_DIR}/
-  
-
-
+make V=1 -j ${ncores}
+make DESTDIR=$RPM_BUILD_ROOT -j ${ncores} install
 
 #-----------------------  
 %endif # BUILD_PACKAGE |

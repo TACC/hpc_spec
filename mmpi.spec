@@ -1,6 +1,7 @@
 #
 # W. Cyrus Proctor
-# 2016-01-06
+# 2015-11-20 Need to investigate relocation -- use /opt/apps for now
+# 2015-11-20
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -20,17 +21,28 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define base_name     mvapich2
-%define pkg_base_name %{base_name}
-%define MODULE_VAR    MVAPICH2
+%define pkg_base_name mmpi
+%define pkg_full_name openmpi
+%define MODULE_VAR    MMPI
 
 # Create some macros (spec file variables)
-%define major_version 2
-%define minor_version 3
+%define major_version 4
+%define minor_version 0
 %define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
-%define pkg_und_version %{major_version}_%{minor_version}
+%define pkg_version_dash %{major_version}_%{minor_version}
+
+%define ucx_version 1.5.1
+%define ucx_install /opt/apps/ucx/%{ucx_version}
+
+%define pmix_version 3.1.2
+%define pmix_install /opt/apps/pmix/%{pmix_version}
+
+%define hcoll_install /opt/mellanox/hcoll
+%define mxm_install   /opt/mellanox/mxm
+%define knem_install  /opt/knem-1.1.3.90mlnx1
+
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -39,10 +51,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 ########################################
 ### Construct name based on includes ###
 ########################################
-#%include name-defines.inc
 %include name-defines-noreloc.inc
-#%include name-defines-hidden.inc
-#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -53,12 +62,12 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
-License:   Freely Distributable
+Release:   13%{?dist}
+License:   BSD
 Group:     MPI
-URL:       http://mvapich.cse.ohio-state.edu
+URL:       https://www.open-mpi.org
 Packager:  TACC - cproctor@tacc.utexas.edu
-Source:    %{base_name}-%{pkg_version}.tar.gz
+Source:    %{pkg_full_name}-%{pkg_version}.tar.bz2
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -78,17 +87,7 @@ Group: Lmod/Modulefiles
 This is the long description for the modulefile RPM...
 
 %description
-MPICH is an open-source and portable implementation of the Message-Passing
-Interface (MPI, www.mpi-forum.org).  MPI is a library for parallel programming,
-and is available on a wide range of parallel machines, from single laptops to
-massively parallel vector parallel processors.
-
-MPICH includes all of the routines in MPI 1.2, along with the I/O routines from
-MPI-2 and some additional routines from MPI-3, including those supporting MPI
-Info and some of the additional datatype constructors.  MPICH  was developed by
-Argonne National Laboratory. See www.mcs.anl.gov/mpi/mpich for more
-information.
-
+Open-MPI development library.
 
 
 #---------------------------------------
@@ -113,7 +112,7 @@ information.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-
+%setup -n %{pkg_full_name}-%{pkg_version}
 
 #---------------------------------------
 %build
@@ -126,11 +125,14 @@ information.
 
 # Setup modules
 %include system-load.inc
-module purge
-# Load Compiler
-%include compiler-load.inc
 
-# Insert further module commands
+# Insert necessary module commands
+ml purge
+%include compiler-load.inc
+ml ucx
+ml pmix
+ml hwloc/1.11.12
+ml
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -141,8 +143,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
   mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
-  
+    
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -154,48 +155,54 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-  
-##################################################
-export         mv2=`pwd`
-export mv2_install=%{INSTALL_DIR}
-##################################################
+ 
+rpm -qa | grep hcoll # Record the version at build time.
+rpm -qa | grep knem  # Record the version at build time.
+export ncores=96
 
-export   mv2_major=%{major_version}
-export   mv2_minor=%{minor_version}
-export   mv2_micro=%{micro_version}
-export mv2_version=${mv2_major}.${mv2_minor}.${mv2_micro}
+./configure                                      \
+--prefix=%{INSTALL_DIR}                          \
+--disable-static                                 \
+--enable-builtin-atomics                         \
+--with-ucx=${TACC_UCX_DIR}                       \
+--with-pmix=${TACC_PMIX_DIR}                     \
+--with-libevent=external                         \
+--with-hwloc=${TACC_HWLOC_DIR}                   \
+--with-slurm                                     \
+--enable-mpi-cxx                                 \
+--without-verbs                                  \
+--with-hcoll=%{hcoll_install}                    \
+--with-mxm=%{mxm_install}                        \
+--with-knem=%{knem_install}                      \
+--with-platform=%{_sourcedir}/mellanox_optimized \
+--disable-dlopen                   
 
-export   ncores=96
-
-cd ${mv2}
-wget http://mvapich.cse.ohio-state.edu/download/mvapich/mv2/mvapich2-${mv2_version}.tar.gz
-tar xvfz mvapich2-${mv2_version}.tar.gz
-cd mvapich2-${mv2_version}
-
-${mv2}/mvapich2-${mv2_version}/configure \
---prefix=${mv2_install}                  \
-
-##--with-pmi=pmi2                          \
-##--enable-romio                           \
-##--with-file-system=lustre+nfs            \
-##--with-pm=slurm                          \
-##--with-slurm=/usr                        \
-#--disable-mcast                          \
-#--disable-silent-rules
-
-make VERBOSE=1 -j ${ncores}
-make VERBOSE=1 -j ${ncores} install
-
-
-if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-fi
-
-cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-umount %{INSTALL_DIR}/
+#--enable-orterun-prefix-by-default \
+#--enable-mpirun-prefix-by-default  \
+#--with-ompi-pmix-rte               \
+#--disable-oshmem                   \
+#--with-pic                         \
+#--with-ucx=%{ucx_install}          \
+#--with-pmix=%{pmix_install}        \
+## --with-slurm
+## 29 ${openmpi}/openmpi-${version}/configure \
+##  30 --prefix=${openmpi_install}             \
+##  31 --without-libfabric                     \
+##  32 --with-psm2=/usr                        \
+##  33 --with-cma                              \
+##  34 --enable-orterun-prefix-by-default      \
+##  35 --with-slurm                            \
+##  36 --with-pmi                              \
+##  37 --with-pic                              \
+##  38 --disable-dlopen                        \
+##  41 
+##  42 #--with-verbs=/usr                       \
+##  43 #--with-psm                              \
 
 
-  
+make V=1 -j ${ncores}
+make DESTDIR=$RPM_BUILD_ROOT -j ${ncores} install
+
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -218,49 +225,59 @@ umount %{INSTALL_DIR}/
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_msg=[[
-This module loads the MVAPICH2 MPI environment built with %{comp_fam_name} compilers. 
-By loading this module, the following commands will be automatically available
-for compiling MPI applications:
 
+Mellanox "Optimized" Version of OpenMPI.
+
+The Open MPI Project is an open source Message Passing Interface implementation
+that is developed and maintained by a consortium of academic, research, and
+industry partners. Open MPI is therefore able to combine the expertise,
+technologies, and resources from all across the High Performance Computing
+community in order to build the best MPI library available. Open MPI offers
+advantages for system and software vendors, application developers and computer
+science researchers.
+
+This module loads the openmpi environment built with
+Intel compilers. By loading this module, the following commands
+will be automatically available for compiling MPI applications:
 mpif77       (F77 source)
 mpif90       (F90 source)
 mpicc        (C   source)
 mpiCC/mpicxx (C++ source)
 
-The %{MODULE_VAR} module defines the following environment variables:
+The %{MODULE_VAR} module also defines the following environment variables:
 TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
 TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
 include files, and tools respectively.
 
-Version %{pkg_version}
+Version %{version}
 ]]
 
 --help(help_msg)
 help(help_msg)
 
--- Create environment variables.
-local base           = "%{INSTALL_DIR}"
-whatis("Name: MVAPICH2")
-whatis("Version: %{pkg_version}")
-whatis("Category: library, runtime support ")
-whatis("Keywords: System, Library ")
-whatis("Description: MPI-2 implementation for Infiniband ")
-whatis("URL: http://mvapich.cse.ohio-state.edu/overview/mvapich2")
-setenv("MPICH_HOME",base)
-setenv("TACC_MPI_GETMODE","mvapich2_ssh")
-prepend_path("PATH"            , pathJoin(base, "bin")        )
-prepend_path("MANPATH"         , pathJoin(base, "share/man")  )
-prepend_path("INFOPATH"        , pathJoin(base, "doc")        )
-prepend_path("LD_LIBRARY_PATH" , pathJoin(base, "lib/shared") )
-prepend_path("LD_LIBRARY_PATH" , pathJoin(base, "lib")        )
+
+whatis("Name: OpenMPI"                                                       )
+whatis("Version: %{version}"                                                 )
+whatis("Category: MPI library, Runtime Support"                              )
+whatis("Description: OpenMPI Library (C/C++/Fortran for x86_64)"             )
+whatis("URL: https://www.open-mpi.org"                                       )
+
+
+-- Create environment variables
+local base = "%{INSTALL_DIR}"
+prepend_path( "MPICH_HOME"            , base )
+prepend_path( "PATH"                  , pathJoin( base, "bin" ))
+prepend_path( "LD_LIBRARY_PATH"       , pathJoin( base, "lib" ))
+prepend_path( "MANPATH"               , pathJoin( base, "share/man" ))
+prepend_path( "MODULEPATH"            , "%{MODULE_PREFIX}/%{comp_fam_ver}/ompi_%{pkg_version_dash}/modulefiles")
+
+setenv(       "TACC_OPENMPI_DIR"        , base )
+setenv(       "TACC_OPENMPI_BIN"        , pathJoin( base, "bin" ))
+setenv(       "TACC_OPENMPI_LIB"        , pathJoin( base, "lib" ))
+setenv(       "TACC_OPENMPI_INC"        , pathJoin( base, "include" ))
+
 family("MPI")
 
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/mvapich2_%{pkg_und_version}/modulefiles")
-
-setenv( "TACC_%{MODULE_VAR}_DIR",                base )
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(base, "include"))
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(base, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(base, "bin"))
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
@@ -276,6 +293,7 @@ EOF
   %if %{?VISIBLE}
     %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
   %endif
+
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -306,6 +324,7 @@ EOF
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
+
 ########################################
 ## Fix Modulefile During Post Install ##
 ########################################
@@ -325,5 +344,5 @@ export PACKAGE_PREUN=1
 #---------------------------------------
 %clean
 #---------------------------------------
-#rm -rf $RPM_BUILD_ROOT
+rm -rf $RPM_BUILD_ROOT
 
