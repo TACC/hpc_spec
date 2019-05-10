@@ -11,7 +11,7 @@
 Name:		slurm
 Version:	19.05.0
 %define rel	0rc1
-%define tacc_version t5
+%define tacc_version t6
 Release:	%{rel}%{tacc_version}%{?dist}
 Summary:	Slurm Workload Manager
 Packager: TACC - cproctor@tacc.utexas.edu
@@ -340,8 +340,10 @@ export CPPFLAGS="-I/opt/apps/cuda/10.1/targets/x86_64-linux/include"
 	%{?_with_shared_libslurm} \
 	%{?_without_x11:--disable-x11} \
         %{?_with_ucx} \
-        --enable-debug \
 	%{?_with_cflags}
+
+
+#        --enable-debug \
 
 make %{?_smp_mflags}
 

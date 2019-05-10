@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   6%{?dist}
+Release:   7%{?dist}
 License:   BSD3
 Group:     System Environment/Libraries
 URL:       https://github.com/pmix/pmix
@@ -187,15 +187,16 @@ export CXX=g++
 
 export ncores=48
 
-./configure             \
---prefix=%{INSTALL_DIR} \
---with-libevent=/usr    \
+./configure                    \
+--prefix=%{INSTALL_DIR}        \
+--with-libevent=/usr           \
 --with-hwloc=${TACC_HWLOC_DIR} \
---enable-debug          \
---enable-static=yes     \
+--disable-debug                \
+--enable-builtin-atomics       \
+--disable-dlopen               \
+--enable-static=yes            \
 --enable-shared=yes     
 
-#--disable-dlopen        \
 
 make V=1 -j ${ncores}
 make DESTDIR=$RPM_BUILD_ROOT install -j ${ncores}

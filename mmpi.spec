@@ -62,7 +62,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   13%{?dist}
+Release:   14%{?dist}
 License:   BSD
 Group:     MPI
 URL:       https://www.open-mpi.org

@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4%{?dist}
+Release:   5%{?dist}
 License:   BSD3
 Group:     System Environment/Libraries
 URL:       https://github.com/openucx/ucx
@@ -153,35 +153,39 @@ export CXX=g++
 
 export ncores=48
 
-./configure             \
---prefix=%{INSTALL_DIR} \
---enable-logging        \
---enable-debug          \
---enable-debug-data     \
---enable-profiling      \
---enable-stats          \
---enable-assertions     \
---enable-params-check   \
---enable-static=yes     \
---enable-shared=yes     
-
-#export   CFLAGS="-march=native -mtune=native"
-#export CXXFLAGS="-march=native -mtune=native"
-#
-#export ncores=48
-#
 #./configure             \
 #--prefix=%{INSTALL_DIR} \
-#--enable-compiler-opt=3 \
-#--enable-optimizations  \
-#--disable-logging       \
-#--disable-debug         \
-#--disable-assertions    \
-#--disable-params-check  \
-#--with-march            \
-#--with-mlx5-dv          \
+#--enable-logging        \
+#--enable-debug          \
+#--enable-debug-data     \
+#--enable-profiling      \
+#--enable-stats          \
+#--enable-assertions     \
+#--enable-params-check   \
 #--enable-static=yes     \
 #--enable-shared=yes     
+
+export ncores=48
+
+./configure             \
+--prefix=%{INSTALL_DIR} \
+--enable-compiler-opt=3 \
+--enable-optimizations  \
+--disable-logging       \
+--disable-debug         \
+--disable-assertions    \
+--disable-params-check  \
+--with-mcpu             \
+--with-march            \
+--with-rc               \
+--with-ud               \
+--with-dc               \
+--with-cm               \
+--with-mlx5-dv          \
+--with-ib-hw-tm         \
+--with-dm               \
+--enable-static=yes     \
+--enable-shared=yes     
 
 
 make V=1 -j ${ncores}
