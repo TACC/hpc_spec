@@ -11,7 +11,7 @@
 Name:		slurm
 Version:	19.05.0
 %define rel	0rc1
-%define tacc_version t6
+%define tacc_version t7
 Release:	%{rel}%{tacc_version}%{?dist}
 Summary:	Slurm Workload Manager
 Packager: TACC - cproctor@tacc.utexas.edu

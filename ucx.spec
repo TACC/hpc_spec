@@ -30,6 +30,8 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
+%define knem_install  /opt/knem-1.1.3.90mlnx1
+
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
 #%include compiler-defines.inc
@@ -48,7 +50,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   5%{?dist}
+Release:   6%{?dist}
 License:   BSD3
 Group:     System Environment/Libraries
 URL:       https://github.com/openucx/ucx
@@ -184,6 +186,7 @@ export ncores=48
 --with-mlx5-dv          \
 --with-ib-hw-tm         \
 --with-dm               \
+--with-knem=%{knem_install} \
 --enable-static=yes     \
 --enable-shared=yes     
 
