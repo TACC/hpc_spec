@@ -1,43 +1,33 @@
-# https://ofiwg.github.io/libfabric/master/man/fi_psm2.7.html
 #
-# W. Cyrus Proctor
-# 2015-11-07
+# Si Liu
+# 2019-03-01
 #
-# Important Build-Time Environment Variables (see name-defines.inc)
-# NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
-# NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
-#
-# Important Install-Time Environment Variables (see post-defines.inc)
-# VERBOSE=1       -> Print detailed information at install time
-# RPM_DBPATH      -> Path To Non-Standard RPM Database Location
-#
-# Typical Command-Line Example:
-# ./build_rpm.sh Bar.spec
-# cd ../RPMS/x86_64
-# rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
-# rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
-# rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: A Nice little relocatable skeleton spec file example.
+Summary: Boost spec file (www.boost.org)
 
 # Give the package a base name
-%define pkg_base_name libfabric
-%define MODULE_VAR    LIBFABRIC
+%define pkg_base_name boost
+%define MODULE_VAR    BOOST
 
 # Create some macros (spec file variables)
 %define major_version 1
-%define minor_version 7
-%define micro_version 1
+%define minor_version 69
+%define micro_version 0
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{major_version}.%{minor_version}
+
+%define mpi_fam none
 
 ### Toggle On/Off ###
-%include rpm-dir.inc                  
-#%include compiler-defines.inc
+%include rpm-dir.inc
+%include compiler-defines.inc
 #%include mpi-defines.inc
+#%include python-defines.inc
+#%define  unified_directories 1
 ########################################
 ### Construct name based on includes ###
 ########################################
+#%include name-defines.inc
 %include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
@@ -49,12 +39,13 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
-License:   GPLv2 or BSD
-Group:     System Environment/Libraries
-URL:       http://www.github.com/ofiwg/libfabric
-Packager:  TACC - cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Release:   1%{?dist}
+License:   GPL
+Group:     Utility
+URL:       http://www.boost.org
+Packager:  TACC - siliu@tacc.utexas.edu
+Source0:   boost_1_69_0.tar.gz
+Source1:   icu4c-63_1-src.tgz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -62,33 +53,31 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: Boost RPM
+Group: Development/System Environment
 %description package
-This is the long description for the package RPM...
-penFabrics Interfaces (OFI) is a framework focused on exporting fabric
-communication services to applications. OFI is best described as a collection
-of libraries and applications used to export fabric services. The key
-components of OFI are: application interfaces, provider libraries, kernel
-services, daemons, and test applications.
+Boost provides free peer-reviewed portable C++ source libraries.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...  OpenFabrics Interfaces
-(OFI) is a framework focused on exporting fabric communication services to
-applications. OFI is best described as a collection of libraries and
-applications used to export fabric services. The key components of OFI are:
-application interfaces, provider libraries, kernel services, daemons, and test
-applications.
+Module RPM for Boost
 
 %description
-OpenFabrics Interfaces (OFI) is a framework focused on exporting fabric
-communication services to applications. OFI is best described as a collection
-of libraries and applications used to export fabric services. The key
-components of OFI are: application interfaces, provider libraries, kernel
-services, daemons, and test applications.
+
+Boost emphasizes libraries that work well with the C++ Standard
+Library. Boost libraries are intended to be widely useful, and usable
+across a broad spectrum of applications. The Boost license encourages
+both commercial and non-commercial use.
+
+Boost aims to establish "existing practice" and provide reference
+implementations so that Boost libraries are suitable for eventual
+standardization. Ten Boost libraries are already included in the C++
+Standards Committee Library Technical Report (TR1) as a step toward
+becoming part of a future C++ Standard. More Boost libraries are
+proposed for the upcoming TR2.
+
 
 #---------------------------------------
 %prep
@@ -99,6 +88,11 @@ services, daemons, and test applications.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+%setup -n boost_%{major_version}_%{minor_version}_%{micro_version}  %{name}-%{version}
+%setup -n boost_%{major_version}_%{minor_version}_%{micro_version}  -T -D -a 1
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -112,8 +106,6 @@ services, daemons, and test applications.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n %{pkg_base_name}-%{pkg_version}
-
 
 #---------------------------------------
 %build
@@ -126,9 +118,14 @@ services, daemons, and test applications.
 
 # Setup modules
 %include system-load.inc
-
-# Insert necessary module commands
 module purge
+# Load Compiler
+%include compiler-load.inc
+# Load MPI Library
+#%include mpi-load.inc
+# Load Python Library
+#%include python-load.inc
+
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -138,9 +135,10 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
   mkdir -p %{INSTALL_DIR}
   mount -t tmpfs tmpfs %{INSTALL_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -152,32 +150,64 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
- 
-  export CC=gcc
-  export ncores=8
-  # DO NOT preppend $RPM_BUILD_ROOT in prefix
-  ./configure \
-  --prefix=%{INSTALL_DIR}
-  make -j ${ncores}
-  make install -j ${ncores}
+
+  ICU_MODE=Linux
+  %if "%{comp_fam}" == "intel"
+        export CONFIGURE_FLAGS=--with-toolset=intel-linux
+        ICU_MODE=Linux/ICC
+  %endif
+
+
+  %if "%{mpi_fam}" != "none"
+        CXX=mpicxx
+  %endif
+
+  %if "%{comp_fam}" == "gcc"
+        export CONFIGURE_FLAGS=--with-toolset=gcc
+  %endif
+
+  WD=`pwd`
   
+  TACC_OPT="-xCORE-AVX2 -axCORE-AVX512,MIC-AVX512"
+ 
+  cd icu/source
+  CXXFLAGS="%{TACC_OPT}" CFLAGS="%{TACC_OPT}" ./runConfigureICU  $ICU_MODE --prefix=%{INSTALL_DIR}
+  make -j 48
+  make install
+  rm -f ~/user-config.jam
+
+  cd $WD
+  EXTRA="-sICU_PATH=%{INSTALL_DIR}"
+  CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all --without-libraries=mpi,python"
+
+  ./bootstrap.sh --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
+
+  ./b2 -j 48 --prefix=%{INSTALL_DIR} $EXTRA cxxflags="%{TACC_OPT}" cflags="%{TACC_OPT}" linkflags="%{TACC_OPT}" install
+  
+  mkdir -p              $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+
+
+  rm -f ~/tools/build/v2/user-config.jam
+
   if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-    mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+        mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
   fi
+
   cp -r %{INSTALL_DIR} $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
   umount %{INSTALL_DIR}
-  
-#-----------------------  
+
+#---------------------- -
 %endif # BUILD_PACKAGE |
 #-----------------------
-
 
 #---------------------------
 %if %{?BUILD_MODULEFILE}
 #---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-  
+  mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -185,63 +215,49 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
+
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_message = [[
-OpenFabrics Interfaces (OFI) is a framework focused on exporting fabric
-communication services to applications. OFI is best described as a collection
-of libraries and applications used to export fabric services. The key
-components of OFI are: application interfaces, provider libraries, kernel
-services, daemons, and test applications.
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
+help([[
+The boost module file defines the following environment variables:
+BOOST_ROOT, TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC for
+the location of the boost distribution.
 
-This module defines the environmental variables TACC_%{MODULE_VAR}_DIR,
-TACC_%{MODULE_VAR}_BIN, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC
-for the location of the main libfabric directory, binaries, libraries,
-and include files respectively.
-
-The location of the binary files is also added to your PATH.
-The location of the library files is also added to your LD_LIBRARY_PATH.
-Documentation is also added to your MANPATH.
+To load the rest of boost  do "module load boost"
 
 Version %{version}
-]]
+]])
 
-help(help_message,"\n")
-
-whatis("Name: %{name}")
+whatis("Name: boost")
 whatis("Version: %{version}")
-whatis("Category: system, environment libaries")
-whatis("Keywords: System, Environment Libraries")
-whatis("Description: Fabric communication services")
-whatis("URL: http://www.github.com/ofiwg/libfabric")
+whatis("Category: %{group}")
+whatis("Keywords: System, Library, C++")
+whatis("URL: http://www.boost.org")
+whatis("Description: Boost provides free peer-reviewed portable C++ source libraries.")
 
--- Export environmental variables
-local libfabric_dir="%{INSTALL_DIR}"
-local libfabric_bin=pathJoin(libfabric_dir,"bin")
-local libfabric_lib=pathJoin(libfabric_dir,"lib")
-local libfabric_inc=pathJoin(libfabric_dir,"include")
-setenv("TACC_LIBFABRIC_DIR",libfabric_dir)
-setenv("TACC_LIBFABRIC_BIN",libfabric_bin)
-setenv("TACC_LIBFABRIC_LIB",libfabric_lib)
-setenv("TACC_LIBFABRIC_INC",libfabric_inc)
 
--- Prepend the libfabric directories to the adequate PATH variables
-prepend_path("PATH",libfabric_bin)
-prepend_path("LD_LIBRARY_PATH",libfabric_lib)
-prepend_path("MANPATH", pathJoin(libfabric_dir, "share/man"))
+setenv("TACC_%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
+setenv("TACC_%{MODULE_VAR}_LIB","%{INSTALL_DIR}/lib")
+setenv("TACC_%{MODULE_VAR}_INC","%{INSTALL_DIR}/include")
+setenv("TACC_%{MODULE_VAR}_BIN","%{INSTALL_DIR}/bin")
+setenv("BOOST_ROOT","%{INSTALL_DIR}")
 
+conflict("boost","boost-mpi")
+
+-- Add boost to the LD_LIBRARY_PATH
+prepend_path("LD_LIBRARY_PATH","%{INSTALL_DIR}/lib")
+prepend_path("PATH", "%{INSTALL_DIR}/bin")
 EOF
-  
+
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
-## version file for %{BASENAME}%{version}
+## version file for %{PYTHON_MODULE_VAR}%{version}
 ##
 
 set     ModulesVersion      "%{version}"
 EOF
-  
+
   # Check the syntax of the generated lua modulefile
   %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
@@ -264,7 +280,7 @@ EOF
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile 
+%files modulefile
 #---------------------------
 
   %defattr(-,root,install,)
@@ -296,4 +312,3 @@ export PACKAGE_PREUN=1
 %clean
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
-

@@ -62,7 +62,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   17%{?dist}
+Release:   18%{?dist}
 License:   BSD
 Group:     MPI
 URL:       https://www.open-mpi.org
@@ -173,9 +173,9 @@ export ncores=96
 --without-verbs                                  \
 --with-hcoll=%{hcoll_install}                    \
 --with-platform=%{_sourcedir}/mellanox_optimized \
+--with-knem=%{knem_install}                      \
 --disable-dlopen                   
 
-#--with-knem=%{knem_install}                      \
 #--with-mxm=%{mxm_install}                        \
 #--enable-orterun-prefix-by-default \
 #--enable-mpirun-prefix-by-default  \
