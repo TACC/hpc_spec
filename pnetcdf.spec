@@ -68,10 +68,10 @@ pwd
 %if "%{is_intel}" == "1" || "%{is_intel19}" == "1" || "%{is_intel18}" == "1"
 
 	# environment used for configure with intel compiler
-        export CFLAGS="-O3 "
-        export FFLAGS="-O3 -assume buffered_io"
-        export CXXFLAGS="-O3 "
-        export LDFLAGS="-O3 "
+        export CFLAGS="-O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 "
+        export FFLAGS="-O3 -assume buffered_io -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 "
+        export CXXFLAGS="-O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 "
+        export LDFLAGS="-O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 "
 %endif
 
 %if "%{mpi_fam}" != "none"
