@@ -88,6 +88,13 @@
   %define is_intel 1
   %define comp_module intel/18.0.2
 %endif
+%if "%{is_intel19}" == "1"
+  %define comp_fam intel
+  %define comp_fam_ver intel19
+  %define comp_fam_name Intel
+  %define is_intel 1
+  %define comp_module intel/19.0.4
+%endif
 
 %if "%{comp_fam}" == "error"
   %{error: You must define which compiler you are using!}
@@ -95,7 +102,7 @@
 %endif
 
 %if "%{comp_fam}" == "gcc"
-  %define TACC_OPT -march=broadwell -mtune=knl
+  %define TACC_OPT -march=broadwell -mtune=skylake-avx512
   %define TACC_OPT_CORE_AVX2 -march=broadwell -mtune=broadwell -ftree-vectorize
   %define TACC_OPT_CORE_AVX2_NOVEC_NOSIMD -march=broadwell -mtune=broadwell -fno-tree-vectorize
   %define TACC_OPT_COMMON_AVX512 -march=broadwell -mtune=skylake-avx512 -mavx512f -mavx512cd -ftree-vectorize

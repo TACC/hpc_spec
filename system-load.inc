@@ -3,6 +3,6 @@ if [ -f "$BASH_ENV" ]; then
   . $BASH_ENV
   module purge
   clearMT
-  export MODULEPATH=/opt/apps/tools/modulefiles:/opt/apps/modulefiles:/opt/modulefiles
+  export MODULEPATH=/opt/apps/tools/modulefiles:/opt/apps/modulefiles:/opt/modulefiles:/opt/apps/spp/modulefiles
   module load TACC
 fi

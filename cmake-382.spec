@@ -1,6 +1,6 @@
 #
 # W. Cyrus Proctor
-# 2015-11-12
+# 2015-11-07
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -20,22 +20,19 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name impi
-%define MODULE_VAR    IMPI
+%define pkg_base_name cmake
+%define MODULE_VAR    CMAKE
 
 # Create some macros (spec file variables)
-%define major_version 18
-%define minor_version 0
+%define major_version 3
+%define minor_version 8
 %define micro_version 2
 
-%define lib_version 2018.2.199
-
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
-%define underscore_version %{major_version}_%{minor_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-%include compiler-defines.inc
+#%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
@@ -51,10 +48,10 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
-License:   proprietary
-Group:     MPI
-URL:       https://software.intel.com/en-us/intel-mpi-library
+Release:   1%{?dist}
+License:   BSD
+Group:     System/Utils
+URL:       http://www.cmake.org
 Packager:  TACC - cproctor@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
@@ -68,20 +65,36 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
-This is specifically an rpm for the Intel MPI modulefile
-used on Frontera.
+CMake  is an extensible, open-source system that manages the build process in
+an operating system and in a compiler-independent manner. Unlike many cross-
+platform systems, CMake is designed to be used in conjunction with the native
+build environment. Simple configuration files placed in each source directory
+(called CMakeLists.txt files) are used to generate standard build files (e.g.,
+makefiles on Unix and projects/workspaces in Windows MSVC) which are used in
+the usual way.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
-This is specifically an rpm for the Intel MPI modulefile
-used on Frontera.
+CMake  is an extensible, open-source system that manages the build process in
+an operating system and in a compiler-independent manner. Unlike many cross-
+platform systems, CMake is designed to be used in conjunction with the native
+build environment. Simple configuration files placed in each source directory
+(called CMakeLists.txt files) are used to generate standard build files (e.g.,
+makefiles on Unix and projects/workspaces in Windows MSVC) which are used in
+the usual way.
 
 %description
-This is specifically an rpm for the Intel MPI modulefile
-used on Frontera.
+CMake  is an extensible, open-source system that manages the build process in
+an operating system and in a compiler-independent manner. Unlike many cross-
+platform systems, CMake is designed to be used in conjunction with the native
+build environment. Simple configuration files placed in each source directory
+(called CMakeLists.txt files) are used to generate standard build files (e.g.,
+makefiles on Unix and projects/workspaces in Windows MSVC) which are used in
+the usual way.
+
 
 #---------------------------------------
 %prep
@@ -104,6 +117,8 @@ used on Frontera.
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
+
+%setup -n %{pkg_base_name}-%{pkg_version}
 
 
 #---------------------------------------
@@ -141,25 +156,18 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-
-%if "%{comp_fam_name}" == "Intel"
-  # gfortran "use mpi" statements are busted
-  # fix intel's mess
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  ln -s /opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiicc $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicc
-  ln -s /opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiicpc $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicxx
-  ln -s /opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiifort $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif77
-  ln -s /opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiifort $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
-%endif
-
  
-%if "%{comp_fam_name}" == "GNU"
-  # gfortran "use mpi" statements are busted
-  # fix intel's mess
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  cp %{_sourcedir}/mpif90.18 $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
-  chmod +rx $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
-%endif
+  export CC=gcc
+  export ncores=24
+  export CFLAGS="-mtune=generic"
+  #export LDFLAGS="-Wl,-rpath,${GCC_LIB} -march=core-avx -mtune=core-avx2" # Location of correct libstdc++.so.6
+  export LDFLAGS="-mtune=generic" # Location of correct libstdc++.so.6
+  echo ${LD_LIBRARY_PATH}
+  echo ${LDFLAGS}
+  # DO NOT preppend $RPM_BUILD_ROOT in prefix
+  ./bootstrap --prefix=%{INSTALL_DIR}
+  make -j ${ncores}
+  make DESTDIR=$RPM_BUILD_ROOT install -j ${ncores}
   
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -179,90 +187,47 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-
-# Default Intel
-%define myCC  icc
-%define myCXX icpc
-%define myFC  ifort
-
-# GCC module
-%if "%{comp_fam_name}" == "GNU"
-%define myCC  gcc
-%define myCXX g++
-%define myFC  gfortran
-%endif
-
+  
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
-Intel MPI Library %{pkg_version} focuses on making applications perform better on Intel
-architecture-based clusters -- implementing the high performance Message Passing
-Interface Version 3.0 specification on multiple fabrics. It enables you to
-quickly deliver maximum end user performance even if you change or upgrade to
-new interconnects, without requiring changes to the software or operating
-environment.
+local help_message = [[
+CMake is an open-source, cross-platform family of tools designed to build, test
+and package software. CMake is used to control the software compilation process
+using simple platform and compiler independent configuration files, and
+generate native makefiles and workspaces that can be used in the compiler
+environment of your choice. 
 
-This module loads the Intel MPI environment built with
-Intel compilers. By loading this module, the following commands
-will be automatically available for compiling MPI applications:
-mpif77       (F77 source)
-mpif90       (F90 source)
-mpicc        (C   source)
-mpicxx       (C++ source)
+This module defines the environmental variables TACC_%{MODULE_VAR}_BIN
+and TACC_%{MODULE_VAR}_DIR for the location of the main CMake directory
+and the binaries.
 
-The %{MODULE_VAR} module also defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
-TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
-include files, and tools respectively.
+The location of the binary files is also added to your PATH.
+
+Extended documentation on CMake can be found under $TACC_%{MODULE_VAR}_DIR/doc.
 
 Version %{version}
 ]]
 
---help(help_msg)
-help(help_msg)
+help(help_message,"\n")
 
--- Create environment variables.
-local base_dir           = "/admin/build/admin/rpms/frontera/intel/install/18.0.2/compilers_and_libraries_%{lib_version}/linux/mpi"
+whatis("Name: %{name}")
+whatis("Version: %{version}")
+whatis("Category: system, utilities")
+whatis("Keywords: System, Utility")
+whatis("Description: tool for generation of files from source")
+whatis("URL: http://www.cmake.org")
 
-whatis("Name: Intel MPI"                                                    )
-whatis("Version: %{version}"                                                )
-whatis("Category: library, Runtime Support"                                 )
-whatis("Description: Intel MPI Library (C/C++/Fortran for x86_64)"          )
-whatis("URL: http://software.intel.com/en-us/articles/intel-mpi-library"    )
-prepend_path( "PATH"                   , pathJoin( base_dir , "intel64/bin"      ) )
-prepend_path( "PATH"                   , pathJoin( "%{INSTALL_DIR}" , "bin"      ) )
-prepend_path( "LD_LIBRARY_PATH"        , pathJoin( base_dir , "intel64/lib"      ) )
-prepend_path( "MANPATH"                , pathJoin( base_dir , "man"              ) )
-prepend_path( "MODULEPATH"             ,"/opt/apps/spp/%{comp_fam_ver}/impi%{underscore_version}/modulefiles" )
-prepend_path( "I_MPI_ROOT"             , base_dir                                )
-setenv(       "MPICH_HOME"             , base_dir                                )
-setenv(       "TACC_MPI_GETMODE"       , "impi_hydra"                            )
-setenv(       "TACC_IMPI_DIR"          , base_dir                                )
-setenv(       "TACC_IMPI_BIN"          , pathJoin( base_dir , "intel64/bin"      ) )
-setenv(       "TACC_IMPI_LIB"          , pathJoin( base_dir , "intel64/lib"      ) )
-setenv(       "TACC_IMPI_INC"          , pathJoin( base_dir , "intel64/include"  ) )
-setenv(       "I_MPI_JOB_FAST_STARTUP" , "1"                                     )
-setenv(       "I_MPI_CC"               , "%{myCC}"                               )
-setenv(       "I_MPI_CXX"              , "%{myCXX}"                              )
-setenv(       "I_MPI_FC"               , "%{myFC}"                               )
-setenv(       "I_MPI_F77"              , "%{myFC}"                               )
-setenv(       "I_MPI_F90"              , "%{myFC}"                               )
-family(       "MPI"                                                              )
+-- Export environmental variables
+local cmake_dir="%{INSTALL_DIR}"
+local cmake_bin=pathJoin(cmake_dir,"bin")
+setenv("TACC_CMAKE_DIR",cmake_dir)
+setenv("TACC_CMAKE_BIN",cmake_bin)
 
-
-if (os.getenv("TACC_SYSTEM") == "stampede2") then
-  depends_on("libfabric")
-  local libfabric_lib = os.getenv("TACC_LIBFABRIC_LIB")
-  setenv(     "I_MPI_OFI_LIBRARY"      , pathJoin(libfabric_lib,"libfabric.so" ) )
-  setenv(     "FI_PSM2_LAZY_CONN"      , "1"                                     )
-  setenv(     "FI_PROVIDER"            , "psm2"                                  )
-  setenv(     "I_MPI_FABRICS"          , "shm:ofi"                               )
-  setenv(     "I_MPI_STARTUP_MODE"     , "pmi_shm_netmod"                        )
-end
+-- Prepend the cmake directories to the adequate PATH variables
+prepend_path("PATH",cmake_bin)
 
 EOF
-
- 
+  
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -273,7 +238,6 @@ set     ModulesVersion      "%{version}"
 EOF
   
   # Check the syntax of the generated lua modulefile
-  ### don't check the hidden one!
   %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------

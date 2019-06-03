@@ -1,6 +1,8 @@
 #
-# W. Cyrus Proctor
-# 2015-11-12
+# Joe Garcia
+# 2019-02-07
+# changing lib version to 2018.4.0.574913 bc update 4 has a patch that should 
+# with the problems users and Mccalpin have been experiencing #2019-02-07 
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -20,27 +22,27 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name impi
-%define MODULE_VAR    IMPI
+%define pkg_base_name vtune 
+%define MODULE_VAR    VTUNE
 
 # Create some macros (spec file variables)
 %define major_version 18
 %define minor_version 0
 %define micro_version 2
 
-%define lib_version 2018.2.199
+%define lib_version 2018.4.0.574913 
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 %define underscore_version %{major_version}_%{minor_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-%include compiler-defines.inc
+#%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+%include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -53,9 +55,9 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
 Release:   2%{?dist}
 License:   proprietary
-Group:     MPI
-URL:       https://software.intel.com/en-us/intel-mpi-library
-Packager:  TACC - cproctor@tacc.utexas.edu
+Group:     PROFILER
+URL:       https://software.intel.com/en-us/intel-vtune-amplifier-xe
+Packager:  TACC - jgarcia@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -68,20 +70,20 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
-This is specifically an rpm for the Intel MPI modulefile
-used on Frontera.
+This is specifically an rpm for the Intel vtune modulefile
+used on Stampede2.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
-This is specifically an rpm for the Intel MPI modulefile
-used on Frontera.
+This is specifically an rpm for the Intel vtune modulefile
+used on Stampede2.
 
 %description
-This is specifically an rpm for the Intel MPI modulefile
-used on Frontera.
+This is specifically an rpm for the Intel vtune modulefile
+used on Stampede2.
 
 #---------------------------------------
 %prep
@@ -142,24 +144,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
 
-%if "%{comp_fam_name}" == "Intel"
-  # gfortran "use mpi" statements are busted
-  # fix intel's mess
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  ln -s /opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiicc $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicc
-  ln -s /opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiicpc $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicxx
-  ln -s /opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiifort $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif77
-  ln -s /opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiifort $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
-%endif
-
- 
-%if "%{comp_fam_name}" == "GNU"
-  # gfortran "use mpi" statements are busted
-  # fix intel's mess
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  cp %{_sourcedir}/mpif90.18 $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
-  chmod +rx $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
-%endif
   
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -180,88 +164,88 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   ########### Do Not Remove #############
   #######################################
 
-# Default Intel
-%define myCC  icc
-%define myCXX icpc
-%define myFC  ifort
-
-# GCC module
-%if "%{comp_fam_name}" == "GNU"
-%define myCC  gcc
-%define myCXX g++
-%define myFC  gfortran
-%endif
-
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
-Intel MPI Library %{pkg_version} focuses on making applications perform better on Intel
-architecture-based clusters -- implementing the high performance Message Passing
-Interface Version 3.0 specification on multiple fabrics. It enables you to
-quickly deliver maximum end user performance even if you change or upgrade to
-new interconnects, without requiring changes to the software or operating
-environment.
+local vtune_dir   = "/opt/intel/vtune_amplifier_%{lib_version}"
 
-This module loads the Intel MPI environment built with
-Intel compilers. By loading this module, the following commands
-will be automatically available for compiling MPI applications:
-mpif77       (F77 source)
-mpif90       (F90 source)
-mpicc        (C   source)
-mpicxx       (C++ source)
+whatis( "Name: vtune" )
+whatis( "Version: %{version}" )
+whatis( "Category: performance analysis" )
+whatis( "Keywords: System, Utility, Tools" )
+whatis( "Description: Intel VTune Amplifier" )
+whatis( "URL: https://software.intel.com/en-us/intel-vtune-amplifier-xe" )
 
-The %{MODULE_VAR} module also defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
-TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
-include files, and tools respectively.
+prepend_path(     "PATH", pathJoin( vtune_dir, "bin64"   )   )
+
+setenv( "TACC_VTUNE_DIR", vtune_dir                          )
+setenv( "TACC_VTUNE_BIN", pathJoin( vtune_dir, "bin64"   )   )
+setenv( "TACC_VTUNE_LIB", pathJoin( vtune_dir, "lib64"   )   )
+setenv( "TACC_VTUNE_INC", pathJoin( vtune_dir, "include" )   )
+
+--setenv("VTUNE_AMPLIFIER_2019_DIR","/opt/intel/vtune_amplifier_2019.4.0.597835")
+--setenv("VT_ADD_LIBS","-ldwarf -lelf -lvtunwind -lm -lpthread")
+--setenv("VT_ARCH","intel64")
+--setenv("VT_LIB_DIR","/opt/intel/itac/2019.4.036/intel64/lib")
+--setenv("VT_MPI","impi4")
+--setenv("VT_ROOT","/opt/intel/itac/2019.4.036")
+--setenv("VT_SLIB_DIR","/opt/intel/itac/2019.4.036/intel64/slib")
+
+help(
+[[
+
+VTune is Intel's signature performance profiling tool.
+
+For detailed info, consult the extensive documentation in
+$TACC_VTUNE_DIR/documentation or online at
+software.intel.com/en-us/intel-vtune-amplifier-xe.
+
+COLLECTION
+**********
+
+First, compile with "-g".
+
+To collect data on an executable named main.exe,
+using a collection named "hotspots", execute the following
+command on a compute node:
+
+   amplxe-cl -collect hotspots -- main.exe
+
+Note the "--" followed by a space.
+
+This will generate a directory with a name like 'r000hs' or 'r000ah'
+("hs" means "hotspots";  "ah" means "advanced-hotspots").
+It will also print a brief summary report to stdout.
+
+You can reduce the sampling rate to use less memory,
+reduce collection time,  and generate smaller database files.
+To reduce the sampling rate to 15ms (default is 1-4ms):
+
+   amplxe-cl -collect hotspots -knob sampling-interval=15 -- main.exe
+
+ANALYSIS AND REPORTING
+**********************
+
+Assuming a collection directory named "r000hs".
+From a login or compute node with X11:
+
+   amplxe-gui r000hs
+
+There are also text-based command-line analysis and report utilities.
+
+ENVIRONMENT VARIABLES
+*********************
+
+This modulefile defines TACC_VTUNE_DIR, TACC_VTUNE_BIN, TACC_VTUNE_LIB,
+and TACC_VTUNE_INC in the usual way.  It also preprends VTune's bin64
+directory to $PATH.
+
+To see the exact effect of loading the module, execute "module show vtune".
 
 Version %{version}
 ]]
-
---help(help_msg)
-help(help_msg)
-
--- Create environment variables.
-local base_dir           = "/admin/build/admin/rpms/frontera/intel/install/18.0.2/compilers_and_libraries_%{lib_version}/linux/mpi"
-
-whatis("Name: Intel MPI"                                                    )
-whatis("Version: %{version}"                                                )
-whatis("Category: library, Runtime Support"                                 )
-whatis("Description: Intel MPI Library (C/C++/Fortran for x86_64)"          )
-whatis("URL: http://software.intel.com/en-us/articles/intel-mpi-library"    )
-prepend_path( "PATH"                   , pathJoin( base_dir , "intel64/bin"      ) )
-prepend_path( "PATH"                   , pathJoin( "%{INSTALL_DIR}" , "bin"      ) )
-prepend_path( "LD_LIBRARY_PATH"        , pathJoin( base_dir , "intel64/lib"      ) )
-prepend_path( "MANPATH"                , pathJoin( base_dir , "man"              ) )
-prepend_path( "MODULEPATH"             ,"/opt/apps/spp/%{comp_fam_ver}/impi%{underscore_version}/modulefiles" )
-prepend_path( "I_MPI_ROOT"             , base_dir                                )
-setenv(       "MPICH_HOME"             , base_dir                                )
-setenv(       "TACC_MPI_GETMODE"       , "impi_hydra"                            )
-setenv(       "TACC_IMPI_DIR"          , base_dir                                )
-setenv(       "TACC_IMPI_BIN"          , pathJoin( base_dir , "intel64/bin"      ) )
-setenv(       "TACC_IMPI_LIB"          , pathJoin( base_dir , "intel64/lib"      ) )
-setenv(       "TACC_IMPI_INC"          , pathJoin( base_dir , "intel64/include"  ) )
-setenv(       "I_MPI_JOB_FAST_STARTUP" , "1"                                     )
-setenv(       "I_MPI_CC"               , "%{myCC}"                               )
-setenv(       "I_MPI_CXX"              , "%{myCXX}"                              )
-setenv(       "I_MPI_FC"               , "%{myFC}"                               )
-setenv(       "I_MPI_F77"              , "%{myFC}"                               )
-setenv(       "I_MPI_F90"              , "%{myFC}"                               )
-family(       "MPI"                                                              )
-
-
-if (os.getenv("TACC_SYSTEM") == "stampede2") then
-  depends_on("libfabric")
-  local libfabric_lib = os.getenv("TACC_LIBFABRIC_LIB")
-  setenv(     "I_MPI_OFI_LIBRARY"      , pathJoin(libfabric_lib,"libfabric.so" ) )
-  setenv(     "FI_PSM2_LAZY_CONN"      , "1"                                     )
-  setenv(     "FI_PROVIDER"            , "psm2"                                  )
-  setenv(     "I_MPI_FABRICS"          , "shm:ofi"                               )
-  setenv(     "I_MPI_STARTUP_MODE"     , "pmi_shm_netmod"                        )
-end
+)
 
 EOF
-
  
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
