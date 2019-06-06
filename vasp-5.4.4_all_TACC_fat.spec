@@ -1,6 +1,6 @@
-#
-# W. Cyrus Proctor
-# 2015-11-08
+# VASP Hang Liu
+# 2017-05-03
+# Modified for KNL deployment.
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -20,24 +20,27 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name git
-%define MODULE_VAR    GIT
+%define pkg_base_name vasp
+%define MODULE_VAR    VASP
 
 # Create some macros (spec file variables)
-%define major_version 2
-%define minor_version 21
-%define micro_version 0
+%define major_version 5
+%define minor_version 4
+%define micro_version 4
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
-%include rpm-dir.inc                  
-#%include compiler-defines.inc
-#%include mpi-defines.inc
+%include rpm-dir.inc
+%include compiler-defines.inc
+%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
 %include name-defines.inc
+#%include name-defines-noreloc.inc
+#%include name-defines-hidden.inc
+#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -48,12 +51,12 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
-License:   GPLv2
-Group:     System Environment/Base
-URL:       https://git-scm.com
-Packager:  TACC - cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Release:   4%{?dist}
+License:   VASP
+Group:     Applications/Chemistry
+URL:       https://www.vasp.at/
+Packager:  TACC - hliu@tacc.utexas.edu
+Source:    %{pkg_base_name}-%{pkg_version}_all_TACC_fat.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -61,28 +64,18 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: The Vienna Ab initio Simulation Package (VASP)
+Group: Applications/Chemistry
 %description package
-This is the long description for the package RPM...
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
+The Vienna Ab initio Simulation Package (VASP)
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
-
+The Vienna Ab initio Simulation Package (VASP)
 %description
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
-
+The Vienna Ab initio Simulation Package (VASP)
 #---------------------------------------
 %prep
 #---------------------------------------
@@ -92,6 +85,8 @@ Git is easy to learn and has a tiny footprint with lightning fast performance.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+%setup -n %{pkg_base_name}-%{pkg_version}_all_TACC_fat
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -106,6 +101,7 @@ Git is easy to learn and has a tiny footprint with lightning fast performance.
 #--------------------------
 
 
+
 #---------------------------------------
 %build
 #---------------------------------------
@@ -117,9 +113,13 @@ Git is easy to learn and has a tiny footprint with lightning fast performance.
 
 # Setup modules
 %include system-load.inc
-
-# Insert necessary module commands
 module purge
+# Load Compiler
+%include compiler-load.inc
+# Load MPI Library
+%include mpi-load.inc
+
+# Insert further module commands
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -129,9 +129,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -144,38 +142,46 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
 
-export ncores=68
-export git=`pwd`
-export git_install=%{INSTALL_DIR}
-export git_version=%{pkg_version}
-export CC=gcc
-export CFLAGS="-mtune=generic"
-export LDFLAGS="-mtune=generic"
+cd wannier90-1.2/
+make lib
 
-wget https://www.kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
-tar xvfz git-${git_version}.tar.gz
+cd ../beef
+./configure CC=icc --prefix=$PWD
+make
+make install
 
-cd git-${git_version}
+cd ../vasp.5.4.4
+make all
 
-${git}/git-${git_version}/configure \
---prefix=${git_install}
+cd ../vasp.5.4.4.vtst
+make all
 
-make all -j ${ncores}
-make install -j ${ncores}
+cd ./bin
+mv vasp_std vasp_std_vtst
+mv vasp_gam vasp_gam_vtst
+mv vasp_ncl vasp_ncl_vtst
 
-if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-fi
+cd ../../
 
-echo "ID %{INSTALL_DIR}"
-echo "RID $RPM_BUILD_ROOT/%{INSTALL_DIR}"
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+rm   -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}/*
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
 
-cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-umount %{INSTALL_DIR}/
+cd vasp.5.4.4/bin/
+cp vasp_std $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_gam $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_ncl $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
 
+cd ../../vasp.5.4.4.vtst/bin
+cp vasp_std_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_gam_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_ncl_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cd ../../beef/bin
+cp bee $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cd ../../
+cp -r vtstscripts-933 $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
 
-  
-#-----------------------  
+#-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
 
@@ -185,7 +191,7 @@ umount %{INSTALL_DIR}/
 #---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -193,39 +199,66 @@ umount %{INSTALL_DIR}/
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
-# Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
-help([[
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
 
-The %{MODULE_VAR} module file defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_BIN, TACC_%{MODULE_VAR}_LIB for the
-location of the %{MODULE_VAR} distribution, binaries, and libraries
-respectively. GIT_EXEC_PATH, which is also defined, determines where Git looks
-for its sub-programs. You can check the current setting by running 
-"git --exec-path".
+# Write out the modulefile associated with the application
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
+local help_message=[[
+The TACC VASP module appends the path to the vasp executables
+to the PATH environment variable.  Also TACC_VASP_DIR, and
+TACC_VASP_BIN are set to VASP home and bin directories.
+
+Users have to show their licenses and be confirmed by
+VASP team that they are registered users under that licenses
+Scan a copy the license and send to hliu@tacc.utexas.edu
+
+The VASP executables are
+vasp_std: compiled with pre processing flag: -DNGZhalf
+vasp_gam: compiled with pre processing flag: -DNGZhalf -DwNGZhalf
+vasp_ncl: compiled without above pre processing flags
+vasp_std_vtst: vasp_std with VTST
+vasp_gam_vtst: vasp_gam with VTST
+vasp_ncl_vtst: vasp_ncl with VTST
+vtstscripts-933/: utility scripts of VTST
+bee: BEEF analysis code
+
+This the VASP.5.4.4 release.
 
 Version %{version}
-]])
-
-whatis("Name: Git")
-whatis("Version: %{version}")
-whatis("Category: library, tools")
-whatis("Keywords: System, Source Control Management, Tools")
-whatis("URL: http://git-scm.com")
-whatis("Description: Fast Version Control System")
+]]
 
 
-prepend_path(                  "PATH" , "%{INSTALL_DIR}/bin"              )
-prepend_path(               "MANPATH" , "%{INSTALL_DIR}/share/man"        )
-setenv (     "TACC_%{MODULE_VAR}_DIR" , "%{INSTALL_DIR}"                  )
-setenv (     "TACC_%{MODULE_VAR}_LIB" , "%{INSTALL_DIR}/lib"              )
-setenv (     "TACC_%{MODULE_VAR}_BIN" , "%{INSTALL_DIR}/bin"              )
-setenv (     "GIT_EXEC_PATH"          , "%{INSTALL_DIR}/libexec/git-core" )
-setenv (     "GIT_TEMPLATE_DIR"       , "%{INSTALL_DIR}/share/git-core/templates" )
+whatis("Version: %{pkg_version}")
+whatis("Category: application, chemistry")
+whatis("Keywords: Chemistry, Density Functional Theory, Molecular Dynamics")
+whatis("URL:https://www.vasp.at/")
+whatis("Description: Vienna Ab-Initio Simulation Package")
+help(help_message,"\n")
+
+
+local group = "G-802400"
+found = userInGroup(group)
+
+
+local err_message = [[
+You do not have access to VASP.5.4.4!
+
+
+Users have to show their licenses and be confirmed by the
+VASP team that they are registered users under that license.
+Scan a copy of the license and send it to hliu@tacc.utexas.edu
+]]
+
+
+if (found) then
+local vasp_dir="%{INSTALL_DIR}"
+
+prepend_path(    "PATH",                pathJoin(vasp_dir, "bin"))
+setenv( "TACC_%{MODULE_VAR}_DIR",                vasp_dir)
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(vasp_dir, "bin"))
+
+else
+  LmodError(err_message,"\n")
+end
 
 EOF
 
@@ -237,10 +270,10 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 
 set     ModulesVersion      "%{version}"
 EOF
-  
-  # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %endif
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -251,7 +284,8 @@ EOF
 %files package
 #------------------------
 
-  %defattr(-,root,install,)
+#  %defattr(-,root,install,)
+%defattr(750,root,G-802400)
   # RPM package contains files within these directories
   %{INSTALL_DIR}
 
@@ -260,7 +294,7 @@ EOF
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile 
+%files modulefile
 #---------------------------
 
   %defattr(-,root,install,)
@@ -270,7 +304,6 @@ EOF
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
 
 ########################################
 ## Fix Modulefile During Post Install ##

@@ -1,6 +1,14 @@
 #
+# Spec file for Gnu Parallel
+# https://www.gnu.org/software/parallel/
+#
+# Victor Eijkhout, 2019
+# based on:
+#
+# Bar.spec, 
 # W. Cyrus Proctor
-# 2015-11-08
+# Antonio Gomez
+# 2015-08-25
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -17,18 +25,16 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: A Nice little relocatable skeleton spec file example.
+Summary:    Set of tools for manipulating geographic and Cartesian data sets
 
 # Give the package a base name
-%define pkg_base_name git
-%define MODULE_VAR    GIT
+%define pkg_base_name gnuparallel
+%define MODULE_VAR    GNUPARALLEL
 
-# Create some macros (spec file variables)
-%define major_version 2
-%define minor_version 21
-%define micro_version 0
+# Version corresponds to when we downloaded the gnu parallel source
+%define major_version git20190606
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{major_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -37,7 +43,10 @@ Summary: A Nice little relocatable skeleton spec file example.
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+#%include name-defines.inc
+%include name-defines-noreloc.inc
+#%include name-defines-hidden.inc
+#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -48,40 +57,31 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
-License:   GPLv2
-Group:     System Environment/Base
-URL:       https://git-scm.com
-Packager:  TACC - cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Release:   3%{?dist}
+License:   GNU
+Group:     Development/Tools
+Vendor:     GNU Foundation
+Source:	    gnuparallel-%{version}.tgz
+URL:	    https://www.gnu.org/software/parallel/
+Packager:   eijkhout@tacc.utexas.edu
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
-
+%global _python_bytecompile_errors_terminate_build 0
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: GNUPARALLEL is a job launcher
 %description package
 This is the long description for the package RPM...
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
 
 %package %{MODULEFILE}
-Summary: The modulefile RPM
-Group: Lmod/Modulefiles
+Summary: GNUPARALLEL is a job launcher
 %description modulefile
 This is the long description for the modulefile RPM...
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
 
 %description
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
+Summary: GNUPARALLEL is a job launcher
 
 #---------------------------------------
 %prep
@@ -92,6 +92,9 @@ Git is easy to learn and has a tiny footprint with lightning fast performance.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+%setup -n %{pkg_base_name}-%{pkg_version}
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -106,6 +109,7 @@ Git is easy to learn and has a tiny footprint with lightning fast performance.
 #--------------------------
 
 
+
 #---------------------------------------
 %build
 #---------------------------------------
@@ -117,9 +121,21 @@ Git is easy to learn and has a tiny footprint with lightning fast performance.
 
 # Setup modules
 %include system-load.inc
-
-# Insert necessary module commands
 module purge
+
+# Load Compiler
+#%include compiler-load.inc
+
+# Load MPI Library
+#%include mpi-load.inc
+
+# Insert further module commands
+module spider python3/3.7.0
+module load cmake python3
+module use /opt/apps/intel19/python3_7/modulefiles/
+module spider boost
+module spider boost/1.69
+module load boost
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -129,8 +145,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -143,38 +157,60 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-
-export ncores=68
-export git=`pwd`
-export git_install=%{INSTALL_DIR}
-export git_version=%{pkg_version}
-export CC=gcc
-export CFLAGS="-mtune=generic"
-export LDFLAGS="-mtune=generic"
-
-wget https://www.kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
-tar xvfz git-${git_version}.tar.gz
-
-cd git-${git_version}
-
-${git}/git-${git_version}/configure \
---prefix=${git_install}
-
-make all -j ${ncores}
-make install -j ${ncores}
-
-if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-fi
-
-echo "ID %{INSTALL_DIR}"
-echo "RID $RPM_BUILD_ROOT/%{INSTALL_DIR}"
-
-cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-umount %{INSTALL_DIR}/
-
-
   
+  # Create some dummy directories and files for fun
+  #mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+  #mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/share
+  
+#
+# config/make
+#
+
+PARALLEL_VERSION=%{major_version}
+PARALLEL_HOME=${WORK}/parallel/
+PARALLEL_SRC=`pwd`
+PARALLEL_BUILD=/tmp/parallel-stuff
+PARALLEL_INSTALL=$RPM_BUILD_ROOT/%{INSTALL_DIR}
+PARALLEL_BIN=${PARALLEL_INSTALL}/bin
+
+####
+#### we only support gcc installation
+####
+export CC=gcc
+export CXX=g++
+export FC=gfortran
+
+#### configure
+export PATH=${PATH}:/usr/bin
+
+#which pod2man
+#(echo foo | pod2man ) || /bin/true
+#alias pod2man="pod2man -errors=pod"
+
+pushd /tmp && rm -rf gnuparallel && mkdir gnuparallel && cd gnuparallel \
+  && git clone https://github.com/ssimms/pdfapi2.git \
+  && export PERLLIB=`pwd`/pdfapi2/lib \
+  && export PERL5LIB=`pwd`/pdfapi2/lib \
+  && git clone https://github.com/gitpan/pod2pdf.git \
+  && cd pod2pdf && perl Makefile.PL && make \
+  && export PATH=`pwd`/blib/script:${PATH} \
+  && export PERLLIB=`pwd`/blib/lib:${PERLLIB} \
+  && export PERL5LIB=`pwd`/blib/lib:${PERL5LIB} \
+  && popd
+which pod2pdf
+
+./configure --prefix=${PARALLEL_INSTALL} \
+&& make \
+&& ( cd src ; for p in parallel.pdf env_parallel.pdf sem.pdf sql.pdf niceload.pdf parallel_tutorial.pdf parallel_book.pdf parallel_design.pdf parallel_alternatives.pdf parcat.pdf parset.pdf ; do touch $p ; done ) \
+&& ( cd src ; for m in ./parallel_design.7 ; do touch $m ; done ) \
+&& make install
+
+## ( cd %{_topdir}/SOURCES/gnuparallel_scripts && rm -f *~ )
+## cp -r %{_topdir}/SOURCES/gnuparallel_scripts ${PARALLEL_INSTALL}/scripts
+## mv ${PARALLEL_INSTALL}/scripts/README ${PARALLEL_INSTALL}/
+## chmod -R o+rX ${PARALLEL_INSTALL}/scripts
+git clone https://github.com/TACC/gnuparallel_scripts.git ${PARALLEL_INSTALL}/scripts
+
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -195,51 +231,48 @@ umount %{INSTALL_DIR}/
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
-help([[
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
+help( [[
+Module %{name} loads environmental variables defining
+the location of GNUPARALLEL directory and binaries:
+TACC_GNUPARALLEL_DIR TACC_GNUPARALLEL_BIN
 
-The %{MODULE_VAR} module file defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_BIN, TACC_%{MODULE_VAR}_LIB for the
-location of the %{MODULE_VAR} distribution, binaries, and libraries
-respectively. GIT_EXEC_PATH, which is also defined, determines where Git looks
-for its sub-programs. You can check the current setting by running 
-"git --exec-path".
+Executing a file of commandlines:
 
-Version %{version}
-]])
+gnuparallel_command_file_execute.sh commands
 
-whatis("Name: Git")
-whatis("Version: %{version}")
-whatis("Category: library, tools")
-whatis("Keywords: System, Source Control Management, Tools")
-whatis("URL: http://git-scm.com")
-whatis("Description: Fast Version Control System")
+Version: %{version}
+]] )
 
+whatis( "GNUPARALLEL" )
+whatis( "Version: %{version}" )
+whatis( "Category: system" )
+whatis( "Keywords: System, utilities" )
+whatis( "Description: GNU Parallel utility" )
+whatis( "URL: https://www.gnu.org/software/parallel/" )
 
-prepend_path(                  "PATH" , "%{INSTALL_DIR}/bin"              )
-prepend_path(               "MANPATH" , "%{INSTALL_DIR}/share/man"        )
-setenv (     "TACC_%{MODULE_VAR}_DIR" , "%{INSTALL_DIR}"                  )
-setenv (     "TACC_%{MODULE_VAR}_LIB" , "%{INSTALL_DIR}/lib"              )
-setenv (     "TACC_%{MODULE_VAR}_BIN" , "%{INSTALL_DIR}/bin"              )
-setenv (     "GIT_EXEC_PATH"          , "%{INSTALL_DIR}/libexec/git-core" )
-setenv (     "GIT_TEMPLATE_DIR"       , "%{INSTALL_DIR}/share/git-core/templates" )
+local version =  "%{version}"
+local gnuparallel_dir =  "%{INSTALL_DIR}"
 
+setenv("TACC_GNUPARALLEL_DIR",gnuparallel_dir)
+setenv("TACC_GNUPARALLEL_BIN",pathJoin( gnuparallel_dir,"bin" ) )
+
+prepend_path ("PATH",pathJoin( gnuparallel_dir,"bin" ) )
+prepend_path ("PATH",pathJoin( gnuparallel_dir,"scripts" ) )
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module3.1.1#################################################
+#%Module1.0####################################################################
 ##
-## version file for %{BASENAME}%{version}
+## Version file for %{name} version %{version}
 ##
-
-set     ModulesVersion      "%{version}"
+set ModulesVersion "%version"
 EOF
-  
-  # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
+  %endif
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
@@ -271,7 +304,6 @@ EOF
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-
 ########################################
 ## Fix Modulefile During Post Install ##
 ########################################
@@ -293,3 +325,10 @@ export PACKAGE_PREUN=1
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
 
+%changelog
+* Wed Dec 05 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: scripts from github, delay parameter
+* Mon Sep 17 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: adding ssh script
+* Thu Jun 14 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial release

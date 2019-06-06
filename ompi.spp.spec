@@ -1,6 +1,7 @@
 #
 # W. Cyrus Proctor
-# 2015-11-08
+# 2015-11-20 Need to investigate relocation -- use /opt/apps for now
+# 2015-11-20
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -20,24 +21,32 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name git
-%define MODULE_VAR    GIT
+%define pkg_base_name ompi
+%define pkg_full_name openmpi
+%define MODULE_VAR    OMPI
 
 # Create some macros (spec file variables)
-%define major_version 2
-%define minor_version 21
-%define micro_version 0
+%define major_version 4
+%define minor_version 0
+%define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version_dash %{major_version}_%{minor_version}
+
+%define ucx_version 1.5.1
+%define ucx_install /opt/apps/ucx/%{ucx_version}
+
+%define pmix_version 3.1.2
+%define pmix_install /opt/apps/pmix/%{pmix_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
+%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+%include name-defines-noreloc-spp.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -48,12 +57,12 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
-License:   GPLv2
-Group:     System Environment/Base
-URL:       https://git-scm.com
+Release:   19%{?dist}
+License:   BSD
+Group:     MPI
+URL:       https://www.open-mpi.org
 Packager:  TACC - cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Source:    %{pkg_full_name}-%{pkg_version}.tar.bz2
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -65,23 +74,16 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
 
 %description
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
+Open-MPI development library.
+
 
 #---------------------------------------
 %prep
@@ -105,6 +107,7 @@ Git is easy to learn and has a tiny footprint with lightning fast performance.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
+%setup -n %{pkg_full_name}-%{pkg_version}
 
 #---------------------------------------
 %build
@@ -119,7 +122,12 @@ Git is easy to learn and has a tiny footprint with lightning fast performance.
 %include system-load.inc
 
 # Insert necessary module commands
-module purge
+ml purge
+%include compiler-load.inc
+ml ucx
+ml pmix
+ml hwloc/1.11.12
+ml
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -130,8 +138,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
   mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
-  
+    
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -144,37 +151,55 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
 
-export ncores=68
-export git=`pwd`
-export git_install=%{INSTALL_DIR}
-export git_version=%{pkg_version}
-export CC=gcc
-export CFLAGS="-mtune=generic"
-export LDFLAGS="-mtune=generic"
+#sed -i '30i#include "orte/mca/errmgr/errmgr.h"' ./oshmem/mca/memheap/base/memheap_base_mkey.c
+ 
+ 
+export ncores=96
 
-wget https://www.kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
-tar xvfz git-${git_version}.tar.gz
-
-cd git-${git_version}
-
-${git}/git-${git_version}/configure \
---prefix=${git_install}
-
-make all -j ${ncores}
-make install -j ${ncores}
-
-if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-fi
-
-echo "ID %{INSTALL_DIR}"
-echo "RID $RPM_BUILD_ROOT/%{INSTALL_DIR}"
-
-cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-umount %{INSTALL_DIR}/
+./configure                                      \
+--prefix=%{INSTALL_DIR}                          \
+--disable-static                                 \
+--enable-builtin-atomics                         \
+--with-ucx=${TACC_UCX_DIR}                       \
+--with-pmix=${TACC_PMIX_DIR}                     \
+--with-libevent=external                         \
+--with-hwloc=${TACC_HWLOC_DIR}                   \
+--with-slurm                                     \
+--enable-mpi-cxx                                 \
+--without-verbs                                  \
+--disable-dlopen                   
 
 
-  
+#--enable-orterun-prefix-by-default \
+#--enable-mpirun-prefix-by-default  \
+#--with-ompi-pmix-rte               \
+#--disable-oshmem                   \
+#--without-verbs                    \
+
+#sed -i 's#$(OSHMEM_TOP_BUILDDIR)/ompi/libmpi.la#$(OSHMEM_TOP_BUILDDIR)/ompi/libmpi.la $(top_srcdir)/orte/libopen-rte.la#g' ./oshmem/Makefile
+
+#--with-pic                         \
+#--with-ucx=%{ucx_install}          \
+#--with-pmix=%{pmix_install}        \
+## --with-slurm
+## 29 ${openmpi}/openmpi-${version}/configure \
+##  30 --prefix=${openmpi_install}             \
+##  31 --without-libfabric                     \
+##  32 --with-psm2=/usr                        \
+##  33 --with-cma                              \
+##  34 --enable-orterun-prefix-by-default      \
+##  35 --with-slurm                            \
+##  36 --with-pmi                              \
+##  37 --with-pic                              \
+##  38 --disable-dlopen                        \
+##  41 
+##  42 #--with-verbs=/usr                       \
+##  43 #--with-psm                              \
+
+
+make V=1 -j ${ncores}
+make DESTDIR=$RPM_BUILD_ROOT -j ${ncores} install
+
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -195,40 +220,61 @@ umount %{INSTALL_DIR}/
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
-help([[
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
+local help_msg=[[
+The Open MPI Project is an open source Message Passing Interface implementation
+that is developed and maintained by a consortium of academic, research, and
+industry partners. Open MPI is therefore able to combine the expertise,
+technologies, and resources from all across the High Performance Computing
+community in order to build the best MPI library available. Open MPI offers
+advantages for system and software vendors, application developers and computer
+science researchers.
 
-The %{MODULE_VAR} module file defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_BIN, TACC_%{MODULE_VAR}_LIB for the
-location of the %{MODULE_VAR} distribution, binaries, and libraries
-respectively. GIT_EXEC_PATH, which is also defined, determines where Git looks
-for its sub-programs. You can check the current setting by running 
-"git --exec-path".
+This module loads the openmpi environment built with
+Intel compilers. By loading this module, the following commands
+will be automatically available for compiling MPI applications:
+mpif77       (F77 source)
+mpif90       (F90 source)
+mpicc        (C   source)
+mpiCC/mpicxx (C++ source)
+
+The %{MODULE_VAR} module also defines the following environment variables:
+TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
+TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
+include files, and tools respectively.
 
 Version %{version}
-]])
+]]
 
-whatis("Name: Git")
-whatis("Version: %{version}")
-whatis("Category: library, tools")
-whatis("Keywords: System, Source Control Management, Tools")
-whatis("URL: http://git-scm.com")
-whatis("Description: Fast Version Control System")
+--help(help_msg)
+help(help_msg)
 
 
-prepend_path(                  "PATH" , "%{INSTALL_DIR}/bin"              )
-prepend_path(               "MANPATH" , "%{INSTALL_DIR}/share/man"        )
-setenv (     "TACC_%{MODULE_VAR}_DIR" , "%{INSTALL_DIR}"                  )
-setenv (     "TACC_%{MODULE_VAR}_LIB" , "%{INSTALL_DIR}/lib"              )
-setenv (     "TACC_%{MODULE_VAR}_BIN" , "%{INSTALL_DIR}/bin"              )
-setenv (     "GIT_EXEC_PATH"          , "%{INSTALL_DIR}/libexec/git-core" )
-setenv (     "GIT_TEMPLATE_DIR"       , "%{INSTALL_DIR}/share/git-core/templates" )
+whatis("Name: OpenMPI"                                                       )
+whatis("Version: %{version}"                                                 )
+whatis("Category: MPI library, Runtime Support"                              )
+whatis("Description: OpenMPI Library (C/C++/Fortran for x86_64)"             )
+whatis("URL: https://www.open-mpi.org"                                       )
+
+
+-- Create environment variables
+local base = "%{INSTALL_DIR}"
+prepend_path( "MPICH_HOME"            , base )
+prepend_path( "PATH"                  , pathJoin( base, "bin" ))
+prepend_path( "LD_LIBRARY_PATH"       , pathJoin( base, "lib" ))
+prepend_path( "MANPATH"               , pathJoin( base, "share/man" ))
+prepend_path( "MODULEPATH"            , "%{MODULE_PREFIX}/../%{comp_fam_ver}/ompi_%{pkg_version_dash}/modulefiles")
+prepend_path( "MODULEPATH"            , "%{MODULE_PREFIX}/%{comp_fam_ver}/ompi_%{pkg_version_dash}/modulefiles")
+
+setenv(       "TACC_OPENMPI_DIR"        , base )
+setenv(       "TACC_OPENMPI_BIN"        , pathJoin( base, "bin" ))
+setenv(       "TACC_OPENMPI_LIB"        , pathJoin( base, "lib" ))
+setenv(       "TACC_OPENMPI_INC"        , pathJoin( base, "include" ))
+
+family("MPI")
 
 EOF
-
+  
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -238,8 +284,10 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 set     ModulesVersion      "%{version}"
 EOF
   
-  # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %endif
 
 #--------------------------
 %endif # BUILD_MODULEFILE |

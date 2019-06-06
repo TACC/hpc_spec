@@ -1,6 +1,7 @@
 #
 # W. Cyrus Proctor
-# 2015-11-12
+# 2015-11-20 Need to investigate relocation -- use /opt/apps for now
+# 2015-11-20
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -20,18 +21,28 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name impi
-%define MODULE_VAR    IMPI
+%define pkg_base_name mmpi
+%define pkg_full_name openmpi
+%define MODULE_VAR    MMPI
 
 # Create some macros (spec file variables)
-%define major_version 19
+%define major_version 4
 %define minor_version 0
-%define micro_version 4
-
-%define lib_version 2019.4.243
+%define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
-%define underscore_version %{major_version}_%{minor_version}
+%define pkg_version_dash %{major_version}_%{minor_version}
+
+%define ucx_version 1.5.1
+%define ucx_install /opt/apps/ucx/%{ucx_version}
+
+%define pmix_version 3.1.2
+%define pmix_install /opt/apps/pmix/%{pmix_version}
+
+%define hcoll_install /opt/mellanox/hcoll
+%define mxm_install   /opt/mellanox/mxm
+%define knem_install  /opt/knem-1.1.3.90mlnx1
+
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -40,7 +51,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+%include name-defines-noreloc-spp.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -51,12 +62,12 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4%{?dist}
-License:   proprietary
+Release:   19%{?dist}
+License:   BSD
 Group:     MPI
-URL:       https://software.intel.com/en-us/intel-mpi-library
+URL:       https://www.open-mpi.org
 Packager:  TACC - cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Source:    %{pkg_full_name}-%{pkg_version}.tar.bz2
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -68,20 +79,16 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
-This is specifically an rpm for the Intel MPI modulefile
-used on Frontera.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
-This is specifically an rpm for the Intel MPI modulefile
-used on Frontera.
 
 %description
-This is specifically an rpm for the Intel MPI modulefile
-used on Frontera.
+Open-MPI development library.
+
 
 #---------------------------------------
 %prep
@@ -105,6 +112,7 @@ used on Frontera.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
+%setup -n %{pkg_full_name}-%{pkg_version}
 
 #---------------------------------------
 %build
@@ -119,7 +127,12 @@ used on Frontera.
 %include system-load.inc
 
 # Insert necessary module commands
-module purge
+ml purge
+%include compiler-load.inc
+ml ucx
+ml pmix
+ml hwloc/1.11.12
+ml
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -129,7 +142,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
+  mkdir -p %{INSTALL_DIR}
+    
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -141,26 +155,54 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
+ 
+rpm -qa | grep hcoll # Record the version at build time.
+rpm -qa | grep knem  # Record the version at build time.
+export ncores=96
 
-###%if "%{comp_fam_name}" == "Intel"
-###  # gfortran "use mpi" statements are busted
-###  # fix intel's mess
-###  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-###  ln -s /opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiicc $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicc
-###  ln -s /opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiicpc $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicxx
-###  ln -s /opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiifort $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif77
-###  ln -s /opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiifort $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
-###%endif
-###
-### 
-###%if "%{comp_fam_name}" == "GNU"
-###  # gfortran "use mpi" statements are busted
-###  # fix intel's mess
-###  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-###  cp %{_sourcedir}/mpif90.18 $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
-###  chmod +rx $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
-###%endif
-  
+./configure                                      \
+--prefix=%{INSTALL_DIR}                          \
+--disable-static                                 \
+--enable-builtin-atomics                         \
+--with-ucx=${TACC_UCX_DIR}                       \
+--with-pmix=${TACC_PMIX_DIR}                     \
+--with-libevent=external                         \
+--with-hwloc=${TACC_HWLOC_DIR}                   \
+--with-slurm                                     \
+--enable-mpi-cxx                                 \
+--without-verbs                                  \
+--with-hcoll=%{hcoll_install}                    \
+--with-platform=%{_sourcedir}/mellanox_optimized \
+--with-knem=%{knem_install}                      \
+--disable-dlopen                   
+
+#--with-mxm=%{mxm_install}                        \
+#--enable-orterun-prefix-by-default \
+#--enable-mpirun-prefix-by-default  \
+#--with-ompi-pmix-rte               \
+#--disable-oshmem                   \
+#--with-pic                         \
+#--with-ucx=%{ucx_install}          \
+#--with-pmix=%{pmix_install}        \
+## --with-slurm
+## 29 ${openmpi}/openmpi-${version}/configure \
+##  30 --prefix=${openmpi_install}             \
+##  31 --without-libfabric                     \
+##  32 --with-psm2=/usr                        \
+##  33 --with-cma                              \
+##  34 --enable-orterun-prefix-by-default      \
+##  35 --with-slurm                            \
+##  36 --with-pmi                              \
+##  37 --with-pic                              \
+##  38 --disable-dlopen                        \
+##  41 
+##  42 #--with-verbs=/usr                       \
+##  43 #--with-psm                              \
+
+
+make V=1 -j ${ncores}
+make DESTDIR=$RPM_BUILD_ROOT -j ${ncores} install
+
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -179,36 +221,28 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-
-# Default Intel
-%define myCC  icc
-%define myCXX icpc
-%define myFC  ifort
-
-# GCC module
-%if "%{comp_fam_name}" == "GNU"
-%define myCC  gcc
-%define myCXX g++
-%define myFC  gfortran
-%endif
-
+  
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_msg=[[
-Intel MPI Library %{pkg_version} focuses on making applications perform better on Intel
-architecture-based clusters -- implementing the high performance Message Passing
-Interface Version 3.0 specification on multiple fabrics. It enables you to
-quickly deliver maximum end user performance even if you change or upgrade to
-new interconnects, without requiring changes to the software or operating
-environment.
 
-This module loads the Intel MPI environment built with
+Mellanox "Optimized" Version of OpenMPI.
+
+The Open MPI Project is an open source Message Passing Interface implementation
+that is developed and maintained by a consortium of academic, research, and
+industry partners. Open MPI is therefore able to combine the expertise,
+technologies, and resources from all across the High Performance Computing
+community in order to build the best MPI library available. Open MPI offers
+advantages for system and software vendors, application developers and computer
+science researchers.
+
+This module loads the openmpi environment built with
 Intel compilers. By loading this module, the following commands
 will be automatically available for compiling MPI applications:
 mpif77       (F77 source)
 mpif90       (F90 source)
 mpicc        (C   source)
-mpicxx       (C++ source)
+mpiCC/mpicxx (C++ source)
 
 The %{MODULE_VAR} module also defines the following environment variables:
 TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
@@ -221,50 +255,32 @@ Version %{version}
 --help(help_msg)
 help(help_msg)
 
--- Create environment variables.
-local base_dir           = "/opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi"
 
-whatis("Name: Intel MPI"                                                    )
-whatis("Version: %{version}"                                                )
-whatis("Category: library, Runtime Support"                                 )
-whatis("Description: Intel MPI Library (C/C++/Fortran for x86_64)"          )
-whatis("URL: http://software.intel.com/en-us/articles/intel-mpi-library"    )
-prepend_path( "PATH"                   , pathJoin( base_dir , "intel64/bin"      ) )
-prepend_path( "PATH"                   , pathJoin( "%{INSTALL_DIR}" , "bin"      ) )
-prepend_path( "LD_LIBRARY_PATH"        , pathJoin( base_dir , "intel64/lib"      ) )
-prepend_path( "LD_LIBRARY_PATH"        , pathJoin( base_dir , "intel64/lib/release_mt" ) )
-prepend_path( "MANPATH"                , pathJoin( base_dir , "man"              ) )
-prepend_path( "MODULEPATH"             ,"/opt/apps/%{comp_fam_ver}/impi%{underscore_version}/modulefiles" )
-prepend_path( "I_MPI_ROOT"             , base_dir                                )
-setenv(       "MPICH_HOME"             , base_dir                                )
-setenv(       "TACC_MPI_GETMODE"       , "impi_hydra"                            )
-setenv(       "TACC_IMPI_DIR"          , base_dir                                )
-setenv(       "TACC_IMPI_BIN"          , pathJoin( base_dir , "intel64/bin"      ) )
-setenv(       "TACC_IMPI_LIB"          , pathJoin( base_dir , "intel64/lib"      ) )
-setenv(       "TACC_IMPI_INC"          , pathJoin( base_dir , "intel64/include"  ) )
-setenv(       "I_MPI_JOB_FAST_STARTUP" , "1"                                     )
-setenv(       "I_MPI_CC"               , "%{myCC}"                               )
-setenv(       "I_MPI_CXX"              , "%{myCXX}"                              )
-setenv(       "I_MPI_FC"               , "%{myFC}"                               )
-setenv(       "I_MPI_F77"              , "%{myFC}"                               )
-setenv(       "I_MPI_F90"              , "%{myFC}"                               )
-family(       "MPI"                                                              )
+whatis("Name: OpenMPI"                                                       )
+whatis("Version: %{version}"                                                 )
+whatis("Category: MPI library, Runtime Support"                              )
+whatis("Description: OpenMPI Library (C/C++/Fortran for x86_64)"             )
+whatis("URL: https://www.open-mpi.org"                                       )
 
 
-if (os.getenv("TACC_SYSTEM") == "frontera") then
-  depends_on("libfabric")
-  local libfabric_lib = os.getenv("TACC_LIBFABRIC_LIB")
-  setenv(     "I_MPI_OFI_LIBRARY"      , pathJoin(libfabric_lib,"libfabric.so" ) )
---  setenv(     "FI_PSM2_LAZY_CONN"      , "1"                                     )
---  setenv(     "FI_PROVIDER"            , "psm2"                                  )
---  setenv(     "FI_PROVIDER_PATH"       , pathJoin(base_dir, "intel64/libfabric/lib/prov") )
-  setenv(     "I_MPI_FABRICS"          , "shm:ofi"                               )
-  setenv(     "I_MPI_STARTUP_MODE"     , "pmi_shm_netmod"                        )
-end
+-- Create environment variables
+local base = "%{INSTALL_DIR}"
+prepend_path( "MPICH_HOME"            , base )
+prepend_path( "PATH"                  , pathJoin( base, "bin" ))
+prepend_path( "LD_LIBRARY_PATH"       , pathJoin( base, "lib" ))
+prepend_path( "MANPATH"               , pathJoin( base, "share/man" ))
+prepend_path( "MODULEPATH"            , "%{MODULE_PREFIX}/../%{comp_fam_ver}/ompi_%{pkg_version_dash}/modulefiles")
+prepend_path( "MODULEPATH"            , "%{MODULE_PREFIX}/%{comp_fam_ver}/ompi_%{pkg_version_dash}/modulefiles")
+
+setenv(       "TACC_OPENMPI_DIR"        , base )
+setenv(       "TACC_OPENMPI_BIN"        , pathJoin( base, "bin" ))
+setenv(       "TACC_OPENMPI_LIB"        , pathJoin( base, "lib" ))
+setenv(       "TACC_OPENMPI_INC"        , pathJoin( base, "include" ))
+
+family("MPI")
 
 EOF
-
- 
+  
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -274,9 +290,10 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 set     ModulesVersion      "%{version}"
 EOF
   
-  # Check the syntax of the generated lua modulefile
-  ### don't check the hidden one!
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %endif
 
 #--------------------------
 %endif # BUILD_MODULEFILE |

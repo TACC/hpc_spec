@@ -13,13 +13,8 @@ Packager:   TACC - rtevans@tacc.utexas.edu
 # Either Python package or mpi4py will be built 
 # based on this switch
 #------------------------------------------------
-%define build_mpi4py     0
+%define build_mpi4py     1
 %global _python_bytecompile_errors_terminate_build 0
-#%global __strip /opt/apps/gcc/7.1.0/bin/strip
-#%undefine __brp_strip_static_archive
-%if 0%{?scl:1}
-%define __strip %{_bindir}/strip
-%endif
 
 #------------------------------------------------
 # BASIC DEFINITIONS
@@ -194,13 +189,13 @@ fi
 ### Scipy
 if ! $(%{INSTALL_DIR_COMP}/bin/%{PNAME} -c "import scipy"); then
     cd %{_topdir}/SOURCES	
-    if [ ! -f "%{_topdir}/SOURCES/scipy-1.3.0.tar.gz" ]; then	
-	wget -O scipy-1.3.0.tar.gz https://github.com/scipy/scipy/releases/download/v1.3.0/scipy-1.3.0.tar.gz
+    if [ ! -f "%{_topdir}/SOURCES/scipy-1.2.0.tar.gz" ]; then	
+	wget -O scipy-1.2.0.tar.gz https://github.com/scipy/scipy/releases/download/v1.2.0/scipy-1.2.0.tar.gz
     fi	   
 
-    rm -rf %{_topdir}/SOURCES/scipy-1.3.0
-    tar -xzvf scipy-1.3.0.tar.gz -C %{_topdir}/SOURCES	 
-    cd %{_topdir}/SOURCES/scipy-1.3.0
+    rm -rf %{_topdir}/SOURCES/scipy-1.2.0
+    tar -xzvf scipy-1.2.0.tar.gz -C %{_topdir}/SOURCES	 
+    cd %{_topdir}/SOURCES/scipy-1.2.0
 
     %if "%{comp_fam_name}" == "Intel"
     %{INSTALL_DIR_COMP}/bin/%{PNAME} setup.py config --compiler=intelem --fcompiler=intelem build_clib --compiler=intelem --fcompiler=intelem build_ext --compiler=intelem --fcompiler=intelem install

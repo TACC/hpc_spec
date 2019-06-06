@@ -233,7 +233,7 @@ prepend_path( "PATH"                   , pathJoin( base_dir , "intel64/bin"     
 prepend_path( "PATH"                   , pathJoin( "%{INSTALL_DIR}" , "bin"      ) )
 prepend_path( "LD_LIBRARY_PATH"        , pathJoin( base_dir , "intel64/lib"      ) )
 prepend_path( "MANPATH"                , pathJoin( base_dir , "man"              ) )
-prepend_path( "MODULEPATH"             ,"/opt/apps/spp/%{comp_fam_ver}/impi%{underscore_version}/modulefiles" )
+prepend_path( "MODULEPATH"             ,"/opt/apps/%{comp_fam_ver}/impi%{underscore_version}/modulefiles" )
 prepend_path( "I_MPI_ROOT"             , base_dir                                )
 setenv(       "MPICH_HOME"             , base_dir                                )
 setenv(       "TACC_MPI_GETMODE"       , "impi_hydra"                            )

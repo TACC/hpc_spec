@@ -1,6 +1,6 @@
 #
 # W. Cyrus Proctor
-# 2015-11-08
+# 2015-12-11
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -20,24 +20,24 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name git
-%define MODULE_VAR    GIT
+%define pkg_base_name mkl
+%define MODULE_VAR    MKL
 
 # Create some macros (spec file variables)
-%define major_version 2
-%define minor_version 21
-%define micro_version 0
+%define major_version 18
+%define minor_version 0
+%define patch_version 2
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{major_version}.%{minor_version}.%{patch_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
+%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+%include name-defines-noreloc-spp.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -48,10 +48,10 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
-License:   GPLv2
-Group:     System Environment/Base
-URL:       https://git-scm.com
+Release:   1%{?dist}
+License:   proprietary
+Group:     Compiler
+URL:       https://software.intel.com/en-us/intel-compilers
 Packager:  TACC - cproctor@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
@@ -65,23 +65,20 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
+This is specifically an rpm for the Intel MKL modulefile
+used on Frontera for GCC.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
+This is specifically an rpm for the Intel MKL modulefile
+used on Frontera for GCC.
 
 %description
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
+This is specifically an rpm for the Intel MKL modulefile
+used on Frontera for GCC.
 
 #---------------------------------------
 %prep
@@ -129,8 +126,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -143,37 +138,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-
-export ncores=68
-export git=`pwd`
-export git_install=%{INSTALL_DIR}
-export git_version=%{pkg_version}
-export CC=gcc
-export CFLAGS="-mtune=generic"
-export LDFLAGS="-mtune=generic"
-
-wget https://www.kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
-tar xvfz git-${git_version}.tar.gz
-
-cd git-${git_version}
-
-${git}/git-${git_version}/configure \
---prefix=${git_install}
-
-make all -j ${ncores}
-make install -j ${ncores}
-
-if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-fi
-
-echo "ID %{INSTALL_DIR}"
-echo "RID $RPM_BUILD_ROOT/%{INSTALL_DIR}"
-
-cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-umount %{INSTALL_DIR}/
-
-
+ 
+  # Nothing to do!
   
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -195,40 +161,65 @@ umount %{INSTALL_DIR}/
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
-help([[
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
+local help_msg=[[
+The Intel Math Kernel Library (Intel MKL) improves performance with math
+routines for software applications that solve large computational problems.
+Intel MKL provides BLAS and LAPACK linear algebra routines, fast Fourier
+transforms, vectorized math functions, random number generation functions, and
+other functionality.
 
-The %{MODULE_VAR} module file defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_BIN, TACC_%{MODULE_VAR}_LIB for the
-location of the %{MODULE_VAR} distribution, binaries, and libraries
-respectively. GIT_EXEC_PATH, which is also defined, determines where Git looks
-for its sub-programs. You can check the current setting by running 
-"git --exec-path".
+The Intel MKL module enables the use of the MKL with the GNU GCC compilers by
+updating the $LD_LIBRARY_PATH, $INCLUDE, and $MANPATH environment variables to
+access the MKL libraries, include files, and available man pages, respectively.
+
+The following additional environment variables are also defined:
+
+$TACC_MKL_DIR           (path to Math Kernel Library root         )
+$TACC_MKL_LIB           (path to Math Kernel Library libs         )
+$TACC_MKL_INC           (path to Math Kernel Library includes     )
+$TACC_MKL_DOC           (path to Math Kernel Library documentation)
+
+To use the MKL with Intel compilers, please see the Intel module help
+by issuing a "module help intel".
+
+Also see the Intel MKL Link Line Advisor:
+https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor
 
 Version %{version}
-]])
+]]
 
-whatis("Name: Git")
-whatis("Version: %{version}")
-whatis("Category: library, tools")
-whatis("Keywords: System, Source Control Management, Tools")
-whatis("URL: http://git-scm.com")
-whatis("Description: Fast Version Control System")
+--help(help_msg)
+help(help_msg)
 
+whatis("Name: Intel MKL"                                                    )
+whatis("Version: %{version}"                                                )
+whatis("Category: Library, Runtime Support"                                 )
+whatis("Description: Intel Math Kernel Library"                             )
+whatis("URL: https://software.intel.com/en-us/intel-mkl"                    )
 
-prepend_path(                  "PATH" , "%{INSTALL_DIR}/bin"              )
-prepend_path(               "MANPATH" , "%{INSTALL_DIR}/share/man"        )
-setenv (     "TACC_%{MODULE_VAR}_DIR" , "%{INSTALL_DIR}"                  )
-setenv (     "TACC_%{MODULE_VAR}_LIB" , "%{INSTALL_DIR}/lib"              )
-setenv (     "TACC_%{MODULE_VAR}_BIN" , "%{INSTALL_DIR}/bin"              )
-setenv (     "GIT_EXEC_PATH"          , "%{INSTALL_DIR}/libexec/git-core" )
-setenv (     "GIT_TEMPLATE_DIR"       , "%{INSTALL_DIR}/share/git-core/templates" )
+-- Create environment variables.
+local base         = "/admin/build/admin/rpms/frontera/intel/install/18.0.2"
+local full_xe      = "compilers_and_libraries_2018.2.199/linux"
+local installDir   = pathJoin(base,full_xe)
+local mklRoot      = pathJoin(installDir,"mkl")
+
+setenv( "MKLROOT"      ,              mklRoot )
+setenv( "TACC_MKL_DIR" ,              mklRoot )
+setenv( "TACC_MKL_LIB" ,              pathJoin( mklRoot    , "lib/intel64" ) )
+setenv( "TACC_MKL_INC" ,              pathJoin( mklRoot    , "include" ) )
+setenv( "TACC_MKL_DOC" ,              pathJoin( base       , "documentation_2018/en/mkl/ps2018" ) )
+
+prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( mklRoot    , "lib/intel64" ) )
+
+prepend_path( "INCLUDE" ,             pathJoin( mklRoot    , "include" ) )
+
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2018/en/debugger/gdb-ia/man" ) )
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2018/en/debugger/gdb-igfx/man" ) )
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2018/en/man/common" ) )
 
 EOF
-
+  
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##

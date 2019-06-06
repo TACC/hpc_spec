@@ -1,43 +1,28 @@
-#
-# W. Cyrus Proctor
-# 2015-11-08
-#
-# Important Build-Time Environment Variables (see name-defines.inc)
-# NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
-# NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
-#
-# Important Install-Time Environment Variables (see post-defines.inc)
-# VERBOSE=1       -> Print detailed information at install time
-# RPM_DBPATH      -> Path To Non-Standard RPM Database Location
-#
-# Typical Command-Line Example:
-# ./build_rpm.sh Bar.spec
-# cd ../RPMS/x86_64
-# rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
-# rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
-# rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
+# Si Liu
+# 2019-06-04
 
-Summary: A Nice little relocatable skeleton spec file example.
+Summary: SILO spec file 
 
 # Give the package a base name
-%define pkg_base_name git
-%define MODULE_VAR    GIT
+%define pkg_base_name silo
+%define MODULE_VAR    SILO
 
 # Create some macros (spec file variables)
-%define major_version 2
-%define minor_version 21
-%define micro_version 0
+%define major_version 4
+%define minor_version 10
+%define micro_version 2
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
-%include rpm-dir.inc                  
-#%include compiler-defines.inc
-#%include mpi-defines.inc
+%include rpm-dir.inc
+%include compiler-defines.inc
+
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+#%include name-defines.inc
+%include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -48,53 +33,58 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
-License:   GPLv2
-Group:     System Environment/Base
-URL:       https://git-scm.com
-Packager:  TACC - cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Release:   1%{?dist}
+License: BSD Open Source License
+Group:   Data/Visualization
+Packager: TACC - siliu@tacc.utexas.edu
+Source: %{pkg_base_name}-%{version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
 
-
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: Silo
+Group: Data/Visualization
+
 %description package
-This is the long description for the package RPM...
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
+Silo is a library for reading and writing a wide variety of scientific data to binary, disk files. 
+The files Silo produces and the data within them can be easily shared and exchanged 
+between wholly independently developed applications running on disparate computing platforms. 
+Consequently, Silo facilitates the development of general purpose tools for processing scientific data. 
 
 %package %{MODULEFILE}
-Summary: The modulefile RPM
-Group: Lmod/Modulefiles
+Summary: Silo
+Group: Data/Visualization 
+
 %description modulefile
-This is the long description for the modulefile RPM...
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
+Module RPM for Silo
 
 %description
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
+Silo is a library for reading and writing a wide variety of scientific data to binary, disk files. 
+The files Silo produces and the data within them can be easily shared and exchanged 
+between wholly independently developed applications running on disparate computing platforms. 
+Consequently, Silo facilitates the development of general purpose tools for processing scientific data.
 
 #---------------------------------------
 %prep
 #---------------------------------------
+
+
+echo %{INSTALL_DIR}
 
 #------------------------
 %if %{?BUILD_PACKAGE}
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+%setup -n %{pkg_base_name}-%{pkg_version} 
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
+
 
 #---------------------------
 %if %{?BUILD_MODULEFILE}
@@ -117,9 +107,10 @@ Git is easy to learn and has a tiny footprint with lightning fast performance.
 
 # Setup modules
 %include system-load.inc
-
-# Insert necessary module commands
+%include compiler-defines.inc
 module purge
+
+%include compiler-load.inc
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -131,7 +122,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
   mkdir -p %{INSTALL_DIR}
   mount -t tmpfs tmpfs %{INSTALL_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -144,40 +135,32 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
 
-export ncores=68
-export git=`pwd`
-export git_install=%{INSTALL_DIR}
-export git_version=%{pkg_version}
-export CC=gcc
-export CFLAGS="-mtune=generic"
-export LDFLAGS="-mtune=generic"
+  INSTALL_DIR=%{INSTALL_DIR}
 
-wget https://www.kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
-tar xvfz git-${git_version}.tar.gz
-
-cd git-${git_version}
-
-${git}/git-${git_version}/configure \
---prefix=${git_install}
-
-make all -j ${ncores}
-make install -j ${ncores}
-
-if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-fi
-
-echo "ID %{INSTALL_DIR}"
-echo "RID $RPM_BUILD_ROOT/%{INSTALL_DIR}"
-
-cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-umount %{INSTALL_DIR}/
+  # Removed from config:
+  # --enable-sharedlibs=gcc  --enable-shared
 
 
-  
-#-----------------------  
+   export CFLAGS="-O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 "
+   export FFLAGS="-O3 -assume buffered_io -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 "
+   export CXXFLAGS="-O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 "
+   export LDFLAGS="-O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 "
+
+  ./configure --prefix=$INSTALL_DIR   \
+  --enable-static --enable-shared \
+  --with-hdf5=/opt/apps/intel19/hdf5/1.10.4/x86_64/include,/opt/apps/intel19/hdf5/1.10.4/x86_64/lib
+
+  make -j 16
+
+  make DESTDIR=$RPM_BUILD_ROOT install
+
+  cp -r %{INSTALL_DIR} $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+  umount %{INSTALL_DIR}
+
+#---------------------- -
 %endif # BUILD_PACKAGE |
 #-----------------------
+
 
 
 #---------------------------
@@ -185,7 +168,7 @@ umount %{INSTALL_DIR}/
 #---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -193,41 +176,34 @@ umount %{INSTALL_DIR}/
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
+
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
-help([[
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
 
-The %{MODULE_VAR} module file defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_BIN, TACC_%{MODULE_VAR}_LIB for the
-location of the %{MODULE_VAR} distribution, binaries, and libraries
-respectively. GIT_EXEC_PATH, which is also defined, determines where Git looks
-for its sub-programs. You can check the current setting by running 
-"git --exec-path".
+help(
+[[
+Silo is a library for reading and writing a wide variety of scientific data to binary, disk files.
+The files Silo produces and the data within them can be easily shared and exchanged
+between wholly independently developed applications running on disparate computing platforms.
+Consequently, Silo facilitates the development of general purpose tools for processing scientific data.
 
-Version %{version}
-]])
+Version: 4.10.2
+]]
+)
 
-whatis("Name: Git")
-whatis("Version: %{version}")
-whatis("Category: library, tools")
-whatis("Keywords: System, Source Control Management, Tools")
-whatis("URL: http://git-scm.com")
-whatis("Description: Fast Version Control System")
+whatis("Name:SILO scientific database library")
+whatis("Version: 4.10.2")
+whatis("Category: Library, Visualization")
+whatis("Description: a scalable mesh and field I/O library and scientific database")
+whatis("URL: https://wci.llnl.gov/codes/silo/")
 
-
-prepend_path(                  "PATH" , "%{INSTALL_DIR}/bin"              )
-prepend_path(               "MANPATH" , "%{INSTALL_DIR}/share/man"        )
-setenv (     "TACC_%{MODULE_VAR}_DIR" , "%{INSTALL_DIR}"                  )
-setenv (     "TACC_%{MODULE_VAR}_LIB" , "%{INSTALL_DIR}/lib"              )
-setenv (     "TACC_%{MODULE_VAR}_BIN" , "%{INSTALL_DIR}/bin"              )
-setenv (     "GIT_EXEC_PATH"          , "%{INSTALL_DIR}/libexec/git-core" )
-setenv (     "GIT_TEMPLATE_DIR"       , "%{INSTALL_DIR}/share/git-core/templates" )
+setenv("TACC_%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
+setenv("TACC_%{MODULE_VAR}_LIB","%{INSTALL_DIR}/lib")
+setenv("TACC_%{MODULE_VAR}_INC","%{INSTALL_DIR}/include")
+setenv("TACC_%{MODULE_VAR}_BIN","%{INSTALL_DIR}/bin")
 
 EOF
+
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
@@ -237,7 +213,7 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 
 set     ModulesVersion      "%{version}"
 EOF
-  
+
   # Check the syntax of the generated lua modulefile
   %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
@@ -260,7 +236,7 @@ EOF
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile 
+%files modulefile
 #---------------------------
 
   %defattr(-,root,install,)
@@ -292,4 +268,3 @@ export PACKAGE_PREUN=1
 %clean
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
-

@@ -43,7 +43,7 @@ Summary: A Nice little non-relocatable skeleton spec file example.
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines-noreloc.inc
+%include name-defines-noreloc-spp.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -416,6 +416,7 @@ prepend_path( "LD_LIBRARY_PATH"          , pathJoin(gcc_dir,"lib"       )       
 prepend_path( "LD_LIBRARY_PATH"          , pathJoin(gcc_dir,"lib64"     )               )
 prepend_path( "MANPATH"                  , pathJoin(gcc_dir,"share/man" )               )
 prepend_path( "INCLUDE"                  , pathJoin(gcc_dir,"include"   )               )
+prepend_path( "MODULEPATH"               , "%{MODULE_PREFIX}/../%{gcc_ver}/modulefiles" )
 prepend_path( "MODULEPATH"               , "%{MODULE_PREFIX}/%{gcc_ver}/modulefiles" )
 setenv(       "%{MODULE_VAR}_LIB"        , pathJoin(gcc_dir,"lib64"     )               )
 setenv(       "TACC_%{MODULE_VAR}_DIR"   , gcc_dir                                      )

@@ -40,6 +40,10 @@
     %define mpi_label 18_0
     %define mpi_module_version 18.0.2
   %endif
+  %if "%{mpiV}" == "19_0"
+    %define mpi_label 19_0
+    %define mpi_module_version 19.0.4
+  %endif
   %if "%{mpiV}" == "19_4"
     %define mpi_label 19_0
     %define mpi_module_version 19.0.4

@@ -1,6 +1,15 @@
 #
+# Spec file for SWIG:
+# interface generator utility 
+# which is always too old for trilinos
+#
+# Victor Eijkhout, 2017
+# based on:
+#
+# Bar.spec, 
 # W. Cyrus Proctor
-# 2015-11-08
+# Antonio Gomez
+# 2015-08-25
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -17,27 +26,30 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: A Nice little relocatable skeleton spec file example.
+Summary:    Set of tools for manipulating geographic and Cartesian data sets
 
 # Give the package a base name
-%define pkg_base_name git
-%define MODULE_VAR    GIT
+%define pkg_base_name swig
+%define MODULE_VAR    SWIG
 
 # Create some macros (spec file variables)
-%define major_version 2
-%define minor_version 21
+%define major_version 4
+%define minor_version 0
 %define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
+%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+#%include name-defines.inc
+%include name-defines-noreloc-home1.inc
+
+
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -48,40 +60,43 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
-License:   GPLv2
-Group:     System Environment/Base
-URL:       https://git-scm.com
-Packager:  TACC - cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Release:   1%{?dist}
+License:   GNU
+Group:     Development/Tools
+Vendor:     SOEST - hawaii
+Group:      Libraries/maps
+Source:	    swig-%{version}.tar.gz
+URL:	    http://swig.soest.hawaii.edu/ 
+Packager:   eijkhout@tacc.utexas.edu
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
-
+%global _python_bytecompile_errors_terminate_build 0
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: SWIG install
+Group: System Environment/Base
 %description package
 This is the long description for the package RPM...
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
 
 %package %{MODULEFILE}
-Summary: The modulefile RPM
-Group: Lmod/Modulefiles
+Summary: SWIG install
+Group: System Environment/Base
 %description modulefile
 This is the long description for the modulefile RPM...
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
 
 %description
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
+SWIG is a software development tool that connects programs written in C and C++
+with a variety of high-level programming languages. SWIG is primarily used with
+common scripting languages such as Perl, Python, Tcl/Tk, and Ruby, however the
+list of supported languages also includes non-scripting languages such as Java,
+OCAML and C#. Also several interpreted and compiled Scheme implementations
+(Guile, MzScheme, Chicken) are supported. SWIG is most commonly used to create
+high-level interpreted or compiled programming environments, user interfaces,
+and as a tool for testing and prototyping C/C++ software. SWIG can also export
+its parse tree in the form of XML and Lisp s-expressions. 
+
 
 #---------------------------------------
 %prep
@@ -92,6 +107,9 @@ Git is easy to learn and has a tiny footprint with lightning fast performance.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+%setup -n %{pkg_base_name}-%{pkg_version}
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -106,6 +124,7 @@ Git is easy to learn and has a tiny footprint with lightning fast performance.
 #--------------------------
 
 
+
 #---------------------------------------
 %build
 #---------------------------------------
@@ -117,20 +136,16 @@ Git is easy to learn and has a tiny footprint with lightning fast performance.
 
 # Setup modules
 %include system-load.inc
-
-# Insert necessary module commands
-module purge
-
-echo "Building the package?:    %{BUILD_PACKAGE}"
-echo "Building the modulefile?: %{BUILD_MODULEFILE}"
+# Load Compiler
+%include compiler-load.inc
+# Load MPI Library
+#%include mpi-load.inc
 
 #------------------------
 %if %{?BUILD_PACKAGE}
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -143,38 +158,21 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-
-export ncores=68
-export git=`pwd`
-export git_install=%{INSTALL_DIR}
-export git_version=%{pkg_version}
-export CC=gcc
-export CFLAGS="-mtune=generic"
-export LDFLAGS="-mtune=generic"
-
-wget https://www.kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
-tar xvfz git-${git_version}.tar.gz
-
-cd git-${git_version}
-
-${git}/git-${git_version}/configure \
---prefix=${git_install}
-
-make all -j ${ncores}
-make install -j ${ncores}
-
-if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-fi
-
-echo "ID %{INSTALL_DIR}"
-echo "RID $RPM_BUILD_ROOT/%{INSTALL_DIR}"
-
-cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-umount %{INSTALL_DIR}/
-
-
   
+#
+# Use mount temp trick
+#
+mkdir -p             %{INSTALL_DIR}
+mount -t tmpfs tmpfs %{INSTALL_DIR}
+
+./configure --prefix=%{INSTALL_DIR} \
+ && make \
+ && make install
+
+cp -r %{INSTALL_DIR}/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+
+umount %{INSTALL_DIR}
+
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -195,51 +193,42 @@ umount %{INSTALL_DIR}/
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
-help([[
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
-
-The %{MODULE_VAR} module file defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_BIN, TACC_%{MODULE_VAR}_LIB for the
-location of the %{MODULE_VAR} distribution, binaries, and libraries
-respectively. GIT_EXEC_PATH, which is also defined, determines where Git looks
-for its sub-programs. You can check the current setting by running 
-"git --exec-path".
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
+help( [[
+Simplified Wrapper and Interface Generator
+This module loads swig.
+The command directory is added to PATH.
+The include directory is added to INCLUDE.
+The lib     directory is added to LD_LIBRARY_PATH.
 
 Version %{version}
-]])
+]] )
 
-whatis("Name: Git")
-whatis("Version: %{version}")
-whatis("Category: library, tools")
-whatis("Keywords: System, Source Control Management, Tools")
-whatis("URL: http://git-scm.com")
-whatis("Description: Fast Version Control System")
+whatis( "Simplified Wrapper and Interface Generator" )
+whatis( "Version: %{version}" )
+whatis( "Category: Development/Tools" )
+whatis( "Description: SWIG is a software development tool that connects programs written in C and C++ with a variety of high-level programming languages." )
+whatis( "URL: http://www.swig.org" )
 
+local swig_dir = "%{INSTALL_DIR}"
 
-prepend_path(                  "PATH" , "%{INSTALL_DIR}/bin"              )
-prepend_path(               "MANPATH" , "%{INSTALL_DIR}/share/man"        )
-setenv (     "TACC_%{MODULE_VAR}_DIR" , "%{INSTALL_DIR}"                  )
-setenv (     "TACC_%{MODULE_VAR}_LIB" , "%{INSTALL_DIR}/lib"              )
-setenv (     "TACC_%{MODULE_VAR}_BIN" , "%{INSTALL_DIR}/bin"              )
-setenv (     "GIT_EXEC_PATH"          , "%{INSTALL_DIR}/libexec/git-core" )
-setenv (     "GIT_TEMPLATE_DIR"       , "%{INSTALL_DIR}/share/git-core/templates" )
-
+prepend_path( "PATH", pathJoin( swig_dir,"bin" ) )
+setenv("TACC_SWIG_DIR", swig_dir )
+setenv("TACC_SWIG_BIN", pathJoin(swig_dir,"bin" ) )
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module3.1.1#################################################
+#%Module1.0####################################################################
 ##
-## version file for %{BASENAME}%{version}
+## Version file for %{name} version %{version}
 ##
-
-set     ModulesVersion      "%{version}"
+set ModulesVersion "%version"
 EOF
-  
-  # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
+  %endif
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
@@ -271,25 +260,27 @@ EOF
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-
-########################################
-## Fix Modulefile During Post Install ##
-########################################
-%post %{PACKAGE}
-export PACKAGE_POST=1
-%include post-defines.inc
-%post %{MODULEFILE}
-export MODULEFILE_POST=1
-%include post-defines.inc
-%preun %{PACKAGE}
-export PACKAGE_PREUN=1
-%include post-defines.inc
-########################################
-############ Do Not Remove #############
-########################################
+# ########################################
+# ## Fix Modulefile During Post Install ##
+# ########################################
+# %post %{PACKAGE}
+# export PACKAGE_POST=1
+# %include post-defines.inc
+# %post %{MODULEFILE}
+# export MODULEFILE_POST=1
+# %include post-defines.inc
+# %preun %{PACKAGE}
+# export PACKAGE_PREUN=1
+# %include post-defines.inc
+# ########################################
+# ############ Do Not Remove #############
+# ########################################
 
 #---------------------------------------
 %clean
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
 
+%changelog
+* Mon Jun 03 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial release

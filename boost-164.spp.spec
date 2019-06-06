@@ -1,43 +1,28 @@
-#
-# W. Cyrus Proctor
-# 2015-11-08
-#
-# Important Build-Time Environment Variables (see name-defines.inc)
-# NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
-# NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
-#
-# Important Install-Time Environment Variables (see post-defines.inc)
-# VERBOSE=1       -> Print detailed information at install time
-# RPM_DBPATH      -> Path To Non-Standard RPM Database Location
-#
-# Typical Command-Line Example:
-# ./build_rpm.sh Bar.spec
-# cd ../RPMS/x86_64
-# rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
-# rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
-# rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: A Nice little relocatable skeleton spec file example.
+Summary: Boost spec file (www.boost.org)
 
 # Give the package a base name
-%define pkg_base_name git
-%define MODULE_VAR    GIT
+%define pkg_base_name boost
+%define MODULE_VAR    BOOST
 
 # Create some macros (spec file variables)
-%define major_version 2
-%define minor_version 21
+%define major_version 1
+%define minor_version 64
 %define micro_version 0
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{major_version}.%{minor_version}
+
+%define mpi_fam none
 
 ### Toggle On/Off ###
-%include rpm-dir.inc                  
-#%include compiler-defines.inc
+%include rpm-dir.inc
+%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+#%include name-defines.inc
+%include name-defines-noreloc-spp.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -48,12 +33,13 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
-License:   GPLv2
-Group:     System Environment/Base
-URL:       https://git-scm.com
+Release:   1%{?dist}
+License:   GPL
+Group:     Utility
+URL:       http://www.boost.org
 Packager:  TACC - cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Source0:   boost_1_64_0.tar.gz
+Source1:   icu4c-59_1-src.tgz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -61,27 +47,31 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: Boost RPM
+Group: Development/System Environment
 %description package
-This is the long description for the package RPM...
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
+Boost provides free peer-reviewed portable C++ source libraries.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
+Module RPM for Boost
 
 %description
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
+
+Boost emphasizes libraries that work well with the C++ Standard
+Library. Boost libraries are intended to be widely useful, and usable
+across a broad spectrum of applications. The Boost license encourages
+both commercial and non-commercial use.
+
+Boost aims to establish "existing practice" and provide reference
+implementations so that Boost libraries are suitable for eventual
+standardization. Ten Boost libraries are already included in the C++
+Standards Committee Library Technical Report (TR1) as a step toward
+becoming part of a future C++ Standard. More Boost libraries are
+proposed for the upcoming TR2.
+
 
 #---------------------------------------
 %prep
@@ -92,6 +82,10 @@ Git is easy to learn and has a tiny footprint with lightning fast performance.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+%setup -n boost_%{major_version}_%{minor_version}_%{micro_version}  %{name}-%{version}
+%setup -n boost_%{major_version}_%{minor_version}_%{micro_version}  -T -D -a 1
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -117,9 +111,12 @@ Git is easy to learn and has a tiny footprint with lightning fast performance.
 
 # Setup modules
 %include system-load.inc
-
-# Insert necessary module commands
 module purge
+# Load Compiler
+%include compiler-load.inc
+# Load MPI Library
+#%include mpi-load.inc
+
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -129,9 +126,10 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
   mkdir -p %{INSTALL_DIR}
   mount -t tmpfs tmpfs %{INSTALL_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -144,48 +142,62 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
 
-export ncores=68
-export git=`pwd`
-export git_install=%{INSTALL_DIR}
-export git_version=%{pkg_version}
-export CC=gcc
-export CFLAGS="-mtune=generic"
-export LDFLAGS="-mtune=generic"
-
-wget https://www.kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
-tar xvfz git-${git_version}.tar.gz
-
-cd git-${git_version}
-
-${git}/git-${git_version}/configure \
---prefix=${git_install}
-
-make all -j ${ncores}
-make install -j ${ncores}
-
-if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-fi
-
-echo "ID %{INSTALL_DIR}"
-echo "RID $RPM_BUILD_ROOT/%{INSTALL_DIR}"
-
-cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-umount %{INSTALL_DIR}/
+  ICU_MODE=Linux
+  %if "%{comp_fam}" == "intel"
+        export CONFIGURE_FLAGS=--with-toolset=intel-linux
+        ICU_MODE=Linux/ICC
+  %endif
 
 
+  %if "%{mpi_fam}" != "none"
+        CXX=mpicxx
+  %endif
+
+  %if "%{comp_fam}" == "gcc"
+        export CONFIGURE_FLAGS=--with-toolset=gcc
+  %endif
+
+  WD=`pwd`
   
-#-----------------------  
+  TACC_OPT="-xCORE-AVX2 -axCORE-AVX512,MIC-AVX512"
+ 
+  cd icu/source
+  CXXFLAGS="%{TACC_OPT}" CFLAGS="%{TACC_OPT}" ./runConfigureICU  $ICU_MODE --prefix=%{INSTALL_DIR}
+  make -j 48
+  make install
+  rm -f ~/user-config.jam
+
+  cd $WD
+  EXTRA="-sICU_PATH=%{INSTALL_DIR}"
+  CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all --without-libraries=mpi,python"
+
+  ./bootstrap.sh --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
+
+  ./b2 -j 48 --prefix=%{INSTALL_DIR} $EXTRA cxxflags="%{TACC_OPT}" cflags="%{TACC_OPT}" linkflags="%{TACC_OPT}" install
+  
+  mkdir -p              $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+
+  rm -f ~/tools/build/v2/user-config.jam
+
+  if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
+        mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  fi
+
+  cp -r %{INSTALL_DIR} $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+  umount %{INSTALL_DIR}
+
+#---------------------- -
 %endif # BUILD_PACKAGE |
 #-----------------------
-
 
 #---------------------------
 %if %{?BUILD_MODULEFILE}
 #---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-  
+  mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -193,51 +205,46 @@ umount %{INSTALL_DIR}/
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
+
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help([[
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
+The boost module file defines the following environment variables:
+BOOST_ROOT, TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC for
+the location of the boost distribution.
 
-The %{MODULE_VAR} module file defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_BIN, TACC_%{MODULE_VAR}_LIB for the
-location of the %{MODULE_VAR} distribution, binaries, and libraries
-respectively. GIT_EXEC_PATH, which is also defined, determines where Git looks
-for its sub-programs. You can check the current setting by running 
-"git --exec-path".
+To load the rest of boost  do "module load boost"
 
 Version %{version}
 ]])
 
-whatis("Name: Git")
+whatis("Name: boost")
 whatis("Version: %{version}")
-whatis("Category: library, tools")
-whatis("Keywords: System, Source Control Management, Tools")
-whatis("URL: http://git-scm.com")
-whatis("Description: Fast Version Control System")
+whatis("Category: %{group}")
+whatis("Keywords: System, Library, C++")
+whatis("URL: http://www.boost.org")
+whatis("Description: Boost provides free peer-reviewed portable C++ source libraries.")
 
+setenv("TACC_%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
+setenv("TACC_%{MODULE_VAR}_LIB","%{INSTALL_DIR}/lib")
+setenv("TACC_%{MODULE_VAR}_INC","%{INSTALL_DIR}/include")
+setenv("TACC_%{MODULE_VAR}_BIN","%{INSTALL_DIR}/bin")
+setenv("BOOST_ROOT","%{INSTALL_DIR}")
 
-prepend_path(                  "PATH" , "%{INSTALL_DIR}/bin"              )
-prepend_path(               "MANPATH" , "%{INSTALL_DIR}/share/man"        )
-setenv (     "TACC_%{MODULE_VAR}_DIR" , "%{INSTALL_DIR}"                  )
-setenv (     "TACC_%{MODULE_VAR}_LIB" , "%{INSTALL_DIR}/lib"              )
-setenv (     "TACC_%{MODULE_VAR}_BIN" , "%{INSTALL_DIR}/bin"              )
-setenv (     "GIT_EXEC_PATH"          , "%{INSTALL_DIR}/libexec/git-core" )
-setenv (     "GIT_TEMPLATE_DIR"       , "%{INSTALL_DIR}/share/git-core/templates" )
-
+-- Add boost to the LD_LIBRARY_PATH
+prepend_path("LD_LIBRARY_PATH","%{INSTALL_DIR}/lib")
+prepend_path("PATH", "%{INSTALL_DIR}/bin")
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
-## version file for %{BASENAME}%{version}
+## version file for %{PYTHON_MODULE_VAR}%{version}
 ##
 
 set     ModulesVersion      "%{version}"
 EOF
-  
+
   # Check the syntax of the generated lua modulefile
   %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
@@ -255,17 +262,19 @@ EOF
   # RPM package contains files within these directories
   %{INSTALL_DIR}
 
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile 
+%files modulefile
 #---------------------------
 
   %defattr(-,root,install,)
   # RPM modulefile contains files within these directories
   %{MODULE_DIR}
+
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
@@ -292,4 +301,3 @@ export PACKAGE_PREUN=1
 %clean
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
-

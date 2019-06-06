@@ -1,6 +1,5 @@
-#
-# W. Cyrus Proctor
-# 2015-11-08
+# Quantum Espresso 6.3.SPEC
+# 10/2017
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -17,27 +16,33 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: A Nice little relocatable skeleton spec file example.
+Summary: Quantum Espresso
 
 # Give the package a base name
-%define pkg_base_name git
-%define MODULE_VAR    GIT
+%define pkg_base_name qe
+%define MODULE_VAR    QE
 
 # Create some macros (spec file variables)
-%define major_version 2
-%define minor_version 21
-%define micro_version 0
+%define major_version 6
+%define minor_version 3
+%define micro_version 0 
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{major_version}.%{minor_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
-#%include mpi-defines.inc
+
+%include compiler-defines.inc
+%include mpi-defines.inc
+
+#%include name-defines-noreloc.inc
+
 ########################################
 ### Construct name based on includes ###
 ########################################
 %include name-defines.inc
+
+
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -48,12 +53,15 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
-License:   GPLv2
-Group:     System Environment/Base
-URL:       https://git-scm.com
-Packager:  TACC - cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Release:   1
+License:   GPL
+Group:     Applications/Chemistry
+URL:       http://www.quantum-espresso.org
+Packager:  TACC - hliu@tacc.utexas.edu
+Source:    %{pkg_base_name}-%{pkg_version}-TACC-fat.tar.gz
+#Source0:   %{pkg_base_name}-%{pkg_version}.tar.bz2
+#Source1:   libint-1.1.5.tar.gz
+#Source2:   libxc-2.0.1.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -61,27 +69,24 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale.
+Group: Applications/Chemistry
 %description package
-This is the long description for the package RPM...
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
-
+Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
+It is based on density-functional theory, plane waves, and pseudopotentials.
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
-
+Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
+It is based on density-functional theory, plane waves, and pseudopotentials.
 %description
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
+Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
+It is based on density-functional theory, plane waves, and pseudopotentials.
+
+# install package at /home1/apps, install module file at /opt/apps 
+%define HOME1 /home1/apps
+%define INSTALL_DIR %{HOME1}/%{comp_fam_ver}/%{mpi_fam_ver}/%{pkg_base_name}/%{pkg_version}
 
 #---------------------------------------
 %prep
@@ -105,10 +110,39 @@ Git is easy to learn and has a tiny footprint with lightning fast performance.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
+%setup -n %{pkg_base_name}-%{pkg_version}-TACC-fat
 
 #---------------------------------------
 %build
 #---------------------------------------
+%include compiler-load.inc
+%include mpi-load.inc
+
+export VERSION=6.3
+
+export ARCH=x86_64
+export F77=ifort
+export CC=icc
+export LD_LIBS="-Wl,--as-needed -liomp5 -Wl,--no-as-needed"
+export LDFLAGS="-Wl,--as-needed -liomp5 -Wl,--no-as-needed"
+export DFLAGS="-D__OPENMP -D__INTEL -D__DFTI -D__MPI -D__PARA -D__SCALAPACK -D__ELPA_2016 -D__USE_MANY_FFT -D__NON_BLOCKING_SCATTER -D__EXX_ACE"
+export FFLAGS="-O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -fp-model precise -assume byterecl -qopenmp"
+export ELPAPATH=$PWD
+export ELPAPATH=$ELPAPATH/elpa-2016.11.001.pre/ELPA_201611001pre
+export IFLAGS="-I../include/ -I${MKLROOT}/include -I../FoX/finclude -I../../FoX/finclude -I${ELPAPATH}/include/elpa_openmp-2016.11.001.pre/modules/"
+
+export BLAS_LIBS=" -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl"
+export LAPACK_LIBS="${BLAS_LIBS}"
+export SCALAPACK_LIBS="${ELPAPATH}/lib/libelpa_openmp.a -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64"
+export FFT_LIBS="${BLAS_LIBS}"
+
+./build_hliu_201611001pre_fat
+./configure
+make all
+
+# Remove non active symbolic links in packages
+#rm S3DE/iotk/iotk
+#rm -rf Doc
 
 
 #---------------------------------------
@@ -129,8 +163,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -143,38 +175,14 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-
-export ncores=68
-export git=`pwd`
-export git_install=%{INSTALL_DIR}
-export git_version=%{pkg_version}
-export CC=gcc
-export CFLAGS="-mtune=generic"
-export LDFLAGS="-mtune=generic"
-
-wget https://www.kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
-tar xvfz git-${git_version}.tar.gz
-
-cd git-${git_version}
-
-${git}/git-${git_version}/configure \
---prefix=${git_install}
-
-make all -j ${ncores}
-make install -j ${ncores}
-
-if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-fi
-
-echo "ID %{INSTALL_DIR}"
-echo "RID $RPM_BUILD_ROOT/%{INSTALL_DIR}"
-
-cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-umount %{INSTALL_DIR}/
-
-
   
+  # Create some dummy directories and files for fun
+#  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+#  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+
+cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+chmod -Rf u+rwX,g+rwX,o=rX  $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -195,40 +203,52 @@ umount %{INSTALL_DIR}/
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
-help([[
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
+local help_msg=[[
 
-The %{MODULE_VAR} module file defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_BIN, TACC_%{MODULE_VAR}_LIB for the
-location of the %{MODULE_VAR} distribution, binaries, and libraries
-respectively. GIT_EXEC_PATH, which is also defined, determines where Git looks
-for its sub-programs. You can check the current setting by running 
-"git --exec-path".
+
+To run codes in quantum espresso, e.g. pw.x, include the following lines in
+your job script, using the appropriate input file name:
+module load qe/6.3
+ibrun pw.x -input input.scf
+
+IMPORTANT NOTES:
+
+1. Run your jobs on $SCRATCH rather than $WORK. The $SCRATCH file system is better able to handle these kinds of loads.
+
+2. Especially when running pw.x, set the keyword disk_io to low or none in input so that wavefunction
+will not be written to file at each scf iteration step, but stored in memory.
+
+3. When running ph.x, set the  reduced_io to .true. and run it and redirect its IO to $SCRATCH.
+Do not run multiple ph.x jobs at given time.
 
 Version %{version}
-]])
+]]
 
-whatis("Name: Git")
-whatis("Version: %{version}")
-whatis("Category: library, tools")
-whatis("Keywords: System, Source Control Management, Tools")
-whatis("URL: http://git-scm.com")
-whatis("Description: Fast Version Control System")
+--help(help_msg)
+help(help_msg)
 
+whatis("Name: Quantum Espresso")
+whatis("Version: %{pkg_version}%{dbg}")
+%if "%{is_debug}" == "1"
+setenv("TACC_%{MODULE_VAR}_DEBUG","1")
+%endif
+whatis "Category: application, chemistry"
+whatis "Keywords: Chemistry, Density Functional Theory, Plane Wave, Peudo potentials"
+whatis "URL: http://www.quantum-espresso.org"
+whatis "Description: Integrated suite of computer codes for electronic structure calculations and material modeling at the nanoscale."
 
-prepend_path(                  "PATH" , "%{INSTALL_DIR}/bin"              )
-prepend_path(               "MANPATH" , "%{INSTALL_DIR}/share/man"        )
-setenv (     "TACC_%{MODULE_VAR}_DIR" , "%{INSTALL_DIR}"                  )
-setenv (     "TACC_%{MODULE_VAR}_LIB" , "%{INSTALL_DIR}/lib"              )
-setenv (     "TACC_%{MODULE_VAR}_BIN" , "%{INSTALL_DIR}/bin"              )
-setenv (     "GIT_EXEC_PATH"          , "%{INSTALL_DIR}/libexec/git-core" )
-setenv (     "GIT_TEMPLATE_DIR"       , "%{INSTALL_DIR}/share/git-core/templates" )
+-- Create environment variables.
+local qe_dir="%{INSTALL_DIR}"
+
+prepend_path(    "PATH",                pathJoin(qe_dir, "bin"))
+
+setenv( "TACC_%{MODULE_VAR}_DIR",                qe_dir)
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(qe_dir, "bin"))
+setenv("TACC_%{MODULE_VAR}_PSEUDO",pathJoin(qe_dir,"pseudo"))
 
 EOF
-
+  
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##

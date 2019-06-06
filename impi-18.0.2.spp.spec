@@ -24,11 +24,11 @@ Summary: A Nice little relocatable skeleton spec file example.
 %define MODULE_VAR    IMPI
 
 # Create some macros (spec file variables)
-%define major_version 19
+%define major_version 18
 %define minor_version 0
-%define micro_version 4
+%define micro_version 2
 
-%define lib_version 2019.4.243
+%define lib_version 2018.2.199
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 %define underscore_version %{major_version}_%{minor_version}
@@ -40,7 +40,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+%include name-defines-noreloc-spp.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -51,7 +51,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4%{?dist}
+Release:   2%{?dist}
 License:   proprietary
 Group:     MPI
 URL:       https://software.intel.com/en-us/intel-mpi-library
@@ -142,24 +142,24 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
 
-###%if "%{comp_fam_name}" == "Intel"
-###  # gfortran "use mpi" statements are busted
-###  # fix intel's mess
-###  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-###  ln -s /opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiicc $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicc
-###  ln -s /opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiicpc $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicxx
-###  ln -s /opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiifort $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif77
-###  ln -s /opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiifort $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
-###%endif
-###
-### 
-###%if "%{comp_fam_name}" == "GNU"
-###  # gfortran "use mpi" statements are busted
-###  # fix intel's mess
-###  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-###  cp %{_sourcedir}/mpif90.18 $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
-###  chmod +rx $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
-###%endif
+%if "%{comp_fam_name}" == "Intel"
+  # gfortran "use mpi" statements are busted
+  # fix intel's mess
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+  ln -s /opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiicc $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicc
+  ln -s /opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiicpc $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicxx
+  ln -s /opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiifort $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif77
+  ln -s /opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiifort $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
+%endif
+
+ 
+%if "%{comp_fam_name}" == "GNU"
+  # gfortran "use mpi" statements are busted
+  # fix intel's mess
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+  cp %{_sourcedir}/mpif90.18 $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
+  chmod +rx $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
+%endif
   
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -222,7 +222,7 @@ Version %{version}
 help(help_msg)
 
 -- Create environment variables.
-local base_dir           = "/opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi"
+local base_dir           = "/admin/build/admin/rpms/frontera/intel/install/18.0.2/compilers_and_libraries_%{lib_version}/linux/mpi"
 
 whatis("Name: Intel MPI"                                                    )
 whatis("Version: %{version}"                                                )
@@ -232,9 +232,9 @@ whatis("URL: http://software.intel.com/en-us/articles/intel-mpi-library"    )
 prepend_path( "PATH"                   , pathJoin( base_dir , "intel64/bin"      ) )
 prepend_path( "PATH"                   , pathJoin( "%{INSTALL_DIR}" , "bin"      ) )
 prepend_path( "LD_LIBRARY_PATH"        , pathJoin( base_dir , "intel64/lib"      ) )
-prepend_path( "LD_LIBRARY_PATH"        , pathJoin( base_dir , "intel64/lib/release_mt" ) )
 prepend_path( "MANPATH"                , pathJoin( base_dir , "man"              ) )
 prepend_path( "MODULEPATH"             ,"/opt/apps/%{comp_fam_ver}/impi%{underscore_version}/modulefiles" )
+prepend_path( "MODULEPATH"             ,"/opt/apps/spp/%{comp_fam_ver}/impi%{underscore_version}/modulefiles" )
 prepend_path( "I_MPI_ROOT"             , base_dir                                )
 setenv(       "MPICH_HOME"             , base_dir                                )
 setenv(       "TACC_MPI_GETMODE"       , "impi_hydra"                            )
@@ -251,13 +251,12 @@ setenv(       "I_MPI_F90"              , "%{myFC}"                              
 family(       "MPI"                                                              )
 
 
-if (os.getenv("TACC_SYSTEM") == "frontera") then
+if (os.getenv("TACC_SYSTEM") == "stampede2") then
   depends_on("libfabric")
   local libfabric_lib = os.getenv("TACC_LIBFABRIC_LIB")
   setenv(     "I_MPI_OFI_LIBRARY"      , pathJoin(libfabric_lib,"libfabric.so" ) )
---  setenv(     "FI_PSM2_LAZY_CONN"      , "1"                                     )
---  setenv(     "FI_PROVIDER"            , "psm2"                                  )
---  setenv(     "FI_PROVIDER_PATH"       , pathJoin(base_dir, "intel64/libfabric/lib/prov") )
+  setenv(     "FI_PSM2_LAZY_CONN"      , "1"                                     )
+  setenv(     "FI_PROVIDER"            , "psm2"                                  )
   setenv(     "I_MPI_FABRICS"          , "shm:ofi"                               )
   setenv(     "I_MPI_STARTUP_MODE"     , "pmi_shm_netmod"                        )
 end

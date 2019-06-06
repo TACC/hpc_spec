@@ -4,7 +4,7 @@
 # 2015-12-05 Add hidden and non-relocatable version
 # 2015-08-25
 
-%define name_prefix tacc
+%define name_prefix tacc-spp
 
 # Compiler Specific?
 %if "%{?comp_fam_ver}"

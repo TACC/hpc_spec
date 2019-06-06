@@ -1,6 +1,14 @@
 #
+# Spec file for EIGEN:
+# C++ linear algebra library
+#
+# Victor Eijkhout, 2019
+# based on:
+#
+# Bar.spec, 
 # W. Cyrus Proctor
-# 2015-11-08
+# Antonio Gomez
+# 2015-08-25
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -17,27 +25,30 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: A Nice little relocatable skeleton spec file example.
+Summary:    Set of tools for manipulating geographic and Cartesian data sets
 
 # Give the package a base name
-%define pkg_base_name git
-%define MODULE_VAR    GIT
+%define pkg_base_name eigen
+%define MODULE_VAR    EIGEN
 
 # Create some macros (spec file variables)
-%define major_version 2
-%define minor_version 21
-%define micro_version 0
+%define major_version 3
+%define minor_version 3
+%define micro_version 7
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
+%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+#%include name-defines.inc
+%include name-defines-noreloc-home1.inc
+#%include name-defines-hidden.inc
+#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -48,40 +59,36 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
-License:   GPLv2
-Group:     System Environment/Base
-URL:       https://git-scm.com
-Packager:  TACC - cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Release:   1%{?dist}
+License:   GNU
+Group:     Development/Tools
+Vendor:     Tuxfamily
+Group:      Libraries/maps
+Source:	    eigen-%{version}.tar.gz
+URL:	    http://eigen.tuxfamily.org/
+Packager:   eijkhout@tacc.utexas.edu
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
-
+%global _python_bytecompile_errors_terminate_build 0
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: Eigen is a C++ template library for linear algebra: matrices, vectors, numerical solvers, and related algorithms.
+Group: Applications
 %description package
 This is the long description for the package RPM...
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
 
 %package %{MODULEFILE}
-Summary: The modulefile RPM
-Group: Lmod/Modulefiles
+Summary: Eigen is a C++ template library for linear algebra: matrices, vectors, numerical solvers, and related algorithms.
+Group: Applications
 %description modulefile
 This is the long description for the modulefile RPM...
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
 
-%description
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
+%description 
+Eigen is a C++ template library for linear algebra:
+matrices, vectors, numerical solvers, and related algorithms.
+
 
 #---------------------------------------
 %prep
@@ -92,6 +99,9 @@ Git is easy to learn and has a tiny footprint with lightning fast performance.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+%setup -n %{pkg_base_name}-%{pkg_version}
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -106,6 +116,7 @@ Git is easy to learn and has a tiny footprint with lightning fast performance.
 #--------------------------
 
 
+
 #---------------------------------------
 %build
 #---------------------------------------
@@ -117,9 +128,18 @@ Git is easy to learn and has a tiny footprint with lightning fast performance.
 
 # Setup modules
 %include system-load.inc
-
-# Insert necessary module commands
 module purge
+# Load Compiler
+%include compiler-load.inc
+# Load MPI Library
+#%include mpi-load.inc
+
+# Insert further module commands
+module load cmake
+module use /opt/apps/intel19/python2_7/modulefiles/
+module list
+module spider boost/1.69
+module load boost
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -129,9 +149,19 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
   
+export EIGEN_SRC_DIR=`pwd`
+export EIGEN_BUILD_DIR=/tmp/eigen-build
+rm -rf ${EIGEN_BUILD_DIR}
+mkdir ${EIGEN_BUILD_DIR}
+export EIGEN_INSTALL_DIR=%{INSTALL_DIR}
+
+#
+# Use mount temp trick
+#
+mkdir -p             %{INSTALL_DIR}
+mount -t tmpfs tmpfs %{INSTALL_DIR}
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -143,38 +173,23 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-
-export ncores=68
-export git=`pwd`
-export git_install=%{INSTALL_DIR}
-export git_version=%{pkg_version}
-export CC=gcc
-export CFLAGS="-mtune=generic"
-export LDFLAGS="-mtune=generic"
-
-wget https://www.kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
-tar xvfz git-${git_version}.tar.gz
-
-cd git-${git_version}
-
-${git}/git-${git_version}/configure \
---prefix=${git_install}
-
-make all -j ${ncores}
-make install -j ${ncores}
-
-if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-fi
-
-echo "ID %{INSTALL_DIR}"
-echo "RID $RPM_BUILD_ROOT/%{INSTALL_DIR}"
-
-cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-umount %{INSTALL_DIR}/
-
-
   
+( \
+  cd ${EIGEN_BUILD_DIR} \
+  && echo "using CC=${CC}, CXX=${CXX}, FC=${FC}" \
+  && cmake -D CMAKE_INSTALL_PREFIX:PATH=${EIGEN_INSTALL_DIR} \
+        -D CMAKE_C_COMPILER:FILEPATH=${CC} \
+        -D CMAKE_CXX_COMPILER:FILEPATH=${CXX} \
+        -D CMAKE_Fortran_COMPILER:FILEPATH=${FC} \
+        ${EIGEN_SRC_DIR} \
+  && make && make install \
+  && mkdir ${EIGEN_INSTALL_DIR}/cmake \
+  && cp -r CMake* *cmake ${EIGEN_INSTALL_DIR}/cmake \
+)
+
+cp -r %{INSTALL_DIR}/* ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
+umount tmpfs
+
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -195,51 +210,46 @@ umount %{INSTALL_DIR}/
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
-help([[
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
+help( [[
+Module %{name} loads environmental variables defining
+the location of EIGEN directory, libraries, and binaries:
+TACC_EIGEN_DIR TACC_EIGEN_BIN TACC_EIGEN_SHARE
 
-The %{MODULE_VAR} module file defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_BIN, TACC_%{MODULE_VAR}_LIB for the
-location of the %{MODULE_VAR} distribution, binaries, and libraries
-respectively. GIT_EXEC_PATH, which is also defined, determines where Git looks
-for its sub-programs. You can check the current setting by running 
-"git --exec-path".
+Version: %{version}
+]] )
 
-Version %{version}
-]])
+whatis( "EIGEN" )
+whatis( "Version: %{version}" )
+whatis( "Category: system, development" )
+whatis( "Keywords: Linear Algebra, C++" )
+whatis( "Description: C++ template library for linear algebra" )
+whatis( "URL: http://eigen.tuxfamily.org/" )
 
-whatis("Name: Git")
-whatis("Version: %{version}")
-whatis("Category: library, tools")
-whatis("Keywords: System, Source Control Management, Tools")
-whatis("URL: http://git-scm.com")
-whatis("Description: Fast Version Control System")
+local version =  "%{version}"
+local eigen_dir =  "%{INSTALL_DIR}"
 
+setenv("TACC_EIGEN_DIR",eigen_dir)
+setenv("TACC_EIGEN_BIN",pathJoin( eigen_dir,"bin" ) )
+setenv("TACC_EIGEN_INC",pathJoin( eigen_dir,"include","eigen3" ) )
+setenv("TACC_EIGEN_SHARE",pathJoin( eigen_dir,"share" ) )
 
-prepend_path(                  "PATH" , "%{INSTALL_DIR}/bin"              )
-prepend_path(               "MANPATH" , "%{INSTALL_DIR}/share/man"        )
-setenv (     "TACC_%{MODULE_VAR}_DIR" , "%{INSTALL_DIR}"                  )
-setenv (     "TACC_%{MODULE_VAR}_LIB" , "%{INSTALL_DIR}/lib"              )
-setenv (     "TACC_%{MODULE_VAR}_BIN" , "%{INSTALL_DIR}/bin"              )
-setenv (     "GIT_EXEC_PATH"          , "%{INSTALL_DIR}/libexec/git-core" )
-setenv (     "GIT_TEMPLATE_DIR"       , "%{INSTALL_DIR}/share/git-core/templates" )
-
+prepend_path ("PATH",pathJoin( eigen_dir,"share" ) )
+prepend_path ("PATH",pathJoin( eigen_dir,"bin" ) )
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module3.1.1#################################################
+#%Module1.0####################################################################
 ##
-## version file for %{BASENAME}%{version}
+## Version file for %{name} version %{version}
 ##
-
-set     ModulesVersion      "%{version}"
+set ModulesVersion "%version"
 EOF
-  
-  # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
+  %endif
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
@@ -271,7 +281,6 @@ EOF
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-
 ########################################
 ## Fix Modulefile During Post Install ##
 ########################################
@@ -293,3 +302,6 @@ export PACKAGE_PREUN=1
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
 
+%changelog
+* Tue Jun 04 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial release

@@ -408,6 +408,7 @@ prepend_path( "LD_LIBRARY_PATH"          , pathJoin(gcc_dir,"lib"       )       
 prepend_path( "LD_LIBRARY_PATH"          , pathJoin(gcc_dir,"lib64"     )               )
 prepend_path( "MANPATH"                  , pathJoin(gcc_dir,"share/man" )               )
 prepend_path( "INCLUDE"                  , pathJoin(gcc_dir,"include"   )               )
+prepend_path( "MODULEPATH"               , "/opt/apps/%{gcc_ver}/modulefiles" )
 prepend_path( "MODULEPATH"               , "%{MODULE_PREFIX}/%{gcc_ver}/modulefiles" )
 setenv(       "%{MODULE_VAR}_LIB"        , pathJoin(gcc_dir,"lib64"     )               )
 setenv(       "TACC_%{MODULE_VAR}_DIR"   , gcc_dir                                      )
@@ -420,8 +421,8 @@ family("compiler")
 EOF
 
 
-#cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version << 'EOF'
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
+#cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version << 'EOF'
 #%Module3.1.1#################################################
 ##
 ## version file for %{BASENAME}%{version}
