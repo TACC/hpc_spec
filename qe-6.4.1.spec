@@ -1,4 +1,4 @@
-# Quantum Espresso 6.3.SPEC
+# Quantum Espresso 6.4.1.SPEC
 # 10/2017
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
@@ -24,10 +24,10 @@ Summary: Quantum Espresso
 
 # Create some macros (spec file variables)
 %define major_version 6
-%define minor_version 3
-%define micro_version 0 
+%define minor_version 4
+%define micro_version 1 
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -58,7 +58,7 @@ License:   GPL
 Group:     Applications/Chemistry
 URL:       http://www.quantum-espresso.org
 Packager:  TACC - hliu@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}-TACC-fat.tar.gz
+Source:    %{pkg_base_name}-%{pkg_version}-TACC.tar.gz
 #Source0:   %{pkg_base_name}-%{pkg_version}.tar.bz2
 #Source1:   libint-1.1.5.tar.gz
 #Source2:   libxc-2.0.1.tar.gz
@@ -110,7 +110,7 @@ It is based on density-functional theory, plane waves, and pseudopotentials.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n %{pkg_base_name}-%{pkg_version}-TACC-fat
+%setup -n %{pkg_base_name}-%{pkg_version}-TACC
 
 #---------------------------------------
 %build
@@ -118,24 +118,32 @@ It is based on density-functional theory, plane waves, and pseudopotentials.
 %include compiler-load.inc
 %include mpi-load.inc
 
-export VERSION=6.3
+export VERSION=6.4.1
 
-export ARCH=x86_64
-export F77=ifort
-export CC=icc
-export LD_LIBS="-Wl,--as-needed -liomp5 -Wl,--no-as-needed"
-export LDFLAGS="-Wl,--as-needed -liomp5 -Wl,--no-as-needed"
-export DFLAGS="-D__OPENMP -D__INTEL -D__DFTI -D__MPI -D__PARA -D__SCALAPACK -D__USE_MANY_FFT -D__NON_BLOCKING_SCATTER -D__EXX_ACE"
-export FFLAGS="-O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -fp-model precise -assume byterecl -qopenmp"
-export IFLAGS="-I../include/ -I${MKLROOT}/include -I../FoX/finclude -I../../FoX/finclude"
+# get source 
 
-export BLAS_LIBS=" -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl"
-export LAPACK_LIBS="${BLAS_LIBS}"
-export SCALAPACK_LIBS="-lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64"
-export FFT_LIBS="${BLAS_LIBS}"
+wget http://elpa.mpcdf.mpg.de/html/Releases/2018.11.001/elpa-2018.11.001.tar.gz
+wget https://gitlab.com/QEF/q-e/-/archive/qe-6.4.1/q-e-qe-6.4.1.tar.bz2
 
-#./build_hliu_201611001pre_fat
-./configure
+# build ELPA
+tar xvf elpa-2018.11.001.tar.gz
+cd elpa-2018.11.001
+wget --no-check-certificate https://github.com/hfp/xconfigure/raw/master/configure-get.sh
+chmod +x configure-get.sh
+./configure-get.sh elpa
+
+./configure-elpa-skx-omp.sh
+make -j ; make install
+
+cd ..
+
+#build qe and linked against the built elpa
+tar xvf q-e-qe-6.4.1.tar.bz2
+cd q-e-qe-6.4.1
+wget --no-check-certificate https://github.com/hfp/xconfigure/raw/master/configure-get.sh
+chmod +x configure-get.sh
+./configure-get.sh qe
+./configure-qe-skx-omp.sh
 make all
 
 # Remove non active symbolic links in packages
@@ -207,7 +215,7 @@ local help_msg=[[
 
 To run codes in quantum espresso, e.g. pw.x, include the following lines in
 your job script, using the appropriate input file name:
-module load qe/6.3
+module load qe/6.4.1
 ibrun pw.x -input input.scf
 
 IMPORTANT NOTES:

@@ -1,5 +1,11 @@
-# Quantum Espresso 6.3.SPEC
-# 10/2017
+#
+# Kent Milfeld  rpmbuild -bb htop-2.2.0.spec 2>&1 | tee htop-2.2.0_r1_a.log
+
+# r=/admin/build/admin/rpms/frontera/RPMS/x86_64
+# rpm -hiv --relocate /tmprpm=/opt/apps  $r/tacc-htop-modulefile-2.2.0-1.el7.x86_64.rpm
+# rpm -hiv --relocate /tmpmod=/opt/apps  $r/tacc-htop-package-2.2.0-1.el7.x86_64.rpm
+
+# 2019-06-29
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -12,37 +18,34 @@
 # Typical Command-Line Example:
 # ./build_rpm.sh Bar.spec
 # cd ../RPMS/x86_64
-# rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
-# rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
-# rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: Quantum Espresso
+#   rpmbuild -bb htop-2.2.0.spec 2>&1 | tee htop-2.2.0.log2
+
+# rpm -hiv --relocate /tmprpm=/opt/apps $r/tacc-htop-package-2.2.0-1.el7.centos.x86_64.rpm
+# rpm -hiv --relocate /tmpmod=/opt/apps $r/tacc-htop-modulefile-2.2.0-1.el7.centos.x86_64.rpm
+# rpm -e tacc-htop-package-2.2.0 tacc-htop-modulefile-2.2.0
+
+Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name qe
-%define MODULE_VAR    QE
+%define pkg_base_name htop
+%define MODULE_VAR    HTOP
 
 # Create some macros (spec file variables)
-%define major_version 6
-%define minor_version 3
-%define micro_version 0 
+%define major_version 2
+%define minor_version 2 
+%define micro_version 0
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-
-%include compiler-defines.inc
-%include mpi-defines.inc
-
-#%include name-defines-noreloc.inc
-
+#%include compiler-defines.inc
+#%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
 %include name-defines.inc
-
-
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -53,15 +56,13 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   1%{?dist}
 License:   GPL
-Group:     Applications/Chemistry
-URL:       http://www.quantum-espresso.org
-Packager:  TACC - hliu@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}-TACC-fat.tar.gz
-#Source0:   %{pkg_base_name}-%{pkg_version}.tar.bz2
-#Source1:   libint-1.1.5.tar.gz
-#Source2:   libxc-2.0.1.tar.gz
+Group:     System Environment/Base
+URL:       https://hisham.hm/htop/
+Packager:  TACC - milfeld@tacc.utexas.edu
+#Source:    %{pkg_base_name}-%{pkg_version}.tar
+Source:    htop-2.2.0.tar
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -69,24 +70,21 @@ Source:    %{pkg_base_name}-%{pkg_version}-TACC-fat.tar.gz
 
 
 %package %{PACKAGE}
-Summary: Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale.
-Group: Applications/Chemistry
+Summary: The package RPM
+Group: Development/Tools
 %description package
-Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
-It is based on density-functional theory, plane waves, and pseudopotentials.
+This is the long description for the package RPM...
+Htop is a ncurses-based process viewer for Linux.
+
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
-It is based on density-functional theory, plane waves, and pseudopotentials.
-%description
-Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
-It is based on density-functional theory, plane waves, and pseudopotentials.
+This is the long description for the modulefile RPM...
+Htop is a ncurses-based process viewer for Linux.
 
-# install package at /home1/apps, install module file at /opt/apps 
-%define HOME1 /home1/apps
-%define INSTALL_DIR %{HOME1}/%{comp_fam_ver}/%{mpi_fam_ver}/%{pkg_base_name}/%{pkg_version}
+%description
+Git is easy to learn and has a tiny footprint with lightning fast performance.
 
 #---------------------------------------
 %prep
@@ -97,6 +95,9 @@ It is based on density-functional theory, plane waves, and pseudopotentials.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+%setup -n %{pkg_base_name}-%{pkg_version}
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -110,37 +111,10 @@ It is based on density-functional theory, plane waves, and pseudopotentials.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n %{pkg_base_name}-%{pkg_version}-TACC-fat
 
 #---------------------------------------
 %build
 #---------------------------------------
-%include compiler-load.inc
-%include mpi-load.inc
-
-export VERSION=6.3
-
-export ARCH=x86_64
-export F77=ifort
-export CC=icc
-export LD_LIBS="-Wl,--as-needed -liomp5 -Wl,--no-as-needed"
-export LDFLAGS="-Wl,--as-needed -liomp5 -Wl,--no-as-needed"
-export DFLAGS="-D__OPENMP -D__INTEL -D__DFTI -D__MPI -D__PARA -D__SCALAPACK -D__USE_MANY_FFT -D__NON_BLOCKING_SCATTER -D__EXX_ACE"
-export FFLAGS="-O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -fp-model precise -assume byterecl -qopenmp"
-export IFLAGS="-I../include/ -I${MKLROOT}/include -I../FoX/finclude -I../../FoX/finclude"
-
-export BLAS_LIBS=" -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl"
-export LAPACK_LIBS="${BLAS_LIBS}"
-export SCALAPACK_LIBS="-lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64"
-export FFT_LIBS="${BLAS_LIBS}"
-
-#./build_hliu_201611001pre_fat
-./configure
-make all
-
-# Remove non active symbolic links in packages
-#rm S3DE/iotk/iotk
-#rm -rf Doc
 
 
 #---------------------------------------
@@ -161,6 +135,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  mkdir -p                 %{INSTALL_DIR}
+  mount -t tmpfs tmpfs     %{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -173,14 +149,26 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
+
+# make cpu number beging with 0 (to match proc-ids)  5/2/2019 KFM
+sed -i 's/countCPUsFromZero = false/countCPUsFromZero = true/' Settings.c
+
+./configure --prefix=%{INSTALL_DIR}
+make 
+make install
+
+if [ !  -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+fi
+
+echo "ID %{INSTALL_DIR}"
+echo "RID $RPM_BUILD_ROOT/%{INSTALL_DIR}"
+
+cp -r  %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+umount %{INSTALL_DIR}/
+
+
   
-  # Create some dummy directories and files for fun
-#  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-#  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
-
-cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}/
-chmod -Rf u+rwX,g+rwX,o=rX  $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -201,52 +189,39 @@ chmod -Rf u+rwX,g+rwX,o=rX  $RPM_BUILD_ROOT/%{INSTALL_DIR}
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
+help([[
+Htop is a ncurses-based process viewer for Linux.
 
+The %{MODULE_VAR} module file defines the following environment variables:
+TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_BIN and TACC_%{MODULE_VAR}_MAN 
+for the location of the %{MODULE_VAR} distribution, binaries, and man
+pages, respectively.
+The binary and man directories are pre-appended to the PATH and MANPATH variables.
 
-To run codes in quantum espresso, e.g. pw.x, include the following lines in
-your job script, using the appropriate input file name:
-module load qe/6.3
-ibrun pw.x -input input.scf
+To run htop, execute:
 
-IMPORTANT NOTES:
-
-1. Run your jobs on $SCRATCH rather than $WORK. The $SCRATCH file system is better able to handle these kinds of loads.
-
-2. Especially when running pw.x, set the keyword disk_io to low or none in input so that wavefunction
-will not be written to file at each scf iteration step, but stored in memory.
-
-3. When running ph.x, set the  reduced_io to .true. and run it and redirect its IO to $SCRATCH.
-Do not run multiple ph.x jobs at given time.
+htop
 
 Version %{version}
-]]
+]])
 
---help(help_msg)
-help(help_msg)
+whatis("Name: HTOP")
+whatis("Version: %{version}")
+whatis("Category: library, tools")
+whatis("Keywords: System, Process Viewer, Tools")
+whatis("URL: https://hisham.hm/htop/")
+whatis("Description: Process Viewer using ncurses, info is similar to top")
 
-whatis("Name: Quantum Espresso")
-whatis("Version: %{pkg_version}%{dbg}")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
-whatis "Category: application, chemistry"
-whatis "Keywords: Chemistry, Density Functional Theory, Plane Wave, Peudo potentials"
-whatis "URL: http://www.quantum-espresso.org"
-whatis "Description: Integrated suite of computer codes for electronic structure calculations and material modeling at the nanoscale."
 
--- Create environment variables.
-local qe_dir="%{INSTALL_DIR}"
-
-prepend_path(    "PATH",                pathJoin(qe_dir, "bin"))
-
-setenv( "TACC_%{MODULE_VAR}_DIR",                qe_dir)
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(qe_dir, "bin"))
-setenv("TACC_%{MODULE_VAR}_PSEUDO",pathJoin(qe_dir,"pseudo"))
+prepend_path(                  "PATH" , "%{INSTALL_DIR}/bin"              )
+prepend_path(               "MANPATH" , "%{INSTALL_DIR}/share/man"        )
+setenv (     "TACC_%{MODULE_VAR}_DIR" , "%{INSTALL_DIR}"                  )
+setenv (     "TACC_%{MODULE_VAR}_BIN" , "%{INSTALL_DIR}/bin"              )
+setenv (     "TACC_%{MODULE_VAR}_MAN" , "%{INSTALL_DIR}/share/man"              )
 
 EOF
-  
+
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##

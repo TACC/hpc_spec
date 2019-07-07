@@ -1,5 +1,15 @@
-# Quantum Espresso 6.3.SPEC
-# 10/2017
+#
+# Spec file for GMT:
+# Generic Mapping Tools
+# See http://gmt.soest.hawaii.edu/
+#
+# Victor Eijkhout, 2017
+# based on:
+#
+# Bar.spec, 
+# W. Cyrus Proctor
+# Antonio Gomez
+# 2015-08-25
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -16,33 +26,30 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: Quantum Espresso
+Summary:    Set of tools for manipulating geographic and Cartesian data sets
 
 # Give the package a base name
-%define pkg_base_name qe
-%define MODULE_VAR    QE
+%define pkg_base_name gmt
+%define MODULE_VAR    GMT
 
 # Create some macros (spec file variables)
-%define major_version 6
-%define minor_version 3
-%define micro_version 0 
+%define major_version 5
+%define minor_version 4
+%define micro_version 5
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-
 %include compiler-defines.inc
-%include mpi-defines.inc
-
-#%include name-defines-noreloc.inc
-
+#%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
-
-
+#%include name-defines.inc
+%include name-defines-noreloc-home1.inc
+#%include name-defines-hidden.inc
+#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -53,40 +60,39 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
-License:   GPL
-Group:     Applications/Chemistry
-URL:       http://www.quantum-espresso.org
-Packager:  TACC - hliu@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}-TACC-fat.tar.gz
-#Source0:   %{pkg_base_name}-%{pkg_version}.tar.bz2
-#Source1:   libint-1.1.5.tar.gz
-#Source2:   libxc-2.0.1.tar.gz
+Release:   1%{?dist}
+License:   GNU
+Group:     Development/Tools
+Vendor:     SOEST - hawaii
+Group:      Libraries/maps
+Source:	    gmt-%{version}.tar.gz
+URL:	    http://gmt.soest.hawaii.edu/ 
+Packager:   eijkhout@tacc.utexas.edu
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
+%global _python_bytecompile_errors_terminate_build 0
 
+# coastlines database
+%define gshhg_version 2.3.6
 
 %package %{PACKAGE}
-Summary: Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale.
-Group: Applications/Chemistry
+Summary: GMT is an open source collection of tools for manipulating geographic and Cartesian data sets
+Group: Applications
 %description package
-Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
-It is based on density-functional theory, plane waves, and pseudopotentials.
-%package %{MODULEFILE}
-Summary: The modulefile RPM
-Group: Lmod/Modulefiles
-%description modulefile
-Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
-It is based on density-functional theory, plane waves, and pseudopotentials.
-%description
-Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
-It is based on density-functional theory, plane waves, and pseudopotentials.
+This is the long description for the package RPM...
 
-# install package at /home1/apps, install module file at /opt/apps 
-%define HOME1 /home1/apps
-%define INSTALL_DIR %{HOME1}/%{comp_fam_ver}/%{mpi_fam_ver}/%{pkg_base_name}/%{pkg_version}
+%package %{MODULEFILE}
+Summary: GMT is an open source collection of tools for manipulating geographic and Cartesian data sets
+Group: Applications
+%description modulefile
+This is the long description for the modulefile RPM...
+
+%description
+GMT is an open source collection of 60 
+tools for manipulating geographic and Cartesian data sets
+
 
 #---------------------------------------
 %prep
@@ -97,6 +103,9 @@ It is based on density-functional theory, plane waves, and pseudopotentials.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+%setup -n %{pkg_base_name}-%{pkg_version}
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -110,37 +119,11 @@ It is based on density-functional theory, plane waves, and pseudopotentials.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n %{pkg_base_name}-%{pkg_version}-TACC-fat
+
 
 #---------------------------------------
 %build
 #---------------------------------------
-%include compiler-load.inc
-%include mpi-load.inc
-
-export VERSION=6.3
-
-export ARCH=x86_64
-export F77=ifort
-export CC=icc
-export LD_LIBS="-Wl,--as-needed -liomp5 -Wl,--no-as-needed"
-export LDFLAGS="-Wl,--as-needed -liomp5 -Wl,--no-as-needed"
-export DFLAGS="-D__OPENMP -D__INTEL -D__DFTI -D__MPI -D__PARA -D__SCALAPACK -D__USE_MANY_FFT -D__NON_BLOCKING_SCATTER -D__EXX_ACE"
-export FFLAGS="-O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -fp-model precise -assume byterecl -qopenmp"
-export IFLAGS="-I../include/ -I${MKLROOT}/include -I../FoX/finclude -I../../FoX/finclude"
-
-export BLAS_LIBS=" -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl"
-export LAPACK_LIBS="${BLAS_LIBS}"
-export SCALAPACK_LIBS="-lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64"
-export FFT_LIBS="${BLAS_LIBS}"
-
-#./build_hliu_201611001pre_fat
-./configure
-make all
-
-# Remove non active symbolic links in packages
-#rm S3DE/iotk/iotk
-#rm -rf Doc
 
 
 #---------------------------------------
@@ -149,9 +132,18 @@ make all
 
 # Setup modules
 %include system-load.inc
-
-# Insert necessary module commands
 module purge
+# Load Compiler
+%include compiler-load.inc
+# Load MPI Library
+#%include mpi-load.inc
+
+# Insert further module commands
+# need netcdf libs also
+ module load netcdf
+ export NETCDF_INC=${TACC_NETCDF_INC}
+ export NETCDF_LIB=${TACC_NETCDF_LIB}
+
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -162,6 +154,12 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
   
+#
+# Use mount temp trick
+#
+mkdir -p             %{INSTALL_DIR}
+mount -t tmpfs tmpfs %{INSTALL_DIR}
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -175,11 +173,56 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   
   # Create some dummy directories and files for fun
-#  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-#  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
+  
+#
+# config/make
+#
 
-cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}/
-chmod -Rf u+rwX,g+rwX,o=rX  $RPM_BUILD_ROOT/%{INSTALL_DIR}
+mkdir -p %{INSTALL_DIR}/share
+
+sed \
+    -e '/GSHHG_ROOT/s/^#//' \
+    -e '/COPY_GSHHG/s/^#//' \
+    -e 's!gshhg_path!%{INSTALL_DIR}/share/gshhg-gmt-%{gshhg_version}!' \
+    cmake/ConfigUserTemplate.cmake > cmake/ConfigUser.cmake
+grep -i gshhg cmake/ConfigUser*.cmake
+
+pushd %{INSTALL_DIR}
+
+# unpack extra datasets
+( cd share ; tar fxz %{_topdir}/SOURCES/gshhg-gmt-%{gshhg_version}.tar.gz )
+
+# recent versions use cmake instead of configure
+module load cmake
+
+# use icc not gcc
+ export CC=`which icc`
+
+# VLE i can't find this file.....
+# tar jxvf /home1/0000/build/rpms/SOURCES/GMT4.5.5_triangle_repack_JL.tar.bz2
+
+cmake \
+  -D CMAKE_INSTALL_PREFIX:PATH=%{INSTALL_DIR} \
+  %{_topdir}/BUILD/gmt-%{version} \
+
+make 
+
+mkdir -p                 $RPM_BUILD_ROOT/%{INSTALL_DIR}
+make install
+
+#create gmt.conf to make GMT use SI units instead of US
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/share
+cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/share/gmt.conf << 'EOF'
+SI
+EOF
+
+popd
+  
+cp -r %{INSTALL_DIR}/* ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
+umount tmpfs
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -201,63 +244,47 @@ chmod -Rf u+rwX,g+rwX,o=rX  $RPM_BUILD_ROOT/%{INSTALL_DIR}
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
+help( [[
+Module %{name} loads environmental variables defining
+the location of GMT directory, libraries, and binaries:
+TACC_GMT_DIR TACC_GMT_LIB TACC_GMT_BIN
 
+Version: %{version}
+]] )
 
-To run codes in quantum espresso, e.g. pw.x, include the following lines in
-your job script, using the appropriate input file name:
-module load qe/6.3
-ibrun pw.x -input input.scf
+whatis( "GMT" )
+whatis( "Version: %{version}" )
+whatis( "Category: system, development" )
+whatis( "Keywords: System, Cartesian Grids" )
+whatis( "Description: Generic Mapping Tools: Tools for manipulating geographic and Cartesian data sets" )
+whatis( "URL: http://gmt.soest.hawaii.edu/" )
 
-IMPORTANT NOTES:
+local version =  "%{version}"
+local gmt_dir =  "%{INSTALL_DIR}"
 
-1. Run your jobs on $SCRATCH rather than $WORK. The $SCRATCH file system is better able to handle these kinds of loads.
+setenv("TACC_GMT_DIR",gmt_dir)
+setenv("TACC_GMT_BIN",pathJoin( gmt_dir,"bin" ) )
+setenv("TACC_GMT_LIB",pathJoin( gmt_dir,"lib" ) )
+setenv("TACC_GMT_SHARE",pathJoin( gmt_dir,"share" ) )
 
-2. Especially when running pw.x, set the keyword disk_io to low or none in input so that wavefunction
-will not be written to file at each scf iteration step, but stored in memory.
-
-3. When running ph.x, set the  reduced_io to .true. and run it and redirect its IO to $SCRATCH.
-Do not run multiple ph.x jobs at given time.
-
-Version %{version}
-]]
-
---help(help_msg)
-help(help_msg)
-
-whatis("Name: Quantum Espresso")
-whatis("Version: %{pkg_version}%{dbg}")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
-whatis "Category: application, chemistry"
-whatis "Keywords: Chemistry, Density Functional Theory, Plane Wave, Peudo potentials"
-whatis "URL: http://www.quantum-espresso.org"
-whatis "Description: Integrated suite of computer codes for electronic structure calculations and material modeling at the nanoscale."
-
--- Create environment variables.
-local qe_dir="%{INSTALL_DIR}"
-
-prepend_path(    "PATH",                pathJoin(qe_dir, "bin"))
-
-setenv( "TACC_%{MODULE_VAR}_DIR",                qe_dir)
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(qe_dir, "bin"))
-setenv("TACC_%{MODULE_VAR}_PSEUDO",pathJoin(qe_dir,"pseudo"))
-
+prepend_path ("PATH",pathJoin( gmt_dir,"share" ) )
+prepend_path ("PATH",pathJoin( gmt_dir,"bin" ) )
+prepend_path ("LD_LIBRARY_PATH",pathJoin( gmt_dir, "lib" ) )
 EOF
-  
+
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module3.1.1#################################################
+#%Module1.0####################################################################
 ##
-## version file for %{BASENAME}%{version}
+## Version file for %{name} version %{version}
 ##
-
-set     ModulesVersion      "%{version}"
+set ModulesVersion "%version"
 EOF
-  
-  # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
+  %endif
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
@@ -289,7 +316,6 @@ EOF
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-
 ########################################
 ## Fix Modulefile During Post Install ##
 ########################################
@@ -311,3 +337,6 @@ export PACKAGE_PREUN=1
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
 
+%changelog
+* Fri Jun 07 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial release

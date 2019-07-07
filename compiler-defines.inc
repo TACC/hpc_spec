@@ -86,7 +86,7 @@
   %define comp_fam_ver intel18
   %define comp_fam_name Intel
   %define is_intel 1
-  %define comp_module intel/18.0.2
+  %define comp_module intel/18.0.5
 %endif
 %if "%{is_intel19}" == "1"
   %define comp_fam intel

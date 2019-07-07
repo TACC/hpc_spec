@@ -3,9 +3,9 @@
 #    LAMMPS SPEC FILE
 #
 #    MACHINE       :   TACC FRONTERA
-#    VERSION       :   12 DEC 2018 - patch_31May2019
+#    VERSION       :   5 Jun 2019 - patch_5Jun2019
 #    AUTHOR        :   Albert Lu
-#    LAST MODIFIED :   06-06-2019
+#    LAST MODIFIED :   06-21-2019
 #
 ################################################################
 
@@ -25,13 +25,13 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 #
-# rpmbuild -bb --define 'is_intel19 1' --define 'is_impi 1' --define 'mpiV 19_4' lammps-12Dec18_i19_p5.spec | tee log_lammps_12Dec18
+# rpmbuild -bb --define 'is_intel19 1' --define 'is_impi 1' --define 'mpiV 19_4' lammps-5Jun19_i19_v2.spec | tee log_lammps_5Jun19
 #
 
 %define pkg_base_name lammps
 %define MODULE_VAR    LAMMPS 
 
-%define major_version 12Dec18
+%define major_version 5Jun19
 %define minor_version 0
 %define micro_version 0
 
@@ -42,7 +42,8 @@
 %include rpm-dir.inc                  
 %include compiler-defines.inc
 %include mpi-defines.inc
-%include name-defines-noreloc.inc
+%include name-defines.inc
+#%include name-defines-noreloc.inc
 
 ################################################################
 
@@ -51,7 +52,7 @@ Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
-Release:   1%{?dist}
+Release:   3%{?dist}
 License:   GPL
 Vendor:    Sandia
 Group:     applications/chemistry
@@ -125,14 +126,13 @@ as well as a syntax for looping over runs and breaking out of loops.
  
   ml use /opt/apps/intel19/modulefiles
   module load intel
-  module load impi 
-  module load python3
-  module load hdf5
+  module load impi
+  module load python3/3.7.0
+  #module load hdf5/1.10.4
   #module load qt5
   #module load vtk/8.1.1
-  #module load gsl
-  module load netcdf
-  module load gsl
+  #module load netcdf/4.6.2
+  module load gsl/2.5
   module load cmake
   set -x
 
@@ -148,19 +148,14 @@ as well as a syntax for looping over runs and breaking out of loops.
 
   # List of additional library to be installed
   #liblist="atc awpmd colvars compress h5md kim linalg netcdf plumed poems python quip scafacos smd voronoi vtk ffmpeg"
-  #liblist="atc awpmd colvars compress h5md     linalg netcdf plumed poems python quip scafacos smd voronoi vtk ffmpeg"
 
-  #liblist="atc awpmd colvars compress       kim linalg               poems                      smd voronoi           "
-  #liblist="atc awpmd colvars compress            linalg               poems                      smd voronoi           "
-#  liblist="atc awpmd colvars compress                                  poems                      smd voronoi           "
-  
-  liblist="atc awpmd colvars compress h5md kim linalg netcdf plumed poems python quip scafacos smd voronoi     ffmpeg"
-  #liblist="plumed"
+  #liblist=""
+  liblist="atc awpmd colvars compress      kim linalg       plumed poems python         scafacos  smd voronoi    ffmpeg"
+
   # Include all packages which don't need external libraries
   # Remove the packges that's not in the liblist
 
-  cd src
-  
+  cd src  
   make yes-all
   make no-ext
   make no-gpu
@@ -460,6 +455,7 @@ EOF
 
     cd ../
 
+    rm -rf plumed2-src
     ln -s ${PLUMED_INSTALL_DIR}/include includelink
     ln -s ${PLUMED_INSTALL_DIR}/lib liblink
 
@@ -517,11 +513,11 @@ EOF
 
     make libquip
 
-    rm -r src
-    rm -r tests
-    rm -r doc
-    rm -r docker
-    rm -r Singularity
+    rm -rf src
+    rm -rf tests
+    rm -rf doc
+    rm -rf docker
+    rm -rf Singularity
 
     cd ../../..
 
@@ -551,7 +547,7 @@ EOF
     make install
 
     cd ../
-
+    rm -rf scafacos-src
     ln -s ${SCAFACOS_DIR}/include includelink
     ln -s ${SCAFACOS_DIR}/lib liblink
 
@@ -597,7 +593,7 @@ EOF
     # voronoi library source code
     cd lib/voronoi/src/voro++-${vorover}
 
-    make -j 4 CXX="mpiicpc" CFLAGS="-O3 -Wall -fPIC -ansi -pedantic -xCORE-AVX2 -axCORE-AVX512,MIC-AVX512"
+    make -j 4 CXX="mpiicpc" CFLAGS="-O3 -Wall -fPIC -ansi -pedantic -xCORE-AVX512"
 
     rm -rf examples
     rm -rf html
@@ -743,28 +739,25 @@ EOF
 
   cd src
 
-  # Make lammmps (use src/MAKE/MACHINES/Makefile.stampede)
+  # Make lammmps (use src/MAKE/MACHINES/Makefile.frontera)
 
-  cat MAKE/OPTIONS/Makefile.intel_cpu_intelmpi | sed 's/-xHost/-xCOMMON-AVX512 -axMIC-AVX512/g' | sed 's/-restrict/-restrict -diag-disable=cpu-dispatch/g'> MAKE/MACHINES/Makefile.stampede
+  cat MAKE/OPTIONS/Makefile.intel_cpu_intelmpi | sed 's/-xHost/-xCORE-AVX512/g' | sed 's/-restrict/-restrict -diag-disable=cpu-dispatch/g'> MAKE/MACHINES/Makefile.frontera
 
-  make -j 10 stampede \
-            LMP_INC="-DLAMMPS_GZIP -DLAMMPS_EXCEPTIONS"
+  make -j 10 frontera \
+            LMP_INC="-DLAMMPS_GZIP -DLAMMPS_EXCEPTIONS -DLAMMPS_FFMPEG -DLAMMPS_PNG" \
+            FFT_INC="-DFFT_SINGLE" \
+            FFT_LIB="-lmkl_intel_lp64 -lmkl_sequential -lmkl_core" \
+            JPG_INC="-I/usr/lib64" \
+            JPG_PATH="-L/usr/lib64" \
+            JPG_LIB="-lpng"
 
-#  make -j 10 stampede \
-#            LMP_INC="-DLAMMPS_GZIP -DLAMMPS_JPEG -DLAMMPS_FFMPEG -DLAMMPS_EXCEPTIONS" \
-#            JPG_INC="-I/usr/lib64" \
-#            JPG_PATH="-L/usr/lib64" \
-#            JPG_LIB="-lpng -ljpeg"
-
-#  if [[ $liblist =~ "netcdf"    ]]; then make no-user-netcdf  ; fi
-  make -j 10 stampede mode=shlib \
-            LMP_INC="-DLAMMPS_GZIP -DLAMMPS_EXCEPTIONS"
-
-#  make -j 10 stampede mode=shlib \
-#            LMP_INC="-DLAMMPS_GZIP -DLAMMPS_JPEG -DLAMMPS_FFMPEG -DLAMMPS_EXCEPTIONS" \
-#            JPG_INC="-I/usr/lib64" \
-#            JPG_PATH="-L/usr/lib64" \
-#            JPG_LIB="-lpng -ljpeg"
+  make -j 10 frontera mode=shlib \
+            LMP_INC="-DLAMMPS_GZIP -DLAMMPS_EXCEPTIONS -DLAMMPS_FFMPEG -DLAMMPS_PNG" \
+            FFT_INC="-DFFT_SINGLE" \
+            FFT_LIB="-lmkl_intel_lp64 -lmkl_sequential -lmkl_core" \
+            JPG_INC="-I/usr/lib64" \
+            JPG_PATH="-L/usr/lib64" \
+            JPG_LIB="-lpng"
   cd ..
 
   rm -rf /opt/apps/intel19/impi19_0/lammps/%{major_version}
@@ -789,7 +782,7 @@ echo "Installing the modulefile?: %{BUILD_MODULEFILE}"
   
   # cleanup lib directories that we won't use
   rm -rf lib/gpu lib/kokkos lib/molfile lib/mscg
-  rm -rf lib/qmmm lib/reax
+  rm -rf lib/qmmm lib/reax lib/h5md lib/netcdf lib/quip lib/vtk
 
   # cleanup tools directories
   rm -rf tools
@@ -809,18 +802,19 @@ echo "Installing the modulefile?: %{BUILD_MODULEFILE}"
   find lib -name \*\*.blk -exec rm {} \;
 
   # cleanup obj files
-  rm -rf src/Obj_stampede
+  rm -rf src/Obj_frontera
+  rm -rf src/Obj_shared_frontera
 
   # clean doc files
   rm -rf doc
 
   # create bin
   mkdir                                 $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  mv src/lmp_stampede                   $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/lmp_frontera
+  mv src/lmp_frontera                   $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/lmp_frontera
 
   # create lib/lammps
   mkdir -p                              $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/lammps
-  mv src/liblammps_stampede.so          $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/lammps/liblammps_frontera.so
+  mv src/liblamm*                       $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/lammps
   cp python/lammps.py                   $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/lammps
 
   # back to lammps build root
@@ -828,7 +822,7 @@ echo "Installing the modulefile?: %{BUILD_MODULEFILE}"
   cp -pR lib/*           $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
   cp -pR potentials      $RPM_BUILD_ROOT/%{INSTALL_DIR}/potentials
   cp -pR python          $RPM_BUILD_ROOT/%{INSTALL_DIR}/python
-  cp -pR src             $RPM_BUILD_ROOT/%{INSTALL_DIR}/src  
+  # cp -pR src             $RPM_BUILD_ROOT/%{INSTALL_DIR}/src  
   
   chmod -Rf u+rwX,g+rwX,o=rX $RPM_BUILD_ROOT/%{INSTALL_DIR}/*
 
@@ -881,16 +875,16 @@ Run LAMMPS program
 The LAMMPS modulefile defines the following environment 
 variables (with the prefix "TACC_LAMMPS_"):
 
-TACC_LAMMPS_DIR/BIN/LIB/POT/PYTHON/SRC
+TACC_LAMMPS_DIR/BIN/LIB/POT/PYTHON
 
 for the location of the LAMMPS home, binaries, libraries, potentials, 
-python, and source respectively. The modulefile also appends TACC_LAMMPS_BIN to PATH.
+and python scripts respectively. The modulefile also appends TACC_LAMMPS_BIN to PATH.
 
 - PACKAGES
 
 The following packages were not installed:
 
-  GPU, KOKKOS, LATTE, LINALG, MESSAGE, MSCG, REAX, USER-ADIOS USER-MOLFILE, USER-QMMM
+  GPU, H5MD, KOKKOS, LATTE, MESSAGE, MSCG, NETCDF, QUIP, REAX, USER-ADIOS USER-MOLFILE, USER-QMMM, USER-VTK
 
 Information of external libraries:
 
@@ -905,9 +899,6 @@ Information of external libraries:
       $ kim-api-v1-collections-management list
     
     to show the collections.
-
-  * QUIP (No GAP)
-    https://github.com/libAtoms/QUIP.git
 
   * VORONOI  
     voro++-%{vorover}
@@ -939,7 +930,6 @@ setenv("TACC_LAMMPS_DIR"       ,lmp_dir)
 setenv("TACC_LAMMPS_BIN"       ,pathJoin(lmp_dir,"bin"))
 setenv("TACC_LAMMPS_LIB"       ,pathJoin(lmp_dir,"lib"))
 setenv("TACC_LAMMPS_POT"       ,pathJoin(lmp_dir,"potentials"))
-setenv("TACC_LAMMPS_SRC"       ,pathJoin(lmp_dir,"src"))
 
 local kim_dir="%{INSTALL_DIR}/lib/kim/"
 local kim_model_dir="%{INSTALL_DIR}/lib/kim/kim_env_collection/models"
@@ -961,9 +951,13 @@ setenv("KIM_API_SIMULATORS_DIR"    ,kim_simulator_dir)
 
 append_path("LD_LIBRARY_PATH",pathJoin(lmp_dir,"lib/ffmpeg/lib"))
 append_path("LD_LIBRARY_PATH",pathJoin(lmp_dir,"lib/lammps"))
+append_path("LD_LIBRARY_PATH",pathJoin(lmp_dir,"lib/kim/installed-kim-api/lib64"))
 
 prepend_path("PYTHONPATH", pathJoin(lmp_dir,"python"))
 prepend_path("PYTHONPATH", pathJoin(lmp_dir,"lib/lammps"))
+
+load("python3/3.7.0")
+load("gsl/2.5")
 
 EOF
 

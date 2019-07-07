@@ -51,7 +51,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4%{?dist}
+Release:   5%{?dist}
 License:   proprietary
 Group:     MPI
 URL:       https://software.intel.com/en-us/intel-mpi-library
@@ -242,7 +242,7 @@ setenv(       "TACC_IMPI_DIR"          , base_dir                               
 setenv(       "TACC_IMPI_BIN"          , pathJoin( base_dir , "intel64/bin"      ) )
 setenv(       "TACC_IMPI_LIB"          , pathJoin( base_dir , "intel64/lib"      ) )
 setenv(       "TACC_IMPI_INC"          , pathJoin( base_dir , "intel64/include"  ) )
-setenv(       "I_MPI_JOB_FAST_STARTUP" , "1"                                     )
+-- setenv(       "I_MPI_JOB_FAST_STARTUP" , "1"                                     )
 setenv(       "I_MPI_CC"               , "%{myCC}"                               )
 setenv(       "I_MPI_CXX"              , "%{myCXX}"                              )
 setenv(       "I_MPI_FC"               , "%{myFC}"                               )
@@ -254,12 +254,12 @@ family(       "MPI"                                                             
 if (os.getenv("TACC_SYSTEM") == "frontera") then
   depends_on("libfabric")
   local libfabric_lib = os.getenv("TACC_LIBFABRIC_LIB")
-  setenv(     "I_MPI_OFI_LIBRARY"      , pathJoin(libfabric_lib,"libfabric.so" ) )
+--  setenv(     "I_MPI_OFI_LIBRARY"      , pathJoin(libfabric_lib,"libfabric.so" ) )
 --  setenv(     "FI_PSM2_LAZY_CONN"      , "1"                                     )
 --  setenv(     "FI_PROVIDER"            , "psm2"                                  )
 --  setenv(     "FI_PROVIDER_PATH"       , pathJoin(base_dir, "intel64/libfabric/lib/prov") )
   setenv(     "I_MPI_FABRICS"          , "shm:ofi"                               )
-  setenv(     "I_MPI_STARTUP_MODE"     , "pmi_shm_netmod"                        )
+--  setenv(     "I_MPI_STARTUP_MODE"     , "pmi_shm_netmod"                        )
 end
 
 EOF

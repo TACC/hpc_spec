@@ -185,7 +185,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   ./bootstrap.sh --prefix=%{PYTHON_INSTALL_DIR} ${CONFIGURE_FLAGS}
   
-  echo "using mpi : /opt/apps/intel18/impi/18.0.2/bin/mpicxx ;" >> project-config.jam
+  echo "using mpi : /opt/intel/compilers_and_libraries_2019.4.243/linux/mpi/intel64/bin/mpicxx ;" >> project-config.jam
 
   ./b2 -j 24 --prefix=%{PYTHON_INSTALL_DIR} $EXTRA cxxflags="%{TACC_OPT}" cflags="%{TACC_OPT}" linkflags="%{TACC_OPT}" install
   

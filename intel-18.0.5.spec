@@ -26,11 +26,11 @@ Summary: A Nice little relocatable skeleton spec file example.
 # Create some macros (spec file variables)
 %define major_version 18
 %define minor_version 0
-%define micro_version 2
+%define micro_version 5
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
-%define lib_dir 2018.2.199
+%define lib_dir 2018.5.274
 %define year 2018
 
 ### Toggle On/Off ###
@@ -51,7 +51,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   5%{?dist}
+Release:   1%{?dist}
 License:   proprietary
 Group:     Compiler
 URL:       https://software.intel.com/en-us/intel-compilers
@@ -69,7 +69,7 @@ Group: Development/Tools
 %description package
 This is the long description for the package RPM...
 This is specifically an rpm for the Intel Compiler modulefile
-used on Stampede2.
+used on Frontera.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
@@ -77,11 +77,11 @@ Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
 This is specifically an rpm for the Intel Compiler modulefile
-used on Stampede2.
+used on Frontera.
 
 %description
 This is specifically an rpm for the Intel Compiler modulefile
-used on Stampede2.
+used on Frontera.
 
 #---------------------------------------
 %prep
@@ -199,7 +199,7 @@ paths for the gcc/6.3.0 bin, lib, and lib64 directories to your environment.
 
 Note: The $TACC_VEC_FLAGS environment variable is provided as a convenience
 during your compliation step. This variable specifies instruction sets
-appropriate to build and run on any Stampede2 node (login node, KNL compute
+appropriate to build and run on any Frontera node (login node, KNL compute
 node, SKX compute node), and use CPU dispatch to produce a multi-architecture
 binary.
 
@@ -220,7 +220,6 @@ whatis("Description: Intel Compiler Family (C/C++/Fortran for x86_64)"      )
 whatis("URL: http://software.intel.com/en-us/articles/intel-compilers"      )
 
 -- Create environment variables.
--- local base         = "/admin/build/admin/rpms/frontera/intel/install/18.0.2"
 local base         = "/opt/intel"
 local gcc_base     = "/opt/apps/gcc/6.3.0"
 local full_xe      = "compilers_and_libraries_%{lib_dir}/linux"

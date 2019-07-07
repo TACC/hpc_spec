@@ -6,7 +6,7 @@ Summary: Trilinos install
 
 # Create some macros (spec file variables)
 %define major_version 12
-%define minor_version 12
+%define minor_version 14
 %define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
@@ -31,7 +31,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 6%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tar.gz
@@ -119,7 +119,10 @@ mount -t tmpfs tmpfs %{INSTALL_DIR}
 ##cp -r * %{INSTALL_DIR}
 ##pushd %{INSTALL_DIR}
 
-module load cmake boost swig
+export PYTHON_MAJOR_VER=3
+module load cmake swig
+module use /opt/apps/intel19/python${PYTHON_MAJOR_VER}_7/modulefiles/
+module load boost
 ## VLE stopgap!
 export BOOST_ROOT=${TACC_BOOST_DIR}
 
@@ -133,10 +136,10 @@ export BOOST_ROOT=${TACC_BOOST_DIR}
 export COPTFLAGS="-g %{TACC_OPT} -O2"
   export HAS_HDF5=ON
   export HAS_NETCDF=ON
-  export HAS_PYTHON=ON
+  export HAS_PYTHON=OFF
   export HAS_MUELU=ON
-  export HAS_STK=OFF
-  export HAS_SUPERLU=ON
+  export HAS_STK=ON
+  export HAS_SUPERLU=OFF
 %if "%{comp_fam}" == "gcc"
 %else
 %endif
@@ -148,8 +151,10 @@ if [ "${HAS_NETCDF}" = "ON" ] ; then
   module load parallel-netcdf
 fi
 if [ "${HAS_PYTHON}" = "ON" ] ; then
-  module load python
+  module load python%{python_major_version}
+  export PYTHON_LOAD_FLAG=${TACC_PYTHON_LIB}/libpython%{python_major_version}.%{python_minor_version}.so
 fi
+
 if [ "${HAS_SUPERLU}" = "ON" ] ; then
   module load superlu_seq
 fi
@@ -176,12 +181,14 @@ export TRILINOS_LOCATION=%{_topdir}/BUILD/
 
 export SOURCEVERSION=%{version}
 export VERSION=%{version}
-source %{SPEC_DIR}/victor_scripts/trilinos-12.cmake
-echo ${trilinos_extra_libs}
+export PREFIXLOCATION=%{INSTALL_DIR}
+source %{SPEC_DIR}/victor_scripts/trilinos.cmake
+#echo ${trilinos_extra_libs}
 
 ####
 #### Compilation
 ####
+echo "about to make"
 make -j 8             # Trilinos can compile in parallel
 # make -j 4 tests           # (takes forever...)
 #make runtests-serial # (requires queue submission)
@@ -284,16 +291,7 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
-* Mon Apr 23 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 6: upgrade to 12.12.1
-* Wed Jan 17 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 5: giving up on SuperLU for now, fixed module help
-* Wed Aug 16 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 4: adding FEI
-* Mon Jul 31 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: disable STK for gcc
-* Fri Jun 30 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: fix broken stuff that trips up dealII
-             also enabling python for gcc
-* Fri May 12 2017 eijkhout <eijkhout@tacc.utexas.edu>
+* Mon Jun 10 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: fix missing lib directory
+* Thu Jun 06 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

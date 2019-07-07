@@ -1,8 +1,9 @@
 #
-# Spec file for Gnu Parallel
-# https://www.gnu.org/software/parallel/
+# Spec file for PYBIND11:
+# interface generator utility 
+# which is always too old for trilinos
 #
-# Victor Eijkhout, 2019
+# Victor Eijkhout, 2017
 # based on:
 #
 # Bar.spec, 
@@ -28,13 +29,15 @@
 Summary:    Set of tools for manipulating geographic and Cartesian data sets
 
 # Give the package a base name
-%define pkg_base_name gnuparallel
-%define MODULE_VAR    GNUPARALLEL
+%define pkg_base_name pybind11
+%define MODULE_VAR    PYBIND11
 
-# Version corresponds to when we downloaded the gnu parallel source
-%define major_version git20190618
+# Create some macros (spec file variables)
+%define major_version 2
+%define minor_version 2
+%define micro_version 4
 
-%define pkg_version %{major_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -44,7 +47,7 @@ Summary:    Set of tools for manipulating geographic and Cartesian data sets
 ### Construct name based on includes ###
 ########################################
 #%include name-defines.inc
-%include name-defines-noreloc.inc
+%include name-defines-noreloc-home1.inc
 #%include name-defines-hidden.inc
 #%include name-defines-hidden-noreloc.inc
 ########################################
@@ -57,12 +60,13 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
+Release:   1%{?dist}
 License:   GNU
 Group:     Development/Tools
-Vendor:     GNU Foundation
-Source:	    gnuparallel-%{version}.tgz
-URL:	    https://www.gnu.org/software/parallel/
+Vendor:     Pybind11
+Group:      Libraries/maps
+Source:	    pybind11-%{version}.tar.gz
+URL:	    https://pybind1111.readthedocs.io/en/latest/
 Packager:   eijkhout@tacc.utexas.edu
 
 # Turn off debug package mode
@@ -71,17 +75,20 @@ Packager:   eijkhout@tacc.utexas.edu
 %global _python_bytecompile_errors_terminate_build 0
 
 %package %{PACKAGE}
-Summary: GNUPARALLEL is a job launcher
+Summary: PYBIND11 install
+Group: System Environment/Base
 %description package
-This is the long description for the package RPM...
+PYBIND11 exposes C++11 functionality to Python
+
 
 %package %{MODULEFILE}
-Summary: GNUPARALLEL is a job launcher
+Summary: PYBIND11 install
+Group: System Environment/Base
 %description modulefile
-This is the long description for the modulefile RPM...
+PYBIND11 exposes C++11 functionality to Python
 
 %description
-Summary: GNUPARALLEL is a job launcher
+PYBIND11 exposes C++11 functionality to Python
 
 #---------------------------------------
 %prep
@@ -121,23 +128,12 @@ Summary: GNUPARALLEL is a job launcher
 
 # Setup modules
 %include system-load.inc
-module purge
-
 # Load Compiler
 %include compiler-load.inc
-
 # Load MPI Library
 #%include mpi-load.inc
 
-# Insert further module commands
-module load cmake
-echo $MODULEPATH
-module load python3
-module use /opt/apps/intel19/python3_7/modulefiles/
-module load boost
-
-echo "Building the package?:    %{BUILD_PACKAGE}"
-echo "Building the modulefile?: %{BUILD_MODULEFILE}"
+module load cmake python3
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -157,58 +153,56 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
   
-  # Create some dummy directories and files for fun
-  #mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  #mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/share
-  
-#
-# config/make
-#
+SPEC_DIR=`pwd`/../SPECS
 
-PARALLEL_VERSION=%{major_version}
-PARALLEL_HOME=${WORK}/parallel/
-PARALLEL_SRC=`pwd`
-PARALLEL_BUILD=/tmp/parallel-stuff
-PARALLEL_INSTALL=$RPM_BUILD_ROOT/%{INSTALL_DIR}
-PARALLEL_BIN=${PARALLEL_INSTALL}/bin
+#
+# Use mount temp trick
+#
+mkdir -p             %{INSTALL_DIR}
+mount -t tmpfs tmpfs %{INSTALL_DIR}
+
+
+#wget -nc --quiet https://github.com/pybind11/pybind1111/archive/v%{version}.tar.gz
+
+find . -name pybind11\*cmake
 
 ####
-#### we only support gcc installation
+#### pybind1111
 ####
-export CC=gcc
-export CXX=g++
-export FC=gfortran
+PYBIND11_SRC=`pwd`
+PYBIND11_INSTALL=%{INSTALL_DIR}
+PYBIND11_BUILD=/tmp/pybind11-build
+rm -rf ${PYBIND11_BUILD}
+mkdir -p ${PYBIND11_BUILD}
+pushd ${PYBIND11_BUILD}
 
-#### configure
-export PATH=${PATH}:/usr/bin
-
-#which pod2man
-#(echo foo | pod2man ) || /bin/true
-#alias pod2man="pod2man -errors=pod"
-
-pushd /tmp && rm -rf gnuparallel && mkdir gnuparallel && cd gnuparallel \
-  && git clone https://github.com/ssimms/pdfapi2.git \
-  && export PERLLIB=`pwd`/pdfapi2/lib \
-  && export PERL5LIB=`pwd`/pdfapi2/lib \
-  && git clone https://github.com/gitpan/pod2pdf.git \
-  && cd pod2pdf && perl Makefile.PL && make \
-  && export PATH=`pwd`/blib/script:${PATH} \
-  && export PERLLIB=`pwd`/blib/lib:${PERLLIB} \
-  && export PERL5LIB=`pwd`/blib/lib:${PERL5LIB} \
-  && popd
-which pod2pdf
-
-alias libreoffice='/bin/true'
-./configure --prefix=${PARALLEL_INSTALL} \
+( \
+cmake \
+    -D CMAKE_INSTALL_PREFIX=${PYBIND11_INSTALL} \
+    -D PYTHON_EXECUTABLE=`which python3` \
+    -D PYBIND11_INSTALL=ON \
+    -D PYBIND11_TEST=OFF \
+    -D OLD_CONFIG_FILES=0 \
+   ${PYBIND11_SRC} \
 && make \
-&& ( cd src \
-     && for i in parallel.texi env_parallel.texi sem.texi sql.texi niceload.texi parallel_tutorial.texi parallel_book.texi parallel_design.texi parallel_alternatives.texi parcat.texi parset.texi parallel_cheat.pdf ; do touch $i ; done ) \
-&& ( cd src ; for p in parallel.pdf env_parallel.pdf sem.pdf sql.pdf niceload.pdf parallel_tutorial.pdf parallel_book.pdf parallel_design.pdf parallel_alternatives.pdf parcat.pdf parset.pdf ; do touch $p ; done ) \
-&& ( cd src ; for m in ./parallel_design.7 ; do touch $m ; done ) \
-&& make install
+&& find . -name pybind11\*cmake \
+&& sed -i \
+       -e '/cmake_install.cmake/s/\/opt/-\/opt/' \
+       Makefile \
+&& make install || /bin/true \
+) || /bin/true
+echo "really done make install" \
 
-git clone https://github.com/TACC/gnuparallel_scripts.git ${PARALLEL_INSTALL}/scripts
-rm -rf ${PARALLEL_INSTALL}/scripts/.git
+# export nomake="\
+#     -D PYBIND11_MASTER_PROJECT=ON \
+#     -D PYBIND11_EXPORT_NAME=OFF \
+#     "
+
+popd
+
+cp -r %{INSTALL_DIR}/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+
+umount %{INSTALL_DIR}
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -232,32 +226,25 @@ rm -rf ${PARALLEL_INSTALL}/scripts/.git
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
 help( [[
-Module %{name} loads environmental variables defining
-the location of GNUPARALLEL directory and binaries:
-TACC_GNUPARALLEL_DIR TACC_GNUPARALLEL_BIN
+Python bindings to C++11. This module provides variables
+TACC_PYBIND11_DIR, TACC_PYBIND11_INC, and TACC_PYBIND11_SHARE.
+It also update the CMAKE_PREFIX_PATH.
 
-Executing a file of commandlines:
-
-gnuparallel_command_file_execute.sh commands
-
-Version: %{version}
+Version %{version}
 ]] )
 
-whatis( "GNUPARALLEL" )
+whatis( "Python bindings for C++11" )
 whatis( "Version: %{version}" )
-whatis( "Category: system" )
-whatis( "Keywords: System, utilities" )
-whatis( "Description: GNU Parallel utility" )
-whatis( "URL: https://www.gnu.org/software/parallel/" )
+whatis( "Category: Development/Tools" )
+whatis( "Description: PYBIND11 exposes C++11 functionality to Python" )
+whatis( "URL: https://pybind1111.readthedocs.io/en/latest/" )
 
-local version =  "%{version}"
-local gnuparallel_dir =  "%{INSTALL_DIR}"
+local pybind11_dir = "%{INSTALL_DIR}"
 
-setenv("TACC_GNUPARALLEL_DIR",gnuparallel_dir)
-setenv("TACC_GNUPARALLEL_BIN",pathJoin( gnuparallel_dir,"bin" ) )
-
-prepend_path ("PATH",pathJoin( gnuparallel_dir,"scripts" ) )
-prepend_path ("PATH",pathJoin( gnuparallel_dir,"bin" ) )
+setenv("TACC_PYBIND11_DIR", pybind11_dir )
+setenv("TACC_PYBIND11_INC", pathJoin(pybind11_dir,"include" ) )
+setenv("TACC_PYBIND11_SHARE", pathJoin(pybind11_dir,"share" ) )
+append_path( "CMAKE_PREFIX_PATH", pathJoin( pybind11_dir,"share","cmake","pybind11" ) )
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
@@ -325,7 +312,5 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Fri Jun 28 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2 : include pass_env in our own repository
 * Mon Jun 10 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

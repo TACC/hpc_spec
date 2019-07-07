@@ -51,7 +51,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3%{?dist}
+Release:   2%{?dist}
 License:   proprietary
 Group:     MPI
 URL:       https://software.intel.com/en-us/intel-mpi-library
@@ -222,8 +222,7 @@ Version %{version}
 help(help_msg)
 
 -- Create environment variables.
--- local base_dir           = "/admin/build/admin/rpms/frontera/intel/install/18.0.2/compilers_and_libraries_%{lib_version}/linux/mpi"
-local base_dir           = "/opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi"
+local base_dir           = "/admin/build/admin/rpms/frontera/intel/install/18.0.2/compilers_and_libraries_%{lib_version}/linux/mpi"
 
 whatis("Name: Intel MPI"                                                    )
 whatis("Version: %{version}"                                                )
@@ -250,9 +249,6 @@ setenv(       "I_MPI_F77"              , "%{myFC}"                              
 setenv(       "I_MPI_F90"              , "%{myFC}"                               )
 family(       "MPI"                                                              )
 
-if (os.getenv("TACC_SYSTEM") == "frontera") then
-  setenv(     "I_MPI_FABRICS"          , "shm:ofa"                               )
-end
 
 if (os.getenv("TACC_SYSTEM") == "stampede2") then
   depends_on("libfabric")

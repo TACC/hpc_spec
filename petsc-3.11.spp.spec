@@ -7,7 +7,7 @@ Summary: PETSc install
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 11
-%define micro_version 3
+%define micro_version 2
 %define versionpatch %{major_version}.%{minor_version}.%{micro_version}
 
 #### NOTE this incorporates one patch on the regular 3.11.0 release.
@@ -22,8 +22,7 @@ Summary: PETSc install
 ### Construct name based on includes ###
 ########################################
 #%include name-defines.inc
-%include name-defines-noreloc-home1.inc
-
+%include name-defines-noreloc-admin.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -152,7 +151,7 @@ export MPI_EXTRA_OPTIONS="--with-mpiexec=mpirun_rsh"
 
 export PETSC_CONFIGURE_OPTIONS="\
   --with-x=0 -with-pic \
-  --with-make-np=8 \
+  --with-make-np=48 \
   "
 mkdir -p %{INSTALL_DIR}/externalpackages
 mkdir -p %{MODULE_DIR}
@@ -169,8 +168,8 @@ export PLAPACKOPTIONS=
 ##
 export logdir=%{_topdir}/../apps/petsc/logs
 mkdir -p ${logdir}; rm -rf ${logdir}/*
-export dynamiccc="i64 debug i64debug complexi64 complexi64debug uni unidebug nohdf5 hyprefei"
-export dynamiccxx="cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug cxxi64 cxxi64debug"
+export dynamiccc=""
+export dynamiccxx="cxx"
 
 for ext in \
   "" \
@@ -188,9 +187,9 @@ echo "configure install for ${ext}"
 export versionextra=
 
 if [ -z "${ext}" ] ; then
-  export architecture=clx
+  export architecture=skylake
 else
-  export architecture=clx-${ext}
+  export architecture=skylake-${ext}
 fi
 
 ##
@@ -383,7 +382,6 @@ case "${ext}" in
 	SUNDIALS_OPTIONS= ;    SUNDIALSSTRING= ;
 	SUPERLU_OPTIONS= ;     superlustring= ;
 	SUITESPARSE_OPTIONS= ; SUITESPARSE_STRING= ;
-	ZOLTAN_OPTIONS= ;      ZOLTANSTRING= ;
                 ;;
 esac
 
@@ -459,7 +457,7 @@ export MPI_OPTIONS="--with-mpi=1 --with-cc=${MPICC} --with-cxx=${MPICXX} --with-
     --with-mpi-include=${TACC_IMPI_INC} --with-mpi-lib=${TACC_IMPI_LIB}/release_mt/libmpi.so"
 %else
   export PETSC_MPICH_HOME="${MPICH_HOME}"
-  export MPI_OPTIONS="${MPI_OPTIONS} --with-mpi-dir=${MPICH_HOME}"
+  #export MPI_OPTIONS="${MPI_OPTIONS} --with-mpi-dir=${MPICH_HOME}"
 %endif
 echo "Finding mpi in ${MPICH_HOME}"
 
@@ -475,29 +473,23 @@ export precision=--with-precision=double
 case "${ext}" in
 single ) 
     export precision=--with-precision=single ;
-    export packageslisting= ;
+    export packageslisting=
     export packages= ;;
 esac
 
-case "${ext}" in
-*i64* ) 
-    export packageslisting= ;
-    export packages= ;;
-esac 
-
-# if [ "%{comp_fam}" = "gcc" ] ; then
-#   # this is TACC_INTEL_LIB
-#   # -L/opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/ -lirc
-#   # /opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/libirc.so
-# ls /opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/libirc.so
-# #  export LIBS="/opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/libirc.so"
-# fi
+if [ "%{comp_fam}" = "gcc" ] ; then
+  # this is TACC_INTEL_LIB
+  # -L/opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/ -lirc
+  # /opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/libirc.so
+#ls /opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/libirc.so
+export LIBS="/admin/build/admin/rpms/frontera/intel/install/18.0.2/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/libirc.so"
+fi
 
 ##
 ## here we go
 ##
 export PETSC_ARCH=${architecture}
-export EXTERNAL_PACKAGES_DIR=/admin/build/admin/rpms/stampede2/SOURCES/petsc-packages
+export EXTERNAL_PACKAGES_DIR=/admin/build/admin/rpms/frontera/SOURCES/petsc-packages
 export PACKAGES_BUILD_DIR=/tmp/petsc-%{version}/${architecture}
 mkdir -p ${PACKAGES_BUILD_DIR}
 noprefix=--prefix=%{INSTALL_DIR}/${architecture}
@@ -514,7 +506,7 @@ if [ "${ext}" = "tau" ] ; then
 else
 
   # python config/configure.py
-  export I_MPI_FABRICS=shm:tmi
+  #export I_MPI_FABRICS=shm:tmi
   RPM_BUILD_ROOT=tmpfs PETSC_DIR=`pwd` ./configure \
     ${PETSC_CONFIGURE_OPTIONS} \
     --with-packages-search-path=[${EXTERNAL_PACKAGES_DIR}] \
@@ -646,8 +638,6 @@ EOF
 
 %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua 
 
-rm -rf ${PACKAGES_BUILD_DIR}
-
 ##
 ## end of module file loop
 ##
@@ -655,7 +645,7 @@ done
 
 cp -r config include lib makefile src \
     $RPM_BUILD_ROOT/%{INSTALL_DIR}
-cp -r clx* \
+cp -r skylake* \
     $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 popd
@@ -679,33 +669,14 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 %files %{PACKAGE}
   %defattr(-,root,install,)
-  %{INSTALL_DIR}/clx
-  %{INSTALL_DIR}/clx-single
-  %{INSTALL_DIR}/clx-i64
-  %{INSTALL_DIR}/clx-debug
-  %{INSTALL_DIR}/clx-i64debug
-  %{INSTALL_DIR}/clx-uni
-  %{INSTALL_DIR}/clx-unidebug
-  %{INSTALL_DIR}/clx-nohdf5
-  %{INSTALL_DIR}/clx-hyprefei
+  %{INSTALL_DIR}/skylake
+  %{INSTALL_DIR}/skylake-single
 %files %{PACKAGE}-xx
   %defattr(-,root,install,)
-  %{INSTALL_DIR}/clx-cxx
-  %{INSTALL_DIR}/clx-cxxi64
-  %{INSTALL_DIR}/clx-complex
-  %{INSTALL_DIR}/clx-complexi64
-  %{INSTALL_DIR}/clx-cxxcomplex
-  # and debug variants
-  %{INSTALL_DIR}/clx-cxxdebug
-  %{INSTALL_DIR}/clx-cxxi64debug
-  %{INSTALL_DIR}/clx-complexdebug
-  %{INSTALL_DIR}/clx-complexi64debug
-  %{INSTALL_DIR}/clx-cxxcomplexdebug
+  %{INSTALL_DIR}/skylake-cxx
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
-* Thu Jul 04 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: point update, use "clx"
 * Mon Jun 03 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

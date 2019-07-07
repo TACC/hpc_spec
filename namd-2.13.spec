@@ -1,5 +1,7 @@
-# Quantum Espresso 6.3.SPEC
-# 10/2017
+#
+# W. Cyrus Proctor
+# Antonio Gomez
+# 2015-08-25
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -16,21 +18,21 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: Quantum Espresso
+Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name qe
-%define MODULE_VAR    QE
+%define pkg_base_name namd
+%define MODULE_VAR    NAMD
 
 # Create some macros (spec file variables)
-%define major_version 6
-%define minor_version 3
-%define micro_version 0 
+%define major_version 2
+%define minor_version 13
+%define micro_version 0
 
+#%define pkg_version %{major_version}.%{minor_version}
 %define pkg_version %{major_version}.%{minor_version}
-
 ### Toggle On/Off ###
-%include rpm-dir.inc                  
+%include rpm-dir.inc
 
 %include compiler-defines.inc
 %include mpi-defines.inc
@@ -53,15 +55,13 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   1%{?dist}
 License:   GPL
-Group:     Applications/Chemistry
-URL:       http://www.quantum-espresso.org
-Packager:  TACC - hliu@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}-TACC-fat.tar.gz
-#Source0:   %{pkg_base_name}-%{pkg_version}.tar.bz2
-#Source1:   libint-1.1.5.tar.gz
-#Source2:   libxc-2.0.1.tar.gz
+Group:     Theoretical and Computational Biophysics Group, UIUC
+URL:       http://www.ks.uiuc.edu/Development/Download/download.cgi?PackageName=NAMD
+Packager:  TACC - huang@tacc.utexas.edu
+Source:    NAMD_2.13_Source.tar.gz
+#Source1:   tcl8.5.9-linux-x86_64-threaded.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -69,24 +69,31 @@ Source:    %{pkg_base_name}-%{pkg_version}-TACC-fat.tar.gz
 
 
 %package %{PACKAGE}
-Summary: Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale.
+Summary: The NAMD RPM
 Group: Applications/Chemistry
 %description package
-Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
-It is based on density-functional theory, plane waves, and pseudopotentials.
+NAMD, recipient of a 2002 Gordon Bell Award, is a parallel molecular dynamics
+code designed for high-performance simulation of large biomolecular systems.
+Based on Charm++ parallel objects, NAMD scales to hundreds of processors on
+high-end parallel platforms and tens of processors on commodity clusters
+using gigabit ethernet.
+
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
-It is based on density-functional theory, plane waves, and pseudopotentials.
-%description
-Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
-It is based on density-functional theory, plane waves, and pseudopotentials.
+NAMD, recipient of a 2002 Gordon Bell Award, is a parallel molecular dynamics
+code designed for high-performance simulation of large biomolecular systems.
+Based on Charm++ parallel objects, NAMD scales to hundreds of processors on
+high-end parallel platforms and tens of processors on commodity clusters
+using gigabit ethernet.
 
-# install package at /home1/apps, install module file at /opt/apps 
-%define HOME1 /home1/apps
-%define INSTALL_DIR %{HOME1}/%{comp_fam_ver}/%{mpi_fam_ver}/%{pkg_base_name}/%{pkg_version}
+%description
+NAMD, recipient of a 2002 Gordon Bell Award, is a parallel molecular dynamics
+code designed for high-performance simulation of large biomolecular systems.
+Based on Charm++ parallel objects, NAMD scales to hundreds of processors on
+high-end parallel platforms and tens of processors on commodity clusters
+using gigabit ethernet.
 
 #---------------------------------------
 %prep
@@ -110,38 +117,12 @@ It is based on density-functional theory, plane waves, and pseudopotentials.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n %{pkg_base_name}-%{pkg_version}-TACC-fat
+%setup -n NAMD_%{pkg_version}_Source
+
 
 #---------------------------------------
 %build
 #---------------------------------------
-%include compiler-load.inc
-%include mpi-load.inc
-
-export VERSION=6.3
-
-export ARCH=x86_64
-export F77=ifort
-export CC=icc
-export LD_LIBS="-Wl,--as-needed -liomp5 -Wl,--no-as-needed"
-export LDFLAGS="-Wl,--as-needed -liomp5 -Wl,--no-as-needed"
-export DFLAGS="-D__OPENMP -D__INTEL -D__DFTI -D__MPI -D__PARA -D__SCALAPACK -D__USE_MANY_FFT -D__NON_BLOCKING_SCATTER -D__EXX_ACE"
-export FFLAGS="-O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -fp-model precise -assume byterecl -qopenmp"
-export IFLAGS="-I../include/ -I${MKLROOT}/include -I../FoX/finclude -I../../FoX/finclude"
-
-export BLAS_LIBS=" -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl"
-export LAPACK_LIBS="${BLAS_LIBS}"
-export SCALAPACK_LIBS="-lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64"
-export FFT_LIBS="${BLAS_LIBS}"
-
-#./build_hliu_201611001pre_fat
-./configure
-make all
-
-# Remove non active symbolic links in packages
-#rm S3DE/iotk/iotk
-#rm -rf Doc
-
 
 #---------------------------------------
 %install
@@ -149,9 +130,13 @@ make all
 
 # Setup modules
 %include system-load.inc
+module purge
+%include compiler-load.inc
+%include mpi-load.inc
+
 
 # Insert necessary module commands
-module purge
+#module purge
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -161,7 +146,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -173,15 +158,20 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-  
+
   # Create some dummy directories and files for fun
-#  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-#  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
 
-cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}/
-chmod -Rf u+rwX,g+rwX,o=rX  $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  cp -p bin/{namd2,psfgen,flipbinpdb,flipdcd,sortreplicas} $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
+  cp -r lib $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  chmod -Rf u+rwX,g+rwX,o=rX                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-#-----------------------  
+
+  # Copy everything from tarball over to the installation directory
+#  cp * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+#-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
 
@@ -191,7 +181,7 @@ chmod -Rf u+rwX,g+rwX,o=rX  $RPM_BUILD_ROOT/%{INSTALL_DIR}
 #---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -199,26 +189,29 @@ chmod -Rf u+rwX,g+rwX,o=rX  $RPM_BUILD_ROOT/%{INSTALL_DIR}
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
+
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_msg=[[
+The TACC NAMD module appends the path to the namd2 executable
+to the PATH environment variable. Also TACC_NAMD_DIR,
+TACC_NAMD_BIN, and TACC_NAMD_LIB are set to NAMD home
+bin, and lib directories; lib directory contains information for
+ABF, random acceleration MD(RAMD), replica exchange MD(REMD).
 
 
-To run codes in quantum espresso, e.g. pw.x, include the following lines in
-your job script, using the appropriate input file name:
-module load qe/6.3
-ibrun pw.x -input input.scf
+Note: The way to run NAMD on Cascade Lake node is shown as following.
 
-IMPORTANT NOTES:
+#!/bin/bash
+#SBATCH -J test   # Job Name
+#SBATCH -o test.o%j
+#SBATCH -N 2      # Total number of nodes
+#SBATCH -n 8      # Total number of mpi tasks
+#SBATCH -p normal # Queue name
+#SBATCH -t 24:00:00 # Run time (hh:mm:ss) - 24 hours
 
-1. Run your jobs on $SCRATCH rather than $WORK. The $SCRATCH file system is better able to handle these kinds of loads.
 
-2. Especially when running pw.x, set the keyword disk_io to low or none in input so that wavefunction
-will not be written to file at each scf iteration step, but stored in memory.
-
-3. When running ph.x, set the  reduced_io to .true. and run it and redirect its IO to $SCRATCH.
-Do not run multiple ph.x jobs at given time.
+ibrun namd2 +ppn 13 +pemap 2-26:2,30-54:2,3-27:2,31-55:2 +commap 0,28,1,29 input &> output
 
 Version %{version}
 ]]
@@ -226,27 +219,27 @@ Version %{version}
 --help(help_msg)
 help(help_msg)
 
-whatis("Name: Quantum Espresso")
+whatis("Name: NAMD")
 whatis("Version: %{pkg_version}%{dbg}")
 %if "%{is_debug}" == "1"
 setenv("TACC_%{MODULE_VAR}_DEBUG","1")
 %endif
-whatis "Category: application, chemistry"
-whatis "Keywords: Chemistry, Density Functional Theory, Plane Wave, Peudo potentials"
-whatis "URL: http://www.quantum-espresso.org"
-whatis "Description: Integrated suite of computer codes for electronic structure calculations and material modeling at the nanoscale."
+
+whatis("Category: application, chemistry")
+whatis("Keywords: Chemistry, Biology, Molecular Dynamics, Application")
+whatis("URL: http://www.ks.uiuc.edu/Research/namd/")
+whatis("Description: Scalable Molecular Dynamics software")
 
 -- Create environment variables.
-local qe_dir="%{INSTALL_DIR}"
+local namd_dir           = "%{INSTALL_DIR}"
 
-prepend_path(    "PATH",                pathJoin(qe_dir, "bin"))
-
-setenv( "TACC_%{MODULE_VAR}_DIR",                qe_dir)
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(qe_dir, "bin"))
-setenv("TACC_%{MODULE_VAR}_PSEUDO",pathJoin(qe_dir,"pseudo"))
+family("namd")
+prepend_path(    "PATH",                pathJoin(namd_dir, "bin"))
+setenv( "TACC_%{MODULE_VAR}_DIR",                namd_dir)
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(namd_dir, "bin"))
 
 EOF
-  
+
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -255,7 +248,7 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 
 set     ModulesVersion      "%{version}"
 EOF
-  
+
   # Check the syntax of the generated lua modulefile
   %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
@@ -278,7 +271,7 @@ EOF
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile 
+%files modulefile
 #---------------------------
 
   %defattr(-,root,install,)

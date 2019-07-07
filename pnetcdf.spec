@@ -26,6 +26,8 @@ BuildRoot: /var/tmp/%{name}-%{version}-buildroot
 %include rpm-dir.inc
 %include compiler-defines.inc
 
+%include name-defines-noreloc.inc
+
 # This is a hack to prevent mpi-defines.inc to complain if mpi is not set.
 %include mpi-defines.inc
 
@@ -33,7 +35,7 @@ BuildRoot: /var/tmp/%{name}-%{version}-buildroot
 %define PNAME           pnetcdf
 %define INSTALL_DIR     %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{PNAME}/%{version}
 %define MODULE_DIR      %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{MODULES}/%{PNAME}
-%define RPM_NAME        %{PNAME}-%{comp_fam_ver}-%{mpi_fam_ver}
+%define RPM_NAME        tacc-%{PNAME}-%{comp_fam_ver}-%{mpi_fam_ver}
 %define NETCDF_VERSION    (PnetCDF)
 %{echo: WITH MPI %PNAME-%{comp_fam_ver}-%{mpi_fam_ver}}
 %{echo: WITH MPI %RPM_NAME}

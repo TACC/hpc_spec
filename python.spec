@@ -1,8 +1,8 @@
 Summary:    Python is a high-level general-purpose programming language.
-#Name:      tacc-python2
-Name:       tacc-python3 
-#Version:    2.7.16
-Version:    3.7.0
+Name:      tacc-python2
+#Name:       tacc-python3 
+Version:    2.7.16
+#Version:    3.7.0
 Release:    1%{?dist}
 License:    GPLv2
 Vendor:     Python Software Foundation
@@ -29,8 +29,8 @@ Packager:   TACC - rtevans@tacc.utexas.edu
 %include compiler-defines.inc
 %include mpi-defines.inc	
 
-%define MAJOR_MINOR 3.7
-%define MAJOR 3
+%define MAJOR_MINOR 2.7
+%define MAJOR 2
 %define PNAME python%{MAJOR}
 
 %define INSTALL_DIR_COMP %{APPS}/%{comp_fam_ver}/%{PNAME}/%{version}
@@ -267,7 +267,8 @@ ${PIP} install --no-binary :all: PyYAML
 
 if module load hdf5; then
     HDF5_DIR=$TACC_HDF5_DIR ${PIP} install --no-binary :all: h5py
-    ${PIP} install tables
+    ${PIP} uninstall tables
+    ${PIP} install --no-binary :all: tables 
 fi
 #############################################################
 # mpi4py: use INSTALL_DIR_MPI

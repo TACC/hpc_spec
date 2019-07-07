@@ -59,7 +59,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GNU
 Group:     Development/Tools
 Vendor:     Tuxfamily
@@ -214,7 +214,7 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
 help( [[
 Module %{name} loads environmental variables defining
 the location of EIGEN directory, libraries, and binaries:
-TACC_EIGEN_DIR TACC_EIGEN_BIN TACC_EIGEN_SHARE
+TACC_EIGEN_DIR, TACC_EIGEN_INC, TACC_EIGEN_SHARE
 
 Version: %{version}
 ]] )
@@ -230,12 +230,10 @@ local version =  "%{version}"
 local eigen_dir =  "%{INSTALL_DIR}"
 
 setenv("TACC_EIGEN_DIR",eigen_dir)
-setenv("TACC_EIGEN_BIN",pathJoin( eigen_dir,"bin" ) )
 setenv("TACC_EIGEN_INC",pathJoin( eigen_dir,"include","eigen3" ) )
 setenv("TACC_EIGEN_SHARE",pathJoin( eigen_dir,"share" ) )
 
 prepend_path ("PATH",pathJoin( eigen_dir,"share" ) )
-prepend_path ("PATH",pathJoin( eigen_dir,"bin" ) )
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
@@ -303,5 +301,7 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Fri Jun 07 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release UNBUILT UNRELEASED : removing the bin directory definition
 * Tue Jun 04 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

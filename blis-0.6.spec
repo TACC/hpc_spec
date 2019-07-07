@@ -1,6 +1,11 @@
 #
+# blis.spec
+# Victor Eijkhout
+#
+# based on Bar.spec
 # W. Cyrus Proctor
-# 2015-11-07
+# Antonio Gomez
+# 2015-08-25
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -17,27 +22,29 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: A Nice little relocatable skeleton spec file example.
+Summary: Blas-Like Instantiation Subprograms
 
 # Give the package a base name
-%define pkg_base_name cmake
-%define MODULE_VAR    CMAKE
+%define pkg_base_name blis
+%define MODULE_VAR    BLIS
 
 # Create some macros (spec file variables)
-%define major_version 3
-%define minor_version 8
-%define micro_version 2
+%define major_version 0
+%define minor_version 6
+%define micro_version 0
+
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
-#%include mpi-defines.inc
+%include compiler-defines.inc
+
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+%include name-defines-noreloc-home1.inc
+
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -48,11 +55,11 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   1
 License:   BSD
-Group:     System/Utils
-URL:       http://www.cmake.org
-Packager:  TACC - cproctor@tacc.utexas.edu
+Group:     Development/Tools
+URL:       https://github.com/flame/blis
+Packager:  TACC - eijkhout@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -61,39 +68,19 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: Blas alternative
+Group: Numerical library
 %description package
 This is the long description for the package RPM...
-CMake  is an extensible, open-source system that manages the build process in
-an operating system and in a compiler-independent manner. Unlike many cross-
-platform systems, CMake is designed to be used in conjunction with the native
-build environment. Simple configuration files placed in each source directory
-(called CMakeLists.txt files) are used to generate standard build files (e.g.,
-makefiles on Unix and projects/workspaces in Windows MSVC) which are used in
-the usual way.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...
-CMake  is an extensible, open-source system that manages the build process in
-an operating system and in a compiler-independent manner. Unlike many cross-
-platform systems, CMake is designed to be used in conjunction with the native
-build environment. Simple configuration files placed in each source directory
-(called CMakeLists.txt files) are used to generate standard build files (e.g.,
-makefiles on Unix and projects/workspaces in Windows MSVC) which are used in
-the usual way.
+RvdG's BLAS-like Library Instantiation Software
 
 %description
-CMake  is an extensible, open-source system that manages the build process in
-an operating system and in a compiler-independent manner. Unlike many cross-
-platform systems, CMake is designed to be used in conjunction with the native
-build environment. Simple configuration files placed in each source directory
-(called CMakeLists.txt files) are used to generate standard build files (e.g.,
-makefiles on Unix and projects/workspaces in Windows MSVC) which are used in
-the usual way.
+RvdG's BLAS-like Library Instantiation Software
 
 
 #---------------------------------------
@@ -105,6 +92,9 @@ the usual way.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+%setup -n %{pkg_base_name}-%{pkg_version}
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -118,13 +108,9 @@ the usual way.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n %{pkg_base_name}-%{pkg_version}
-
-
 #---------------------------------------
 %build
 #---------------------------------------
-
 
 #---------------------------------------
 %install
@@ -132,17 +118,17 @@ the usual way.
 
 # Setup modules
 %include system-load.inc
-
-# Insert necessary module commands
 module purge
+# Load Compiler
+%include compiler-load.inc
 
-echo "Building the package?:    %{BUILD_PACKAGE}"
-echo "Building the modulefile?: %{BUILD_MODULEFILE}"
+# Insert further module commands
 
 #------------------------
 %if %{?BUILD_PACKAGE}
 #------------------------
 
+  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
   
   #######################################
@@ -156,19 +142,33 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
- 
-  export CC=gcc
-  export ncores=24
-  export CFLAGS="-mtune=generic"
-  #export LDFLAGS="-Wl,-rpath,${GCC_LIB} -march=core-avx -mtune=core-avx2" # Location of correct libstdc++.so.6
-  export LDFLAGS="-mtune=generic" # Location of correct libstdc++.so.6
-  echo ${LD_LIBRARY_PATH}
-  echo ${LDFLAGS}
-  # DO NOT preppend $RPM_BUILD_ROOT in prefix
-  ./bootstrap --prefix=%{INSTALL_DIR}
-  make -j ${ncores}
-  make DESTDIR=$RPM_BUILD_ROOT install -j ${ncores}
   
+mkdir -p %{INSTALL_DIR}
+rm -rf %{INSTALL_DIR}/*
+mount -t tmpfs tmpfs %{INSTALL_DIR}
+
+%if "%{is_intel}" == "1"
+export CC=icc
+%else
+export CC=gcc
+%endif
+
+# stupid fix for fopenmp => qopenmp
+find . -type f -exec grep fopenmp {} \; -exec sed -i -e s/fopenmp/qopenmp/ {} \;
+./configure --prefix=%{INSTALL_DIR} skx
+make V=1
+make install
+
+  # Copy installation from tmpfs to RPM directory
+  ls %{INSTALL_DIR}
+  cp -r %{INSTALL_DIR}/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+  ls $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+
+umount %{INSTALL_DIR}
+  
+cp -r examples $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+ls $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -191,40 +191,31 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_message = [[
-CMake is an open-source, cross-platform family of tools designed to build, test
-and package software. CMake is used to control the software compilation process
-using simple platform and compiler independent configuration files, and
-generate native makefiles and workspaces that can be used in the compiler
-environment of your choice. 
 
-This module defines the environmental variables TACC_%{MODULE_VAR}_BIN
-and TACC_%{MODULE_VAR}_DIR for the location of the main CMake directory
-and the binaries.
+This module provides the BLIS environment variables:
+TACC_BLIS_DIR, TACC_BLIS_LIB, TACC_BLIS_INC
 
-The location of the binary files is also added to your PATH.
-
-Extended documentation on CMake can be found under $TACC_%{MODULE_VAR}_DIR/doc.
+There are examples programs in \$TACC_BLIS_DIR/examples
 
 Version %{version}
 ]]
 
 help(help_message,"\n")
 
-whatis("Name: %{name}")
+whatis("Name: BLIS")
 whatis("Version: %{version}")
-whatis("Category: system, utilities")
-whatis("Keywords: System, Utility")
-whatis("Description: tool for generation of files from source")
-whatis("URL: http://www.cmake.org")
+whatis("Category: ")
+whatis("Keywords: library, numerics, BLAS")
+whatis("URL: https://github.com/flame/blis")
+whatis("Description: BLAS-like Library Instantiation Software")
 
--- Export environmental variables
-local cmake_dir="%{INSTALL_DIR}"
-local cmake_bin=pathJoin(cmake_dir,"bin")
-setenv("TACC_CMAKE_DIR",cmake_dir)
-setenv("TACC_CMAKE_BIN",cmake_bin)
+local blis_dir="%{INSTALL_DIR}"
 
--- Prepend the cmake directories to the adequate PATH variables
-prepend_path("PATH",cmake_bin)
+setenv("TACC_BLIS_DIR",blis_dir)
+setenv("TACC_BLIS_LIB",pathJoin(blis_dir,"lib"))
+setenv("TACC_BLIS_INC",pathJoin(blis_dir,"include"))
+
+append_path("LD_LIBRARY_PATH",pathJoin(blis_dir,"lib"))
 
 EOF
   
@@ -237,8 +228,21 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 set     ModulesVersion      "%{version}"
 EOF
   
-  # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %endif
+
+ls $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+find . -name config.mk
+cat ./config.mk | sed 's?INSTALL_PREFIX.*?INSTALL_PREFIX=/opt/apps/blis/%{comp_fam_ver}/%{version}?' \
+    > $RPM_BUILD_ROOT/%{INSTALL_DIR}/config.mk
+chmod 644 $RPM_BUILD_ROOT/%{INSTALL_DIR}/config.mk # ?????
+ls $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+cp -r config testsuite \
+  $RPM_BUILD_ROOT/%{INSTALL_DIR}
+ls $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
@@ -270,7 +274,6 @@ EOF
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-
 ########################################
 ## Fix Modulefile During Post Install ##
 ########################################
@@ -292,3 +295,9 @@ export PACKAGE_PREUN=1
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
 
+#---------------------------------------
+%changelog
+#---------------------------------------
+#
+* Fri Jun 07 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial release

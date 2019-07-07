@@ -1,5 +1,6 @@
-# Quantum Espresso 6.3.SPEC
-# 10/2017
+#
+# W. Cyrus Proctor
+# 2015-12-11
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -16,33 +17,27 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: Quantum Espresso
+Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name qe
-%define MODULE_VAR    QE
+%define pkg_base_name mkl
+%define MODULE_VAR    MKL
 
 # Create some macros (spec file variables)
-%define major_version 6
-%define minor_version 3
-%define micro_version 0 
+%define major_version 18
+%define minor_version 0
+%define patch_version 5
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{patch_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-
 %include compiler-defines.inc
-%include mpi-defines.inc
-
-#%include name-defines-noreloc.inc
-
+#%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
 %include name-defines.inc
-
-
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -53,15 +48,12 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
-License:   GPL
-Group:     Applications/Chemistry
-URL:       http://www.quantum-espresso.org
-Packager:  TACC - hliu@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}-TACC-fat.tar.gz
-#Source0:   %{pkg_base_name}-%{pkg_version}.tar.bz2
-#Source1:   libint-1.1.5.tar.gz
-#Source2:   libxc-2.0.1.tar.gz
+Release:   1%{?dist}
+License:   proprietary
+Group:     Compiler
+URL:       https://software.intel.com/en-us/intel-compilers
+Packager:  TACC - cproctor@tacc.utexas.edu
+Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -69,24 +61,24 @@ Source:    %{pkg_base_name}-%{pkg_version}-TACC-fat.tar.gz
 
 
 %package %{PACKAGE}
-Summary: Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale.
-Group: Applications/Chemistry
+Summary: The package RPM
+Group: Development/Tools
 %description package
-Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
-It is based on density-functional theory, plane waves, and pseudopotentials.
+This is the long description for the package RPM...
+This is specifically an rpm for the Intel MKL modulefile
+used on Frontera for GCC.
+
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
-It is based on density-functional theory, plane waves, and pseudopotentials.
-%description
-Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
-It is based on density-functional theory, plane waves, and pseudopotentials.
+This is the long description for the modulefile RPM...
+This is specifically an rpm for the Intel MKL modulefile
+used on Frontera for GCC.
 
-# install package at /home1/apps, install module file at /opt/apps 
-%define HOME1 /home1/apps
-%define INSTALL_DIR %{HOME1}/%{comp_fam_ver}/%{mpi_fam_ver}/%{pkg_base_name}/%{pkg_version}
+%description
+This is specifically an rpm for the Intel MKL modulefile
+used on Frontera for GCC.
 
 #---------------------------------------
 %prep
@@ -110,37 +102,10 @@ It is based on density-functional theory, plane waves, and pseudopotentials.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n %{pkg_base_name}-%{pkg_version}-TACC-fat
 
 #---------------------------------------
 %build
 #---------------------------------------
-%include compiler-load.inc
-%include mpi-load.inc
-
-export VERSION=6.3
-
-export ARCH=x86_64
-export F77=ifort
-export CC=icc
-export LD_LIBS="-Wl,--as-needed -liomp5 -Wl,--no-as-needed"
-export LDFLAGS="-Wl,--as-needed -liomp5 -Wl,--no-as-needed"
-export DFLAGS="-D__OPENMP -D__INTEL -D__DFTI -D__MPI -D__PARA -D__SCALAPACK -D__USE_MANY_FFT -D__NON_BLOCKING_SCATTER -D__EXX_ACE"
-export FFLAGS="-O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -fp-model precise -assume byterecl -qopenmp"
-export IFLAGS="-I../include/ -I${MKLROOT}/include -I../FoX/finclude -I../../FoX/finclude"
-
-export BLAS_LIBS=" -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl"
-export LAPACK_LIBS="${BLAS_LIBS}"
-export SCALAPACK_LIBS="-lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64"
-export FFT_LIBS="${BLAS_LIBS}"
-
-#./build_hliu_201611001pre_fat
-./configure
-make all
-
-# Remove non active symbolic links in packages
-#rm S3DE/iotk/iotk
-#rm -rf Doc
 
 
 #---------------------------------------
@@ -173,14 +138,9 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
+ 
+  # Nothing to do!
   
-  # Create some dummy directories and files for fun
-#  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-#  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
-
-cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}/
-chmod -Rf u+rwX,g+rwX,o=rX  $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -203,22 +163,28 @@ chmod -Rf u+rwX,g+rwX,o=rX  $RPM_BUILD_ROOT/%{INSTALL_DIR}
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_msg=[[
+The Intel Math Kernel Library (Intel MKL) improves performance with math
+routines for software applications that solve large computational problems.
+Intel MKL provides BLAS and LAPACK linear algebra routines, fast Fourier
+transforms, vectorized math functions, random number generation functions, and
+other functionality.
 
+The Intel MKL module enables the use of the MKL with the GNU GCC compilers by
+updating the $LD_LIBRARY_PATH, $INCLUDE, and $MANPATH environment variables to
+access the MKL libraries, include files, and available man pages, respectively.
 
-To run codes in quantum espresso, e.g. pw.x, include the following lines in
-your job script, using the appropriate input file name:
-module load qe/6.3
-ibrun pw.x -input input.scf
+The following additional environment variables are also defined:
 
-IMPORTANT NOTES:
+$TACC_MKL_DIR           (path to Math Kernel Library root         )
+$TACC_MKL_LIB           (path to Math Kernel Library libs         )
+$TACC_MKL_INC           (path to Math Kernel Library includes     )
+$TACC_MKL_DOC           (path to Math Kernel Library documentation)
 
-1. Run your jobs on $SCRATCH rather than $WORK. The $SCRATCH file system is better able to handle these kinds of loads.
+To use the MKL with Intel compilers, please see the Intel module help
+by issuing a "module help intel".
 
-2. Especially when running pw.x, set the keyword disk_io to low or none in input so that wavefunction
-will not be written to file at each scf iteration step, but stored in memory.
-
-3. When running ph.x, set the  reduced_io to .true. and run it and redirect its IO to $SCRATCH.
-Do not run multiple ph.x jobs at given time.
+Also see the Intel MKL Link Line Advisor:
+https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor
 
 Version %{version}
 ]]
@@ -226,24 +192,31 @@ Version %{version}
 --help(help_msg)
 help(help_msg)
 
-whatis("Name: Quantum Espresso")
-whatis("Version: %{pkg_version}%{dbg}")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
-whatis "Category: application, chemistry"
-whatis "Keywords: Chemistry, Density Functional Theory, Plane Wave, Peudo potentials"
-whatis "URL: http://www.quantum-espresso.org"
-whatis "Description: Integrated suite of computer codes for electronic structure calculations and material modeling at the nanoscale."
+whatis("Name: Intel MKL"                                                    )
+whatis("Version: %{version}"                                                )
+whatis("Category: Library, Runtime Support"                                 )
+whatis("Description: Intel Math Kernel Library"                             )
+whatis("URL: https://software.intel.com/en-us/intel-mkl"                    )
 
 -- Create environment variables.
-local qe_dir="%{INSTALL_DIR}"
+local base         = "/opt/intel"
+local full_xe      = "compilers_and_libraries_2018.5.274/linux"
+local installDir   = pathJoin(base,full_xe)
+local mklRoot      = pathJoin(installDir,"mkl")
 
-prepend_path(    "PATH",                pathJoin(qe_dir, "bin"))
+setenv( "MKLROOT"      ,              mklRoot )
+setenv( "TACC_MKL_DIR" ,              mklRoot )
+setenv( "TACC_MKL_LIB" ,              pathJoin( mklRoot    , "lib/intel64" ) )
+setenv( "TACC_MKL_INC" ,              pathJoin( mklRoot    , "include" ) )
+setenv( "TACC_MKL_DOC" ,              pathJoin( base       , "documentation_2018/en/mkl/ps2018" ) )
 
-setenv( "TACC_%{MODULE_VAR}_DIR",                qe_dir)
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(qe_dir, "bin"))
-setenv("TACC_%{MODULE_VAR}_PSEUDO",pathJoin(qe_dir,"pseudo"))
+prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( mklRoot    , "lib/intel64" ) )
+
+prepend_path( "INCLUDE" ,             pathJoin( mklRoot    , "include" ) )
+
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2018/en/debugger/gdb-ia/man" ) )
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2018/en/debugger/gdb-igfx/man" ) )
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2018/en/man/common" ) )
 
 EOF
   
