@@ -1,14 +1,6 @@
 #
-# Spec file for Gnu Parallel
-# https://www.gnu.org/software/parallel/
-#
-# Victor Eijkhout, 2019
-# based on:
-#
-# Bar.spec, 
-# W. Cyrus Proctor
-# Antonio Gomez
-# 2015-08-25
+# Anne Bowen
+# 2017-05-01
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -19,32 +11,34 @@
 # RPM_DBPATH      -> Path To Non-Standard RPM Database Location
 #
 # Typical Command-Line Example:
-# ./build_rpm.sh Bar.spec
+#./build_rpm.sh vmd-1.9.3.spec
 # cd ../RPMS/x86_64
-# rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
-# rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
-# rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
+# rpm -i --relocate /tmprpm=/opt/apps vmd-1.9.3-package-1.93-1.x86_64.rpm
+# rpm -i --relocate /tmpmod=/opt/apps vmd-1.9.3-modulefile-1.93-1.x86_64.rpm
+# rpm -e vmd-package-1.1-1.x86_64 vmd-1.9.3-modulefile-1.93-1.x86_64
 
-Summary:    Set of tools for manipulating geographic and Cartesian data sets
+Summary: VMD, Visual Molecular Dynamics spec file (based on Bar.spec)
 
 # Give the package a base name
-%define pkg_base_name gnuparallel
-%define MODULE_VAR    GNUPARALLEL
+%define pkg_base_name vmd
+%define MODULE_VAR    VMD
 
-# Version corresponds to when we downloaded the gnu parallel source
-%define major_version git20190729
+# Create some macros (spec file variables)
+%define major_version 1.9
+%define minor_version 3
+%define micro_version 0
 
-%define pkg_version %{major_version}
+%define pkg_version %{major_version}.%{minor_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-%include compiler-defines.inc
+#%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-#%include name-defines.inc
-%include name-defines-noreloc.inc
+%include name-defines.inc
+#%include name-defines-noreloc.inc
 #%include name-defines-hidden.inc
 #%include name-defines-hidden-noreloc.inc
 ########################################
@@ -57,31 +51,37 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4%{?dist}
-License:   GNU
+Release:   2%{?dist}
+License:   VISUAL MOLECULAR DYNAMICS SOFTWARE LICENSE
 Group:     Development/Tools
-Vendor:     GNU Foundation
-Source:	    gnuparallel-%{version}.tgz
-URL:	    https://www.gnu.org/software/parallel/
-Packager:   eijkhout@tacc.utexas.edu
+URL:       http://www.ks.uiuc.edu/Research/vmd/
+Packager:  TACC - adb@tacc.utexas.edu
+Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
-%global _python_bytecompile_errors_terminate_build 0
+
+%define VMD_SRC vmd.%{version}.tar.gz
+
 
 %package %{PACKAGE}
-Summary: GNUPARALLEL is a job launcher
+Summary: The package RPM
+Group: Development/Tools
 %description package
-This is the long description for the package RPM...
+The vmd package conains the VMD molecular visualization package. The package contains the precompiled binary and any libraries needed to support the various third party components.
+
 
 %package %{MODULEFILE}
-Summary: GNUPARALLEL is a job launcher
+Summary: The modulefile RPM
+Group: Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...
+The module sets the required user environment needed to run VMD on TACC systems. It sets paths to executables and required libraries.
 
 %description
-Summary: GNUPARALLEL is a job launcher
+VMD is designed for modeling, visualization, and analysis of biological systems such as proteins, nucleic acids, lipid bilayer assemblies, etc. It may be used to view more general molecules, as VMD can read standard Protein Data Bank (PDB) files and display the contained structure. VMD provides a wide variety of methods for rendering and coloring a molecule: simple points and lines, CPK spheres and cylinders, licorice bonds, backbone tubes and ribbons, cartoon drawings, and others. VMD can be used to animate and analyze the trajectory of a molecular dynamics (MD) simulation. In particular, VMD can act as a graphical front end for an external MD program by displaying and animating a molecule undergoing simulation on a remote computer.
+rpm -qi <rpm-name>
+
 
 #---------------------------------------
 %prep
@@ -122,20 +122,12 @@ Summary: GNUPARALLEL is a job launcher
 # Setup modules
 %include system-load.inc
 module purge
-
 # Load Compiler
-%include compiler-load.inc
-
+#%include compiler-load.inc
 # Load MPI Library
 #%include mpi-load.inc
 
 # Insert further module commands
-module load cmake
-echo $MODULEPATH
-#module use /opt/apps/intel19/impi19_0/modulefiles
-module load python3
-#module use /opt/apps/intel19/python3_7/modulefiles/
-module load boost
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -157,61 +149,18 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-  
+ 
+  #module load swr 
   # Create some dummy directories and files for fun
-  #mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  #mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/share
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
+
+  echo "TACC_OPT %{TACC_OPT}"
   
-#
-# config/make
-#
-
-PARALLEL_VERSION=%{major_version}
-PARALLEL_HOME=${WORK}/parallel/
-PARALLEL_SRC=`pwd`
-PARALLEL_BUILD=/tmp/parallel-stuff
-PARALLEL_INSTALL=$RPM_BUILD_ROOT/%{INSTALL_DIR}
-PARALLEL_BIN=${PARALLEL_INSTALL}/bin
-
-####
-#### we only support gcc installation
-####
-export CC=gcc
-export CXX=g++
-export FC=gfortran
-
-#### configure
-export PATH=${PATH}:/usr/bin
-
-#which pod2man
-#(echo foo | pod2man ) || /bin/true
-#alias pod2man="pod2man -errors=pod"
-
-pushd /tmp && rm -rf gnuparallel && mkdir gnuparallel && cd gnuparallel \
-  && git clone https://github.com/ssimms/pdfapi2.git \
-  && export PERLLIB=`pwd`/pdfapi2/lib \
-  && export PERL5LIB=`pwd`/pdfapi2/lib \
-  && git clone https://github.com/gitpan/pod2pdf.git \
-  && cd pod2pdf && perl Makefile.PL && make \
-  && export PATH=`pwd`/blib/script:${PATH} \
-  && export PERLLIB=`pwd`/blib/lib:${PERLLIB} \
-  && export PERL5LIB=`pwd`/blib/lib:${PERL5LIB} \
-  && popd
-which pod2pdf
-
-alias libreoffice='/bin/true'
-./configure --prefix=${PARALLEL_INSTALL} \
-&& make \
-&& ( cd src \
-     && for i in parallel.texi env_parallel.texi sem.texi sql.texi niceload.texi parallel_tutorial.texi parallel_book.texi parallel_design.texi parallel_alternatives.texi parcat.texi parset.texi parallel_cheat.pdf ; do touch $i ; done ) \
-&& ( cd src ; for p in parallel.pdf env_parallel.pdf sem.pdf sql.pdf niceload.pdf parallel_tutorial.pdf parallel_book.pdf parallel_design.pdf parallel_alternatives.pdf parcat.pdf parset.pdf ; do touch $p ; done ) \
-&& ( cd src ; for m in ./parallel_design.7 ; do touch $m ; done ) \
-&& make install
-
-git clone https://github.com/TACC/gnuparallel_scripts.git ${PARALLEL_INSTALL}/scripts
-chmod +x ${PARALLEL_INSTALL}/scripts/pass_env
-rm -rf ${PARALLEL_INSTALL}/scripts/.git
-
+  # Copy everything from tarball over to the installation directory
+  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -232,49 +181,49 @@ rm -rf ${PARALLEL_INSTALL}/scripts/.git
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
-help( [[
-Module %{name} loads environmental variables defining
-the location of GNUPARALLEL directory and binaries:
-TACC_GNUPARALLEL_DIR TACC_GNUPARALLEL_BIN
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
+local help_msg=[[
+The %{MODULE_VAR} module defines the following environment variables:
+TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
+TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
+include files, and tools respectively.
+]]
 
-Executing a file of commandlines:
+--help(help_msg)
+help(help_msg)
 
-gnuparallel_command_file_execute.sh commands
+whatis("Name: bar")
+whatis("Version: %{pkg_version}%{dbg}")
+%if "%{is_debug}" == "1"
+setenv("TACC_%{MODULE_VAR}_DEBUG","1")
+%endif
 
-Version: %{version}
-]] )
+-- Create environment variables.
+local bar_dir           = "%{INSTALL_DIR}"
 
-whatis( "GNUPARALLEL" )
-whatis( "Version: %{version}" )
-whatis( "Category: system" )
-whatis( "Keywords: System, utilities" )
-whatis( "Description: GNU Parallel utility" )
-whatis( "URL: https://www.gnu.org/software/parallel/" )
-
-local version =  "%{version}"
-local gnuparallel_dir =  "%{INSTALL_DIR}"
-
-setenv("TACC_GNUPARALLEL_DIR",gnuparallel_dir)
-setenv("TACC_GNUPARALLEL_BIN",pathJoin( gnuparallel_dir,"bin" ) )
-
-prepend_path ("PATH",pathJoin( gnuparallel_dir,"scripts" ) )
-prepend_path ("PATH",pathJoin( gnuparallel_dir,"bin" ) )
+family("bar")
+prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "lib"))
+prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/bar1_1/modulefiles")
+setenv( "TACC_%{MODULE_VAR}_DIR",                bar_dir)
+setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(bar_dir, "include"))
+setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(bar_dir, "lib"))
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(bar_dir, "bin"))
 EOF
-
+  
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module1.0####################################################################
+#%Module3.1.1#################################################
 ##
-## Version file for %{name} version %{version}
+## version file for %{BASENAME}%{version}
 ##
-set ModulesVersion "%version"
-EOF
 
+set     ModulesVersion      "%{version}"
+EOF
+  
   # Check the syntax of the generated lua modulefile only if a visible module
   %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
   %endif
-
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -326,12 +275,3 @@ export PACKAGE_PREUN=1
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
 
-%changelog
-* Mon Jul 29 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 4: abandoned use of /tmp. stupid
-* Tue Jul 23 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3 : actually use pass_env
-* Fri Jun 28 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2 : include pass_env in our own repository
-* Mon Jun 10 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 1: initial release

@@ -100,7 +100,7 @@ for ext in \
   single "" \
   ${dynamiccc} ${dynamiccxx} ; do
 
-export architecture=skylake
+export architecture=clx
 if [ -z "${ext}" ] ; then
   module load petsc/%{version}
 else
@@ -182,7 +182,7 @@ done
 
 ## mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-cp -r skylake*          $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+cp -r clx*          $RPM_BUILD_ROOT/%{INSTALL_DIR}/
 cp -r docs include lib src $RPM_BUILD_ROOT/%{INSTALL_DIR}/
 
 %files %{PACKAGE}

@@ -7,12 +7,12 @@ Summary: HDF5 Library
 # This spec file can be built in parallel with mpi or not.
 #
 #
-%define hdf5_pkg_version   1.10.4
-%define ncdf_pkg_version   4.6.2
+%define hdf5_pkg_version   1.8.16
+%define ncdf_pkg_version   4.3.3.1
 %define ncdf_cxx_version   4.2
-%define ncdf_cxx4_version  4.3.0
-%define ncdf_ftn_version   4.4.4
-%define szip_version 2.1.1
+%define ncdf_cxx4_version  4.2.1
+%define ncdf_ftn_version   4.4.2
+%define szip_version 2.1
 
 %define dbg %{nil}
 %if "%{is_debug}" == "1"
@@ -27,14 +27,14 @@ Summary: HDF5 Library
 
 Name: hdf5-netcdf
 Version: %{hdf5_version}
-Release: 2%{?dist}
+Release: 5%{?dist}
 License: see included Copyright
 Vendor: NCSA
 Group: Development/Libraries
 Source:  hdf5-%{hdf5_pkg_version}.tar.bz2
 Source1: szip-%{szip_version}.tar.gz
 Patch2:  szip-config.patch
-Source2: netcdf-c-%{ncdf_pkg_version}.tar.gz
+Source2: netcdf-%{ncdf_pkg_version}.tar.gz
 Patch3:  netcdf_hdf5_1.8.13.patch
 Source3: netcdf-fortran-%{ncdf_ftn_version}.tar.gz
 Source4: netcdf-cxx4-%{ncdf_cxx4_version}.tar.gz
@@ -99,7 +99,7 @@ URL: http://hdf.ncsa.uiuc.edu/HDF5/
 %endif
 
 %package -n %{RPM_NAME}
-Summary: HDF5 library, NetCDF 4
+Summary: HDF5 library, Netcfd 4
 Group: Development/Libraries
 
 %description
@@ -130,12 +130,12 @@ rm -rf hdf5-%{hdf5_pkg_version}
 #    default source will unpack twice... a weird RPMism.
 # -D prevents the top-level directory from being deleted before we can get there!
 %setup -n hdf5-%{hdf5_pkg_version} -T -D -a 1
-cd szip-%{szip_version}
+cd szip-2.1
 %patch2 -p0 
 
 # netcfd
-rm -rf ../netcdf-c-%{ncdf_pkg_version}
-%setup -T -D -b 2 -n netcdf-c-%{ncdf_pkg_version}
+rm -rf ../netcdf-%{ncdf_pkg_version}
+%setup -T -D -b 2 -n netcdf-%{ncdf_pkg_version}
 #patch3 -p1
 
 # netcdf-fortran
@@ -300,7 +300,7 @@ for ARCH in "${archA[@]}"; do
 
   export LD_LIBRARY_PATH="$INSTALL_DIR:$LD_LIBRARY_PATH:$INSTALL_DIR"
 
-  ./configure --prefix=$INSTALL_DIR --enable-build-mode=production --with-szlib=$INSTALL_DIR --enable-fortran --enable-fortran2003 --enable-shared --with-default-api-version=v18 $CONF_OPTS $DEBUG_FLAGS
+  ./configure --prefix=$INSTALL_DIR --enable-production --with-szlib=$INSTALL_DIR --enable-fortran --enable-fortran2003 --enable-shared $CONF_OPTS $DEBUG_FLAGS
 
   make V=1 -j 4
 
@@ -425,7 +425,7 @@ EOF
 ########################################################################
 
 cd $HDF5_DIR
-cd ../netcdf-c-%{ncdf_pkg_version}
+cd ../netcdf-%{ncdf_pkg_version}
 
 WD=`pwd`
 
@@ -488,7 +488,7 @@ for ARCH in "${archA[@]}"; do
   export LDFLAGS="${LDFLAGS} -Wl,-rpath,${TACC_HDF5_LIB} -L${TACC_HDF5_LIB}" 
   
   cd $HDF5_DIR
-  cd ../netcdf-c-%{ncdf_pkg_version}
+  cd ../netcdf-%{ncdf_pkg_version}
 
   rm -rf tacc_${ARCH}
   mkdir tacc_${ARCH}
@@ -522,7 +522,7 @@ for ARCH in "${archA[@]}"; do
   mkdir tacc_${ARCH}
   cd tacc_${ARCH}
 
-  ../configure --prefix=$INSTALL_DIR --enable-shared
+  ../configure --prefix=$INSTALL_DIR --enable-shared $PARALLEL
   make -j 3
   make install
   make distclean
@@ -541,7 +541,7 @@ for ARCH in "${archA[@]}"; do
   rm -rf tacc_${ARCH}
   mkdir tacc_${ARCH}
   cd tacc_${ARCH}
-  ../configure --prefix=$INSTALL_DIR --enable-shared
+  ../configure --prefix=$INSTALL_DIR --enable-shared $PARALLEL
   make -j 3
   make install
   make distclean

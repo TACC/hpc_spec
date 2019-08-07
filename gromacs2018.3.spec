@@ -61,7 +61,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_base_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GPL
 Group:     Development/Tools
 Group: Applications/Biology
@@ -377,7 +377,7 @@ setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(gromacs_dir, "lib64"))
 setenv( "TACC_%{MODULE_VAR}_BIN", pathJoin(gromacs_dir, "bin"))
 
 setenv("TACC_%{MODULE_VAR}_DOC",pathJoin(gromacs_dir,"share"))
-setenv("GMXLIB",pathJoin(gromacs_dir,"share/gromacs/top"))
+setenv("GMXLIB",pathJoin(gromacs_dir,"share/top"))
 append_path("MANPATH",pathJoin(gromacs_dir,"share/man"))
 append_path("PKG_CONFIG_PATH",pathJoin(gromacs_dir,"lib/pkgconfig"))
 

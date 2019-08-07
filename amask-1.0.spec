@@ -1,22 +1,25 @@
 # build rpm
 
-# rpmbuild -bb --define 'is_intel19 1' --define 'is_impi 1' --define 'mpiV 19_4' amask-1.0.spec 2>&1 | tee amask-1.0_r1.log
 #
 # Build only PACKAGE or MODULE -- set variable.  E.g. NO_PACKAGE=1 rpmbuild -bb ... only build modulefile
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
 # NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
 
-
-# install rpm in /opt/apps # install 
+# rpmbuild -bb --define 'is_intel19 1' --define 'is_impi 1' --define 'mpiV 19_4' amask-1.0.spec 2>&1 | tee amask-1.0_i19_r7.log
 
 # r=/admin/build/admin/rpms/frontera/RPMS/x86_64
-# rpm -hiv --relocate /tmprpm=/opt/apps  $r/tacc-amask-intel19-impi19_0-package-1.0-5.el7.x86_64.rpm
-# rpm -hiv --relocate /tmpmod=/opt/apps  $r/tacc-amask-intel19-impi19_0-modulefile-1.0-5.el7.x86_64.rpm
+# rpm -hiv --relocate /tmprpm=/opt/apps     $r/tacc-amask-intel19-impi19_0-package-1.0-7.el7.x86_64.rpm
+# rpm -hiv --relocate /tmpmod=/opt/apps  $r/tacc-amask-intel19-impi19_0-modulefile-1.0-7.el7.x86_64.rpm
 
+# rpmbuild -bb --define 'is_intel18 1' --define 'is_impi 1' --define 'mpiV 18_5' amask-1.0.spec 2>&1 | tee amask-1.0_i18_r7.log
+
+# r=/admin/build/admin/rpms/frontera/RPMS/x86_64
+# rpm -hiv --relocate /tmprpm=/opt/apps     $r/tacc-amask-intel18-impi18_0-package-1.0-7.el7.x86_64.rpm
+# rpm -hiv --relocate /tmpmod=/opt/apps  $r/tacc-amask-intel18-impi18_0-modulefile-1.0-7.el7.x86_64.rpm
 
 # remove rpm
-# rpm -e tacc-amask-intel19-impi19_0-package-1.0-5.el7.x86_64
-# rpm -e tacc-amask-intel19-impi19_0-modulefile-1.0-5.el7.x86_64.rpm
+# rpm -e tacc-amask ...
+# rpm -e tacc-amask ...
 #
 # Important Install-Time Environment Variables (see post-defines.inc)
 # VERBOSE=1       -> Print detailed information at install time
@@ -50,7 +53,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
 
-Release:   5%{?dist}
+Release:   7%{?dist}
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.gnu.org/software/bar

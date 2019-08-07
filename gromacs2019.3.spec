@@ -1,9 +1,15 @@
 #
-# rpmbuild -bb --define 'is_intel19 1' --define 'is_impi 1' --define 'mpiV 19_4' gromacs2018.spec 2>&1 | tee gromacs2018.spec_r#_a.log
+# rpmbuild -bb --define 'is_intel19 1' --define 'is_impi 1' --define 'mpiV 19_4' gromacs2019.3.spec 2>&1 | tee gromacs2019.3.spec_r#_a.log
 
 # r=/admin/build/admin/rpms/frontera/RPMS/x86_64
-#rpm -hiv --nodeps $r/
-#rpm -hiv --nodeps $r/
+#rpm -hiv --nodeps $r/tacc-gromacs-intel19-impi19_0-package-2019.3-1.el7.x86_64.rpm
+#rpm -hiv --nodeps $r/tacc-gromacs-intel19-impi19_0-modulefile-2019.3-1.el7.x86_64.rpm
+
+#rpm -hiv --nodeps --relocate /tmprpm=/opt/apps $r/tacc-gromacs-intel19-impi19_0-package-2019.3-1.el7.x86_64.rpm
+#rpm -hiv --nodeps --relocate /tmpmod=/opt/apps $r/tacc-gromacs-intel19-impi19_0-modulefile-2019.3-1.el7.x86_64.rpm
+
+#rpm -e tacc-gromacs-intel19-impi19_0-package-2019.3-1.el7.x86_64
+#rpm -e tacc-gromacs-intel19-impi19_0-modulefile-2019.3-1.el7.x86_64
 
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
@@ -28,10 +34,10 @@ Summary: A Nice little relocatable skeleton spec file for Gromacs.
 %define MODULE_VAR    GROMACS
 %define name_prefix tacc
 # Create some macros (spec file variables)
-%define major_version 2018
-%define minor_version  
+%define major_version 2019
+%define minor_version 3 
 
-%define pkg_version %{major_version}
+%define pkg_version %{major_version}.%{minor_version}
 %define dbg %{nil}
 
 ### Toggle On/Off ###
@@ -61,7 +67,7 @@ Group:     Development/Tools
 Group: Applications/Biology
 URL: http://www.gromacs.org
 Packager:  TACC - staff
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Source:    %{pkg_base_name}-%{pkg_version}.tar
 
 # Turn off debug package mode
 %define debug_package %{nil}

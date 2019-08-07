@@ -94,6 +94,7 @@ It contains solvers and tools mostly for PDE solving.
 module purge
 %include compiler-load.inc
 %include mpi-load.inc
+module list
 
 #
 # Set Up Installation Directory and tmp file system
@@ -259,15 +260,17 @@ esac
 
 export HAS_HDF5=1
 export hdf5string="hdf5"
-export hdf5download="--with-hdf5=1 --download-hdf5=1"
-#--with-hdf5-dir=${TACC_HDF5_DIR}"
+export hdf5download="--with-hdf5=1 --with-hdf5-dir=${TACC_HDF5_DIR}"
+# --download-hdf5=1"
 export hdf5versionextra="; hdf5 support"
+module load phdf5
 
 case "${ext}" in
 *nohdf5* ) export HAS_HDF5=0
         export hdf5string=
         export hdf5download=
         export hdf5versionextra=
+	module unload phdf5
         ;;
 esac
 
@@ -705,6 +708,8 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Fri Aug 02 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: using McLay's hdf5
 * Thu Jul 04 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: point update, use "clx"
 * Mon Jun 03 2019 eijkhout <eijkhout@tacc.utexas.edu>

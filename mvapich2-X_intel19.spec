@@ -1,42 +1,24 @@
-#
-# W. Cyrus Proctor
-# 2015-11-08
-#
-# Important Build-Time Environment Variables (see name-defines.inc)
-# NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
-# NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
-#
-# Important Install-Time Environment Variables (see post-defines.inc)
-# VERBOSE=1       -> Print detailed information at install time
-# RPM_DBPATH      -> Path To Non-Standard RPM Database Location
-#
-# Typical Command-Line Example:
-# ./build_rpm.sh Bar.spec
-# cd ../RPMS/x86_64
-# rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
-# rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
-# rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
-
-Summary: A Nice little relocatable skeleton spec file example.
+Summary: MVvapich2 new spec file 
 
 # Give the package a base name
-%define pkg_base_name git
-%define MODULE_VAR    GIT
+%define pkg_base_name mvapich2
+%define MODULE_VAR    MVAPICH2
 
 # Create some macros (spec file variables)
-%define major_version 2
-%define minor_version 21
-%define micro_version 0
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define major_version 2
+%define minor_version X
+
+%define pkg_version %{major_version}.%{minor_version}
 
 ### Toggle On/Off ###
-%include rpm-dir.inc                  
-#%include compiler-defines.inc
+%include rpm-dir.inc
+%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
+#%include name-defines.inc
 %include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
@@ -48,40 +30,49 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3%{?dist}
-License:   GPLv2
-Group:     System Environment/Base
-URL:       https://git-scm.com
-Packager:  TACC - cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Release:   1%{?dist}
+License: BSD License
+Group:   Development/Libraries
+Packager: TACC - siliu@tacc.utexas.edu
+#Source: %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
 
-
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: OSU MPI-3 implementation
+Group: Development/Libraries
+
 %description package
-This is the long description for the package RPM...
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
+MVAPICH is an open-source and portable implementation of the Message-Passing
+Interface (MPI, www.mpi-forum.org).  MPI is a library for parallel programming,
+and is available on a wide range of parallel machines, from single laptops to
+massively parallel vector parallel processors.
+MVAPICH includes all of the routines in MPI 3.1.
+MVAPICH is developed at the Ohio State University. See whttp://mvapich.cse.ohio-state.edu/
 
 %package %{MODULEFILE}
-Summary: The modulefile RPM
-Group: Lmod/Modulefiles
+Summary: OSU MPI-3 implementation
+Group: Development/Libraries
+
 %description modulefile
-This is the long description for the modulefile RPM...
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
+Module RPM for Mvapich2
+MVAPICH is an open-source and portable implementation of the Message-Passing
+Interface (MPI, www.mpi-forum.org).  MPI is a library for parallel programming,
+and is available on a wide range of parallel machines, from single laptops to
+massively parallel vector parallel processors.
+MVAPICH includes all of the routines in MPI 3.1.
+MVAPICH is developed at the Ohio State University. See whttp://mvapich.cse.ohio-state.edu/
+
 
 %description
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
+MVAPICH is an open-source and portable implementation of the Message-Passing
+Interface (MPI, www.mpi-forum.org).  MPI is a library for parallel programming,
+and is available on a wide range of parallel machines, from single laptops to
+massively parallel vector parallel processors.
+MVAPICH includes all of the routines in MPI 3.1.
+MVAPICH is developed at the Ohio State University. See whttp://mvapich.cse.ohio-state.edu/
 
 #---------------------------------------
 %prep
@@ -92,6 +83,7 @@ Git is easy to learn and has a tiny footprint with lightning fast performance.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -117,9 +109,9 @@ Git is easy to learn and has a tiny footprint with lightning fast performance.
 
 # Setup modules
 %include system-load.inc
-
-# Insert necessary module commands
 module purge
+%include compiler-load.inc
+module list
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -129,9 +121,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
-  
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -144,40 +133,11 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
 
-export ncores=68
-export git=`pwd`
-export git_install=%{INSTALL_DIR}
-export git_version=%{pkg_version}
-export CC=gcc
-export CFLAGS="-mtune=generic"
-export LDFLAGS="-mtune=generic"
 
-wget https://www.kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
-tar xvfz git-${git_version}.tar.gz
-
-cd git-${git_version}
-
-${git}/git-${git_version}/configure \
---prefix=${git_install}
-
-make all -j ${ncores}
-make install -j ${ncores}
-
-if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-fi
-
-echo "ID %{INSTALL_DIR}"
-echo "RID $RPM_BUILD_ROOT/%{INSTALL_DIR}"
-
-cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-umount %{INSTALL_DIR}/
-
-
-  
-#-----------------------  
+#---------------------- -
 %endif # BUILD_PACKAGE |
 #-----------------------
+
 
 
 #---------------------------
@@ -185,7 +145,7 @@ umount %{INSTALL_DIR}/
 #---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -193,41 +153,56 @@ umount %{INSTALL_DIR}/
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
+echo %{INSTALL_DIR}
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
-help([[
-Git is a free and open source distributed version control system designed to
-handle everything from small to very large projects with speed and efficiency.
-Git is easy to learn and has a tiny footprint with lightning fast performance.
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{pkg_version}.lua << 'EOF'
+local help_msg=[[
+This is only a TEST VERSION for Mvapich2-X
 
-The %{MODULE_VAR} module file defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_BIN, TACC_%{MODULE_VAR}_LIB for the
-location of the %{MODULE_VAR} distribution, binaries, and libraries
-respectively. GIT_EXEC_PATH, which is also defined, determines where Git looks
-for its sub-programs. You can check the current setting by running 
-"git --exec-path".
+This module loads the MVAPICH2 MPI environment built with Intel compilers. 
+By loading this module, the following commands will be automatically available 
+for compiling MPI applications:
+mpif77       (F77 source)
+mpif90       (F90 source)
+mpicc        (C   source)
+mpiCC/mpicxx (C++ source)
 
 Version %{version}
-]])
+]]
 
-whatis("Name: Git")
-whatis("Version: %{version}")
-whatis("Category: library, tools")
-whatis("Keywords: System, Source Control Management, Tools")
-whatis("URL: http://git-scm.com")
-whatis("Description: Fast Version Control System")
+help(help_msg)
 
+whatis( "Name: %{pkg_base_name}"                                       )
+whatis( "Version: %{version}"                                          )
+whatis( "Category: library, runtime support"                           )
+whatis( "Keywords: System, Library"                                    )
+whatis( "Description:  MPI-3.1 implementation"                         )
+whatis( "URL: http://mvapich.cse.ohio-state.edu/overview/mvapich2"     )
 
-prepend_path(                  "PATH" , "%{INSTALL_DIR}/bin"              )
-prepend_path(               "MANPATH" , "%{INSTALL_DIR}/share/man"        )
-setenv (     "TACC_%{MODULE_VAR}_DIR" , "%{INSTALL_DIR}"                  )
-setenv (     "TACC_%{MODULE_VAR}_LIB" , "%{INSTALL_DIR}/lib"              )
-setenv (     "TACC_%{MODULE_VAR}_BIN" , "%{INSTALL_DIR}/bin"              )
-setenv (     "GIT_EXEC_PATH"          , "%{INSTALL_DIR}/libexec/git-core" )
-setenv (     "GIT_TEMPLATE_DIR"       , "%{INSTALL_DIR}/share/git-core/templates" )
+local base_dir = "%{INSTALL_DIR}"
+
+setenv( "MPICH_HOME"             , base_dir                            )
+setenv( "MPI_ROOT"               , base_dir                            )
+setenv( "TACC_MPI_GETMODE"       , "mvapich2_ssh"                      )
+setenv( "MV2_HOMOGENEOUS_CLUSTER", "1"                                 )
+setenv( "MV2_CPU_BINDING_POLICY" , "hybrid"                            )
+setenv( "MV2_HYBRID_BINDING_POLICY", "spread"                         )
+setenv( "MV2_USE_RDMA_CM"        , "0"                                 )
+setenv( "MV2_USE_DC"             , "0"                                 )
+setenv( "MV2_HYBRID_ENABLE_THRESHOLD", "10000000"                      )
+
+prepend_path( "PATH"             , pathJoin( base_dir , "bin"          ) )
+prepend_path( "MANPATH"          , pathJoin( base_dir , "share/man"    ) )
+prepend_path( "INFOPATH"         , pathJoin( base_dir , "doc"          ) )
+prepend_path( "LD_LIBRARY_PATH"  , pathJoin( base_dir , "lib/shared"   ) )
+prepend_path( "LD_LIBRARY_PATH"  , pathJoin( base_dir , "lib"          ) )
+prepend_path( "PKG_CONFIG_PATH"  , pathJoin( base_dir , "lib/pkgconfig") )
+prepend_path( "MODULEPATH"       , "/opt/apps/intel19/impi19_0/modulefiles" )
+
+family("MPI")
 
 EOF
+
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
@@ -237,7 +212,7 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 
 set     ModulesVersion      "%{version}"
 EOF
-  
+
   # Check the syntax of the generated lua modulefile
   %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
@@ -260,7 +235,7 @@ EOF
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile 
+%files modulefile
 #---------------------------
 
   %defattr(-,root,install,)
@@ -292,4 +267,3 @@ export PACKAGE_PREUN=1
 %clean
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
-
