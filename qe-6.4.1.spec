@@ -53,7 +53,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2
 License:   GPL
 Group:     Applications/Chemistry
 URL:       http://www.quantum-espresso.org
@@ -186,7 +186,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
 #  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
 
-cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+cp -r ./q-e-qe-6.4.1/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/
 chmod -Rf u+rwX,g+rwX,o=rX  $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #-----------------------  

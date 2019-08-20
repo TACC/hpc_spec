@@ -26,7 +26,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 1
-%define micro_version 2
+%define micro_version 3
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -155,7 +155,7 @@ demonstrates the desired level of scalability.
 
 # Insert necessary module commands
 module purge
-ml hwloc/1.11.12
+ml hwloc/1.11.13
 ml
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
@@ -190,6 +190,7 @@ export ncores=48
 ./configure                    \
 --prefix=%{INSTALL_DIR}        \
 --with-libevent=/usr           \
+--enable-dstore                \
 --with-hwloc=${TACC_HWLOC_DIR} \
 --disable-debug                \
 --enable-builtin-atomics       \

@@ -1,11 +1,20 @@
 
-# rpmbuild -bb --define 'is_intel18 1' --define 'is_impi 1' --define 'mpiV 18_5' remora-1.8.3.spec 2>&1 | tee remora-1.8.3_i18_r1.log
+# rpmbuild -bb --define 'is_intel18 1' --define 'is_impi 1'     --define 'mpiV 18_5' remora-1.8.3.spec 2>&1 | tee remora-1.8.3_i18_impi_r2.log
+# rpmbuild -bb --define 'is_intel18 1' --define 'is_mvapich2 1' --define 'mpiV 2_3'  remora-1.8.3.spec 2>&1 | tee remora-1.8.3_i18_mv2_r2.log
+# rpmbuild -bb --define 'is_intel19 1' --define 'is_mvapich2 1' --define 'mpiV 2_3'  remora-1.8.3.spec 2>&1 | tee remora-1.8.3_i19_mv2_r2.log
 
 # r=/admin/build/admin/rpms/frontera/RPMS/x86_64
-# rpm -hiv     $r/tacc-remora-intel18-impi18_0-package-1.8.3-1.el7.x86_64.rpm
-# rpm -hiv  $r/tacc-remora-intel18-impi18_0-modulefile-1.8.3-1.el7.x86_64.rpm
 
-# rpmbuild -bb --define 'is_intel19 1' --define 'is_impi 1' --define 'mpiV 19_4' remora-1.8.3.spec 2>&1 | tee remora-1.8.3_i19_r1.log
+# rpm -hiv  $r/tacc-remora-intel18-impi18_0-package-1.8.3-2.el7.x86_64.rpm
+# rpm -hiv  $r/tacc-remora-intel18-impi18_0-modulefile-1.8.3-2.el7.x86_64.rpm
+
+# rpm -hiv  $r/tacc-remora-intel18-mvapich2_2_3-package-1.8.3-2.el7.x86_64.rpm
+# rpm -hiv  $r/tacc-remora-intel18-mvapich2_2_3-modulefile-1.8.3-2.el7.x86_64.rpm
+
+# rpm -hiv  $r/tacc-remora-intel19-mvapich2_2_3-package-1.8.3-2.el7.x86_64.rpm
+# rpm -hiv  $r/tacc-remora-intel19-mvapich2_2_3-modulefile-1.8.3-2.el7.x86_64.rpm
+
+
 
 # r=/admin/build/admin/rpms/frontera/RPMS/x86_64
 # rpm -hiv     $r/tacc-remora-intel19-impi19_0-package-1.8.3-1.el7.x86_64.rpm
@@ -74,7 +83,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   MIT
 Group:     Profiling/Tools
 URL:       https://github.com/TACC/remora
@@ -151,8 +160,13 @@ REMORA provides an easy to use profiler that collects several different statisti
 
 # Setup modules
 %include system-load.inc
+
 module purge
-module load intel impi python TACC
+ module load TACC
+#module load intel/18.0.5 impi/18.0.5
+#module load intel/18.0.5 mvapich2
+ module load intel/19.0.4 mvapich2
+
 # Load Compiler
 #%include compiler-load.inc
 # Load MPI Library
@@ -186,11 +200,12 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
  mkdir -p             %{INSTALL_DIR}
  mount -t tmpfs tmpfs %{INSTALL_DIR}
 
-export CFLAGS="%{TACC_OPT}"
-export LDFLAGS="%{TACC_OPT}"
+#export CFLAGS="%{TACC_OPT}"
+#export LDFLAGS="%{TACC_OPT}"
 
 ## sed -i 's/icc/#icc/g' ./install.sh
 #sed -i 's/pip/#pip/g' ./install.sh
+
 REMORA_INSTALL_PREFIX=%{INSTALL_DIR} ./install.sh
 
 sed -i '/dvs,IO/d'                  %{INSTALL_DIR}/bin/config/modules

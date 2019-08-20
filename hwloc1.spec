@@ -26,7 +26,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 # Create some macros (spec file variables)
 %define major_version 1
 %define minor_version 11
-%define micro_version 12
+%define micro_version 13
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -53,7 +53,7 @@ License:   BSD-2
 Group:     Development/Tools
 URL:       https://www.open-mpi.org/projects/hwloc
 Packager:  TACC - cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Source:    %{pkg_base_name}-%{pkg_version}.tar.bz2
 
 # Turn off debug package mode
 %define debug_package %{nil}

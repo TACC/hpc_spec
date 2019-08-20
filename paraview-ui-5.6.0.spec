@@ -13,7 +13,7 @@ Release:   0
 Source:    ParaView-v5.6.0.tar.gz
 
 # Give the package a base name
-%define pkg_base_name paraview-osmesa
+%define pkg_base_name paraview
 %define MODULE_VAR    PARAVIEW
 
 %define major_version 5
@@ -22,7 +22,7 @@ Source:    ParaView-v5.6.0.tar.gz
 
 %define pkg_version %{major_version}.%{minor_version}
 
-%define is_intel18 1
+%define is_intel19 1
 %define is_cmpich 1
 
 %include rpm-dir.inc
@@ -55,9 +55,13 @@ ParaView is a free interactive parallel visualization and graphical analysis too
 
 %prep
 
+echo "Building the modulefile?: %{BUILD_MODULEFILE}"
+echo "Building the package?: %{BUILD_PACKAGE}"
+
 #------------------------
 %if %{?BUILD_PACKAGE}
 #------------------------
+
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
@@ -79,17 +83,11 @@ ParaView is a free interactive parallel visualization and graphical analysis too
 
 %build
 
-echo '============== BUILD =================='
-pwd
-echo '======================================='
-
-%include system-load-LG.inc
 %include compiler-load.inc
 %include mpi-load.inc
 
 module use /admin/build/gda/rpminstall/modulefiles
-module load python2 cmake qt5 ospray swr
-export LD_LIBRARY_PATH+=:$TACC_SWR_LIB
+module load python2 cmake qt5 ospray
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -109,26 +107,16 @@ export LD_LIBRARY_PATH+=:$TACC_SWR_LIB
   mkdir build
   cd build
   CC=icc CXX=icpc cmake .. \
-    -DPARAVIEW_ENABLE_WEB=ON \
+    -DPARAVIEW_ENABLE_WEB=OFF \
     -DOSPRAY_INSTALL_DIR=$TACC_OSPRAY_DIR \
     -DCMAKE_INSTALL_PREFIX=$RPM_BUILD_ROOT/%{INSTALL_DIR} \
     -DCMAKE_BUILD_TYPE=Release \
-    -DPARAVIEW_USE_MPI=ON \
+    -DPARAVIEW_QT_VERSION=5 \
+    -DPARAVIEW_USE_MPI=OFF \
+    -DVTK_USE_SYSTEM_HDF5=ON \
     -DPARAVIEW_ENABLE_PYTHON=ON \
     -DPARAVIEW_INSTALL_DEVELOPMENT_FILES=ON \
-    -DPARAVIEW_USE_OSPRAY=ON  \
-    -DVTK_USE_OFFSCREEN=OFF \
-    -DOSPRAY_INSTALL_DIR=$TACC_OSPRAY_DIR \
-    -DVTK_OPENGL_HAS_OSMESA=ON \
-    -DCMAKE_EXE_LINKER_FLAGS="-L$TACC_SWR_LIB -lLLVM" \
-    -DCMAKE_SHARED_LINKER_FLAGS="-L$TACC_SWR_LIB -lLLVM" \
-    -DOSMESA_LIBRARY=$TACC_SWR_LIB/libOSMesa.so \
-    -DOSMESA_INCLUDE_DIR=$TACC_SWR_INC \
-    -DPARAVIEW_BUILD_QT_GUI=OFF \
-    -DVTK_USE_X=OFF \
-    -DOPENGL_INCLUDE_DIR=IGNORE \
-    -DOPENGL_gl_LIBRARY=IGNORE \
-    -DVTK_USE_OFFSCREEN=OFF
+    -DPARAVIEW_USE_OSPRAY=ON 
 
   make pvCompileTools
   make -j 6
@@ -139,14 +127,9 @@ export LD_LIBRARY_PATH+=:$TACC_SWR_LIB
 %install
 
 # Setup modules
-%include system-load-LG.inc
 %include compiler-load.inc
 %include mpi-load.inc
 
-
-echo '============== INSTALL =================='
-pwd
-echo '========================================='
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -163,13 +146,44 @@ echo '========================================='
   #######################################
 
   cd build
-  make -j 6 install
+make -j 6 install
 
-  cd $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  for i in pvbatch pvdataserver pvpython pvrenderserver pvserver ; do
-	mv $i $i.orig
-	ln -s ../lib/$i $i
-  done
+cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/paraview-config << 'EOF1'
+echo paraview-config is not available
+EOF1
+
+cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/paraview-config << 'EOF2'
+echo paraview-config is not available
+EOF2
+
+
+find $RPM_BUILD_ROOT/%{INSTALL_DIR} -name  QtTestingConfig.cmake -print
+find $RPM_BUILD_ROOT/%{INSTALL_DIR} -name  QtTestingConfig.cmake | xargs sed -i "s|$RPM_BUILD_ROOT||g"
+find $RPM_BUILD_ROOT/%{INSTALL_DIR} -name  vtkPython.cmake -print
+find $RPM_BUILD_ROOT/%{INSTALL_DIR} -name  vtkPython.cmake | xargs sed -i "s|$RPM_BUILD_ROOT||g"
+find $RPM_BUILD_ROOT/%{INSTALL_DIR} -name  VTKConfig.cmake -print
+find $RPM_BUILD_ROOT/%{INSTALL_DIR} -name  VTKConfig.cmake | xargs sed -i "s|$RPM_BUILD_ROOT||g"
+chmod a+x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/paraview-config $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/paraview-config
+
+cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/pv-parallel-startup << 'EOF1'
+#! /bin/bash
+module load paraview-osmesa
+ibrun swr pvserver
+EOF1
+
+chmod a+rx $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/pv-parallel-startup
+
+cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/default_servers.pvsc << 'EOF2'
+<Servers>
+  <Server name="auto" configuration="" resource="cs://localhost:11111">
+    <CommandStartup>
+      <Command exec="pv-parallel-startup" timeout="0" delay="5">
+        <Arguments/>
+      </Command>
+    </CommandStartup>
+  </Server>
+</Servers>
+EOF2
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -202,13 +216,13 @@ include files, and tools respectively.
 --help(help_msg)
 help(help_msg)
 
-whatis("Name: paraview-osmesa")
+whatis("Name: paraview")
 whatis("Version: %{pkg_version}%{dbg}")
 %if "%{is_debug}" == "1"
 setenv("TACC_%{MODULE_VAR}_DEBUG","1")
 %endif
 
-conflict("paraview-osmesa")
+conflict("paraview")
 prereq("python2", "qt5", "ospray", "swr")
 
 -- Create environment variables.

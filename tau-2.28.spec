@@ -67,25 +67,23 @@ URL:       http://www.cs.uoregon.edu/research/tau/
 # BASIC DEFINITIONS
 #------------------------------------------------
 
+  %define TAU_tag       "-tag=whatever"
+  %define TAU_tag       %{nil}
+
   %define PDT_name      pdtoolkit
   %define PDT_version   3.25
   %define PDT_dir       %{APPS}/%{comp_fam_ver}/%{PDT_name}/%{PDT_version}
 
-  %define PAPI_version  5.7.0
-  %define PAPI_dir      /opt/apps/papi/%{PAPI_version}
-  %define PAPI_events              %{PAPI_dir}/share/papi/papi_events.csv
-  %define PAPI_avail               %{PAPI_dir}/bin/papi_avail
-  %define PAPI_component_avail     %{PAPI_dir}/bin/papi_component_avail
   %define TAU_metrics   GET_TIME_OF_DAY:PAPI_TOT_CYC:PAPI_L2_LDM
   
-  %define TAU_makefile Makefile.tau-intelmpi-icpc-papi-ompt-mpi-pdt-openmp
-  %define TAU_makefile_omp Makefile.tau-intelomp-icpc-papi-ompt-pdt-openmp
+ #%define TAU_makefile     Makefile.tau-intelmpi-icpc-papi-ompt-mpi-pdt-openmp
+ #%define TAU_makefile_omp Makefile.tau-intelomp-icpc-papi-ompt-pdt-openmp
+ #                                                                          # intel mpi openmp
+  %define TAU_makefile     Makefile.tau-icpc-papi-ompt-tr4-mpi-pdt-openmp
   
 #                                               Configure Options
   %define  PREFIX     "-prefix=%{INSTALL_DIR}"
   %define  PDT        "-pdt=%{PDT_dir}"
-  %define  PAPI       "-papi=%PAPI_dir"
-
   #define  ARCH       "-arch=x86_64"
 
 ##############
@@ -131,17 +129,29 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
      mkdir -p             %{INSTALL_DIR}
      mount -t tmpfs tmpfs %{INSTALL_DIR}
 
-     module load papi/%{PAPI_version}
      module load cmake
 
-     ./configure -tag=intelmpi %{PREFIX} -c++=mpicxx -cc=mpicc -fortran=mpif90 \
-                 %{PDT} %{PAPI} -ompt=download \
-                 -bfd=download -iowrapper -unwind=download
+     module load papi
+     %define PAPI_version        ${TACC_PAPI_DIR##*/}
+     %define PAPI_dir             $TACC_PAPI_DIR
+     %define PAPI_events          $TACC_PAPI_DIR/share/papi/papi_events.csv
+     %define PAPI_avail           $TACC_PAPI_DIR/bin/papi_avail
+     %define PAPI_component_avail $TACC_PAPI_DIR/bin/papi_component_avail
+     %define PAPI                 "-papi=%PAPI_dir"
+
+    #%define TAG       "-tag=whatever"
+     %define TAG       %{nil} 
+
+     ./configure %{TAG} %{PREFIX} -c++=mpicxx -cc=mpicc -fortran=mpif90 \
+                 %{PDT} %{PAPI}   -ompt=download \
+                 -bfd=download -iowrapper -unwind=download -ompt=download
      make clean install -j 10
 
-     ./configure -tag=intelomp %{PREFIX} -c++=icpc   -cc=icc   -fortran=ifort \
-                 %{PDT} %{PAPI} -ompt=download \
-                 -bfd=download -iowrapper -unwind=download
+     %define TAG       %{nil} 
+
+     ./configure %{TAG} %{PREFIX} -c++=icpc   -cc=icc   -fortran=ifort \
+                 %{PDT} %{PAPI}   -ompt=download \
+                 -bfd=download -iowrapper -unwind=download -ompt=download
      make clean install -j 10
 
   %endif  #BUILD_PACKAGE |

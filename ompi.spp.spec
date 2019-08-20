@@ -33,10 +33,13 @@ Summary: A Nice little relocatable skeleton spec file example.
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 %define pkg_version_dash %{major_version}_%{minor_version}
 
+%define hwloc_version 1.11.13
+%define hwloc_install /opt/apps/hwloc/%{hwloc_version}
+
 %define ucx_version 1.5.1
 %define ucx_install /opt/apps/ucx/%{ucx_version}
 
-%define pmix_version 3.1.2
+%define pmix_version 3.1.3
 %define pmix_install /opt/apps/pmix/%{pmix_version}
 
 ### Toggle On/Off ###
@@ -57,7 +60,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   19%{?dist}
+Release:   20%{?dist}
 License:   BSD
 Group:     MPI
 URL:       https://www.open-mpi.org
@@ -124,9 +127,9 @@ Open-MPI development library.
 # Insert necessary module commands
 ml purge
 %include compiler-load.inc
-ml ucx
-ml pmix
-ml hwloc/1.11.12
+ml ucx/%{ucx_version}
+ml pmix/%{pmix_version}
+ml hwloc/%{hwloc_version}
 ml
 
 echo "Building the package?:    %{BUILD_PACKAGE}"

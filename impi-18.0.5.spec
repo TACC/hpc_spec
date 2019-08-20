@@ -51,7 +51,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   proprietary
 Group:     MPI
 URL:       https://software.intel.com/en-us/intel-mpi-library
@@ -253,6 +253,8 @@ if (os.getenv("TACC_SYSTEM") == "frontera") then
   setenv(     "I_MPI_FABRICS"          , "shm:ofa"                               )
   setenv(     "I_MPI_FALLBACK"         , "0"                                     )
   setenv(     "I_MPI_STARTUP_MODE"     , "pmi_shm_netmod"                        )
+  setenv(     "I_MPI_ADJUST_BCAST"     , "1:16384-0"                             )
+  setenv(     "I_MPI_ADJUST_ALLTOALL"  , "3"                                     )
 end
 
 if (os.getenv("TACC_SYSTEM") == "stampede2") then

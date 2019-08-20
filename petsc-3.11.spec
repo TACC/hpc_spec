@@ -34,7 +34,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -259,11 +259,11 @@ esac
 ##
 
 export HAS_HDF5=1
+module load phdf5
 export hdf5string="hdf5"
 export hdf5download="--with-hdf5=1 --with-hdf5-dir=${TACC_HDF5_DIR}"
 # --download-hdf5=1"
 export hdf5versionextra="; hdf5 support"
-module load phdf5
 
 case "${ext}" in
 *nohdf5* ) export HAS_HDF5=0
