@@ -93,7 +93,7 @@
   %define comp_fam_ver intel19
   %define comp_fam_name Intel
   %define is_intel 1
-  %define comp_module intel/19.0.4
+  %define comp_module intel/19.0.5
 %endif
 
 %if "%{comp_fam}" == "error"

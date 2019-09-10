@@ -57,7 +57,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4%{?dist}
+Release:   5%{?dist}
 License:   GNU
 Group:     Development/Tools
 Vendor:     GNU Foundation
@@ -240,7 +240,7 @@ TACC_GNUPARALLEL_DIR TACC_GNUPARALLEL_BIN
 
 Executing a file of commandlines:
 
-gnuparallel_command_file_execute.sh commands
+gnuparallel_command_file_execute_ssh.sh commands
 
 Version: %{version}
 ]] )
@@ -327,6 +327,9 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Mon Aug 26 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 5: UNRELEASED
+  corrected module help
 * Mon Jul 29 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 4: abandoned use of /tmp. stupid
 * Tue Jul 23 2019 eijkhout <eijkhout@tacc.utexas.edu>

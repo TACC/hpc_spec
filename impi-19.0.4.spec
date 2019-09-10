@@ -51,7 +51,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   5%{?dist}
+Release:   6%{?dist}
 License:   proprietary
 Group:     MPI
 URL:       https://software.intel.com/en-us/intel-mpi-library
@@ -222,7 +222,7 @@ Version %{version}
 help(help_msg)
 
 -- Create environment variables.
-local base_dir           = "/opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi"
+local base_dir           = "/home1/apps/intel/19.0.4/compilers_and_libraries_%{lib_version}/linux/mpi"
 
 whatis("Name: Intel MPI"                                                    )
 whatis("Version: %{version}"                                                )

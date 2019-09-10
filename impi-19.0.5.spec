@@ -1,7 +1,6 @@
-# https://ofiwg.github.io/libfabric/master/man/fi_psm2.7.html
 #
 # W. Cyrus Proctor
-# 2015-11-07
+# 2015-11-12
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -21,24 +20,27 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name libfabric
-%define MODULE_VAR    LIBFABRIC
+%define pkg_base_name impi
+%define MODULE_VAR    IMPI
 
 # Create some macros (spec file variables)
-%define major_version 1
-%define minor_version 7
-%define micro_version 1
+%define major_version 19
+%define minor_version 0
+%define micro_version 5
+
+%define lib_version 2019.5.281
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define underscore_version %{major_version}_%{minor_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
+%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines-noreloc.inc
+%include name-defines.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -49,10 +51,10 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
-License:   GPLv2 or BSD
-Group:     System Environment/Libraries
-URL:       http://www.github.com/ofiwg/libfabric
+Release:   1%{?dist}
+License:   proprietary
+Group:     MPI
+URL:       https://software.intel.com/en-us/intel-mpi-library
 Packager:  TACC - cproctor@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
@@ -66,29 +68,20 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
-penFabrics Interfaces (OFI) is a framework focused on exporting fabric
-communication services to applications. OFI is best described as a collection
-of libraries and applications used to export fabric services. The key
-components of OFI are: application interfaces, provider libraries, kernel
-services, daemons, and test applications.
+This is specifically an rpm for the Intel MPI modulefile
+used on Frontera.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...  OpenFabrics Interfaces
-(OFI) is a framework focused on exporting fabric communication services to
-applications. OFI is best described as a collection of libraries and
-applications used to export fabric services. The key components of OFI are:
-application interfaces, provider libraries, kernel services, daemons, and test
-applications.
+This is the long description for the modulefile RPM...
+This is specifically an rpm for the Intel MPI modulefile
+used on Frontera.
 
 %description
-OpenFabrics Interfaces (OFI) is a framework focused on exporting fabric
-communication services to applications. OFI is best described as a collection
-of libraries and applications used to export fabric services. The key
-components of OFI are: application interfaces, provider libraries, kernel
-services, daemons, and test applications.
+This is specifically an rpm for the Intel MPI modulefile
+used on Frontera.
 
 #---------------------------------------
 %prep
@@ -111,8 +104,6 @@ services, daemons, and test applications.
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
-%setup -n %{pkg_base_name}-%{pkg_version}
 
 
 #---------------------------------------
@@ -138,8 +129,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -152,20 +141,25 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
- 
-  export CC=gcc
-  export ncores=8
-  # DO NOT preppend $RPM_BUILD_ROOT in prefix
-  ./configure \
-  --prefix=%{INSTALL_DIR}
-  make -j ${ncores}
-  make install -j ${ncores}
-  
-  if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-    mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  fi
-  cp -r %{INSTALL_DIR} $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-  umount %{INSTALL_DIR}
+
+###%if "%{comp_fam_name}" == "Intel"
+###  # gfortran "use mpi" statements are busted
+###  # fix intel's mess
+###  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+###  ln -s /opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiicc $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicc
+###  ln -s /opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiicpc $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpicxx
+###  ln -s /opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiifort $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif77
+###  ln -s /opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi/intel64/bin/mpiifort $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
+###%endif
+###
+### 
+###%if "%{comp_fam_name}" == "GNU"
+###  # gfortran "use mpi" statements are busted
+###  # fix intel's mess
+###  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+###  cp %{_sourcedir}/mpif90.18 $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
+###  chmod +rx $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/mpif90
+###%endif
   
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -185,56 +179,89 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
+
+# Default Intel
+%define myCC  icc
+%define myCXX icpc
+%define myFC  ifort
+
+# GCC module
+%if "%{comp_fam_name}" == "GNU"
+%define myCC  gcc
+%define myCXX g++
+%define myFC  gfortran
+%endif
+
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_message = [[
-OpenFabrics Interfaces (OFI) is a framework focused on exporting fabric
-communication services to applications. OFI is best described as a collection
-of libraries and applications used to export fabric services. The key
-components of OFI are: application interfaces, provider libraries, kernel
-services, daemons, and test applications.
+local help_msg=[[
+Intel MPI Library %{pkg_version} focuses on making applications perform better on Intel
+architecture-based clusters -- implementing the high performance Message Passing
+Interface Version 3.0 specification on multiple fabrics. It enables you to
+quickly deliver maximum end user performance even if you change or upgrade to
+new interconnects, without requiring changes to the software or operating
+environment.
 
-This module defines the environmental variables TACC_%{MODULE_VAR}_DIR,
-TACC_%{MODULE_VAR}_BIN, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC
-for the location of the main libfabric directory, binaries, libraries,
-and include files respectively.
+This module loads the Intel MPI environment built with
+Intel compilers. By loading this module, the following commands
+will be automatically available for compiling MPI applications:
+mpif77       (F77 source)
+mpif90       (F90 source)
+mpicc        (C   source)
+mpicxx       (C++ source)
 
-The location of the binary files is also added to your PATH.
-The location of the library files is also added to your LD_LIBRARY_PATH.
-Documentation is also added to your MANPATH.
+The %{MODULE_VAR} module also defines the following environment variables:
+TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
+TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
+include files, and tools respectively.
 
 Version %{version}
 ]]
 
-help(help_message,"\n")
+--help(help_msg)
+help(help_msg)
 
-whatis("Name: %{name}")
-whatis("Version: %{version}")
-whatis("Category: system, environment libaries")
-whatis("Keywords: System, Environment Libraries")
-whatis("Description: Fabric communication services")
-whatis("URL: http://www.github.com/ofiwg/libfabric")
+-- Create environment variables.
+local base_dir           = "/opt/intel/compilers_and_libraries_%{lib_version}/linux/mpi"
 
--- Export environmental variables
-local libfabric_dir="%{INSTALL_DIR}"
-local libfabric_bin=pathJoin(libfabric_dir,"bin")
-local libfabric_lib=pathJoin(libfabric_dir,"lib")
-local libfabric_inc=pathJoin(libfabric_dir,"include")
-setenv("TACC_LIBFABRIC_DIR",libfabric_dir)
-setenv("TACC_LIBFABRIC_BIN",libfabric_bin)
-setenv("TACC_LIBFABRIC_LIB",libfabric_lib)
-setenv("TACC_LIBFABRIC_INC",libfabric_inc)
+whatis("Name: Intel MPI"                                                    )
+whatis("Version: %{version}"                                                )
+whatis("Category: library, Runtime Support"                                 )
+whatis("Description: Intel MPI Library (C/C++/Fortran for x86_64)"          )
+whatis("URL: http://software.intel.com/en-us/articles/intel-mpi-library"    )
+prepend_path( "PATH"                   , pathJoin( base_dir , "intel64/bin"      ) )
+prepend_path( "PATH"                   , pathJoin( "%{INSTALL_DIR}" , "bin"      ) )
+prepend_path( "LD_LIBRARY_PATH"        , pathJoin( base_dir , "intel64/lib"      ) )
+--prepend_path( "LD_LIBRARY_PATH"        , pathJoin( base_dir , "intel64/lib/release_mt" ) )
+prepend_path( "LD_LIBRARY_PATH"        , pathJoin( base_dir , "intel64/lib/release" ) )
+prepend_path( "MANPATH"                , pathJoin( base_dir , "man"              ) )
+prepend_path( "MODULEPATH"             ,"/opt/apps/%{comp_fam_ver}/impi%{underscore_version}/modulefiles" )
+prepend_path( "I_MPI_ROOT"             , base_dir                                )
+setenv(       "MPICH_HOME"             , base_dir                                )
+setenv(       "TACC_MPI_GETMODE"       , "impi_hydra"                            )
+setenv(       "TACC_IMPI_DIR"          , base_dir                                )
+setenv(       "TACC_IMPI_BIN"          , pathJoin( base_dir , "intel64/bin"      ) )
+setenv(       "TACC_IMPI_LIB"          , pathJoin( base_dir , "intel64/lib"      ) )
+setenv(       "TACC_IMPI_INC"          , pathJoin( base_dir , "intel64/include"  ) )
+setenv(       "I_MPI_CC"               , "%{myCC}"                               )
+setenv(       "I_MPI_CXX"              , "%{myCXX}"                              )
+setenv(       "I_MPI_FC"               , "%{myFC}"                               )
+setenv(       "I_MPI_F77"              , "%{myFC}"                               )
+setenv(       "I_MPI_F90"              , "%{myFC}"                               )
+family(       "MPI"                                                              )
 
--- Prepend the libfabric directories to the adequate PATH variables
-prepend_path("PATH",libfabric_bin)
-prepend_path("LD_LIBRARY_PATH",libfabric_lib)
-prepend_path("MANPATH", pathJoin(libfabric_dir, "share/man"))
 
-family("libfabric")
+if (os.getenv("TACC_SYSTEM") == "frontera") then
+  family( "libfabric" )
+  depends_on( "ucx" )
+  setenv( "FI_PROVIDER"        , "mlx" )
+  setenv( "FI_PROVIDER_PATH"   , pathJoin( base_dir , "intel64/libfabric/lib/prov" ) )
+  setenv( "I_MPI_STARTUP_MODE" , "pmi_shm_netmod" )
+end
 
 EOF
-  
+
+ 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -245,6 +272,7 @@ set     ModulesVersion      "%{version}"
 EOF
   
   # Check the syntax of the generated lua modulefile
+  ### don't check the hidden one!
   %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------

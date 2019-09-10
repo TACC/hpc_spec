@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   proprietary
 Group:     Compiler
 URL:       https://software.intel.com/en-us/intel-compilers
@@ -198,7 +198,7 @@ whatis("Description: Intel Math Kernel Library"                             )
 whatis("URL: https://software.intel.com/en-us/intel-mkl"                    )
 
 -- Create environment variables.
-local base         = "/opt/intel"
+local base         = "/home1/apps/intel/19.0.4"
 local full_xe      = "compilers_and_libraries_2019.4.243/linux"
 local installDir   = pathJoin(base,full_xe)
 local mklRoot      = pathJoin(installDir,"mkl")

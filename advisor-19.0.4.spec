@@ -1,7 +1,7 @@
-# https://ofiwg.github.io/libfabric/master/man/fi_psm2.7.html
 #
-# W. Cyrus Proctor
-# 2015-11-07
+# Joe Garcia 
+# 2019-08-27
+# copied this over from the hpc_spec github repo, making frontera changes
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -21,15 +21,18 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name libfabric
-%define MODULE_VAR    LIBFABRIC
+%define pkg_base_name advisor 
+%define MODULE_VAR    ADVISOR 
 
 # Create some macros (spec file variables)
-%define major_version 1
-%define minor_version 7
-%define micro_version 1
+%define major_version 19
+%define minor_version 0 
+%define micro_version 4
+
+%define lib_version 2019.4.0.597843
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define underscore_version %{major_version}_%{minor_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -49,11 +52,11 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
-License:   GPLv2 or BSD
-Group:     System Environment/Libraries
-URL:       http://www.github.com/ofiwg/libfabric
-Packager:  TACC - cproctor@tacc.utexas.edu
+Release:   1%{?dist}
+License:   proprietary
+Group:     PROFILER
+URL:       https://software.intel.com/en-us/intel-advisor-xe
+Packager:  TACC - jgarcia@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -66,29 +69,20 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
-penFabrics Interfaces (OFI) is a framework focused on exporting fabric
-communication services to applications. OFI is best described as a collection
-of libraries and applications used to export fabric services. The key
-components of OFI are: application interfaces, provider libraries, kernel
-services, daemons, and test applications.
+This is specifically an rpm for the Intel advisor modulefile
+used on Frontera.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...  OpenFabrics Interfaces
-(OFI) is a framework focused on exporting fabric communication services to
-applications. OFI is best described as a collection of libraries and
-applications used to export fabric services. The key components of OFI are:
-application interfaces, provider libraries, kernel services, daemons, and test
-applications.
+This is the long description for the modulefile RPM...
+This is specifically an rpm for the Intel advisor modulefile
+used on Frontera.
 
 %description
-OpenFabrics Interfaces (OFI) is a framework focused on exporting fabric
-communication services to applications. OFI is best described as a collection
-of libraries and applications used to export fabric services. The key
-components of OFI are: application interfaces, provider libraries, kernel
-services, daemons, and test applications.
+This is specifically an rpm for the Intel advisor modulefile
+used on Frontera.
 
 #---------------------------------------
 %prep
@@ -111,8 +105,6 @@ services, daemons, and test applications.
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
-%setup -n %{pkg_base_name}-%{pkg_version}
 
 
 #---------------------------------------
@@ -138,8 +130,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -152,20 +142,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
- 
-  export CC=gcc
-  export ncores=8
-  # DO NOT preppend $RPM_BUILD_ROOT in prefix
-  ./configure \
-  --prefix=%{INSTALL_DIR}
-  make -j ${ncores}
-  make install -j ${ncores}
-  
-  if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-    mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  fi
-  cp -r %{INSTALL_DIR} $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-  umount %{INSTALL_DIR}
   
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -185,56 +161,48 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
+
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_message = [[
-OpenFabrics Interfaces (OFI) is a framework focused on exporting fabric
-communication services to applications. OFI is best described as a collection
-of libraries and applications used to export fabric services. The key
-components of OFI are: application interfaces, provider libraries, kernel
-services, daemons, and test applications.
+local advisor_dir   = "/opt/intel/advisor_%{lib_version}"
 
-This module defines the environmental variables TACC_%{MODULE_VAR}_DIR,
-TACC_%{MODULE_VAR}_BIN, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC
-for the location of the main libfabric directory, binaries, libraries,
-and include files respectively.
+whatis( "Name: advisor" )
+whatis( "Version: %{version}" )
+whatis( "Category: performance analysis" )
+whatis( "Keywords: System, Utility, Tools" )
+whatis( "Description: Intel Advisor" )
+whatis( "URL: https://software.intel.com/en-us/intel-advisor-xe" )
 
-The location of the binary files is also added to your PATH.
-The location of the library files is also added to your LD_LIBRARY_PATH.
-Documentation is also added to your MANPATH.
+prepend_path(       "PATH",       pathJoin( advisor_dir, "bin64"     )   )
+append_path(        "PYTHONPATH", pathJoin( advisor_dir, "pythonapi" )   )
 
-Version %{version}
+setenv( "ADVISOR_2018_DIR", advisor_dir                          )
+
+setenv( "TACC_ADVISOR_DIR", advisor_dir                          )
+setenv( "TACC_ADVISOR_BIN", pathJoin( advisor_dir, "bin64"   )   )
+setenv( "TACC_ADVISOR_LIB", pathJoin( advisor_dir, "lib64"   )   )
+setenv( "TACC_ADVISOR_INC", pathJoin( advisor_dir, "include" )   )
+
+help(
+[[
+
+Intel Advisor focuses on vector optimization and thread prototyping.
+
+For detailed info, consult the extensive documentation in
+$TACC_ADVISOR_DIR/documentation or online at
+software.intel.com/en-us/intel-advisor-xe.
+See also software.intel.com/en-us/articles/advisor-tutorials.
+
+To see the exact effect of loading the module, execute "module show advisor".
+
+Version %{version}  (file version %{version})
+
 ]]
-
-help(help_message,"\n")
-
-whatis("Name: %{name}")
-whatis("Version: %{version}")
-whatis("Category: system, environment libaries")
-whatis("Keywords: System, Environment Libraries")
-whatis("Description: Fabric communication services")
-whatis("URL: http://www.github.com/ofiwg/libfabric")
-
--- Export environmental variables
-local libfabric_dir="%{INSTALL_DIR}"
-local libfabric_bin=pathJoin(libfabric_dir,"bin")
-local libfabric_lib=pathJoin(libfabric_dir,"lib")
-local libfabric_inc=pathJoin(libfabric_dir,"include")
-setenv("TACC_LIBFABRIC_DIR",libfabric_dir)
-setenv("TACC_LIBFABRIC_BIN",libfabric_bin)
-setenv("TACC_LIBFABRIC_LIB",libfabric_lib)
-setenv("TACC_LIBFABRIC_INC",libfabric_inc)
-
--- Prepend the libfabric directories to the adequate PATH variables
-prepend_path("PATH",libfabric_bin)
-prepend_path("LD_LIBRARY_PATH",libfabric_lib)
-prepend_path("MANPATH", pathJoin(libfabric_dir, "share/man"))
-
-family("libfabric")
-
-EOF
+)
   
+EOF
+
+ 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -245,6 +213,7 @@ set     ModulesVersion      "%{version}"
 EOF
   
   # Check the syntax of the generated lua modulefile
+  ### don't check the hidden one!
   %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------
@@ -298,4 +267,3 @@ export PACKAGE_PREUN=1
 %clean
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
-

@@ -1,7 +1,6 @@
-# https://ofiwg.github.io/libfabric/master/man/fi_psm2.7.html
-#
-# W. Cyrus Proctor
-# 2015-11-07
+# Joe Garcia
+# 2019-09-09
+# new spec file for intel 19 update 5, there's something different here tho
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -21,15 +20,18 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name libfabric
-%define MODULE_VAR    LIBFABRIC
+%define pkg_base_name vtune 
+%define MODULE_VAR    VTUNE
 
 # Create some macros (spec file variables)
-%define major_version 1
-%define minor_version 7
-%define micro_version 1
+%define major_version 19
+%define minor_version 0
+%define micro_version 5
+
+%define lib_version 2019.6.0.602217 
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define underscore_version %{major_version}_%{minor_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -49,11 +51,11 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
-License:   GPLv2 or BSD
-Group:     System Environment/Libraries
-URL:       http://www.github.com/ofiwg/libfabric
-Packager:  TACC - cproctor@tacc.utexas.edu
+Release:   1%{?dist}
+License:   proprietary
+Group:     PROFILER
+URL:       https://software.intel.com/en-us/intel-vtune-amplifier-xe
+Packager:  TACC - jgarcia@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -66,29 +68,20 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
-penFabrics Interfaces (OFI) is a framework focused on exporting fabric
-communication services to applications. OFI is best described as a collection
-of libraries and applications used to export fabric services. The key
-components of OFI are: application interfaces, provider libraries, kernel
-services, daemons, and test applications.
+This is specifically an rpm for the Intel vtune modulefile
+used on Stampede2.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...  OpenFabrics Interfaces
-(OFI) is a framework focused on exporting fabric communication services to
-applications. OFI is best described as a collection of libraries and
-applications used to export fabric services. The key components of OFI are:
-application interfaces, provider libraries, kernel services, daemons, and test
-applications.
+This is the long description for the modulefile RPM...
+This is specifically an rpm for the Intel vtune modulefile
+used on Stampede2.
 
 %description
-OpenFabrics Interfaces (OFI) is a framework focused on exporting fabric
-communication services to applications. OFI is best described as a collection
-of libraries and applications used to export fabric services. The key
-components of OFI are: application interfaces, provider libraries, kernel
-services, daemons, and test applications.
+This is specifically an rpm for the Intel vtune modulefile
+used on Stampede2.
 
 #---------------------------------------
 %prep
@@ -111,8 +104,6 @@ services, daemons, and test applications.
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
-%setup -n %{pkg_base_name}-%{pkg_version}
 
 
 #---------------------------------------
@@ -138,8 +129,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -152,20 +141,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
- 
-  export CC=gcc
-  export ncores=8
-  # DO NOT preppend $RPM_BUILD_ROOT in prefix
-  ./configure \
-  --prefix=%{INSTALL_DIR}
-  make -j ${ncores}
-  make install -j ${ncores}
-  
-  if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-    mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  fi
-  cp -r %{INSTALL_DIR} $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-  umount %{INSTALL_DIR}
+
   
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -185,56 +161,82 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
+
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_message = [[
-OpenFabrics Interfaces (OFI) is a framework focused on exporting fabric
-communication services to applications. OFI is best described as a collection
-of libraries and applications used to export fabric services. The key
-components of OFI are: application interfaces, provider libraries, kernel
-services, daemons, and test applications.
+local vtune_dir   = "/opt/intel/vtune_amplifier_%{lib_version}"
 
-This module defines the environmental variables TACC_%{MODULE_VAR}_DIR,
-TACC_%{MODULE_VAR}_BIN, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC
-for the location of the main libfabric directory, binaries, libraries,
-and include files respectively.
+whatis( "Name: vtune" )
+whatis( "Version: %{version}" )
+whatis( "Category: performance analysis" )
+whatis( "Keywords: System, Utility, Tools" )
+whatis( "Description: Intel VTune Amplifier" )
+whatis( "URL: https://software.intel.com/en-us/intel-vtune-amplifier-xe" )
 
-The location of the binary files is also added to your PATH.
-The location of the library files is also added to your LD_LIBRARY_PATH.
-Documentation is also added to your MANPATH.
+prepend_path(     "PATH", pathJoin( vtune_dir, "bin64"   )   )
+
+setenv( "TACC_VTUNE_DIR", vtune_dir                          )
+setenv( "TACC_VTUNE_BIN", pathJoin( vtune_dir, "bin64"   )   )
+setenv( "TACC_VTUNE_LIB", pathJoin( vtune_dir, "lib64"   )   )
+setenv( "TACC_VTUNE_INC", pathJoin( vtune_dir, "include" )   )
+
+help(
+[[
+
+VTune is Intel's signature performance profiling tool.
+
+For detailed info, consult the extensive documentation in
+$TACC_VTUNE_DIR/documentation or online at
+software.intel.com/en-us/intel-vtune-amplifier-xe.
+
+COLLECTION
+**********
+
+First, compile with "-g".
+
+To collect data on an executable named main.exe,
+using a collection named "hotspots", execute the following
+command on a compute node:
+
+   amplxe-cl -collect hotspots -- main.exe
+
+Note the "--" followed by a space.
+
+This will generate a directory with a name like 'r000hs' or 'r000ah'
+("hs" means "hotspots";  "ah" means "advanced-hotspots").
+It will also print a brief summary report to stdout.
+
+You can reduce the sampling rate to use less memory,
+reduce collection time,  and generate smaller database files.
+To reduce the sampling rate to 15ms (default is 1-4ms):
+
+   amplxe-cl -collect hotspots -knob sampling-interval=15 -- main.exe
+
+ANALYSIS AND REPORTING
+**********************
+
+Assuming a collection directory named "r000hs".
+From a login or compute node with X11:
+
+   amplxe-gui r000hs
+
+There are also text-based command-line analysis and report utilities.
+
+ENVIRONMENT VARIABLES
+*********************
+
+This modulefile defines TACC_VTUNE_DIR, TACC_VTUNE_BIN, TACC_VTUNE_LIB,
+and TACC_VTUNE_INC in the usual way.  It also preprends VTune's bin64
+directory to $PATH.
+
+To see the exact effect of loading the module, execute "module show vtune".
 
 Version %{version}
 ]]
-
-help(help_message,"\n")
-
-whatis("Name: %{name}")
-whatis("Version: %{version}")
-whatis("Category: system, environment libaries")
-whatis("Keywords: System, Environment Libraries")
-whatis("Description: Fabric communication services")
-whatis("URL: http://www.github.com/ofiwg/libfabric")
-
--- Export environmental variables
-local libfabric_dir="%{INSTALL_DIR}"
-local libfabric_bin=pathJoin(libfabric_dir,"bin")
-local libfabric_lib=pathJoin(libfabric_dir,"lib")
-local libfabric_inc=pathJoin(libfabric_dir,"include")
-setenv("TACC_LIBFABRIC_DIR",libfabric_dir)
-setenv("TACC_LIBFABRIC_BIN",libfabric_bin)
-setenv("TACC_LIBFABRIC_LIB",libfabric_lib)
-setenv("TACC_LIBFABRIC_INC",libfabric_inc)
-
--- Prepend the libfabric directories to the adequate PATH variables
-prepend_path("PATH",libfabric_bin)
-prepend_path("LD_LIBRARY_PATH",libfabric_lib)
-prepend_path("MANPATH", pathJoin(libfabric_dir, "share/man"))
-
-family("libfabric")
+)
 
 EOF
-  
+ 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -245,6 +247,7 @@ set     ModulesVersion      "%{version}"
 EOF
   
   # Check the syntax of the generated lua modulefile
+  ### don't check the hidden one!
   %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------

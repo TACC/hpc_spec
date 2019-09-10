@@ -1,9 +1,10 @@
 Summary:    Python is a high-level general-purpose programming language.
-Name:      tacc-python2
-#Name:       tacc-python3 
-#Version:    2.7.16
-Version:    3.7.0
-Release:    1%{?dist}
+
+%include python-defines.inc
+
+Name:       tacc-python%{python_major_version}
+Version:    %{python_module_version}
+Release:    2%{?dist}
 License:    GPLv2
 Vendor:     Python Software Foundation
 Group:      Applications
@@ -13,28 +14,31 @@ Packager:   TACC - rtevans@tacc.utexas.edu
 # Either Python package or mpi4py will be built 
 # based on this switch
 #------------------------------------------------
-%define build_mpi4py     0
+
 %global _python_bytecompile_errors_terminate_build 0
 
 #------------------------------------------------
 # BASIC DEFINITIONS
 #------------------------------------------------
-%if "%{build_mpi4py}" == "0"
-    %define mpi_fam     none
-    %define mpi_label   none
-%endif
 
 %include rpm-dir.inc
 %include system-defines.inc
 %include compiler-defines.inc
-%include mpi-defines.inc	
 
-%define MAJOR_MINOR 3.7
-%define MAJOR 3
-%define PNAME python%{MAJOR}
+%if %{undefined mpiV}
+    %define build_mpi4py     0
+%else
+    %define build_mpi4py     1
+    %include mpi-defines.inc
+%endif	
+
+
+%define MAJOR_MINOR %{python_major_version}.%{python_minor_version}
+%define MAJOR %{python_major_version}
+%define PNAME python%{python_major_version}
 
 %define INSTALL_DIR_COMP %{APPS}/%{comp_fam_ver}/%{PNAME}/%{version}
-%define MODULE_DIR_COMP %{APPS}/%{comp_fam_ver}/%{MODULES}/%{PNAME}
+  %define MODULE_DIR_COMP %{APPS}/%{comp_fam_ver}/%{MODULES}/%{PNAME}
 %define PACKAGE_NAME %{name}-%{comp_fam_ver}
 
 %if "%{build_mpi4py}" == "1"
@@ -267,7 +271,6 @@ ${PIP} install --no-binary :all: PyYAML
 
 if module load hdf5; then
     HDF5_DIR=$TACC_HDF5_DIR ${PIP} install --no-binary :all: h5py
-    ${PIP} uninstall tables
     ${PIP} install --no-binary :all: tables 
 fi
 #############################################################
@@ -325,7 +328,7 @@ fi
 %if "%{build_mpi4py}" == "0"
 #------- Serial Module File
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR_COMP}
-mkdir -p $RPM_BUILD_ROOT/%{APPS}/%{comp_fam_ver}/%{PNAME}/modulefiles
+mkdir -p $RPM_BUILD_ROOT/%{APPS}/%{comp_fam_ver}/python%{python_label}/modulefiles
 
 cat >    $RPM_BUILD_ROOT/%{MODULE_DIR_COMP}/%{version}.lua << EOF
 help(
@@ -373,7 +376,7 @@ setenv("TACC_PYTHON_VER", "%{MAJOR_MINOR}")
 prepend_path("PATH", python_bin)
 prepend_path("MANPATH", python_man)
 prepend_path("LD_LIBRARY_PATH", python_lib)
-prepend_path("MODULEPATH", "%{APPS}/%{comp_fam_ver}/%{PNAME}/modulefiles")
+prepend_path("MODULEPATH", "%{APPS}/%{comp_fam_ver}/python%{python_label}/modulefiles")
 
 %if "%{comp_fam_name}" == "GNU"
 prepend_path("LD_LIBRARY_PATH", mkl_lib)
@@ -397,12 +400,12 @@ EOF
 %if "%{build_mpi4py}" == "1"
 #------- Parallel Module File
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}
-mkdir -p $RPM_BUILD_ROOT/%{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{PNAME}/modulefiles
+mkdir -p $RPM_BUILD_ROOT/%{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/python%{python_label}/modulefiles
 cat >    $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}/%{version}.lua << 'EOF'
 inherit()
 whatis("Version-notes: Compiler:%{comp_fam_ver}. MPI:%{mpi_fam_ver}")
 prepend_path("PYTHONPATH", "%{INSTALL_DIR_MPI}/lib/python%{MAJOR_MINOR}/site-packages")
-prepend_path("MODULEPATH", "%{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{PNAME}/modulefiles")
+prepend_path("MODULEPATH", "%{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/python%{python_label}/modulefiles")
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}/.version.%{version} << 'EOF'
@@ -435,13 +438,13 @@ fi
 %if "%{build_mpi4py}" == "0"
     %{INSTALL_DIR_COMP}
     %{MODULE_DIR_COMP}
-    %{APPS}/%{comp_fam_ver}/%{PNAME}/modulefiles
+    %{APPS}/%{comp_fam_ver}/python%{python_label}/modulefiles
 %endif
 
 %if "%{build_mpi4py}" == "1"
     %{INSTALL_DIR_MPI}
     %{MODULE_DIR_MPI}
-    %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{PNAME}/modulefiles
+    %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/python%{python_label}/modulefiles
 %endif
 
 %post -n %{PACKAGE_NAME}

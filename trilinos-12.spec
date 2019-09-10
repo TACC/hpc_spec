@@ -31,7 +31,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tar.gz
@@ -209,9 +209,9 @@ make install
   find . -name \*.cmake \
          -exec sed -i -e '/STKDoc_testsConfig.cmake/d' \
                       -e '/COMPILER_FLAGS/s/mkl/mkl -L\${TACC_PYTHON_LIB} -lpython2.7/' \
-                      -e '/EXTRA_LD_FLAGS/s?""?"/opt/apps/intel17/python/2.7.13/lib/libpython2.7.so"?' \
-                      -e '/SET.*TPL_LIBRARIES/s?""?"/opt/apps/intel17/python/2.7.13/lib/libpython2.7.so"?' \
-                      -e '/SET.*TPL_LIBRARIES/s?so"?so;/opt/apps/intel17/python/2.7.13/lib/libpython2.7.so"?' \
+                      -e '/EXTRA_LD_FLAGS/s?""?"/opt/apps/intel17/python/2.7.16/lib/libpython2.7.so"?' \
+                      -e '/SET.*TPL_LIBRARIES/s?""?"/opt/apps/intel17/python/2.7.16/lib/libpython2.7.so"?' \
+                      -e '/SET.*TPL_LIBRARIES/s?so"?so;/opt/apps/intel17/python/2.7.16/lib/libpython2.7.so"?' \
                    {} \; \
          -print \
 )
@@ -291,6 +291,8 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Fri Sep 06 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3 UNRELEASED : update explicit libpython
 * Mon Jun 10 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: fix missing lib directory
 * Thu Jun 06 2019 eijkhout <eijkhout@tacc.utexas.edu>

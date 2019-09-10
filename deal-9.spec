@@ -1,18 +1,20 @@
 Summary: Dealii install
 
+# https://www.dealii.org/9.1.1/readme.html
+
 # Give the package a base name
 %define pkg_base_name dealii
 %define MODULE_VAR    DEALII
 
 # Create some macros (spec file variables)
 %define major_version 9
-%define minor_version 0
-%define micro_version 0
+%define minor_version 1
+%define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
-%define dealiipetscversion 3.9
-%define dealiitrilinosversion git20180209
+%define dealiipetscversion 3.11
+%define dealiitrilinosversion 12.14.1
 
 %include rpm-dir.inc
 %include compiler-defines.inc
@@ -34,7 +36,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 2%{?dist}
+Release: 1%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tar.gz
@@ -168,10 +170,14 @@ export BASIC_FLAGS="-std=c++14 -g %{TACC_OPT} -I${TBBROOT}/include"
     -DDEAL_II_CXX_FLAGS_DEBUG="${BASIC_FLAGS} -O0" \
     -DDEAL_II_CXX_FLAGS_RELEASE="${BASIC_FLAGS} -O2" \
     \
+    -DDEAL_II_COMPONENT_MESH_CONVERTER=ON \
+    -DDEAL_II_HAVE_AVX=ON \
+    -DDEAL_II_HAVE_AVX512=ON \
+    -DDEAL_II_HAVE_ALTIVEC=OFF \
+    \
     -DDEAL_II_WITH_MPI=ON \
         -DVLE_DISABLE_MPI_FOUND=TRUE \
     -DMPICH_IGNORE_CXX_SEEK=ON \
-    -DDEAL_II_COMPONENT_MESH_CONVERTER=ON \
     -DBOOST_DIR=${TACC_BOOST_DIR} \
     -DHDF5_DIR=${TACC_HDF5_DIR} \
     ` if [ ${TACC_FAMILY_COMPILER} = "intel" ] ; then echo " \
@@ -284,8 +290,5 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
-* Fri Aug 03 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: missing TACC_DEALII_INC,
-* Fri Jun 29 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 1: initial release of 9.0.0
-
+* Mon Sep 02 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial release of 9.1.1

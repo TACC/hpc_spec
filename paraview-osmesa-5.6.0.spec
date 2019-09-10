@@ -9,7 +9,7 @@ License:   freely distributable
 Vendor:    www.kitware.com
 Group:     Visualization
 
-Release:   0
+Release:   1
 Source:    ParaView-v5.6.0.tar.gz
 
 # Give the package a base name
@@ -229,7 +229,6 @@ local pv_dir           = "%{INSTALL_DIR}"
 family("paraview")
 prepend_path("PATH",               pathJoin(pv_dir, "bin"))
 prepend_path("LD_LIBRARY_PATH",    pathJoin(pv_dir, "lib"))
-prepend_path("MODULEPATH",         "%{MODULE_PREFIX}/modulefiles")
 prepend_path("PYTHONPATH", 	   pathJoin(pv_dir, "lib/%{pkg_version}/site-packages"))
 prepend_path("PYTHONPATH", 	   pathJoin(pv_dir, "lib/%{pkg_version}/site-packages/vtk"))
 
