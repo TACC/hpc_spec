@@ -51,7 +51,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   proprietary
 Group:     MPI
 URL:       https://software.intel.com/en-us/intel-mpi-library
@@ -234,6 +234,7 @@ prepend_path( "PATH"                   , pathJoin( "%{INSTALL_DIR}" , "bin"     
 prepend_path( "LD_LIBRARY_PATH"        , pathJoin( base_dir , "intel64/lib"      ) )
 --prepend_path( "LD_LIBRARY_PATH"        , pathJoin( base_dir , "intel64/lib/release_mt" ) )
 prepend_path( "LD_LIBRARY_PATH"        , pathJoin( base_dir , "intel64/lib/release" ) )
+prepend_path( "LD_LIBRARY_PATH"        , pathJoin( base_dir , "intel64/libfabric/lib" ) )
 prepend_path( "MANPATH"                , pathJoin( base_dir , "man"              ) )
 prepend_path( "MODULEPATH"             ,"/opt/apps/%{comp_fam_ver}/impi%{underscore_version}/modulefiles" )
 prepend_path( "I_MPI_ROOT"             , base_dir                                )

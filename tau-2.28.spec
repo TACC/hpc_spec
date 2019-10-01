@@ -1,5 +1,6 @@
+## export NO_PACKAGE  # for no package compile
 
-## rpmbuild -bb --clean --define 'is_intel19 1' --define 'is_impi 1' --define 'mpiV 19_4' tau-2.28.spec 2>&1 | tee tau-2.28_intel18_r1_a.log
+## rpmbuild -bb --clean --define 'is_intel19 1' --define 'is_impi 1' --define 'mpiV 19_5' tau-2.28.spec 2>&1 | tee tau-2.28_intel19_r1_a.log
 
 # Hard codes for installation in /opt/apps
 #
@@ -75,7 +76,7 @@ URL:       http://www.cs.uoregon.edu/research/tau/
   %define PDT_dir       %{APPS}/%{comp_fam_ver}/%{PDT_name}/%{PDT_version}
 
   %define TAU_metrics   GET_TIME_OF_DAY:PAPI_TOT_CYC:PAPI_L2_LDM
-  
+
  #%define TAU_makefile     Makefile.tau-intelmpi-icpc-papi-ompt-mpi-pdt-openmp
  #%define TAU_makefile_omp Makefile.tau-intelomp-icpc-papi-ompt-pdt-openmp
  #                                                                          # intel mpi openmp
@@ -171,6 +172,18 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 ###  MODULE
   %if %{?BUILD_MODULEFILE}
 
+    #%include system-load.inc
+    #%include compiler-load.inc
+    #%include mpi-load.inc
+
+    #module load papi
+    #%define PAPI_VER        %( echo ${TACC_PAPI_DIR##*/} )
+    #%define PAPI_TOPDIR     %{TACC_PAPI_DIR}
+    #%define PAPI_EVENTS     %( echo ${TACC_PAPI_DIR}/share/papi/papi_events.csv )
+    %define PAPI_VER        5.7.0
+    %define PAPI_TOPDIR     /opt/apps/papi/5.7.0
+    %define PAPI_EVENTS     /opt/apps/papi/5.7.0/share/papi/papi_events.csv 
+
     rm   -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
     mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 
@@ -194,7 +207,7 @@ paradigm (serial, or mpi and/or openmp) to be used in the instrumentation.
 
 For TAU %{pkg_version} it is only necessary to load up the TAU
 %{pkg_version} environment. Advanced users may need to load up
-papi/%{PAPI_version} and pdtoolkit/%{PDT_version} for library and command access.
+papi/%{PAPI_VER} and pdtoolkit/%{PDT_version} for library and command access.
 For normal usage use the defaults: just load up tau, recompile, and run.
 See the User Guide and Reference pdf files in the $TACC_TAU_DOC directory. 
 Man pages are available for commands (e.g. paraprof, tauf90, etc.),
@@ -211,34 +224,33 @@ Load command:
 Java is used in the TAU gui, paraprof, and is available in the default
 environment.
 
-The Tau makefile (for the Tau compiler wrappers to use) is specified in the 
-TAU_MAKEFILE environement variable. The syntax for makefile name is:
+The TAU makefile is used by the Tau compiler wrappers shown below. 
+The full path to this makefile is specified in the TAU_MAKEFILE 
+environement variable. It has been set for you.
 
-    <path>/Makefile.tau-<hyphen_separated_component_list>\n
+The makefile is: %{TAU_makefile}, 
+and has component names that describe features of the build:
 
-and the components are:
     Intel Compilers (icpc)
-    MPI             (mpi)    also has intelmpi tag name
+    MPI             (mpi)
     OMP             (openmp)
     OpenMP Tool     (ompt)   openmp events
     PAPI            (papi)   now included by default
     PDtoolkit       (pdt)    now included by default
 
-The default TAU Makefile is set for MPI and hybrid applications.
-It has the intelmpi tag in its name.
-For pure OpenMP applications use a Makefile with the 
-intelomp tag (and no mpi component).
+The default TAU Makefile works for pure MPI, pure OpenMP,
+and hybrid applications.  For pure OpenMP applications set
 
-The default TAU Makefile has been set in the TAU_MAKEFILE variable,
-(it is for MPI codes, with|without OpenMP):
+     export TAU_SET_NODE=0   #bash shell 
 
-    $TACC_TAU_LIB/%{TAU_makefile}
+Otherwise you will get a warning to set the variable, and no data.
 
-For pure OpenMP code, set TAU_MAKEFILE as show here:
+For advanced users there may be other TAU Makefiles in 
 
-    export TAU_MAKEFILE=$TACC_TAU_LIB/%{TAU_makefile_omp}
+    $TACC_TAU_LIB
 
-(All TAU Makefiles are stored in the $TACC_TAU_LIB directory.)
+which support advanced features.  Most users have no need for these.
+See component names.
 
 To compile your code with TAU, use one of the TAU compiler wrappers:
 
@@ -285,8 +297,8 @@ prepend_path(    "PATH"           , tau_bin                 )
 prepend_path(    "LD_LIBRARY_PATH", tau_lib                 )
 prepend_path(    "MANPATH"        , pathJoin(tau_dir,"man") )
 
-prepend_path(    "LD_LIBRARY_PATH", "%{PAPI_dir}/lib"       )
-prepend_path(    "MANPATH"        , "%{PAPI_dir}/man"       )
+prepend_path(    "LD_LIBRARY_PATH", "%{PAPI_TOPDIR}/lib"    )
+prepend_path(    "MANPATH"        , "%{PAPI_TOPDIR}/man"    )
 
 setenv(           "TACC_TAU_DIR",            tau_dir        )
 setenv(           "TACC_TAU_BIN",            tau_bin        )
@@ -295,11 +307,13 @@ setenv(           "TACC_TAU_INC",   pathJoin(tau_dir,"include"))
 setenv(           "TACC_TAU_DOC",   pathJoin(tau_dir,"docs"))
 setenv(           "TACC_TAU_EXM",   pathJoin(tau_dir,"examples"))
 setenv(           "TACC_TAU_TOL",   pathJoin(tau_dir,"tools"))
+setenv(           "TACC_TAU_MAN",   pathJoin(tau_dir,"man"))
 setenv(                "TAU",                tau_lib        )
 setenv(           "TAU_MAKEFILE", pathJoin(tau_lib,"%{TAU_makefile}") )
-setenv("PAPI_PERFMON_EVENT_FILE",   "%{PAPI_events}"        )
+setenv("PAPI_PERFMON_EVENT_FILE",   "%{PAPI_EVENTS}"        )
 setenv(            "TAU_METRICS",   "%{TAU_metrics}"        )
 setenv(            "TAU_PROFILE",            "1"            )
+setenv(            "LIBGL_ALWAYS_INDIRECT",  "1"            )
 
 -- setenv(              "TAU_TRACE",            "0"            )
 -- setenv(           "TAU_CALLPATH",            "0"            )
@@ -329,7 +343,7 @@ EOF
    %{INSTALL_DIR}
 %endif #BUILD_PACKAGE |
 
-%if %{?BUILD_PACKAGE}
+%if %{?BUILD_MODULEFILE}
 %files modulefile
    %defattr(-,root,install,)
    %{MODULE_DIR}

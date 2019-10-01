@@ -302,6 +302,6 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 * Fri Jun 07 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release UNBUILT UNRELEASED : removing the bin directory definition
+- release 2 : removing the bin directory definition
 * Tue Jun 04 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

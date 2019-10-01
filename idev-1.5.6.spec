@@ -1,6 +1,6 @@
-# rpmbuild -bb --clean idev-1.5.6.spec 2>&1 | tee idev-1.5.6.r1.log
+# rpmbuild -bb --clean idev-1.5.7.spec 2>&1 | tee idev-1.5.7.r1.log
 #           r=/admin/build/admin/rpms/frontera/RPMS/x86_64
-# rpm -hiv $r/tacc-idev-1.5.6-1.el7.x86_64.rpm
+# rpm -hiv $r/tacc-idev-1.5.7-1.el7.x86_64.rpm
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
@@ -76,8 +76,8 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 # cd $RPM_BUILD_DIR
   cd %{_builddir}
-# git clone https://github.com/milfeld/idev
-  git clone --depth 1 -b idev_tacc https://github.com/milfeld/idev
+  git clone https://github.com/milfeld/idev
+# git clone --depth 1 -b idev_tacc https://github.com/milfeld/idev
 
 #setup  -n idev-#{pkg_version}
 #  default name to cd to is "idev" (-n idev)

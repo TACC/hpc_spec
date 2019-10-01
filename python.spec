@@ -10,10 +10,6 @@ Vendor:     Python Software Foundation
 Group:      Applications
 Packager:   TACC - rtevans@tacc.utexas.edu
 
-#------------------------------------------------
-# Either Python package or mpi4py will be built 
-# based on this switch
-#------------------------------------------------
 
 %global _python_bytecompile_errors_terminate_build 0
 
@@ -25,13 +21,14 @@ Packager:   TACC - rtevans@tacc.utexas.edu
 %include system-defines.inc
 %include compiler-defines.inc
 
-%if %{undefined mpiV}
-    %define build_mpi4py     0
-%else
-    %define build_mpi4py     1
+#------------------------------------------------
+# Either Python package or mpi4py will be built 
+# based on this switch
+#------------------------------------------------
+%if %{defined mpiV}
     %include mpi-defines.inc
+    %define build_mpi4py 1
 %endif	
-
 
 %define MAJOR_MINOR %{python_major_version}.%{python_minor_version}
 %define MAJOR %{python_major_version}
@@ -119,7 +116,8 @@ if [ ! -f "%{INSTALL_DIR_COMP}/bin/%{PNAME}" ]; then
     ./configure --prefix=%{INSTALL_DIR_COMP} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc -lssp' CFLAGS="-Wformat -Wformat-security -D_FORTIFY_SOURCE=2 -fstack-protector -fwrapv -fpic -O3" LDFLAGS="-Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth --without-gcc --with-libm=-limf --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip --enable-unicode=ucs4    
     %endif
     %if "%{comp_fam_name}" == "GNU"
-    ./configure --prefix=%{INSTALL_DIR_COMP} CC=gcc CXX=g++  LD=ld   AR=ar   LIBS='-lpthread' CFLAGS="-Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -fwrapv -fpic -O2" LDFLAGS="-fpic -Xlinker -export-dynamic" --with-system-ffi --enable-shared --with-pth --with-threads --with-ensurepip --with-computed-gotos --with-lto --enable-unicode=ucs4
+    #./configure --prefix=%{INSTALL_DIR_COMP} CC=gcc CXX=g++  LD=ld   AR=ar   LIBS='-lpthread' CFLAGS="-Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -fwrapv -fpic -O2" LDFLAGS="-fpic -Xlinker -export-dynamic" --with-system-ffi --enable-shared --with-pth --with-threads --with-ensurepip --with-computed-gotos --with-lto --enable-unicode=ucs4
+    ./configure --prefix=%{INSTALL_DIR_COMP} CC=gcc CXX=g++  LD=ld   AR=ar   LIBS='-lpthread' CFLAGS="-Wp,-D_FORTIFY_SOURCE=2 -fexceptions --param=ssp-buffer-size=4 -grecord-gcc-switches -fwrapv -fpic -O2" LDFLAGS="-fpic -Xlinker -export-dynamic" --with-system-ffi --enable-shared --with-pth --with-threads --with-ensurepip --with-computed-gotos --with-lto --enable-unicode=ucs4
     %endif
 
     make -j 24

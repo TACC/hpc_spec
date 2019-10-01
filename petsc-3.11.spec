@@ -34,7 +34,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -259,11 +259,13 @@ esac
 ##
 
 export HAS_HDF5=1
-module load phdf5
-export hdf5string="hdf5"
-export hdf5download="--with-hdf5=1 --with-hdf5-dir=${TACC_HDF5_DIR}"
-# --download-hdf5=1"
-export hdf5versionextra="; hdf5 support"
+##%if "%{comp_fam}" == "intel"
+  module load phdf5
+  export hdf5string="hdf5"
+  export hdf5download="--with-hdf5=1 --with-hdf5-dir=${TACC_HDF5_DIR}"
+  # --download-hdf5=1"
+  export hdf5versionextra="; hdf5 support"
+##%endif
 
 case "${ext}" in
 *nohdf5* ) export HAS_HDF5=0
@@ -366,8 +368,10 @@ export superlustring="superlu (distributed/sequential)"
 #
 # Zoltan
 # 
-export ZOLTAN_OPTIONS="--with-zoltan=1 --download-zoltan=1 --download-ptscotch=1"
-export ZOLTANSTRING="zoltan/ptscotch"
+%if "%{comp_fam}" == "intel"
+  export ZOLTAN_OPTIONS="--with-zoltan=1 --download-zoltan=1 --download-ptscotch=1"
+  export ZOLTANSTRING="zoltan/ptscotch"
+%endif
 
 ##
 ## 64-bit indices
@@ -708,8 +712,10 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Fri Sep 27 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 4: regenerate with McLay hdf5
 * Fri Aug 02 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: using McLay's hdf5
+- release 3: using McLay's hdf5 (except gcc/9.1: that was without)
 * Thu Jul 04 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: point update, use "clx"
 * Mon Jun 03 2019 eijkhout <eijkhout@tacc.utexas.edu>

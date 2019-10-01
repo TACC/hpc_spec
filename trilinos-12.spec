@@ -106,6 +106,12 @@ varies with each package.
 %include compiler-load.inc
 %include mpi-load.inc
 
+export PYTHON_MAJOR_VER=3
+module load cmake python${PYTHON_MAJOR_VER} swig 
+module load boost
+## VLE stopgap!
+export BOOST_ROOT=${TACC_BOOST_DIR}
+
 #
 # Set Up Installation Directory and tmp file system
 #
@@ -118,13 +124,6 @@ mkdir -p %{INSTALL_DIR}
 mount -t tmpfs tmpfs %{INSTALL_DIR}
 ##cp -r * %{INSTALL_DIR}
 ##pushd %{INSTALL_DIR}
-
-export PYTHON_MAJOR_VER=3
-module load cmake swig
-module use /opt/apps/intel19/python${PYTHON_MAJOR_VER}_7/modulefiles/
-module load boost
-## VLE stopgap!
-export BOOST_ROOT=${TACC_BOOST_DIR}
 
 %if "%{comp_fam}" == "gcc"
   which gcc
@@ -207,16 +206,21 @@ make install
 
 ( cd %{INSTALL_DIR} && \
   find . -name \*.cmake \
-         -exec sed -i -e '/STKDoc_testsConfig.cmake/d' \
-                      -e '/COMPILER_FLAGS/s/mkl/mkl -L\${TACC_PYTHON_LIB} -lpython2.7/' \
-                      -e '/EXTRA_LD_FLAGS/s?""?"/opt/apps/intel17/python/2.7.16/lib/libpython2.7.so"?' \
-                      -e '/SET.*TPL_LIBRARIES/s?""?"/opt/apps/intel17/python/2.7.16/lib/libpython2.7.so"?' \
-                      -e '/SET.*TPL_LIBRARIES/s?so"?so;/opt/apps/intel17/python/2.7.16/lib/libpython2.7.so"?' \
+         -exec sed -i -e "/STKDoc_testsConfig.cmake/d" \
+                      -e "/COMPILER_FLAGS/s/mkl/mkl -L${TACC_PYTHON_LIB} -lpython2.7/" \
+                      -e "/EXTRA_LD_FLAGS/s?\"\"?\"${TACC_PYTHON_LIB}/libpython2.7.so\"?" \
+                      -e "/SET.*TPL_LIBRARIES/s?\"\"?\"${TACC_PYTHON_LIB}/libpython2.7.so\"?" \
+                      -e "/SET.*TPL_LIBRARIES/s?so\"?so;${TACC_PYTHON_LIB}/libpython2.7.so\"?" \
                    {} \; \
          -print \
 )
 ## SET(Zoltan_TPL_LIBRARIES "")
 export nosed="\
+                Q stands for doublequote \
+                      -e '/COMPILER_FLAGS/s/mkl/mkl -L\${TACC_PYTHON_LIB} -lpython2.7/' \
+                      -e '/EXTRA_LD_FLAGS/s?QQ?Q/opt/apps/intel19/python2/2.7.16/lib/libpython2.7.soQ?' \
+                      -e '/SET.*TPL_LIBRARIES/s?QQ?Q/opt/apps/intel19/python2/2.7.16/lib/libpython2.7.soQ?' \
+                      -e '/SET.*TPL_LIBRARIES/s?soQ?so;/opt/apps/intel19/python2/2.7.16/lib/libpython2.7.soQ?' \
     "
 #SET(Trilinos_CXX_COMPILER_FLAGS " -mkl -DMPICH_SKIP_MPICXX -std=c++11 -O3 -DNDEBUG")
 #SET(Trilinos_C_COMPILER_FLAGS " -mkl -O3 -DNDEBUG")
