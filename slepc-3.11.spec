@@ -36,7 +36,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPL
 Vendor: Universitat Politecnica De Valencia http://www.grycap.upv.es/slepc/
 Group: Development/Numerical-Libraries
@@ -198,5 +198,7 @@ cp -r docs include lib src $RPM_BUILD_ROOT/%{INSTALL_DIR}/
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Tue Oct 01 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: using tmpfs
 * Tue Jun 04 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial build

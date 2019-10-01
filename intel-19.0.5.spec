@@ -51,7 +51,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   proprietary
 Group:     Compiler
 URL:       https://software.intel.com/en-us/intel-compilers
@@ -221,7 +221,7 @@ whatis("URL: http://software.intel.com/en-us/articles/intel-compilers"      )
 
 -- Create environment variables.
 local base         = "/opt/intel"
-local gcc_base     = "/opt/apps/gcc/9.1.0"
+local gcc_base     = "/opt/apps/gcc/8.3.0"
 local full_xe      = "compilers_and_libraries_%{lib_dir}/linux"
 local arch         = "intel64"
 local installDir   = pathJoin(base,full_xe)

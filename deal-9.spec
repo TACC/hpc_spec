@@ -115,6 +115,14 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 mkdir -p %{INSTALL_DIR}
 mount -t tmpfs tmpfs %{INSTALL_DIR}
 
+%if "%{comp_fam}" == "intel"
+  # ultimately we want python3 everywhere
+  module load python2 ## only for boost! should not have to.
+%else
+  # all of a sudden we can load boost without python?
+  # module load python3 ## only for boost! should not have to.
+%endif
+
 module list
 for m in boost cmake \
     metis p4est \
@@ -123,6 +131,8 @@ for m in boost cmake \
     ; do
   module --ignore_cache load $m ; 
 done
+
+find ${TACC_TRILINOS_DIR} -name \*.cmake -exec grep python {} \;
 
 %if "%{comp_fam}" == "intel"
   module load mumps netcdf phdf5
@@ -158,8 +168,8 @@ echo "Figure out TBB directory"
 exit 1
 export TBBROOT=${TACC_INTEL_DIR}/tbb
 %endif
-export BASIC_FLAGS="-march=native"
-export BASIC_FLAGS="-std=c++14 -g %{TACC_OPT} -I${TBBROOT}/include"
+#export BASIC_FLAGS="-march=native"
+export BASIC_FLAGS="-g %{TACC_OPT} -I${TBBROOT}/include"
 
 ##  CC=`which mpicc` CXX=`which mpicxx` F90=`which mpif90`
 
@@ -167,6 +177,7 @@ export BASIC_FLAGS="-std=c++14 -g %{TACC_OPT} -I${TBBROOT}/include"
     -DCMAKE_INSTALL_PREFIX=%{INSTALL_DIR} \
     \
     -DDEAL_II_WITH_CXX11=ON \
+    -DDEAL_II_WITH_CXX17=ON \
     -DDEAL_II_CXX_FLAGS_DEBUG="${BASIC_FLAGS} -O0" \
     -DDEAL_II_CXX_FLAGS_RELEASE="${BASIC_FLAGS} -O2" \
     \
@@ -195,6 +206,10 @@ export BASIC_FLAGS="-std=c++14 -g %{TACC_OPT} -I${TBBROOT}/include"
     \
     %{_topdir}/BUILD/dealii-%{version} \
     2>&1 | tee ${LOGDIR}/dealii_cmake.log
+
+export nocmake="\
+    -DDEAL_II_HAVE_FLAG_Wimplicit_fallthrough=0 \
+    "
 
 ##
 ## abort if cmake fails
@@ -274,7 +289,6 @@ EOF
 ## end of configure install section
 ##
 
-module unload python
 cp -r %{INSTALL_DIR}/* ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
 
 umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR

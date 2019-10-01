@@ -28,7 +28,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 # Create some macros (spec file variables)
 %define major_version 4
 %define minor_version 0
-%define micro_version 1
+%define micro_version 2rc3
 
 %define hwloc_version 1.11.13
 %define hwloc_install /opt/apps/hwloc/%{hwloc_version}
@@ -36,10 +36,10 @@ Summary: A Nice little relocatable skeleton spec file example.
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 %define pkg_version_dash %{major_version}_%{minor_version}
 
-%define ucx_version 1.5.1
+%define ucx_version 1.6.1
 %define ucx_install /opt/apps/ucx/%{ucx_version}
 
-%define pmix_version 3.1.3
+%define pmix_version 3.1.4
 %define pmix_install /opt/apps/pmix/%{pmix_version}
 
 %define hcoll_install /opt/mellanox/hcoll
@@ -65,7 +65,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   20%{?dist}
+Release:   21%{?dist}
 License:   BSD
 Group:     MPI
 URL:       https://www.open-mpi.org

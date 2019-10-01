@@ -26,7 +26,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 # Create some macros (spec file variables)
 %define major_version 1
 %define minor_version 6
-%define micro_version 0
+%define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -50,7 +50,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   6%{?dist}
+Release:   1%{?dist}
 License:   BSD3
 Group:     System Environment/Libraries
 URL:       https://github.com/openucx/ucx

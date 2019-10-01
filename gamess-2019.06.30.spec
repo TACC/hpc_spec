@@ -6,10 +6,10 @@
 #rpm -hiv --nodeps    $r/tacc-gamess-intel18-impi18_0-package-2019.06.30-2.el7.x86_64.rpm
 #rpm -hiv --nodeps $r/tacc-gamess-intel18-impi18_0-modulefile-2019.06.30-2.el7.x86_64.rpm
 
-# rpmbuild -bb --define 'is_intel19 1' --define 'is_impi 1' --define 'mpiV 19_4' gamess-2019.06.30.spec 2>&1 | tee gamess-2019.06.30_i19_#a.log
+# rpmbuild -bb --define 'is_intel19 1' --define 'is_impi 1' --define 'mpiV 19_5' gamess-2019.06.30.spec 2>&1 | tee gamess-2019.06.30_ic_im1905_#a.log
 # r=/admin/build/admin/rpms/frontera/RPMS/x86_64
-#rpm -hiv --nodeps $r/tacc-gamess-intel19-impi19_0-package-2019.06.30-1.el7.x86_64.rpm
-#rpm -hiv --nodeps $r/tacc-gamess-intel19-impi19_0-modulefile-2019.06.30-1.el7.x86_64.rpm
+#rpm -hiv --nodeps $r/tacc-gamess-intel19-impi19_0-package-2019.06.30-2.el7.x86_64.rpm
+#rpm -hiv --nodeps $r/tacc-gamess-intel19-impi19_0-modulefile-2019.06.30-2.el7.x86_64.rpm
 
 
 #
