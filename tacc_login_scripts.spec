@@ -3,8 +3,8 @@
 
 Summary:   Standard TACC Login scripts for our friendly Linux Clusters.
 Name:      tacc_login_scripts
-Version:   2.1
-Release:   60
+Version:   2.2
+Release:   1
 License:   Proprietary
 Group:     System Environment/Base
 Source0:   %{name}-%{version}.tar.gz
@@ -43,8 +43,6 @@ mkdir -p $RPM_BUILD_ROOT%{PROFILE_D_PATH}  $RPM_BUILD_ROOT/etc/tacc/zsh
 PROFILE_D_FILES="
                profile.d/00_shell_startup.CSH
                profile.d/00_shell_startup.SH
-               profile.d/work_archive.csh
-               profile.d/work_archive.sh
                profile.d/z00_tacc_login.csh
                profile.d/z00_tacc_login.sh
                profile.d/z01_lmod.csh
@@ -55,8 +53,8 @@ PROFILE_D_FILES="
                profile.d/z85_idev.csh
                profile.d/z87_tacc_login.csh
                profile.d/z87_tacc_login.sh
-               profile.d/z88_taccinfo.sh
-               profile.d/z88_taccinfo.csh
+               profile.d/z88_fs_taccinfo.sh
+               profile.d/z88_fs_taccinfo.csh
                profile.d/z89_tacctips.sh
                profile.d/z89_tacctips.csh
                profile.d/z90_compute_modules.csh
@@ -82,6 +80,7 @@ find archive | cpio -pduv --owner=build:                 $RPM_BUILD_ROOT/usr/loc
 find $OLD_TACC_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/usr/local
 
 find ./profile.d $PROFILE_D_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT%{PROFILE_D_PATH}/..
+find ./.version                   | cpio -pduv --owner=build: $RPM_BUILD_ROOT%{PROFILE_D_PATH}/
 
 #
 #  The new shells all look in /etc/tacc/ for their startup scripts
@@ -115,10 +114,9 @@ find $ZSH_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/etc/tacc
 
 %files -n %{name}-compute
 %defattr(755,root,root,)
+%{PROFILE_D_PATH}/.version
 %{PROFILE_D_PATH}/00_shell_startup.CSH
 %{PROFILE_D_PATH}/00_shell_startup.SH
-%{PROFILE_D_PATH}/work_archive.csh
-%{PROFILE_D_PATH}/work_archive.sh
 %{PROFILE_D_PATH}/z00_tacc_login.csh
 %{PROFILE_D_PATH}/z00_tacc_login.sh
 %{PROFILE_D_PATH}/z01_lmod.csh
@@ -127,6 +125,8 @@ find $ZSH_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/etc/tacc
 %{PROFILE_D_PATH}/z84_tacc_system_vars.sh
 %{PROFILE_D_PATH}/z85_idev.csh
 %{PROFILE_D_PATH}/z85_idev.sh
+%{PROFILE_D_PATH}/z88_fs_taccinfo.csh
+%{PROFILE_D_PATH}/z88_fs_taccinfo.sh
 %{PROFILE_D_PATH}/z90_compute_modules.csh
 %{PROFILE_D_PATH}/z90_compute_modules.sh
 /etc/tacc/bash_logout
@@ -148,18 +148,17 @@ find $ZSH_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/etc/tacc
 
 %files -n %{name}-login
 %defattr(755,root,root,)
+%{PROFILE_D_PATH}/.version
 %{PROFILE_D_PATH}/00_shell_startup.CSH
 %{PROFILE_D_PATH}/00_shell_startup.SH
-%{PROFILE_D_PATH}/work_archive.csh
-%{PROFILE_D_PATH}/work_archive.sh
 %{PROFILE_D_PATH}/z00_tacc_login.csh
 %{PROFILE_D_PATH}/z00_tacc_login.sh
 %{PROFILE_D_PATH}/z01_lmod.csh
 %{PROFILE_D_PATH}/z01_lmod.sh
 %{PROFILE_D_PATH}/z84_tacc_system_vars.csh
 %{PROFILE_D_PATH}/z84_tacc_system_vars.sh
-%{PROFILE_D_PATH}/z88_taccinfo.sh
-%{PROFILE_D_PATH}/z88_taccinfo.csh
+%{PROFILE_D_PATH}/z88_fs_taccinfo.sh
+%{PROFILE_D_PATH}/z88_fs_taccinfo.csh
 %{PROFILE_D_PATH}/z89_tacctips.sh
 %{PROFILE_D_PATH}/z89_tacctips.csh
 %{PROFILE_D_PATH}/z90_login_modules.csh
