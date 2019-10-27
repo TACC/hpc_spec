@@ -1,7 +1,6 @@
 #
-# W. Cyrus Proctor
-# Antonio Gomez
-# 2015-08-25
+# Kevin Schmidt was original author of this spec file
+# 2019-06-12
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -181,6 +180,8 @@ mkdir -p $PD/{build,src}
 ###############################################################################
 
 #ml gcc/5.2.0 #no CUDA9.0 support for gcc > 6
+#6-12-19, current working build uses gcc/5.2.0
+ml gcc/5.2.0
 ml cmake/3.12.3
 ml cuda/9.0 # 
 ml mkl/18.0.2 #math libraries for Trilinos
@@ -216,7 +217,8 @@ sed -i 's/@NVCC_WRAPPER_ARCH@/35/g;s/@NVCC_WRAPPER_COMPILER@/`which mpicxx`/g' $
 ###############################################################################
 
 # Checkout Specific AMGX Commit (this one works)
-cd $PD/src/AMGX && git checkout 3049527e0c396424df4582e837f9dd89a20f50df
+#6-12-19, current working build can use latest amgx
+#cd $PD/src/AMGX && git checkout 3049527e0c396424df4582e837f9dd89a20f50df
 mkdir $PD/build/AMGX && cd $PD/build/AMGX
 
 AMGX_SRC=$PLATO_ROOT/src/AMGX
@@ -240,7 +242,9 @@ make -j $NPMAKE DESTDIR=$RPM_BUILD_ROOT install 2>&1 | tee $PD/build/AMGX/.user.
 ###############################################################################
 
 # Checkout Specific Trilinos Commit (this one works)
-cd $PD/src/Trilinos && git checkout c56446dd2419e2059db8851c80cf52dbf0c9d4d6
+#cd $PD/src/Trilinos && git checkout c56446dd2419e2059db8851c80cf52dbf0c9d4d6
+#6-12-19, current working plato build uses trilinos-release-12-14-branch
+cd $PD/src/Trilinos && git checkout trilinos-release-12-14-branch 
 mkdir $PD/build/Trilinos && cd $PD/build/Trilinos
 
 TRILINOS_SRC=$PLATO_ROOT/src/Trilinos
@@ -311,9 +315,14 @@ make -j $NPMAKE DESTDIR=$RPM_BUILD_ROOT install 2>&1 | tee $PD/build/Trilinos/.u
 ###############################################################################
 
 # Checkout Specific omega_h Commit (this one works)
-cd $PD/src/omega_h && git checkout 26ca8fd44afe6e9afdf2a6081bc5337f929b0096
+#cd $PD/src/omega_h && git checkout 26ca8fd44afe6e9afdf2a6081bc5337f929b0096
+#6-12-19, current working version of plato needs omega v9.26.5
+cd $PD/src/omega_h && git checkout v9.26.5
+#6-12-19, need to delete -Werror lines in bob.cmake file bc
+#	  these are warnings that prevent a successful build
+sed -i -e's/-Werror//g' cmake/bob.cmake
 mkdir $PD/build/omega_h && cd $PD/build/omega_h
-# Remove offending lines (could be a version mismatch)
+# Remove offending lines (could be a version mismatch) 
 #sed -i '/-Werror/d' $PD/src/omega_h/cmake/bob.cmake
 export PATH=$RPM_BUILD_ROOT/Trilinos/bin:$PATH
 export LD_LIBRARY_PATH=$RPM_BUILD_ROOT/Trilinos/lib:$LD_LIBRARY_PATH
@@ -341,7 +350,9 @@ make -j $NPMAKE DESTDIR=$RPM_BUILD_ROOT install 2>&1 | tee $PD/build/omega_h/.us
 ###############################################################################
 
 # Checkout Specific platoengine Commit (this one works)
-cd $PD/src/platoengine && git checkout 765d272dda13f48038fd8ffcb139a98b045c2051
+#cd $PD/src/platoengine && git checkout 765d272dda13f48038fd8ffcb139a98b045c2051
+#6-12-19, current working build of plato can use latest platoengine
+
 mkdir $PD/build/platoengine && cd $PD/build/platoengine
 
 ANALYZE_PATH=$PLATO_ROOT/build/analyze
@@ -379,7 +390,8 @@ make -j $NPMAKE DESTDIR=$RPM_BUILD_ROOT install 2>&1 | tee $PD/build/platoengine
 ###############################################################################
 
 # Checkout Specific analyze Commit (this one works)
-cd $PD/src/lgrtk && git checkout f2da8ab650ddc4dc519a33dcade7777b46c61ec1
+#cd $PD/src/lgrtk && git checkout f2da8ab650ddc4dc519a33dcade7777b46c61ec1
+#6-12-19, don't need above branch for current working build
 mkdir $PD/build/analyze && cd $PD/build/analyze
 
 ANALYZE_SRC=$PLATO_ROOT/src/lgrtk

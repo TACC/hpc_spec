@@ -181,7 +181,8 @@ ls
 export PETSC_DIR=`pwd`
 export SRC_DIR=%{_topdir}/SOURCES
 
-module load cmake valgrind
+module load cmake 
+# valgrind
 %if "%{comp_fam}" == "gcc"
   module load mkl
 %endif
@@ -236,9 +237,9 @@ export PETSC_CONFIGURE_OPTIONS="\
   --with-x=0 -with-pic \
   --with-np=8 \
   --with-external-packages-dir=${EXTERNAL_PACKAGES_DIR} \
-  --download-petsc4py=yes \
   "
 export nopackage="\
+  --download-petsc4py=yes \
   --with-packages-dir=${EXTERNAL_PACKAGES_DIR} \
   "
 mkdir -p %{INSTALL_DIR}/externalpackages
@@ -708,6 +709,9 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Tue Jun 04 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 6: attempt to install with intel18
+             need this because it maybe uses superlu_dist.so.5 instead of 6
 * Thu Aug 16 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 5: adding petsc4py UNRELEASED
 * Sat Jul 28 2018 eijkhout <eijkhout@tacc.utexas.edu>

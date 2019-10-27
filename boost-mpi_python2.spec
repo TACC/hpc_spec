@@ -1,6 +1,6 @@
 #
 # Si Liu
-# 2019-03-01
+# 2019-06-04
 #
 
 Summary: Boost spec file (www.boost.org)
@@ -29,8 +29,6 @@ Summary: Boost spec file (www.boost.org)
 ########################################
 #%include name-defines.inc
 %include name-defines-noreloc.inc
-#%include  name-defines-python-noreloc.inc
-########################################
 ############ Do Not Remove #############
 ########################################
 
@@ -46,7 +44,7 @@ Group:     Utility
 URL:       http://www.boost.org
 Packager:  TACC - siliu@tacc.utexas.edu
 Source0:   boost_1_69_0.tar.gz
-Source1:   icu4c-63_1-src.tgz
+Source1:   icu4c-64_2-src.tgz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -168,9 +166,10 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   %endif
 
   WD=`pwd`
- 
-  TACC_OPT="-xAVX -axCORE-AVX2"
- 
+
+  TACC_OPT=" "
+### -I/opt/cray/pe/mpt/7.7.3/gni/mpich-intel/16.0/include -I/opt/cray/xpmem/default/include -I/opt/cray/ugni/default/include -I/opt/cray/udreg/default/include -I/opt/cray/dmapp/default/include -I/opt/cray/pe/pmi/default/include  -L/opt/cray/xpmem/default/lib64 -L/opt/cray/ugni/default/lib64 -L/opt/cray/udreg/default/lib64 -L/opt/cray/pe/pmi/default/lib64 -L/opt/cray/dmapp/default/lib64 -L/opt/cray/pe/mpt/7.7.3/gni/mpich-intel/16.0/lib -ldl -lmpichcxx_intel -lmpich_intel -lrt -lugni -lpmi -ldl -lxpmem -lpthread -ludreg "
+
   cd icu/source
   CXXFLAGS="%{TACC_OPT}" CFLAGS="%{TACC_OPT}" ./runConfigureICU  $ICU_MODE --prefix=%{PYTHON_INSTALL_DIR}
   make -j 24
@@ -185,11 +184,11 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   CXX=mpicxx
 
   ./bootstrap.sh --prefix=%{PYTHON_INSTALL_DIR} ${CONFIGURE_FLAGS}
-  echo "using mpi : /opt/apps/intel18/impi/18.0.2/bin/mpicxx ;" >> ~/projet-config.jam
+  echo "using mpi : /opt/apps/intel18/cray_mpich/7.7.3/bin/mpicxx ;" >> project-config.jam
 
   ./b2 -j 24 --prefix=%{PYTHON_INSTALL_DIR} $EXTRA cxxflags="%{TACC_OPT}" cflags="%{TACC_OPT}" linkflags="%{TACC_OPT}" install
   
-  mkdir -p              $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}
+  mkdir -p $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}
   cp -r %{PYTHON_INSTALL_DIR}/ $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}/..
 
 

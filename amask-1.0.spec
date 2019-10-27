@@ -6,8 +6,8 @@
 
 #INSTALL RPM:
 # r=/admin/rpms/RPMS/x86_64
-# rpm -hiv --relocate /tmprpm=/opt/apps --nodeps $r/tacc-amask-intel18-cray_mpich_7_7-package-1.0-1.x86_64.rpm
-# rpm -hiv --relocate /tmpmod=/opt/apps --nodeps $r/tacc-amask-intel18-cray_mpich_7_7-modulefile-1.0-1.x86_64.rpm
+# rpm -hiv --relocate /tmprpm=/opt/apps --nodeps $r/tacc-amask-intel18-cray_mpich_7_7-package-1.0-2.x86_64.rpm
+# rpm -hiv --relocate /tmpmod=/opt/apps --nodeps $r/tacc-amask-intel18-cray_mpich_7_7-modulefile-1.0-2.x86_64.rpm
 
 #REMOVE RPM
 # rpm -e tacc-amask-intel18-cray_mpich_7_7-package-1.0-1
@@ -49,7 +49,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.gnu.org/software/bar
@@ -217,6 +217,12 @@ help(help_message)
 
 whatis("Name: %{pkg_base_name}")
 whatis("Version: %{pkg_version}%{dbg}")
+whatis("Category: Affinity/Tools")
+whatis("Keywords: Tools, Affinity, Resources")
+whatis("Description: Affinity Mask reporting for parallel processes")
+whatis("URL: https://github.com/tacc/amask")
+
+
 %if "%{is_debug}" == "1"
 setenv("TACC_%{MODULE_VAR}_DEBUG","1")
 %endif

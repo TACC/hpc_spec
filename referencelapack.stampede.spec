@@ -59,10 +59,6 @@ Group: development/libraries
 Netlib blas and lapack
 
 %description
-The longer-winded description of the package that will 
-end in up inside the rpm and is queryable if installed via:
-rpm -qi <rpm-name>
-
 Lapack
 
 #---------------------------------------
@@ -193,7 +189,7 @@ for the location of sources and libraries respectively.
 
 This Module Should NOT, I repeat !!!NOT!!!, Be Used In Production!
 
-This module serves for debugging purposes to compare against MKL.
+This module serves for debugging purposes or to compare against MKL.
 
 Version %{version}
 
@@ -278,5 +274,5 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Fri Aug 19 2016 eijkhout <eijkhout@tacc.utexas.edu>
+* Mon Aug 20 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial install

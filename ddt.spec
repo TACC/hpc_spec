@@ -3,11 +3,11 @@
 #
 Summary: DDT is a parallel, symbolic debugger.
 Name: ddt
-Version: 18.1.3
-Release: 2
+Version: 19.1.4
+Release: 1
 License: Commercial
 Group: tools/debugging
-Source0: ddt_18.1.3.tar.gz
+Source0: ddt_19.1.4.tar.gz
 URL: https://developer.arm.com/products/software-development-tools/hpc/downloads/download-arm-forge
 Distribution: SuSE Linux
 Vendor: Allinea
@@ -109,7 +109,7 @@ help(help_message,"\n")
 whatis("Version: %{version}")
 whatis("Category: utility, runtime support")
 whatis("Keywords: System, Utility")
-whatis("URL: http://content.allinea.com/downloads/userguide.pdf")
+whatis("URL: https://developer.arm.com/docs/101136/latest/arm-forge ")
 whatis("Description: Parallel, graphical, symbolic debugger")
 
 local home = os.getenv("HOME")

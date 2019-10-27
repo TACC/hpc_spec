@@ -1,29 +1,51 @@
 #
-# Spec file for reference blas/lapack
+# Kent Milfeld  rpmbuild -bb htop-2.2.0.spec 2>&1 | tee htop-2.2.0_2a.log
+
+# r=/admin/rpms/RPMS/x86_64
+# rpm -hiv --relocate /tmprpm=/opt/apps  $r/tacc-htop-package-2.2.0-2.x86_64.rpm
+# rpm -hiv --relocate /tmpmod=/opt/apps  $r/tacc-htop-modulefile-2.2.0-2.x86_64.rpm
+
+# 2019-05-02
 #
-Summary:   Netlib blas and lapack
+# Important Build-Time Environment Variables (see name-defines.inc)
+# NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
+# NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
+#
+# Important Install-Time Environment Variables (see post-defines.inc)
+# VERBOSE=1       -> Print detailed information at install time
+# RPM_DBPATH      -> Path To Non-Standard RPM Database Location
+#
+# Typical Command-Line Example:
+# ./build_rpm.sh Bar.spec
+# cd ../RPMS/x86_64
+
+#   rpmbuild -bb htop-2.2.0.spec 2>&1 | tee htop-2.2.0.log2
+
+# rpm -hiv --relocate /tmprpm=/opt/apps $r/tacc-htop-package-2.2.0-1.el7.centos.x86_64.rpm
+# rpm -hiv --relocate /tmpmod=/opt/apps $r/tacc-htop-modulefile-2.2.0-1.el7.centos.x86_64.rpm
+# rpm -e tacc-htop-package-2.2.0 tacc-htop-modulefile-2.2.0
+
+Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name referencelapack
-%define MODULE_VAR    REFERENCELAPACK
+%define pkg_base_name htop
+%define MODULE_VAR    HTOP
 
 # Create some macros (spec file variables)
-%define major_version 3
-%define minor_version 5
+%define major_version 2
+%define minor_version 2 
 %define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
-%define pkg_full_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-%include compiler-defines.inc
-%include mpi-defines.inc
-
+#%include compiler-defines.inc
+#%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines-noreloc.inc
+%include name-defines.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -34,36 +56,35 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   2%{?dist}
 License:   GPL
-Group:     Development/Tools
-Source:    referencelapack-%{version}.tgz
-URL:       http://netlib.org/lapack
-Vendor:    University of Tennessee, Knoxville
-Packager:  TACC - eijkhout@tacc.utexas.edu
+Group:     System Environment/Base
+URL:       https://hisham.hm/htop/
+Packager:  TACC - milfeld@tacc.utexas.edu
+#Source:    %{pkg_base_name}-%{pkg_version}.tar
+Source:    htop-2.2.0.tar
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
 
+
 %package %{PACKAGE}
-Summary: Reference blas and lapack
-Group: development/libraries
+Summary: The package RPM
+Group: Development/Tools
 %description package
-Netlib blas and lapack
+This is the long description for the package RPM...
+Htop is a ncurses-based process viewer for Linux.
 
 %package %{MODULEFILE}
-Summary: Reference blas and lapack
-Group: development/libraries
+Summary: The modulefile RPM
+Group: Lmod/Modulefiles
 %description modulefile
-Netlib blas and lapack
+This is the long description for the modulefile RPM...
+Htop is a ncurses-based process viewer for Linux.
 
 %description
-The longer-winded description of the package that will 
-end in up inside the rpm and is queryable if installed via:
-rpm -qi <rpm-name>
-
-Lapack
+Git is easy to learn and has a tiny footprint with lightning fast performance.
 
 #---------------------------------------
 %prep
@@ -75,7 +96,7 @@ Lapack
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%setup -n %{pkg_base_name}-%{pkg_full_version}
+%setup -n %{pkg_base_name}-%{pkg_version}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -102,11 +123,9 @@ Lapack
 
 # Setup modules
 %include system-load.inc
-%include compiler-load.inc
-%include mpi-load.inc
 
 # Insert necessary module commands
-#module purge
+module purge
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -116,7 +135,9 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
+  mkdir -p                 %{INSTALL_DIR}
+  mount -t tmpfs tmpfs     %{INSTALL_DIR}
+  
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -128,10 +149,30 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
+
+# make cpu number beging with 0 (to match proc-ids)  5/2/2019 KFM
+sed -i 's/countCPUsFromZero = false/countCPUsFromZero = true/' Settings.c
+./autogen.sh
+./configure --prefix=%{INSTALL_DIR}
+make 
+make install
+
+if [ !  -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+fi
+
+echo "ID %{INSTALL_DIR}"
+echo "RID $RPM_BUILD_ROOT/%{INSTALL_DIR}"
+
+cp -r  %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+umount %{INSTALL_DIR}/
+
+
   
-#-----------------------
+#-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
+
 
 #---------------------------
 %if %{?BUILD_MODULEFILE}
@@ -147,99 +188,65 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   ########### Do Not Remove #############
   #######################################
   
-#--------------------------
-%endif # BUILD_MODULEFILE |
-#--------------------------
-
-##
-## here we go
-##
-#------------------------
-%if %{?BUILD_PACKAGE}
-#------------------------
-
-#
-# config/make:
-#
-
-module load cmake
-
-mkdir -p %{INSTALL_DIR}
-mount -t tmpfs tmpfs %{INSTALL_DIR} 
-
-cmake -DCMAKE_INSTALL_PREFIX:PATH=%{INSTALL_DIR} .
-make all install
-
-mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-cp -r %{INSTALL_DIR}/* $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-umount %{INSTALL_DIR}
-
-# make test
-
-#-----------------------
-%endif # BUILD_PACKAGE |
-#-----------------------
-
-#---------------------------
-%if %{?BUILD_MODULEFILE}
-#---------------------------
-
+# Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
-local help_message = [[
-The %{name} module file defines the following environment variables:
-TACC_REFERENCELAPACK_DIR, TACC_REFERENCELAPACK_LIB, and 
-for the location of sources and libraries respectively.
+help([[
+Htop is a ncurses-based process viewer for Linux.
 
-This Module Should NOT, I repeat !!!NOT!!!, Be Used In Production!
+The %{MODULE_VAR} module file defines the following environment variables:
+TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_BIN and TACC_%{MODULE_VAR}_MAN 
+for the location of the %{MODULE_VAR} distribution, binaries, and man
+pages, respectively.
+The binary and man directories are pre-appended to the PATH and MANPATH variables.
 
-This module serves for debugging purposes to compare against MKL.
+To run htop, execute:
+
+htop
 
 Version %{version}
+]])
 
-]]
-
-help(help_message,"\n")
-
-
-whatis("ReferenceLapack: Reference implementation of blas and lapack")
+whatis("Name: HTOP")
 whatis("Version: %{version}")
-whatis("Category: development, mathematics")
-whatis("Keywords: Library, development, mathematics")
-whatis("Description: Fortran reference implementation of Blas and Lapack.")
-whatis("URL: http://netlib.org/lapack/")
+whatis("Category: library, tools")
+whatis("Keywords: System, Process Viewer, Tools")
+whatis("URL: https://hisham.hm/htop/")
+whatis("Description: Process Viewer using ncurses, info is similar to top")
 
--- Prerequisites
 
---Prepend paths
-prepend_path("LD_LIBRARY_PATH","%{INSTALL_DIR}/lib")
-
---Env variables 
-setenv("TACC_REFERENCELAPACK_DIR", "%{INSTALL_DIR}")
-setenv("TACC_REFERENCELAPACK_LIB", "%{INSTALL_DIR}/lib")
+prepend_path(                  "PATH" , "%{INSTALL_DIR}/bin"              )
+prepend_path(               "MANPATH" , "%{INSTALL_DIR}/share/man"        )
+setenv (     "TACC_%{MODULE_VAR}_DIR" , "%{INSTALL_DIR}"                  )
+setenv (     "TACC_%{MODULE_VAR}_BIN" , "%{INSTALL_DIR}/bin"              )
+setenv (     "TACC_%{MODULE_VAR}_MAN" , "%{INSTALL_DIR}/share/man"              )
 
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module1.0#################################################
+#%Module3.1.1#################################################
 ##
-## version file for Referencelapack
+## version file for %{BASENAME}%{version}
 ##
- 
+
 set     ModulesVersion      "%{version}"
 EOF
+  
+  # Check the syntax of the generated lua modulefile
+  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
+
 
 #------------------------
 %if %{?BUILD_PACKAGE}
 %files package
 #------------------------
 
-%defattr(-,root,install,-)
-%{INSTALL_DIR}
+  %defattr(-,root,install,)
+  # RPM package contains files within these directories
+  %{INSTALL_DIR}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -249,12 +256,14 @@ EOF
 %files modulefile 
 #---------------------------
 
-%defattr(-,root,install,-)
-%{MODULE_DIR}
+  %defattr(-,root,install,)
+  # RPM modulefile contains files within these directories
+  %{MODULE_DIR}
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
+
 
 ########################################
 ## Fix Modulefile During Post Install ##
@@ -276,7 +285,3 @@ export PACKAGE_PREUN=1
 %clean
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
-
-%changelog
-* Fri Aug 19 2016 eijkhout <eijkhout@tacc.utexas.edu>
-- release 1: initial install

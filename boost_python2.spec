@@ -1,6 +1,6 @@
 #
 # Si Liu
-# 2019-03-01
+# 2019-06-04
 #
 
 Summary: Boost spec file (www.boost.org)
@@ -45,7 +45,7 @@ Group:     Utility
 URL:       http://www.boost.org
 Packager:  TACC - siliu@tacc.utexas.edu
 Source0:   boost_1_69_0.tar.gz
-Source1:   icu4c-63_1-src.tgz
+Source1:   icu4c-64_2-src.tgz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -168,7 +168,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   WD=`pwd`
 
-  TACC_OPT="-xAVX -axCORE-AVX2"
+  TACC_OPT=""
  
   cd icu/source
   CXXFLAGS="%{TACC_OPT}" CFLAGS="%{TACC_OPT}" ./runConfigureICU  $ICU_MODE --prefix=%{PYTHON_INSTALL_DIR}
@@ -183,15 +183,14 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   ./bootstrap.sh --prefix=%{PYTHON_INSTALL_DIR} ${CONFIGURE_FLAGS}
 
   ./b2 -j 24 --prefix=%{PYTHON_INSTALL_DIR} $EXTRA cxxflags="%{TACC_OPT}" cflags="%{TACC_OPT}" linkflags="%{TACC_OPT}" install
-  
-  mkdir -p              $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}
-  cp -r %{PYTHON_INSTALL_DIR}/ $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}/..
 
+  mkdir -p $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}
+  cp -r %{PYTHON_INSTALL_DIR}/ $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}/..
 
   rm -f ~/tools/build/v2/user-config.jam
 
   if [ ! -d $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR} ]; then
-        mkdir -p $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}
+  	mkdir -p $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}
   fi
 
   cp -r %{PYTHON_INSTALL_DIR} $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}/..
@@ -235,7 +234,6 @@ whatis("Category: %{group}")
 whatis("Keywords: System, Library, C++")
 whatis("URL: http://www.boost.org")
 whatis("Description: Boost provides free peer-reviewed portable C++ source libraries.")
-
 
 setenv("TACC_%{MODULE_VAR}_DIR","%{PYTHON_INSTALL_DIR}")
 setenv("TACC_%{MODULE_VAR}_LIB","%{PYTHON_INSTALL_DIR}/lib")

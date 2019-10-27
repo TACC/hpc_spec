@@ -27,8 +27,8 @@ Summary: PETSc rpm build script
 
 # Create some macros (spec file variables)
 %define major_version 3
-%define minor_version 11
-%define micro_version 1
+%define minor_version 12
+%define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}
 %define pkg_full_version %{major_version}.%{minor_version}.%{micro_version}
@@ -70,11 +70,11 @@ Group: HPC/libraries
 %description %{PACKAGE}
 Portable Extendible Toolkit for Scientific Computations
 
-%package %{PACKAGE}-xx
-Summary: PETSc rpm building
-Group: HPC/libraries
-%description %{PACKAGE}-xx
-Portable Extendible Toolkit for Scientific Computations
+# %package %{PACKAGE}-xx
+# Summary: PETSc rpm building
+# Group: HPC/libraries
+# %description %{PACKAGE}-xx
+# Portable Extendible Toolkit for Scientific Computations
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
@@ -257,11 +257,11 @@ export PLAPACKOPTIONS=
 ##
 export logdir=%{_topdir}/../apps/petsc/logs
 mkdir -p ${logdir}; rm -rf ${logdir}/*
-export dynamiccc="uni unidebug debug i64 i64debug complexi64 complexi64debug nohdf5"
-export dynamiccxx="cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug cxxi64 cxxi64debug"
+export dynamiccc="uni unidebug debug i64 i64debug complex complexdebug complexi64 complexi64debug nohdf5"
+##export dynamiccxx="cxx cxxdebug  cxxcomplex cxxcomplexdebug cxxi64 cxxi64debug"
 
-export EXTENSIONS="single ${dynamiccc} ${dynamiccxx}"
-#export EXTENSIONS="single ${dynamiccc}"
+##export EXTENSIONS="single ${dynamiccc} ${dynamiccxx}"
+export EXTENSIONS="single ${dynamiccc}"
 
 ##
 ## start of for ext loop, installation only
@@ -281,17 +281,36 @@ else
 fi
 
 ##
-## C compiler flags
-export usedebug=no
-export CFLAGS="${COPTFLAGS}"
-export CXXFLAGS="${CXXOPTFLAGS}"
-export FFLAGS="${FOPTFLAGS}"
-case "${ext}" in 
-*debug ) export usedebug=yes 
-	export CFLAGS="${CNOOPTFLAGS}"
-	export CXXFLAGS="${CXXNOOPTFLAGS}"
-	export FFLAGS="${FNOOPTFLAGS}"
+## Compiler flags
+##
+export XOPTFLAGS="%{TACC_OPT} -O2 -g"
+case "${ext}" in
+  ( *complex* )
+  export XOPTFLAGS="%{TACC_OPT} -O1 -g"
+  #-xCORE-AVX2 -axMIC-AVX512,COMMON-AVX512 -O1 -g"
+  ;;
+esac
+
+export COPTFLAGS=${XOPTFLAGS}
+export CXXOPTFLAGS=${XOPTFLAGS}
+export FOPTFLAGS=${XOPTFLAGS}
+export CNOOPTFLAGS="-O0 -g"
+export CXXNOOPTFLAGS="-O0 -g"
+export FNOOPTFLAGS="-O0 -g"
+
+export CFLAGS=${COPTFLAGS}
+export CXXFLAGS=${CXXOPTFLAGS}
+export FFLAGS=${FOPTFLAGS}
+case "${ext}" in
+*debug ) export CFLAGS=${CNOOPTFLAGS}
+         export CXXFLAGS=${CXXNOOPTFLAGS}
+         export FFLAGS=${FNOOPTFLAGS}
          ;;
+esac
+
+export usedebug=no
+case "${ext}" in
+*debug ) export usedebug=yes
 esac
 
 ## 
@@ -515,7 +534,7 @@ export FPIC_OPTIONS=
   export PETSC_MPICH_HOME="${MPICH_HOME}"
 %endif
 
-export mpi="--with-mpi-compilers=1 --with-mpi-dir=${PETSC_MPICH_HOME}"
+export mpi="--with-mpi-compilers=1 --with-mpi-dir=${PETSC_MPICH_HOME} --with-mpiexec=ibrun"
 echo "Finding mpi in ${PETSC_MPICH_HOME}"
 
 case "${ext}" in
@@ -681,18 +700,18 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
   %{INSTALL_DIR}/haswell-uni
   %{INSTALL_DIR}/haswell-unidebug
   %{INSTALL_DIR}/haswell-nohdf5
-
-%files %{PACKAGE}-xx
-  %{INSTALL_DIR}/haswell-cxx 
-  %{INSTALL_DIR}/haswell-cxxdebug 
   %{INSTALL_DIR}/haswell-complex 
   %{INSTALL_DIR}/haswell-complexdebug 
-  %{INSTALL_DIR}/haswell-cxxcomplex 
-  %{INSTALL_DIR}/haswell-cxxcomplexdebug 
-  %{INSTALL_DIR}/haswell-cxxi64
-  %{INSTALL_DIR}/haswell-cxxi64debug
   %{INSTALL_DIR}/haswell-complexi64
   %{INSTALL_DIR}/haswell-complexi64debug
+
+# %files %{PACKAGE}-xx
+#   %{INSTALL_DIR}/haswell-cxx 
+#   %{INSTALL_DIR}/haswell-cxxdebug 
+#   %{INSTALL_DIR}/haswell-cxxcomplex 
+#   %{INSTALL_DIR}/haswell-cxxcomplexdebug 
+#   %{INSTALL_DIR}/haswell-cxxi64
+#   %{INSTALL_DIR}/haswell-cxxi64debug
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -717,12 +736,12 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 %post %{PACKAGE}
 export PACKAGE_POST=1
 %include post-defines.inc
+
 %post %{MODULEFILE}
 export MODULEFILE_POST=1
 %include post-defines.inc
+
 %preun %{PACKAGE}
-export PACKAGE_PREUN=1
-%preun %{PACKAGE}-xx
 export PACKAGE_PREUN=1
 %include post-defines.inc
 ########################################
@@ -735,5 +754,5 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Fri Apr 26 2019 eijkhout <eijkhout@tacc.utexas.edu>
+* Mon Oct 21 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

@@ -1,25 +1,24 @@
 #
-# Spec file for reference blas/lapack
+# Si Liu
+# 10-10-2019
 #
-Summary:   Netlib blas and lapack
+
+Summary: Launcher Tool for Simple HTC
 
 # Give the package a base name
-%define pkg_base_name referencelapack
-%define MODULE_VAR    REFERENCELAPACK
+%define pkg_base_name launcher
+%define MODULE_VAR    LAUNCHER
 
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 5
-%define micro_version 0
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
-%define pkg_full_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{major_version}.%{minor_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-%include compiler-defines.inc
-%include mpi-defines.inc
-
+#%include compiler-defines.inc
+#%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
@@ -34,36 +33,32 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
-License:   GPL
+Release:   1%{?dist}
+License:   MIT
 Group:     Development/Tools
-Source:    referencelapack-%{version}.tgz
-URL:       http://netlib.org/lapack
-Vendor:    University of Tennessee, Knoxville
-Packager:  TACC - eijkhout@tacc.utexas.edu
+URL:       https://github.com/TACC/launcher
+Packager:  siliu@tacc.utexas.edu
+Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
 
+
 %package %{PACKAGE}
-Summary: Reference blas and lapack
-Group: development/libraries
+Summary: The package RPM
+Group: Development/Tools
 %description package
-Netlib blas and lapack
+Launcher tool for simple HTC on batch scheduled systems
 
 %package %{MODULEFILE}
-Summary: Reference blas and lapack
-Group: development/libraries
+Summary: The modulefile RPM
+Group: Lmod/Modulefiles
 %description modulefile
-Netlib blas and lapack
+Module RPM for Launcher
 
 %description
-The longer-winded description of the package that will 
-end in up inside the rpm and is queryable if installed via:
-rpm -qi <rpm-name>
-
-Lapack
+The Launcher is a utility for simple HTC workflows on batch scheduled systems where submission of serial jobs is discouraged.
 
 #---------------------------------------
 %prep
@@ -74,9 +69,6 @@ Lapack
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-%setup -n %{pkg_base_name}-%{pkg_full_version}
-
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -90,6 +82,8 @@ Lapack
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
+%setup -n %{pkg_base_name}-%{pkg_version}
+
 
 #---------------------------------------
 %build
@@ -102,11 +96,9 @@ Lapack
 
 # Setup modules
 %include system-load.inc
-%include compiler-load.inc
-%include mpi-load.inc
 
 # Insert necessary module commands
-#module purge
+module purge
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -116,7 +108,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
+  
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -129,9 +121,13 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
   
-#-----------------------
+  # Copy everything from tarball over to the installation directory
+  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  
+#-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
+
 
 #---------------------------
 %if %{?BUILD_MODULEFILE}
@@ -147,99 +143,70 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   ########### Do Not Remove #############
   #######################################
   
-#--------------------------
-%endif # BUILD_MODULEFILE |
-#--------------------------
+# Write out the modulefile associated with the application
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
+local help_msg=[[
+The Launcher is a utility for construction simple HTC workflows bundled 
+as a single batch job.
 
-##
-## here we go
-##
-#------------------------
-%if %{?BUILD_PACKAGE}
-#------------------------
+The %{MODULE_VAR} module defines the %{MODULE_VAR}_DIR environment variable.
 
-#
-# config/make:
-#
+For more information on using the Launcher, please consult 
+%{MODULE_VAR}_DIR/README or go to the Launcher website:
 
-module load cmake
-
-mkdir -p %{INSTALL_DIR}
-mount -t tmpfs tmpfs %{INSTALL_DIR} 
-
-cmake -DCMAKE_INSTALL_PREFIX:PATH=%{INSTALL_DIR} .
-make all install
-
-mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-cp -r %{INSTALL_DIR}/* $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-umount %{INSTALL_DIR}
-
-# make test
-
-#-----------------------
-%endif # BUILD_PACKAGE |
-#-----------------------
-
-#---------------------------
-%if %{?BUILD_MODULEFILE}
-#---------------------------
-
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
-local help_message = [[
-The %{name} module file defines the following environment variables:
-TACC_REFERENCELAPACK_DIR, TACC_REFERENCELAPACK_LIB, and 
-for the location of sources and libraries respectively.
-
-This Module Should NOT, I repeat !!!NOT!!!, Be Used In Production!
-
-This module serves for debugging purposes to compare against MKL.
-
-Version %{version}
-
+https://www.tacc.utexas.edu/research-development/tacc-software/the-launcher.
 ]]
 
-help(help_message,"\n")
+--help(help_msg)
+help(help_msg)
 
+whatis("Name: Launcher")
+whatis("Version: %{pkg_version}%{dbg}")
+%if "%{is_debug}" == "1"
+setenv("TACC_%{MODULE_VAR}_DEBUG","1")
+%endif
 
-whatis("ReferenceLapack: Reference implementation of blas and lapack")
-whatis("Version: %{version}")
-whatis("Category: development, mathematics")
-whatis("Keywords: Library, development, mathematics")
-whatis("Description: Fortran reference implementation of Blas and Lapack.")
-whatis("URL: http://netlib.org/lapack/")
+whatis ("Category: utility, runtime support")
+whatis ("Keywords: System, Utility, Tools")
+whatis ("Description: Utility for starting parametric job sweeps")
 
--- Prerequisites
+-- Create environment variables.
+local launcher_dir           = "%{INSTALL_DIR}"
+local plugin_dir        = "%{INSTALL_DIR}/plugins"
 
---Prepend paths
-prepend_path("LD_LIBRARY_PATH","%{INSTALL_DIR}/lib")
-
---Env variables 
-setenv("TACC_REFERENCELAPACK_DIR", "%{INSTALL_DIR}")
-setenv("TACC_REFERENCELAPACK_LIB", "%{INSTALL_DIR}/lib")
+setenv( "TACC_LAUNCHER_DIR",                launcher_dir)
+setenv( "%{MODULE_VAR}_DIR",                launcher_dir)
+setenv( "%{MODULE_VAR}_PLUGIN_DIR",         plugin_dir)
+setenv( "%{MODULE_VAR}_RMI",                "SLURM")
 
 EOF
-
+  
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module1.0#################################################
+#%Module3.1.1#################################################
 ##
-## version file for Referencelapack
+## version file for %{BASENAME}%{version}
 ##
- 
+
+
 set     ModulesVersion      "%{version}"
 EOF
+  
+  # Check the syntax of the generated lua modulefile
+#  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
+
 
 #------------------------
 %if %{?BUILD_PACKAGE}
 %files package
 #------------------------
 
-%defattr(-,root,install,-)
-%{INSTALL_DIR}
+  %defattr(-,root,install,)
+  # RPM package contains files within these directories
+  %{INSTALL_DIR}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -249,12 +216,14 @@ EOF
 %files modulefile 
 #---------------------------
 
-%defattr(-,root,install,-)
-%{MODULE_DIR}
+  %defattr(-,root,install,)
+  # RPM modulefile contains files within these directories
+  %{MODULE_DIR}
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
+
 
 ########################################
 ## Fix Modulefile During Post Install ##
@@ -278,5 +247,5 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Fri Aug 19 2016 eijkhout <eijkhout@tacc.utexas.edu>
-- release 1: initial install
+* Fri Aug 10 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: removed python load instruction from the modulefile

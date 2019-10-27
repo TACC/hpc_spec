@@ -239,8 +239,8 @@ prepend_path("PYTHONPATH",
 
 setenv(          "TACC_PETSC4PY_DIR",        petsc4py_dir)
 
-prereq     ("python%{pythonV}")
-always_load("petsc/${modulepetscversion}")
+depends_on ("python%{pythonV}")
+depends_on ("petsc/${modulepetscversion}")
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${moduleversion} << EOF

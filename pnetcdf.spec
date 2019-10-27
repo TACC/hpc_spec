@@ -23,11 +23,11 @@ Summary: A Nice little relocatable skeleton spec file example.
 # Give the package a base name
 %define pkg_base_name pnetcdf
 %define MODULE_VAR    PNETCDF
-%define SOURCE_NAME parallel-netcdf
+%define SOURCE_NAME pnetcdf
 
 # Create some macros (spec file variables)
 %define major_version 1
-%define minor_version 8
+%define minor_version 12
 %define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
@@ -57,7 +57,7 @@ Release:   1
 License:   BSD
 Group:     applications/io
 Source:    %{SOURCE_NAME}-%{version}.tar.gz
-URL:       trac.mcs.anl.gov/projects/parallel-netcdf
+URL:       parallel-netcdf.github.io
 Distribution: RedHat Linux
 Vendor:    Northwestern University & Argonne National Lab
 Packager:  TACC - cazes@tacc.utexas.edu
@@ -163,9 +163,9 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   %if "%{is_intel}" == "1" || "%{is_intel13}" == "1" || "%{is_intel16}" == "1"
   
   	# environment used for configure with intel compiler
-          export CFLAGS="-O3"
-          export FFLAGS="-O3"
-          export CXXFLAGS="-O3"
+          export CFLAGS="-O3 -mcmodel=medium"
+          export FFLAGS="-O3 -mcmodel=medium"
+          export CXXFLAGS="-O3 -mcmodel=medium"
   %endif
   
   %if "%{mpi_fam}" != "none"
@@ -263,7 +263,7 @@ whatis("Version: %{version}")
 whatis("Category: library, runtime support")
 whatis("Keywords: I/O, Library")
 whatis("Description: I/O library which stores and retrieves data in self-describing, machine-independent datasets%{NETCDF_VERSION}." )
-whatis(" URL: trac.mcs.anl.gov/projects/parallel-netcdf")
+whatis(" URL: parallel-netcdf.github.io")
 
 --Prepend paths
 prepend_path("LD_LIBRARY_PATH","%{INSTALL_DIR}/lib")

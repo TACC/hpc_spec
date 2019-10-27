@@ -1,14 +1,5 @@
 #
-# pylauncher-3.0.spec
-# Victor Eijkhout
-# 2018 10 31
-#
-# based on
-#
-# Bar.spec
-# W. Cyrus Proctor
-# Antonio Gomez
-# 2015-08-25
+# Adapted from Bar.spec by Victor Eijkhout 2018/12/17
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -25,28 +16,31 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: A Nice little relocatable skeleton spec file example.
+Summary: Petsc4py rpm build scxript
 
 # Give the package a base name
-%define pkg_base_name pylauncher
-%define MODULE_VAR    PYLAUNCHER
+%define pkg_base_name petsc4py
+%define MODULE_VAR    PETSC4PY
 
 # Create some macros (spec file variables)
 %define major_version 3
-%define minor_version 0
+%define minor_version 11
+%define micro_version 0
 
-%define pkg_version %{major_version}.%{minor_version}
-%define pylauncherversion %{major_version}.%{minor_version}
+%define petscversion %{major_version}.%{minor_version}
+%define petsc_full_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{pythonV}.%{petscversion}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
-#%include mpi-defines.inc
+%include compiler-defines.inc
+%include mpi-defines.inc
+
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
-#%include name-defines-noreloc.inc
+#%include name-defines.inc
+%include name-defines-noreloc.inc
 #%include name-defines-hidden.inc
 #%include name-defines-hidden-noreloc.inc
 ########################################
@@ -59,37 +53,32 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4
+Release:   1
+License:   GPL
 Group:     Development/Tools
-License: GPL
-Url: https://bitbucket.org/VictorEijkhout/pylauncher
-Packager: eijkhout@tacc.utexas.edu 
-Source:    %{pkg_base_name}-%{pkg_version}.tgz
+URL:       https://bitbucket.org/petsc/petsc4py/
+Packager:  TACC - eijkhout@tacc.utexas.edu
+Source:    %{pkg_base_name}-%{petsc_full_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
 
-# Turn off the brp-python-bytecompile script
-%global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
-
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: PETSC4PYc rpm building
+Group: HPC/libraries
 %description package
-This is the long description for the package RPM...
+Python interface to PETSc
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...
+Python interface to PETSc
 
 %description
-The longer-winded description of the package that will 
-end in up inside the rpm and is queryable if installed via:
-rpm -qi <rpm-name>
+Python interface to PETSc
 
 
 #---------------------------------------
@@ -102,7 +91,7 @@ rpm -qi <rpm-name>
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%setup -n %{pkg_base_name}-%{pkg_version}
+%setup -n %{pkg_base_name}-%{petsc_full_version}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -131,12 +120,11 @@ rpm -qi <rpm-name>
 # Setup modules
 %include system-load.inc
 module purge
-# Load Compiler
-#%include compiler-load.inc
-# Load MPI Library
-#%include mpi-load.inc
+%include compiler-load.inc
+%include mpi-load.inc
 
 # Insert further module commands
+module load python%{pythonV}
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -159,9 +147,46 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
   
-  # Copy everything from tarball over to the installation directory
-  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  # Create some dummy directories and files for fun
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
   
+#-----------------------  
+%endif # BUILD_PACKAGE |
+#-----------------------
+
+# same as in petsc
+export dynamiccc="debug uni unidebug i64 i64debug"
+export dynamiccxx="cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug cxxi64 cxxi64debug"
+
+echo "See what petsc versions there are"
+module spider petsc
+module spider petsc/%{petscversion}
+
+for ext in \
+  "" debug complex complexdebug ; do
+
+#------------------------
+%if %{?BUILD_PACKAGE}
+#------------------------
+
+export architecture=haswell
+if [ -z "${ext}" ] ; then
+  module load petsc/%{petscversion}
+else
+  module load petsc/%{petscversion}-${ext}
+  export architecture=${architecture}-${ext}
+fi
+
+echo "What do we currently have loaded"
+module list
+
+pwd
+mkdir -p %{INSTALL_DIR}/${architecture}
+python%{pythonV} setup.py build
+python%{pythonV} setup.py install --prefix=%{INSTALL_DIR}/${architecture}
+
+module unload petsc
+
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -181,54 +206,78 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   ########### Do Not Remove #############
   #######################################
   
+if [ -z "${ext}" ] ; then
+  export moduleversion=%{version}
+  export modulepetscversion=%{petscversion}
+else
+  export moduleversion=%{version}-${ext}
+  export modulepetscversion=%{petscversion}-${ext}
+fi
+
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
-The %{MODULE_VAR} module defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_DOC, 
-for the location of the %{MODULE_VAR} distribution, and documentation
-respectively.
-]]
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/${moduleversion}.lua << EOF
+help( [[
+The PETSC4PY modulefile defines the following environment variables:
+TACC_PETSC4PY_DIR for the package location
+and it updates the PYTHONPATH
 
---help(help_msg)
-help(help_msg)
+Version ${moduleversion} is for python%{pythonV} and PETSc %{petscversion}
+]] )
 
-whatis("Name: %{pkg_base_name}")
-whatis("Version: %{pkg_version}%{dbg}")
-whatis("URL: https://github.com/TACC/pylauncher")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
+whatis( "Name: Petsc4py" )
+whatis( "Version: %{moduleversion}" )
+whatis( "Version-notes: ${moduleversion}" )
+whatis( "Category: library, mathematics" )
+whatis( "URL: https://bitbucket.org/petsc/petsc4py/" )
+whatis( "Description: Python interface to PETSc" )
 
--- Create environment variables.
-local bar_dir           = "%{INSTALL_DIR}"
+local             petsc_arch =    "${architecture}"
+local             petsc4py_dir =     "%{INSTALL_DIR}"
 
-prepend_path(    "PYTHONPATH",     bar_dir )
-setenv( "TACC_%{MODULE_VAR}_DIR",                bar_dir)
-setenv( "TACC_%{MODULE_VAR}_DOC",       pathJoin(bar_dir, "docs"))
+prepend_path("PYTHONPATH",
+    pathJoin(petsc4py_dir,petsc_arch,"lib","python${TACC_PYTHON_VER}","site-packages") )
+
+setenv(          "TACC_PETSC4PY_DIR",        petsc4py_dir)
+
+depends_on ("petsc/${modulepetscversion}")
 EOF
   
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${moduleversion} << EOF
 #%Module3.1.1#################################################
 ##
-## version file for %{BASENAME}%{version}
+## version file for %{BASENAME}/%{version}
 ##
 
-set     ModulesVersion      "%{version}"
+set     ModulesVersion      "${moduleversion}"
 EOF
   
   # Check the syntax of the generated lua modulefile only if a visible module
   %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/${moduleversion}.lua
   %endif
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
 
+done # end of for ext loop
+
 #------------------------
 %if %{?BUILD_PACKAGE}
-%files package
+#------------------------
+
+  # Copy everything from tarball over to the installation directory
+  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  # Copy the installation  over to the installation directory
+  cp -r %{INSTALL_DIR}/* $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+#-----------------------  
+%endif # BUILD_PACKAGE |
+#-----------------------
+
+#------------------------
+%if %{?BUILD_PACKAGE}
+%files %{PACKAGE}
 #------------------------
 
   %defattr(-,root,install,)
@@ -240,7 +289,7 @@ EOF
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile 
+%files %{MODULEFILE}
 #---------------------------
 
   %defattr(-,root,install,)
@@ -273,11 +322,5 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Mon Sep 23 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 4: MPI fix
-* Mon Mar 04 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: remove old script
-* Mon Dec 10 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: no longer port number needed
-* Wed Oct 31 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 1: initial build
+* Wed May 15 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: first release
