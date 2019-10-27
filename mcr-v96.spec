@@ -1,18 +1,18 @@
 #
 # Si Liu
-# 2019-04-14
+# 2019-4-14
 #
 
 # Give the package a base name
-%define pkg_base_name matlab
-%define MODULE_VAR    MATLAB
+%define pkg_base_name mcr
+%define MODULE_VAR    MCR
 
 # Create some macros (spec file variables)
-%define major_version 2019a
+%define major_version 9
+%define minor_version 6
+%define pkg_version %{major_version}.%{minor_version}
 
-%define pkg_version %{major_version}
-
-Summary: Matlab spec file
+Summary: Matlab Compiler Runtime (MCR)
 Release: 1%{?dist}
 License: Mathworks License
 Vendor: Mathworks
@@ -42,20 +42,27 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 %define debug_package %{nil}
 %define dbg           %{nil}
 
+%define APPS /home1/apps/
+%define MODULES modulefiles
+
 %package %{PACKAGE}
-Summary: Matlab package RPM
-Group: Applications
+Summary: The package RPM
+Group: Matlab 
 %description package
-MATLAB is a high-level language and interactive environment that enables you to perform computationally intensive tasks faster than with traditional programming languages such as C, C++, and Fortran.
+The MATLAB Compiler Runtime (MCR) is a standalone set of
+shared libraries that enables the execution of compiled
+MATLAB applications or components on computers that do
+not have MATLAB installed. When used together, MATLAB,
+MATLAB Compiler, and the MCR enable you to create and
+distribute numerical applications or software components
+quickly and securely.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-MATLAB is a high-level language and interactive environment that enables you to perform computationally intensive tasks faster than with traditional programming languages such as C, C++, and Fortran.
 
 %description
-MATLAB is a high-level language and interactive environment that enables you to perform computationally intensive tasks faster than with traditional programming languages such as C, C++, and Fortran.
 
 
 
@@ -106,7 +113,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
   mkdir -p %{INSTALL_DIR}
-# mount -t tmpfs tmpfs %{INSTALL_DIR}
+##  mount -t tmpfs tmpfs %{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -147,48 +154,35 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 
 help(
 [[
-MATLAB interpreter and compiler MATLAB is a high-level language
-and interactive environment that enables you to perform computationally
-intensive tasks faster than with traditional programming languages
-such as C, C++, and Fortran.
- 
-Unless you are supplying your own MATLAB license file,
-you are using a license owned by University of Texas at Austin.
+The MATLAB Compiler Runtime (MCR) is a standalone set of
+shared libraries that enables the execution of compiled
+MATLAB applications or components on computers that do
+not have MATLAB installed. When used together, MATLAB,
+MATLAB Compiler, and the MCR enable you to create and
+distribute numerical applications or software components
+quickly and securely.
 
-The UT license is for ACADEMIC USE ONLY!
-
-Version 2019a
+Version v9.6
 ]]
 )
 
-whatis("Name: MATLAB")
-whatis("Version: 2019a")
+whatis("Name: MCR")
+whatis("Version: v9.6")
 whatis("Category: library, mathematics")
 whatis("Keywords: Library, Mathematics, Tools")
 whatis("URL: http://www.mathworks.com/")
-whatis("Description: Matlab 2019a from MathWorks")
+whatis("Description: Matlab v9.6 Compiler Runtime from MathWorks")
 
-prepend_path("PATH", "/home1/apps/matlab/2019a/bin")
+append_path("PATH", "/home1/apps/mcr/9.6/bin")
+append_path("LD_LIBRARY_PATH", "/home1/apps/mcr/9.6/bin/glnxa64")
+append_path("LD_LIBRARY_PATH", "/home1/apps/mcr/9.6/runtime/glnxa64")
+append_path("LD_LIBRARY_PATH", "/home1/apps/mcr/9.6/bin/glnxa64")
+append_path("LD_LIBRARY_PATH", "/home1/apps/mcr/9.6/sys/os/glnxa64")
+append_path("LD_LIBRARY_PATH", "/home1/apps/mcr/9.6/sys/java/jre/glnxa64/jre/lib/amd64/server")
+append_path("LD_LIBRARY_PATH", "/home1/apps/mcr/9.6/sys/java/jre/glnxa64/jre/lib/amd64")
 
-append_path("LD_LIBRARY_PATH", "/home1/apps/matlab/2019a/bin/glnxa64")
-append_path("LD_LIBRARY_PATH", "/home1/apps/matlab/2019a/runtime/glnxa64")
-append_path("LD_LIBRARY_PATH", "/home1/apps/matlab/2019a/sys/java/jre/glnxa64/jre/lib/amd64/server/")
-
-setenv ("TACC_MATLAB_DIR", "/home1/apps/matlab/2019a")
-setenv ("DVS_CACHE","off")
-
---Set MKLROOT, BLAS_VERSION, and LAPACK_VERSION for matlab
-local mklroot=os.getenv("MKLROOT")
-
-if mklroot then
-  setenv("BLAS_VERSION", pathJoin(mklroot,"lib/intel64/libmkl_rt.so") )
-  setenv("LAPACK_VERSION", pathJoin(mklroot,"lib/intel64/libmkl_rt.so") )
-  setenv("MKL_INTERFACE_LAYER","ILP64")
-end
-
---License file
-local UserHome=os.getenv("HOME")
-append_path("LM_LICENSE_FILE", pathJoin(UserHome,".tacc_matlab_license") )
+setenv ("TACC_MCR_DIR", "/home1/apps/mcr/9.6")
+setenv ("XAPPLRESDIR", "/home1/apps/mcr/9.6/X11/app-defaults")
 
 EOF
 

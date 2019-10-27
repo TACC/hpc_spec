@@ -1,6 +1,6 @@
 #
-# Damon McDougall
-# 2018-09-22
+# Ian Wang
+# 2019-09-06
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -19,7 +19,7 @@ Summary: PAPI/Perfctr Library - Local TACC Build
 
 # Create some macros (spec file variables)
 %define major_version 5
-%define minor_version 6
+%define minor_version 7
 %define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
@@ -46,7 +46,7 @@ Release:   1%{?dist}
 License:   LGPL
 Group:     Development/Tools
 URL:       http://icl.cs.utk.edu/papi/
-Packager:  TACC - dmcdougall@tacc.utexas.edu, cproctor@tacc.utexas.edu
+Packager:  TACC - iwang@tacc.utexas.edu, cproctor@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode

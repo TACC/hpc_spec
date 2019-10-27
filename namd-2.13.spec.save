@@ -123,14 +123,8 @@ using gigabit ethernet.
 #---------------------------------------
 %build
 #---------------------------------------
-
-#---------------------------------------
-%install
-#---------------------------------------
-
-# Setup modules
-%include system-load.inc
 module purge
+
 %include compiler-load.inc
 %include mpi-load.inc
 
@@ -166,13 +160,17 @@ cd Linux-KNL-icc
 make -j 16
 
 mv namd2 ../bin/namd2_knl
-cd ..
 
-sed -i 's/python3/python/' lib/alch/deinterleave_idws.py
-sed -i 's/python3/python/' lib/qmmm/runORCA.py
+
+#---------------------------------------
+%install
+#---------------------------------------
+
+# Setup modules
+%include system-load.inc
 
 # Insert necessary module commands
-#module purge
+module purge
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"

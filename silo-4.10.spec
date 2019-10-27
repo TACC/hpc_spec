@@ -191,6 +191,10 @@ whatis("Category: Library, Visualization")
 whatis("Description: a scalable mesh and field I/O library and scientific database")
 whatis("URL: https://wci.llnl.gov/codes/silo/")
 
+prepend_path("PATH",    "%{INSTALL_DIR}/bin")
+prepend_path("INCLUDE", "%{INSTALL_DIR}/include")
+prepend_path("LD_LIBRARY_PATH", "%{INSTALL_DIR}/lib")
+
 setenv("TACC_%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
 setenv("TACC_%{MODULE_VAR}_LIB","%{INSTALL_DIR}/lib")
 setenv("TACC_%{MODULE_VAR}_INC","%{INSTALL_DIR}/include")

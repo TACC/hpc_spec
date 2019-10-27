@@ -46,6 +46,13 @@
   %define is_gcc 1
   %define comp_module gcc/7.1.0
 %endif
+%if "%{is_gcc73}" == "1"
+  %define comp_fam gcc
+  %define comp_fam_ver gcc7_3
+  %define comp_fam_name GNU
+  %define is_gcc 1
+  %define comp_module gcc/7.3.0
+%endif
 %if "%{is_gcc81}" == "1"
   %define comp_fam gcc
   %define comp_fam_ver gcc8_1

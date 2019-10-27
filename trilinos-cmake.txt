@@ -11,21 +11,21 @@ cmake -VV
  -D Trilinos_ENABLE_Fortran:BOOL=ON
  -D CMAKE_INSTALL_PREFIX:PATH=/home1/apps/intel18/impi18_0/trilinos/git20181023
  -D CMAKE_BUILD_TYPE:STRING=RELEASE
- -D 'CMAKE_C_FLAGS:STRING=-g -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -O2 -mkl'
- -D 'CMAKE_CXX_FLAGS:STRING=-g -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -O2 -mkl
- -DMPICH_SKIP_MPICXX
- -DHAVE_AMESOS_SUPERLU5_API
- -DHAVE_AMESOS2_SUPERLU5_API
- -DHAVE_IFPACK2_SUPERLU5_API'
+ -D CMAKE_C_FLAGS:STRING='-g -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -O2 -mkl'
+ -D CMAKE_CXX_FLAGS:STRING='-g -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 -O2 -mkl'
+ -DMPICH_SKIP_MPICXX:BOOL=ON
+ -DHAVE_AMESOS_SUPERLU5_API:BOOL=ON
+ -DHAVE_AMESOS2_SUPERLU5_API:BOOL=ON
+ -DHAVE_IFPACK2_SUPERLU5_API:BOOL=ON
  -D CMAKE_Fortran_FLAGS:STRING=-fPIC
- -D Trilinos_EXTRA_LINK_FLAGS=/opt/apps/intel18/python/2.7.13/lib/libpython2.7.so
- -D Trilinos_EXTRA_LD_FLAGS=/opt/apps/intel18/python/2.7.13/lib/libpython2.7.so
+ -D Trilinos_EXTRA_LINK_FLAGS=/opt/apps/intel18/python/2.7.16/lib/libpython2.7.so
+ -D Trilinos_EXTRA_LD_FLAGS=/opt/apps/intel18/python/2.7.16/lib/libpython2.7.so
  -D BLAS_INCLUDE_DIRS:PATH=/opt/intel/compilers_and_libraries_2018.2.199/linux/mkl/include
  -D BLAS_LIBRARY_DIRS:PATH=/opt/intel/compilers_and_libraries_2018.2.199/linux/mkl/lib/intel64
  -D 'BLAS_LIBRARY_NAMES:STRING=mkl_intel_lp64;mkl_sequential;mkl_core;pthread'
  -D LAPACK_INCLUDE_DIRS:PATH=/opt/intel/compilers_and_libraries_2018.2.199/linux/mkl/include
  -D LAPACK_LIBRARY_DIRS:PATH=/opt/intel/compilers_and_libraries_2018.2.199/linux/mkl/lib/intel64
- -D 'LAPACK_LIBRARY_NAMES:STRING=mkl_intel_lp64;mkl_sequential;mkl_core;pthread'
+ -D LAPACK_LIBRARY_NAMES:STRING='mkl_intel_lp64;mkl_sequential;mkl_core;pthread'
  -D TPL_ENABLE_MPI:BOOL=ON
  -D MPI_EXEC:FILEPATH=/opt/apps/xalt/0.6/bin/ibrun
  -D TPL_ENABLE_GLM=OFF
@@ -91,7 +91,7 @@ cmake -VV
  -D Trilinos_ENABLE_TriKota:BOOL=ON
  -D Trilinos_ENABLE_Zoltan:BOOL=ON
  -D Trilinos_ENABLE_PyTrilinos:Bool=ON
- -D CMAKE_PYTHON_INCLUDE_DIR:PATH=/opt/apps/intel18/python/2.7.13/include
- -D CMAKE_PYTHON_LIBRARIES:STRING=/opt/apps/intel18/python/2.7.13/lib
+ -D CMAKE_PYTHON_INCLUDE_DIR:PATH=/opt/apps/intel18/python/2.7.16/include
+ -D CMAKE_PYTHON_LIBRARIES:STRING=/opt/apps/intel18/python/2.7.16/lib
  -D PyTrilinos_DOCSTRINGS:BOOL=OFF
  -D SWIG_EXECUTABLE:FILEPATH=/home1/apps/intel18/swig/3.0.12/bin/swig /admin/build/rpms/BUILD//trilinos-git

@@ -1,6 +1,11 @@
 #
-# Kent Milfeld  rpmbuild -bb htop-2.2.0.spec 2>&1 | tee htop-2.2.0.log
-# 2018-07-05
+# Kent Milfeld  rpmbuild -bb htop-2.2.0.spec 2>&1 | tee htop-2.2.0_2a.log
+
+# r=/admin/build/admin/rpms/stampede2/RPMS/x86_64
+# rpm -hiv --relocate /tmprpm=/opt/apps  $r/tacc-htop-package-2.2.0-2.el7.x86_64.rpm
+# rpm -hiv --relocate /tmpmod=/opt/apps  $r/tacc-htop-modulefile-2.2.0-2.el7.x86_64.rpm
+
+# 2019-05-02
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -51,7 +56,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GPL
 Group:     System Environment/Base
 URL:       https://hisham.hm/htop/
@@ -145,6 +150,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
 
+# make cpu number beging with 0 (to match proc-ids)  5/2/2019 KFM
+sed -i 's/countCPUsFromZero = false/countCPUsFromZero = true/' Settings.c
 
 ./configure --prefix=%{INSTALL_DIR}
 make 
@@ -191,6 +198,10 @@ TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_BIN and TACC_%{MODULE_VAR}_MAN
 for the location of the %{MODULE_VAR} distribution, binaries, and man
 pages, respectively.
 The binary and man directories are pre-appended to the PATH and MANPATH variables.
+
+To run htop, execute:
+
+htop
 
 Version %{version}
 ]])

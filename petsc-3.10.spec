@@ -464,7 +464,7 @@ esac
 
 if [ "%{comp_fam}" = "gcc" ] ; then
   # this is TACC_INTEL_LIB
-  export LIBS="/opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/libirc.so"
+  export EXTRALIBS="-L/opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/ -Wl,-rpath,/opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/ -lirc"
 fi
 
 ##
@@ -495,6 +495,7 @@ else
     --with-packages-build-dir=${PACKAGES_BUILD_DIR} \
     ${MPI_OPTIONS} ${clanguage} ${scalar} ${dynamicshared} ${precision} ${packages} \
     --with-debugging=${usedebug} \
+    --LIBS="${EXTRALIBS}" \
     ${BLAS_LAPACK_OPTIONS} ${MPI_EXTRA_OPTIONS} ${CUDA_OPTIONS} ${INDEX_OPTIONS} \
     COPTFLAGS="${CFLAGS}" FOPTFLAGS="${FFLAGS}" CXXOPTFLAGS="${CXXFLAGS}"
 fi

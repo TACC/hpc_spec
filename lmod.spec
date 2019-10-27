@@ -1,7 +1,7 @@
 Prefix:    /opt/apps
 Summary:   lmod: Lua based Modules
 Name:      lmod
-Version:   8.0.5
+Version:   8.1.16
 Release:   1%{?dist}
 License:   MIT
 Vendor:    Robert McLay
@@ -23,8 +23,9 @@ Packager:  TACC - mclay@tacc.utexas.edu
 %define INSTALL_DIR    %{PKG_BASE}/%{version}
 %define GENERIC_IDIR   %{PKG_BASE}/lmod
 %define MODULES        modulefiles
-%define MODULE_DIR     %{APPS}/%{MODULES}/lmod
-%define MODULE_DIR_ST  %{APPS}/%{MODULES}/settarg
+%define MODULE_DIR     %{APPS}/%{MODULES}
+%define MODULE_LMOD    %{APPS}/%{MODULES}/lmod.lua
+%define MODULE_SETTARG %{APPS}/%{MODULES}/settarg.lua
 %define ZSH_SITE_FUNC  /usr/share/zsh/site-functions
 
 %package -n %{pkg_name}
@@ -91,9 +92,13 @@ rm $RPM_BUILD_ROOT/%{INSTALL_DIR}/../lmod
 # Modules Section
 #-----------------
 
+#-----------------
+# Lmod modulefile
+#-----------------
+
 rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-cat   >  $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
+cat   >  $RPM_BUILD_ROOT/%{MODULE_LMOD} << 'EOF'
 -- -*- lua -*-
 help(
 [[
@@ -115,39 +120,20 @@ whatis("URL: http://www.tacc.utexas.edu/tacc-projects/lmod")
 prepend_path( "PATH",            "%{GENERIC_IDIR}/libexec" )
 EOF
 
-#--------------
-#  Version file.
-#--------------
+#--------------------
+# Settarg modulefile
+#--------------------
 
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.modulerc-%{version}.lua << 'EOF'
-module_version("%{version}","default")
-EOF
-
-rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR_ST}
-mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR_ST}
 sed -e "s|@PKG@|%{GENERIC_IDIR}|g"     \
     -e "s|@settarg_cmd@|settarg_cmd|g" \
     -e "s|@path_to_lua@|$luaPath|g"    \
-    < MF/settarg.version.lua > $RPM_BUILD_ROOT/%{MODULE_DIR_ST}/%{version}.lua     
-
-#--------------
-#  Version file.
-#--------------
-
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR_ST}/.version.%{version} << 'EOF'
-#%Module3.1.1#################################################
-##
-## version file for %{name}-%{version}
-##
-
-set     ModulesVersion      "%{version}"
-EOF
+    < MF/settarg.version.lua > $RPM_BUILD_ROOT/%{MODULE_SETTARG}
 
 %files -n %{pkg_name}
 %defattr(-,root,root,)
 %{INSTALL_DIR}
-%{MODULE_DIR}
-%{MODULE_DIR_ST}
+%{MODULE_LMOD}
+%{MODULE_SETTARG}
 %{ZSH_SITE_FUNC}/_ml
 %{ZSH_SITE_FUNC}/_module
 

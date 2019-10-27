@@ -2,7 +2,7 @@
 
 Summary: XALT
 Name: xalt
-Version: 2.6.5
+Version: 2.7.9
 Release: 1
 License: LGPLv2
 Group: System Environment/Base
@@ -75,7 +75,7 @@ prepend_path("LD_PRELOAD",                "%{GENERIC_IDIR}/lib64/libxalt_init.so
 setenv (     "%{MODULE_VAR}_DIR",         "%{GENERIC_IDIR}/")
 setenv (     "%{MODULE_VAR}_BIN",         "%{GENERIC_IDIR}/bin")
 setenv (     "XALT_EXECUTABLE_TRACKING",  "yes")
-setenv (     "XALT_SCALAR_SAMPLING",      "yes")
+setenv (     "XALT_SAMPLING",             "yes")
 EOF
 
 #--------------

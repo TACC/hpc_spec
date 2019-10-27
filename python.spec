@@ -1,9 +1,9 @@
 Summary:    Python is a high-level general-purpose programming language.
-#Name:      tacc-python2
-Name:       tacc-python3 
-#Version:    2.7.16
-Version:    3.7.0
-Release:    1%{?dist}
+Name:      tacc-python2
+#Name:       tacc-python3 
+Version:    2.7.16
+#Version:    3.7.0
+Release:    2%{?dist}
 License:    GPLv2
 Vendor:     Python Software Foundation
 Group:      Applications
@@ -34,8 +34,8 @@ Packager:   TACC - rtevans@tacc.utexas.edu
 %include compiler-defines.inc
 %include mpi-defines.inc	
 
-%define MAJOR_MINOR 3.7
-%define MAJOR 3
+%define MAJOR_MINOR 2.7
+%define MAJOR 2
 %define PNAME python%{MAJOR}
 
 %define INSTALL_DIR_COMP %{APPS}/%{comp_fam_ver}/%{PNAME}/%{version}

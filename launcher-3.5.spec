@@ -1,36 +1,30 @@
-#
+# $Id: launcher.spec,v 3.5 2019/10/10 
 # Si Liu
-# 2019-04-14
-#
 
-# Give the package a base name
-%define pkg_base_name matlab
-%define MODULE_VAR    MATLAB
+# This launcher is not using the name convention
+# need to install the module before the package!!!!!!!!!!!
+
+%define pkg_base_name launcher
+%define MODULE_VAR LAUNCHER
 
 # Create some macros (spec file variables)
-%define major_version 2019a
+%define major_version 3
+%define minor_version 5
+%define micro_version 0
 
-%define pkg_version %{major_version}
+%define pkg_version %{major_version}.%{minor_version}
 
-Summary: Matlab spec file
-Release: 1%{?dist}
-License: Mathworks License
-Vendor: Mathworks
+Summary: Local TACC parametric-launcher install.
+
+Release: 3%{?dist}
+Vendor: TACC
+License: none
 Group: Utility
-Source: %{name}-%{version}.tar.gz
-Packager:  TACC - siliu@tacc.utexas.edu
+Source: %{pkg_base_name}-%{pkg_version}.tar.gz
+Packager: siliu@tacc.utexas.edu
 
-### Toggle On/Off ###
-%include rpm-dir.inc                  
-#%include compiler-defines.inc
-#%include mpi-defines.inc
-########################################
-### Construct name based on includes ###
-########################################
+%include rpm-dir.inc
 %include name-defines-noreloc.inc
-########################################
-############ Do Not Remove #############
-########################################
 
 ############ Do Not Change #############
 Name:      %{pkg_name}
@@ -38,39 +32,42 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
+%define INSTALL_DIR  %{INSTALL_PREFIX}/%{pkg_base_name}/%{pkg_base_name}-%{pkg_version}
+
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
 
 %package %{PACKAGE}
-Summary: Matlab package RPM
+Summary: Launcher package RPM
 Group: Applications
 %description package
-MATLAB is a high-level language and interactive environment that enables you to perform computationally intensive tasks faster than with traditional programming languages such as C, C++, and Fortran.
+TACC Parametric Job Launcher is a simple utility for submitting multiple serial applications simultaneously.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
-Group: Lmod/Modulefiles
+Group: Modulefiles
 %description modulefile
-MATLAB is a high-level language and interactive environment that enables you to perform computationally intensive tasks faster than with traditional programming languages such as C, C++, and Fortran.
+TACC Parametric Job Launcher is a simple utility for submitting multiple serial applications simultaneously.
 
 %description
-MATLAB is a high-level language and interactive environment that enables you to perform computationally intensive tasks faster than with traditional programming languages such as C, C++, and Fortran.
-
-
+TACC Parametric Job Launcher is a simple utility for submitting multiple serial applications simultaneously.
 
 #---------------------------------------
 %prep
-#---------------------------------------
+#- --------------------------------------
 
 #------------------------
 %if %{?BUILD_PACKAGE}
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+#%setup -n nwchem-%{pkg_version}
+%setup -n %{pkg_base_name}-%{pkg_version}
 #-----------------------
 %endif # BUILD_PACKAGE |
-#-----------------------
+#----------------------
 
 #---------------------------
 %if %{?BUILD_MODULEFILE}
@@ -82,10 +79,10 @@ MATLAB is a high-level language and interactive environment that enables you to 
 #--------------------------
 
 
+
 #---------------------------------------
 %build
 #---------------------------------------
-
 
 #---------------------------------------
 %install
@@ -100,14 +97,13 @@ module purge
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
+
 #------------------------
 %if %{?BUILD_PACKAGE}
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-# mount -t tmpfs tmpfs %{INSTALL_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -119,11 +115,14 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-  
+
+# Copy everything from tarball over to the installation directory
+cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+chmod -Rf u+rwX,g+rwX,o=rX  $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
-
 
 
 
@@ -132,7 +131,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -140,55 +139,38 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
+
 # Write out the modulefile associated with the application
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 
-help(
-[[
-MATLAB interpreter and compiler MATLAB is a high-level language
-and interactive environment that enables you to perform computationally
-intensive tasks faster than with traditional programming languages
-such as C, C++, and Fortran.
- 
-Unless you are supplying your own MATLAB license file,
-you are using a license owned by University of Texas at Austin.
+local help_message=[[
+The %{name} module file defines the environment variable:
+$%{MODULE_VAR}_DIR for the location of the TACC Parametric 
+Job Launcher which is a simple utility for submitting multiple
+serial applications simultaneously.
 
-The UT license is for ACADEMIC USE ONLY!
+For more information on using the Launcher, please consult
+the README.launcher file located in $%{MODULE_VAR}_DIR
 
-Version 2019a
+Version %{version}
 ]]
-)
 
-whatis("Name: MATLAB")
-whatis("Version: 2019a")
-whatis("Category: library, mathematics")
-whatis("Keywords: Library, Mathematics, Tools")
-whatis("URL: http://www.mathworks.com/")
-whatis("Description: Matlab 2019a from MathWorks")
+help(help_message,"\n")
 
-prepend_path("PATH", "/home1/apps/matlab/2019a/bin")
+whatis ("Name: TACC Parametric Job Launcher")
+whatis ("Version: %{version}")
+whatis ("Category: utility, runtime support")
+whatis ("Keywords: System, Utility, Tools")
+whatis ("Description: Utility for starting parametric job sweeps")
 
-append_path("LD_LIBRARY_PATH", "/home1/apps/matlab/2019a/bin/glnxa64")
-append_path("LD_LIBRARY_PATH", "/home1/apps/matlab/2019a/runtime/glnxa64")
-append_path("LD_LIBRARY_PATH", "/home1/apps/matlab/2019a/sys/java/jre/glnxa64/jre/lib/amd64/server/")
+local launcher_dir="/opt/apps/launcher/launcher-3.5"
+local launcher_plugin_dir="/opt/apps/launcher/launcher-3.5/plugins"
 
-setenv ("TACC_MATLAB_DIR", "/home1/apps/matlab/2019a")
-setenv ("DVS_CACHE","off")
-
---Set MKLROOT, BLAS_VERSION, and LAPACK_VERSION for matlab
-local mklroot=os.getenv("MKLROOT")
-
-if mklroot then
-  setenv("BLAS_VERSION", pathJoin(mklroot,"lib/intel64/libmkl_rt.so") )
-  setenv("LAPACK_VERSION", pathJoin(mklroot,"lib/intel64/libmkl_rt.so") )
-  setenv("MKL_INTERFACE_LAYER","ILP64")
-end
-
---License file
-local UserHome=os.getenv("HOME")
-append_path("LM_LICENSE_FILE", pathJoin(UserHome,".tacc_matlab_license") )
+setenv("TACC_LAUNCHER_DIR", launcher_dir)
+setenv("LAUNCHER_DIR", launcher_dir)
+setenv("LAUNCHER_PLUGIN_DIR", launcher_plugin_dir)
+setenv("LAUNCHER_RMI", "SLURM")
 
 EOF
 
@@ -201,14 +183,14 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 set     ModulesVersion      "%{version}"
 EOF
 
-  
-
 # Check the syntax of the generated lua modulefile
 %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
+
+
 
 
 #------------------------
@@ -225,7 +207,7 @@ EOF
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile 
+%files modulefile
 #---------------------------
 
   %defattr(-,root,install,)
@@ -236,25 +218,46 @@ EOF
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
+#------------------------
+%if %{?BUILD_PACKAGE}
+%files package
+#------------------------
+
+  %defattr(-,root,install,)
+  # RPM package contains files within these directories
+  %{INSTALL_DIR}
+
+#-----------------------
+%endif # BUILD_PACKAGE |
+#-----------------------
+#---------------------------
+%if %{?BUILD_MODULEFILE}
+%files modulefile
+#---------------------------
+
+  %defattr(-,root,install,)
+  # RPM modulefile contains files within these directories
+  %{MODULE_DIR}
+
+#--------------------------
+%endif # BUILD_MODULEFILE |
+#--------------------------
 
 ########################################
 ## Fix Modulefile During Post Install ##
 ########################################
 %post %{PACKAGE}
 export PACKAGE_POST=1
-%include post-defines.inc
+%include post-defines-siliu.inc
 %post %{MODULEFILE}
 export MODULEFILE_POST=1
-%include post-defines.inc
+%include post-defines-siliu.inc
 %preun %{PACKAGE}
 export PACKAGE_PREUN=1
-%include post-defines.inc
+%include post-defines-siliu.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
 
-#---------------------------------------
-%clean
-#---------------------------------------
+##%clean
 rm -rf $RPM_BUILD_ROOT
-

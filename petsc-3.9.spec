@@ -7,8 +7,8 @@ Summary: PETSc install
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 9
-%define micro_version 3
-%define versionpatch 3.9.3
+%define micro_version 4
+%define versionpatch 3.9.4
 
 %define pkg_version %{major_version}.%{minor_version}
 
@@ -197,8 +197,9 @@ fi
 ## Compiler flags
 ##
 %if "%{comp_fam}" == "gcc"
-export XOPTFLAGS="%{TACC_OPT} -O2 -g"
-export LOPFLAGS=${XOPTFLAGS}
+  export XOPTFLAGS="%{TACC_OPT} -O2 -g"
+  export LOPFLAGS=${XOPTFLAGS}
+  export EXTRALIBS="-L/opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/ -Wl,-rpath,/opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/ -lirc"
 %endif
 
 %if "%{is_intel}" == "1"
@@ -296,8 +297,10 @@ export CHACO_OPTIONS="--with-chaco=1 --download-chaco"
 
 #
 # Elemental
+# needs parmetis but parmetis is only real?
 #
-export ELEMENTAL_OPTIONS="--with-elemental=1 --download-elemental"
+export ELEMENTAL_OPTIONS="--with-elemental=1 --download-elemental \
+--with-cxx-dialect=C++11 --with-parmetis --download-parmetis --with-metis --download-metis"
 export ELEMENTAL_STRING=elemental
 
 #
@@ -394,6 +397,10 @@ uni*     )
 	  export packages=
 	  ;;
 esac
+# %if "%{comp_fam}" == "gcc"
+# 	  export packageslisting=
+# 	  export packages=
+# %endif
 
 #
 # blas/lapack
@@ -464,13 +471,16 @@ else
   export I_MPI_FABRICS=shm:tmi
   RPM_BUILD_ROOT=tmpfs PETSC_DIR=`pwd` ./configure \
     ${PETSC_CONFIGURE_OPTIONS} \
-    --with-packages-dir=${EXTERNAL_PACKAGES_DIR} \
-    --with-external-packages-dir=${EXTERNAL_PACKAGES_DIR} \
     ${mpi} ${clanguage} ${scalar} ${dynamicshared} ${precision} ${packages} \
     --with-debugging=${usedebug} \
+    --LIBS="${EXTRALIBS}" \
     ${BLAS_LAPACK_OPTIONS} ${MPI_EXTRA_OPTIONS} ${CUDA_OPTIONS} ${INDEX_OPTIONS} \
     COPTFLAGS="${CFLAGS}" FOPTFLAGS="${FFLAGS}" CXXOPTFLAGS="${CXXFLAGS}"
 fi
+export nopackages="\
+    --with-packages-dir=${EXTERNAL_PACKAGES_DIR} \
+    --with-external-packages-dir=${EXTERNAL_PACKAGES_DIR} \
+    "
 
 ####
 #### post-processing fixes
@@ -639,6 +649,8 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Wed May 05 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 5: fix for gcc and libirc, also update to 3.9.4
 * Tue Aug 14 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 4: DID WE ACTUALLY MAKE AND RELEASE THIS? just to disambiguate for intel 18 update 2
 * Mon Jul 23 2018 eijkhout <eijkhout@tacc.utexas.edu>

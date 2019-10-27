@@ -1,6 +1,6 @@
 #
 # Si Liu
-# 2019-03-01
+# 2019-06-04
 #
 
 Summary: Boost spec file (www.boost.org)
@@ -29,7 +29,6 @@ Summary: Boost spec file (www.boost.org)
 ########################################
 #%include name-defines.inc
 %include name-defines-noreloc.inc
-#%include  name-defines-python-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -46,7 +45,7 @@ Group:     Utility
 URL:       http://www.boost.org
 Packager:  TACC - siliu@tacc.utexas.edu
 Source0:   boost_1_69_0.tar.gz
-Source1:   icu4c-63_1-src.tgz
+Source1:   icu4c-64_2-src.tgz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -190,7 +189,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   ./bootstrap.sh --with-python=/opt/apps/intel18/python3/3.7.0/bin/python3.7  --with-python-version=3.7 --with-python-root=/opt/apps/intel18/python3/3.7.0 --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
 
-  echo "using mpi : /opt/apps/intel18/impi/18.0.2/bin/mpicxx ;" >> ~/projet-config.jam
+  echo "using mpi : /opt/apps/intel18/impi/18.0.2/bin/mpicxx ;" >> project-config.jam
 
   ./b2 -j 24 include="/opt/apps/intel18/python3/3.7.0/include/python3.7m" --prefix=%{PYTHON_INSTALL_DIR} $EXTRA cxxflags="%{TACC_OPT}" cflags="%{TACC_OPT}" linkflags="%{TACC_OPT}" install
   

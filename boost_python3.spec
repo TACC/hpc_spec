@@ -1,6 +1,6 @@
 #
 # Si Liu
-# 2019-03-01
+# 2019-06-04
 #
 
 Summary: Boost spec file (www.boost.org)
@@ -45,7 +45,7 @@ Group:     Utility
 URL:       http://www.boost.org
 Packager:  TACC - siliu@tacc.utexas.edu
 Source0:   boost_1_69_0.tar.gz
-Source1:   icu4c-63_1-src.tgz
+Source1:   icu4c-64_2-src.tgz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -168,7 +168,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   WD=`pwd`
   
- TACC_OPT="-xCORE-AVX2 -axCORE-AVX512,MIC-AVX512"
+  TACC_OPT="-xCORE-AVX2 -axCORE-AVX512,MIC-AVX512"
  
   cd icu/source
   CXXFLAGS="%{TACC_OPT}" CFLAGS="%{TACC_OPT}" ./runConfigureICU  $ICU_MODE --prefix=%{PYTHON_INSTALL_DIR}

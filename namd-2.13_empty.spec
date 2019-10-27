@@ -1,14 +1,12 @@
 #
-# pylauncher3.spec
-# Victor Eijkhout
-#
-# based on
-#
-# Bar.spec
 # W. Cyrus Proctor
 # Antonio Gomez
 # 2015-08-25
 #
+
+#%define NO_PACKAGE 1
+#%define BUILD_PACKAGE 0
+
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
 # NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
@@ -27,29 +25,34 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name pylauncher
-%define MODULE_VAR    PYLAUNCHER
+%define pkg_base_name namd
+%define MODULE_VAR    NAMD
 
 # Create some macros (spec file variables)
-%define major_version 3
+%define major_version 2.13
 %define minor_version 0
+%define micro_version 0
 
-%define pkg_version %{major_version}.%{minor_version}
-%define pylauncherversion %{major_version}.%{minor_version}
-
+#%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}
 ### Toggle On/Off ###
-%include rpm-dir.inc                  
+%include rpm-dir.inc
+
 %include compiler-defines.inc
-#%include mpi-defines.inc
-%include python-defines.inc
+%include mpi-defines.inc
+
+#%include name-defines-noreloc.inc
 
 ########################################
 ### Construct name based on includes ###
 ########################################
 #%include name-defines.inc
 %include name-defines-noreloc.inc
-#%include name-defines-hidden.inc
-#%include name-defines-hidden-noreloc.inc
+
+%define NO_PACKAGE 1
+%define BUILD_PACKAGE 0
+
+
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -60,52 +63,61 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3
-Group:     Development/Tools
-License: GPL
-Url: https://github.com/TACC/pylauncher
-Group: TACC
-Packager: eijkhout@tacc.utexas.edu 
-Source:    %{pkg_base_name}-%{pkg_version}.tgz
+Release:   1%{?dist}
+License:   GPL
+Group:     Theoretical and Computational Biophysics Group, UIUC
+URL:       http://www.ks.uiuc.edu/Development/Download/download.cgi?PackageName=NAMD
+Packager:  TACC - huang@tacc.utexas.edu
+Source:    NAMD_2.13_Source.tar.gz
+Source1:   tcl8.5.9-linux-x86_64-threaded.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
 
-# Turn off the brp-python-bytecompile script
-%global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
-
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: The NAMD 2.13
+Group: Applications/Chemistry
 %description package
-This is the long description for the package RPM...
+A development version of NAMD. 
+NAMD, recipient of a 2002 Gordon Bell Award, is a parallel molecular dynamics
+code designed for high-performance simulation of large biomolecular systems.
+Based on Charm++ parallel objects, NAMD scales to hundreds of processors on
+high-end parallel platforms and tens of processors on commodity clusters
+using gigabit ethernet.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...
+A development version of NAMD.
+NAMD, recipient of a 2002 Gordon Bell Award, is a parallel molecular dynamics
+code designed for high-performance simulation of large biomolecular systems.
+Based on Charm++ parallel objects, NAMD scales to hundreds of processors on
+high-end parallel platforms and tens of processors on commodity clusters
+using gigabit ethernet.
 
 %description
-The longer-winded description of the package that will 
-end in up inside the rpm and is queryable if installed via:
-rpm -qi <rpm-name>
-
+A development version of NAMD.
+NAMD, recipient of a 2002 Gordon Bell Award, is a parallel molecular dynamics
+code designed for high-performance simulation of large biomolecular systems.
+Based on Charm++ parallel objects, NAMD scales to hundreds of processors on
+high-end parallel platforms and tens of processors on commodity clusters
+using gigabit ethernet.
 
 #---------------------------------------
 %prep
 #---------------------------------------
+
+rm   -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #------------------------
 %if %{?BUILD_PACKAGE}
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-%setup -n %{pkg_base_name}-%{pkg_version}
-
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -119,64 +131,35 @@ rpm -qi <rpm-name>
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
+%setup -n NAMD_%{pkg_version}_Source
 
 
 #---------------------------------------
 %build
 #---------------------------------------
+%include compiler-load.inc
+%include mpi-load.inc
 
-
-#---------------------------------------
 %install
 #---------------------------------------
 
 # Setup modules
 %include system-load.inc
+
+# Insert necessary module commands
 module purge
-# Load Compiler
-%include compiler-load.inc
-# Load MPI Library
-#%include mpi-load.inc
-# Load Python
-%include python-load.inc
 
-# Insert further module commands
-
-echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
-
-#------------------------
-%if %{?BUILD_PACKAGE}
-#------------------------
-
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
-  #######################################
-  ##### Create TACC Canary Files ########
-  #######################################
-  touch $RPM_BUILD_ROOT/%{INSTALL_DIR}/.tacc_install_canary
-  #######################################
-  ########### Do Not Remove #############
-  #######################################
-
-  #========================================
-  # Insert Build/Install Instructions Here
-  #========================================
-  
-  # Copy everything from tarball over to the installation directory
-  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
-#-----------------------  
-%endif # BUILD_PACKAGE |
-#-----------------------
 
 
 #---------------------------
 %if %{?BUILD_MODULEFILE}
 #---------------------------
 
+mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
+
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -184,53 +167,30 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
-# Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
-The %{MODULE_VAR} module defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_DOC, 
-for the location of the %{MODULE_VAR} distribution, and documentation
-respectively.
 
-Usage:
-  import pylauncher3
-and use one of the launcher classes. See the examples 
-directory for inspiration. Preferably used with python3.
+cat >    $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
+local err_message = [[
+
+   NAMD 2.13 is not available under Intel 17 and 18 at this time. 
+Please load NAMD/2.13 using the following command, 
+
+module load intel/16.0.3 impi namd/2.13
+module help namd 
+for more information about running NAMD jobs. 
+
+  Please note that the way to run NAMD on Stampede 2 has been changed. 
+The executable files for KNL and SKX nodes are different to get best performance.
+
 ]]
 
---help(help_msg)
-help(help_msg)
+LmodError(err_message,"\n")
 
-whatis("Name: %{pkg_base_name}")
-whatis("Version: %{pkg_version}%{dbg}")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
-
--- Create environment variables.
-local launcher_dir           = "%{INSTALL_DIR}"
-
-prepend_path(    "PYTHONPATH",     launcher_dir )
-setenv( "TACC_%{MODULE_VAR}_DIR",                launcher_dir)
-setenv( "TACC_%{MODULE_VAR}_DOC",       pathJoin(launcher_dir, "docs"))
-
-depends_on("python3")
 EOF
-  
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module3.1.1#################################################
-##
-## version file for %{BASENAME}%{version}
-##
 
-set     ModulesVersion      "%{version}"
-EOF
-  
-  # Check the syntax of the generated lua modulefile only if a visible module
-  %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-  %endif
+
+  # Check the syntax of the generated lua modulefile
+#  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -250,7 +210,7 @@ EOF
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile 
+%files modulefile
 #---------------------------
 
   %defattr(-,root,install,)
@@ -260,6 +220,7 @@ EOF
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
+
 
 ########################################
 ## Fix Modulefile During Post Install ##
@@ -282,10 +243,3 @@ export PACKAGE_PREUN=1
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
 
-%changelog
-* Mon Sep 09 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: fixed MPI mode, now sorted under compiler-python
-* Mon Feb 25 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: removing old launcher script
-* Sun Oct 07 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 1: initial build

@@ -5,10 +5,12 @@ Summary: Moose install
 %define MODULE_VAR    MOOSE
 
 # Create some macros (spec file variables)
-%define major_version git
-%define minor_version 20170622
+%define major_version git20191007
+%define minor_version 1
 
-%define pkg_version %{major_version}.%{minor_version}
+%define MOOSE_PETSC_VERSION 3.11
+
+%define pkg_version %{major_version}
 
 %include rpm-dir.inc
 %include compiler-defines.inc
@@ -30,10 +32,10 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 1%{?dist}
+Release: 3%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
-Source: %{pkg_base_name}-%{pkg_version}.tar.gz
+Source: %{pkg_base_name}-%{pkg_version}.tgz
 URL: http://mooseframework.org/
 Vendor: Idaho National Labs
 Packager: TACC -- eijkhout@tacc.utexas.edu
@@ -75,8 +77,13 @@ The Multiphysics Object-Oriented Simulation Environment (MOOSE) is a finite-elem
 %include compiler-load.inc
 %include mpi-load.inc
 
+%if "%{comp_fam}" == "intel"
+  echo "Intel support officially terminated"
+  exit 1
+%endif
+
 module list
-module load boost petsc
+module load boost petsc/%{MOOSE_PETSC_VERSION}
 
 #
 # Set Up Installation Directory and tmp file system
@@ -92,17 +99,34 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 mkdir -p %{INSTALL_DIR}
 mount -t tmpfs tmpfs %{INSTALL_DIR}
 
-ls
-cp -r * %{INSTALL_DIR}
+( cd /tmp \
+  && rm -rf moose-git \
+  && git clone https://github.com/idaholab/moose.git moose-git \
+  && ( cd moose-git && git checkout master ) \
+  && cp -r moose-git/. %{INSTALL_DIR} \
+  && rm -rf moose-git \
+)
+
 pushd %{INSTALL_DIR}
 ls
+ls examples
 
-scripts/update_and_rebuild_libmesh.sh \
+export CC=mpicc
+export CXX=mpicxx
+# this is TACC_INTEL_LIB
+export ADDITIONAL_LIBS=export ADDITIONAL_LIBS=/opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/libirc.so
+
+./scripts/update_and_rebuild_libmesh.sh \
     2>&1 | tee /tmp/moose.log
+cd modules/combined
+make -j 8
 
+ls examples
 cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
 popd
 umount %{INSTALL_DIR}
+
+rm -rf /tmp/moose-git
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
 help( [[
@@ -163,5 +187,9 @@ EOF
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Mon Oct 07 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: new git pull
+* Mon Jul 29 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: completely redone
 * Thu Jun 22 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

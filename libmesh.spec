@@ -6,11 +6,11 @@ Summary: Libmesh install
 
 # Create some macros (spec file variables)
 %define major_version 1
-%define minor_version 3
-%define micro_version 1
+%define minor_version 4
+%define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
-%define petscversion 3.10
+%define petscversion 3.11
 
 %include rpm-dir.inc
 %include compiler-defines.inc
@@ -32,7 +32,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 1%{?dist}
+Release: 3%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tar.gz
@@ -90,7 +90,7 @@ mount -t tmpfs tmpfs %{INSTALL_DIR}
 
 export COPTFLAGS="-g %{TACC_OPT} -O2"
 
-module load boost python petsc/%{petscversion}
+module load boost python2 petsc/%{petscversion}
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -222,7 +222,9 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Fri May 03 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: 1.4.0 INCOMPATIBLE with petsc 3.11
 * Mon Oct 15 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: 1.3.1
+- release 2 ??? : 1.3.1
 * Mon Mar 05 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

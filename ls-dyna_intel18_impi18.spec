@@ -1,6 +1,6 @@
 #
 # Si Liu
-# 2018-11-11
+# 2019-08-11
 #
 
 Summary:ls-dyna - Local TACC Build
@@ -10,8 +10,8 @@ Summary:ls-dyna - Local TACC Build
 %define MODULE_VAR    LSDYNA
 
 # Create some macros (spec file variables)
-%define major_version 9
-%define minor_version 1
+%define major_version 11
+%define minor_version 0
 %define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
@@ -179,9 +179,9 @@ setenv("TACC_%{MODULE_VAR}_DEBUG","1")
 -- Create environment variables.
 
 family("lsdyna")
-prepend_path(    "PATH",               "/work/projects/wma_apps/stampede2/ls-dyna/ls-dyna_9.1.0/bin")
-setenv( "TACC_%{MODULE_VAR}_DIR",      "/work/projects/wma_apps/stampede2/ls-dyna/ls-dyna_9.1.0")
-setenv( "TACC_%{MODULE_VAR}_BIN",      "/work/projects/wma_apps/stampede2/ls-dyna/ls-dyna_9.1.0/bin")
+prepend_path(    "PATH",               "/work/projects/wma_apps/stampede2/ls-dyna/ls-dyna_11.0.0/bin")
+setenv( "TACC_%{MODULE_VAR}_DIR",      "/work/projects/wma_apps/stampede2/ls-dyna/ls-dyna_11.0.0")
+setenv( "TACC_%{MODULE_VAR}_BIN",      "/work/projects/wma_apps/stampede2/ls-dyna/ls-dyna_11.0.0/bin")
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'

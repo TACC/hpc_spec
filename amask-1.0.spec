@@ -5,6 +5,7 @@
 
 # rpmbuild -bb --define 'is_intel18 1' --define 'is_impi 1' --define 'mpiV 18_2' amask-1.0.spec 2>&1 | tee amask-1.0.log
 # rpmbuild -bb --define 'is_intel18 1' --define 'is_impi 1' --define 'mpiV 18_2' amask-1.0.spec 2>&1 | tee amask-1.0-r3_a.log
+# rpmbuild -bb --define 'is_intel18 1' --define 'is_impi 1' --define 'mpiV 18_2' amask-1.0.spec 2>&1 | tee amask-1.0-r5_a.log
 #
 # Build only PACKAGE or MODULE -- set variable.  E.g. NO_PACKAGE=1 rpmbuild -bb ... only build modulefile
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -53,7 +54,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
 
-Release:   4%{?dist}
+Release:   5%{?dist}
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.gnu.org/software/bar

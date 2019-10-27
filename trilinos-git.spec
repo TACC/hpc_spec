@@ -244,6 +244,10 @@ echo "are we still in /tmp/trilinos-build?"
 pwd
 popd
 
+# clean up temp stuff
+rm -rf /tmp/trilinos-build
+
+# add source stuff to the installation
 cp -r demos packages %{INSTALL_DIR}
 echo "contents of the tmpfs INSTALL_DIR:"
 ls %{INSTALL_DIR}
@@ -276,18 +280,16 @@ whatis( "Category: library, mathematics" )
 whatis( "URL: http://www-unix.mcs.anl.gov/trilinos/trilinos-as/" )
 whatis( "Description: Portable Extendible Toolkit for Scientific Computing, Numerical library for sparse linear algebra" )
 
-local             trilinos_arch =    "${architecture}"
 local             trilinos_dir =     "%{INSTALL_DIR}/"
 
-prepend_path("PATH",            pathJoin(trilinos_dir,trilinos_arch,"bin") )
-prepend_path("LD_LIBRARY_PATH", pathJoin(trilinos_dir,trilinos_arch,"lib") )
+prepend_path("PATH",            pathJoin(trilinos_dir,"bin") )
+prepend_path("LD_LIBRARY_PATH", pathJoin(trilinos_dir,"lib") )
 
-setenv("TRILINOS_ARCH",            trilinos_arch)
 setenv("TRILINOS_DIR",             trilinos_dir)
 setenv("TACC_TRILINOS_DIR",        trilinos_dir)
-setenv("TACC_TRILINOS_BIN",        pathJoin(trilinos_dir,trilinos_arch,"bin") )
-setenv("TACC_TRILINOS_INC",        pathJoin(trilinos_dir,trilinos_arch,"include") )
-setenv("TACC_TRILINOS_LIB",        pathJoin(trilinos_dir,trilinos_arch,"lib") )
+setenv("TACC_TRILINOS_BIN",        pathJoin(trilinos_dir,"bin") )
+setenv("TACC_TRILINOS_INC",        pathJoin(trilinos_dir,"include") )
+setenv("TACC_TRILINOS_LIB",        pathJoin(trilinos_dir,"lib") )
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << EOF

@@ -1,6 +1,6 @@
 #
 # Si Liu
-# 2019-04-14
+# 2019-09-24
 #
 
 # Give the package a base name
@@ -8,7 +8,7 @@
 %define MODULE_VAR    MATLAB
 
 # Create some macros (spec file variables)
-%define major_version 2019a
+%define major_version 2019b
 
 %define pkg_version %{major_version}
 
@@ -157,24 +157,24 @@ you are using a license owned by University of Texas at Austin.
 
 The UT license is for ACADEMIC USE ONLY!
 
-Version 2019a
+Version 2019b
 ]]
 )
 
 whatis("Name: MATLAB")
-whatis("Version: 2019a")
+whatis("Version: 2019b")
 whatis("Category: library, mathematics")
 whatis("Keywords: Library, Mathematics, Tools")
 whatis("URL: http://www.mathworks.com/")
-whatis("Description: Matlab 2019a from MathWorks")
+whatis("Description: Matlab 2019b from MathWorks")
 
-prepend_path("PATH", "/home1/apps/matlab/2019a/bin")
+prepend_path("PATH", "/home1/apps/matlab/2019b/bin")
 
-append_path("LD_LIBRARY_PATH", "/home1/apps/matlab/2019a/bin/glnxa64")
-append_path("LD_LIBRARY_PATH", "/home1/apps/matlab/2019a/runtime/glnxa64")
-append_path("LD_LIBRARY_PATH", "/home1/apps/matlab/2019a/sys/java/jre/glnxa64/jre/lib/amd64/server/")
+append_path("LD_LIBRARY_PATH", "/home1/apps/matlab/2019b/bin/glnxa64")
+append_path("LD_LIBRARY_PATH", "/home1/apps/matlab/2019b/runtime/glnxa64")
+append_path("LD_LIBRARY_PATH", "/home1/apps/matlab/2019b/sys/java/jre/glnxa64/jre/lib/amd64/server/")
 
-setenv ("TACC_MATLAB_DIR", "/home1/apps/matlab/2019a")
+setenv ("TACC_MATLAB_DIR", "/home1/apps/matlab/2019b")
 setenv ("DVS_CACHE","off")
 
 --Set MKLROOT, BLAS_VERSION, and LAPACK_VERSION for matlab
@@ -189,6 +189,18 @@ end
 --License file
 local UserHome=os.getenv("HOME")
 append_path("LM_LICENSE_FILE", pathJoin(UserHome,".tacc_matlab_license") )
+
+local license_file=pathJoin(UserHome,".tacc_matlab_license")
+
+if (mode() == "load" and (os.getenv("LM_LICENSE_FILE") == nil or not isFile(license_file))) then
+                        
+   color_banner("red")
+   LmodMessage("You do not currently have a license for Matlab. \nIf you plan to use your own license, please set it up and ignore this message. \n".. 
+               "If you are an academic user, you may use the Matlab license from UT Austin\n"..
+               "Please check:\n\n     https://portal.tacc.utexas.edu/software/matlab#license\n\non how to access the UT Austin license.\n")
+   color_banner("red")
+-- LmodError("No Matlab license found.")
+end
 
 EOF
 

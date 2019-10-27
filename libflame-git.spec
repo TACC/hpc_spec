@@ -1,33 +1,47 @@
 #
-# Si Liu
-# 2019-04-14
+# libflame.spec
+# Victor Eijkhout
 #
+# based on Bar.spec
+# W. Cyrus Proctor
+# Antonio Gomez
+# 2015-08-25
+#
+# Important Build-Time Environment Variables (see name-defines.inc)
+# NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
+# NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
+#
+# Important Install-Time Environment Variables (see post-defines.inc)
+# VERBOSE=1       -> Print detailed information at install time
+# RPM_DBPATH      -> Path To Non-Standard RPM Database Location
+#
+# Typical Command-Line Example:
+# ./build_rpm.sh Bar.spec
+# cd ../RPMS/x86_64
+# rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+# rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+# rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
+
+Summary: Blas-Like Instantiation Subprograms
 
 # Give the package a base name
-%define pkg_base_name matlab
-%define MODULE_VAR    MATLAB
+%define pkg_base_name libflame
+%define MODULE_VAR    LIBFLAME
 
 # Create some macros (spec file variables)
-%define major_version 2019a
+%define major_version git20190802
 
 %define pkg_version %{major_version}
 
-Summary: Matlab spec file
-Release: 1%{?dist}
-License: Mathworks License
-Vendor: Mathworks
-Group: Utility
-Source: %{name}-%{version}.tar.gz
-Packager:  TACC - siliu@tacc.utexas.edu
-
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
-#%include mpi-defines.inc
+%include compiler-defines.inc
+
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines-noreloc.inc
+%include name-defines-noreloc-home1.inc
+
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -38,25 +52,32 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
+Release:   2
+License:   BSD
+Group:     Development/Tools
+URL:       https://github.com/flame/libflame
+Packager:  TACC - eijkhout@tacc.utexas.edu
+Source:    %{pkg_base_name}-%{pkg_version}.tgz
+
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
 
+
 %package %{PACKAGE}
-Summary: Matlab package RPM
-Group: Applications
+Summary: Blas alternative
+Group: Numerical library
 %description package
-MATLAB is a high-level language and interactive environment that enables you to perform computationally intensive tasks faster than with traditional programming languages such as C, C++, and Fortran.
+This is the long description for the package RPM...
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-MATLAB is a high-level language and interactive environment that enables you to perform computationally intensive tasks faster than with traditional programming languages such as C, C++, and Fortran.
+RvdG's BLAS-like Library Instantiation Software
 
 %description
-MATLAB is a high-level language and interactive environment that enables you to perform computationally intensive tasks faster than with traditional programming languages such as C, C++, and Fortran.
-
+RvdG's BLAS-like Library Instantiation Software
 
 
 #---------------------------------------
@@ -68,6 +89,9 @@ MATLAB is a high-level language and interactive environment that enables you to 
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+%setup -n %{pkg_base_name}-%{pkg_version}
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -81,11 +105,9 @@ MATLAB is a high-level language and interactive environment that enables you to 
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-
 #---------------------------------------
 %build
 #---------------------------------------
-
 
 #---------------------------------------
 %install
@@ -93,20 +115,18 @@ MATLAB is a high-level language and interactive environment that enables you to 
 
 # Setup modules
 %include system-load.inc
-
-# Insert necessary module commands
 module purge
+# Load Compiler
+%include compiler-load.inc
 
-echo "Building the package?:    %{BUILD_PACKAGE}"
-echo "Building the modulefile?: %{BUILD_MODULEFILE}"
+# Insert further module commands
 
 #------------------------
 %if %{?BUILD_PACKAGE}
 #------------------------
 
+  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-# mount -t tmpfs tmpfs %{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -120,11 +140,33 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
   
+mkdir -p %{INSTALL_DIR}
+rm -rf %{INSTALL_DIR}/*
+mount -t tmpfs tmpfs %{INSTALL_DIR}
+
+%if "%{is_intel}" == "1"
+export CC=icc
+%else
+export CC=gcc
+%endif
+
+./configure --prefix=%{INSTALL_DIR} 
+make -j 8 V=1 FLA_ENABLE_MAX_ARG_LIST_HACK=yes
+make install
+
+# Copy installation from tmpfs to RPM directory
+ls %{INSTALL_DIR}
+cp -r %{INSTALL_DIR}/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+ls $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+
+umount %{INSTALL_DIR}
+  
+cp -r config docs examples $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+ls $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
-
-
 
 
 #---------------------------
@@ -142,56 +184,36 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   
 # Write out the modulefile associated with the application
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
+local help_message = [[
 
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
+This module provides the LIBFLAME environment variables:
+TACC_LIBFLAME_DIR, TACC_LIBFLAME_LIB, TACC_LIBFLAME_INC
 
-help(
-[[
-MATLAB interpreter and compiler MATLAB is a high-level language
-and interactive environment that enables you to perform computationally
-intensive tasks faster than with traditional programming languages
-such as C, C++, and Fortran.
- 
-Unless you are supplying your own MATLAB license file,
-you are using a license owned by University of Texas at Austin.
+There are examples programs in \$TACC_LIBFLAME_DIR/examples
 
-The UT license is for ACADEMIC USE ONLY!
-
-Version 2019a
+Version %{version}
 ]]
-)
 
-whatis("Name: MATLAB")
-whatis("Version: 2019a")
-whatis("Category: library, mathematics")
-whatis("Keywords: Library, Mathematics, Tools")
-whatis("URL: http://www.mathworks.com/")
-whatis("Description: Matlab 2019a from MathWorks")
+help(help_message,"\n")
 
-prepend_path("PATH", "/home1/apps/matlab/2019a/bin")
+whatis("Name: LIBFLAME")
+whatis("Version: %{version}")
+whatis("Category: ")
+whatis("Keywords: library, numerics, BLAS")
+whatis("URL: https://github.com/flame/libflame")
+whatis("Description: BLAS-like Library Instantiation Software")
 
-append_path("LD_LIBRARY_PATH", "/home1/apps/matlab/2019a/bin/glnxa64")
-append_path("LD_LIBRARY_PATH", "/home1/apps/matlab/2019a/runtime/glnxa64")
-append_path("LD_LIBRARY_PATH", "/home1/apps/matlab/2019a/sys/java/jre/glnxa64/jre/lib/amd64/server/")
+local libflame_dir="%{INSTALL_DIR}"
 
-setenv ("TACC_MATLAB_DIR", "/home1/apps/matlab/2019a")
-setenv ("DVS_CACHE","off")
+setenv("TACC_LIBFLAME_DIR",libflame_dir)
+setenv("TACC_LIBFLAME_LIB",pathJoin(libflame_dir,"lib"))
+setenv("TACC_LIBFLAME_INC",pathJoin(libflame_dir,"include"))
 
---Set MKLROOT, BLAS_VERSION, and LAPACK_VERSION for matlab
-local mklroot=os.getenv("MKLROOT")
-
-if mklroot then
-  setenv("BLAS_VERSION", pathJoin(mklroot,"lib/intel64/libmkl_rt.so") )
-  setenv("LAPACK_VERSION", pathJoin(mklroot,"lib/intel64/libmkl_rt.so") )
-  setenv("MKL_INTERFACE_LAYER","ILP64")
-end
-
---License file
-local UserHome=os.getenv("HOME")
-append_path("LM_LICENSE_FILE", pathJoin(UserHome,".tacc_matlab_license") )
+append_path("LD_LIBRARY_PATH",pathJoin(libflame_dir,"lib"))
 
 EOF
-
+  
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -200,11 +222,22 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 
 set     ModulesVersion      "%{version}"
 EOF
-
   
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %endif
 
-# Check the syntax of the generated lua modulefile
-%{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+ls $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+find . -name config.mk
+cat ./config.mk | sed 's?INSTALL_PREFIX.*?INSTALL_PREFIX=/opt/apps/libflame/%{comp_fam_ver}/%{version}?' \
+    > $RPM_BUILD_ROOT/%{INSTALL_DIR}/config.mk
+chmod 644 $RPM_BUILD_ROOT/%{INSTALL_DIR}/config.mk # ?????
+# ls $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+# cp -r config docs \
+#   $RPM_BUILD_ROOT/%{INSTALL_DIR}
+# ls $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
@@ -236,7 +269,6 @@ EOF
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-
 ########################################
 ## Fix Modulefile During Post Install ##
 ########################################
@@ -258,3 +290,11 @@ export PACKAGE_PREUN=1
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
 
+#---------------------------------------
+%changelog
+#---------------------------------------
+#
+* Tue Sep 18 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2 UNRELEASED: module info
+* Fri Aug 10 2018 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial release of git repo version

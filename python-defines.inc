@@ -40,7 +40,8 @@
   %endif
   %if "%{pythonV}" == "2_7"
     %define python_label 2_7
-    %define python_module_version 2.7.15
+    ##### Victor: changed 2.7.15 to 16. Nope. rolled back.
+    %define python_module_version 2.7.16
     %define python_major_version 2
     %define python_minor_version 7
   %endif

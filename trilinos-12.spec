@@ -6,7 +6,7 @@ Summary: Trilinos install
 
 # Create some macros (spec file variables)
 %define major_version 12
-%define minor_version 12
+%define minor_version 14
 %define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
@@ -14,12 +14,13 @@ Summary: Trilinos install
 %include rpm-dir.inc
 %include compiler-defines.inc
 %include mpi-defines.inc
+%include python-defines.inc
 
 ########################################
 ### Construct name based on includes ###
 ########################################
 #%include name-defines.inc
-%include name-defines-noreloc-home1.inc
+%include name-defines-noreloc-home2.inc
 
 ########################################
 ############ Do Not Remove #############
@@ -31,7 +32,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 6%{?dist}
+Release: 9%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tar.gz
@@ -105,6 +106,7 @@ varies with each package.
 %include mpi-defines.inc
 %include compiler-load.inc
 %include mpi-load.inc
+%include python-load.inc
 
 #
 # Set Up Installation Directory and tmp file system
@@ -135,11 +137,9 @@ export COPTFLAGS="-g %{TACC_OPT} -O2"
   export HAS_NETCDF=ON
   export HAS_PYTHON=ON
   export HAS_MUELU=ON
-  export HAS_STK=OFF
+  export HAS_STK=ON
   export HAS_SUPERLU=ON
-%if "%{comp_fam}" == "gcc"
-%else
-%endif
+
 export HAS_SEACAS=${HAS_NETCDF}
 if [ "${HAS_HDF5}" = "ON" ] ; then
   module load phdf5
@@ -147,11 +147,23 @@ fi
 if [ "${HAS_NETCDF}" = "ON" ] ; then
   module load parallel-netcdf
 fi
-if [ "${HAS_PYTHON}" = "ON" ] ; then
-  module load python
-fi
+
+# if [ "${HAS_PYTHON}" = "ON" ] ; then
+# %if "%{comp_fam}" == "gcc"
+#   module load python2/2.7.15
+# %else
+#   module load python2/2.7.16
+# %endif
+# fi
+
+export HAS_PYTHON=OFF
+export HAS_SUPERLU=OFF
+
 if [ "${HAS_SUPERLU}" = "ON" ] ; then
   module load superlu_seq
+else
+  export TACC_SUPERLUSEQ_DIR=/home/foo
+  export TACC_SUPERLUSEQ_LIB=/home/foo
 fi
 
 ##
@@ -176,7 +188,11 @@ export TRILINOS_LOCATION=%{_topdir}/BUILD/
 
 export SOURCEVERSION=%{version}
 export VERSION=%{version}
-source %{SPEC_DIR}/victor.trilinos.cmake
+%if "%{python_major_version}" == "3"
+  export PYTHONM=m
+%endif
+export PYTHON_LIB_SO=${TACC_PYTHON_LIB}/libpython%{python_major_version}.%{python_minor_version}${PYTHONM}.so
+%include %{SPEC_DIR}/victor.trilinos.cmake
 echo ${trilinos_extra_libs}
 
 ####
@@ -198,18 +214,21 @@ make -j 8             # Trilinos can compile in parallel
 
 make install
 
+## TACC_FAMILY_PYTHON_VERSION is 2.7.16 and such
+
 ( cd %{INSTALL_DIR} && \
   find . -name \*.cmake \
          -exec sed -i -e '/STKDoc_testsConfig.cmake/d' \
-                      -e '/COMPILER_FLAGS/s/mkl/mkl -L\${TACC_PYTHON_LIB} -lpython2.7/' \
-                      -e '/EXTRA_LD_FLAGS/s?""?"/opt/apps/intel17/python/2.7.13/lib/libpython2.7.so"?' \
-                      -e '/SET.*TPL_LIBRARIES/s?""?"/opt/apps/intel17/python/2.7.13/lib/libpython2.7.so"?' \
-                      -e '/SET.*TPL_LIBRARIES/s?so"?so;/opt/apps/intel17/python/2.7.13/lib/libpython2.7.so"?' \
+                      -e '/COMPILER_FLAGS/s/mkl/mkl -L\${TACC_PYTHON_LIB} -lpython${TACC_PYTHON_VER}/' \
+                      -e '/EXTRA_LD_FLAGS/s?""?"\${TACC_PYTHON_LIB}/libpython${TACC_PYTHON_VER}.so"?' \
+                      -e '/SET.*TPL_LIBRARIES/s?""?"\${TACC_PYTHON_LIB}/libpython${TACC_PYTHON_VER}.so"?' \
+                      -e '/SET.*TPL_LIBRARIES/s?so"?so;\${TACC_PYTHON_LIB}/libpython${TACC_PYTHON_VER}.so"?' \
                    {} \; \
          -print \
 )
 ## SET(Zoltan_TPL_LIBRARIES "")
 export nosed="\
+                      -e '/EXTRA_LD_FLAGS/s?""?"/opt/apps/intel17/python/2.7.16/lib/libpython2.7.so"?' \
     "
 #SET(Trilinos_CXX_COMPILER_FLAGS " -mkl -DMPICH_SKIP_MPICXX -std=c++11 -O3 -DNDEBUG")
 #SET(Trilinos_C_COMPILER_FLAGS " -mkl -O3 -DNDEBUG")
@@ -236,24 +255,22 @@ whatis( "Name: Trilinos" )
 whatis( "Version: %{version}${versionextra}${dynamicextra}" )
 whatis( "Version-notes: external packages installed: ${packages}" )
 whatis( "Category: library, mathematics" )
-whatis( "URL: http://www-unix.mcs.anl.gov/trilinos/trilinos-as/" )
-whatis( "Description: Portable Extendible Toolkit for Scientific Computing, Numerical library for sparse linear algebra" )
+whatis( "URL: https://trilinos.github.io" )
+whatis( "Description: Sandia computational engineering package" )
 
-local             trilinos_arch =    "${architecture}"
 local             trilinos_dir =     "%{INSTALL_DIR}/"
 
-prepend_path("PATH",            pathJoin(trilinos_dir,trilinos_arch,"bin") )
-prepend_path("LD_LIBRARY_PATH", pathJoin(trilinos_dir,trilinos_arch,"lib") )
+prepend_path("PATH",            pathJoin(trilinos_dir,"bin") )
+prepend_path("LD_LIBRARY_PATH", pathJoin(trilinos_dir,"lib") )
 
-setenv("TRILINOS_ARCH",            trilinos_arch)
 setenv("TRILINOS_DIR",             trilinos_dir)
 setenv("TACC_TRILINOS_DIR",        trilinos_dir)
-setenv("TACC_TRILINOS_BIN",        pathJoin(trilinos_dir,trilinos_arch,"bin") )
-setenv("TACC_TRILINOS_INC",        pathJoin(trilinos_dir,trilinos_arch,"include") )
-setenv("TACC_TRILINOS_LIB",        pathJoin(trilinos_dir,trilinos_arch,"lib") )
+setenv("TACC_TRILINOS_BIN",        pathJoin(trilinos_dir,"bin") )
+setenv("TACC_TRILINOS_INC",        pathJoin(trilinos_dir,"include") )
+setenv("TACC_TRILINOS_LIB",        pathJoin(trilinos_dir,"lib") )
 EOF
 
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << EOF
 #%Module1.0#################################################
 ##
 ## version file for Trilinos %version
@@ -268,8 +285,11 @@ EOF
 ## end of configure install section
 ##
 
-module unload python
+#module unload python ### VLE why?
+
 cp -r %{INSTALL_DIR}/* ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
+ls %{INSTALL_DIR}
+ls ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
 
 umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 
@@ -284,8 +304,15 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Mon Sep 16 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 9: making python handling more portable
+* Sun Jun 09 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 8: fix URLs, architecture, lib directory
+* Tue May 28 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 7: upgrade to 12.14.1
+  for now without python, superluseq
 * Mon Apr 23 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 6: upgrade to 12.12.1
+- release 6: upgrade to 12.12.1 NEVER RELEASED?
 * Wed Jan 17 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 5: giving up on SuperLU for now, fixed module help
 * Wed Aug 16 2017 eijkhout <eijkhout@tacc.utexas.edu>

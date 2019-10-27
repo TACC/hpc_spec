@@ -6,9 +6,9 @@
 %define MODULE_VAR    ddt
 
 # Create some macros (spec file variables)
-%define major_version 18
+%define major_version 19
 %define minor_version 1
-%define micro_version 3
+%define micro_version 2
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -25,7 +25,7 @@
 
 ############ Do Not Change #############
 # Name: ddt
-# Version: 18.1.3
+# Version: 19.1.2
 Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}_%{pkg_version}-buildroot
@@ -34,8 +34,8 @@ Summary: DDT is a parallel, symbolic debugger.
 
 Release: 1%{?dist}
 License: Commercial
-Vendor: Allinea
-URL: http://www.allinea.com
+Vendor: ARM
+URL: http://www.arm.com
 Packager: TACC - cazes@tacc.utexas.edu
 Source:    %{pkg_base_name}_%{pkg_version}.tar.gz
 #  define _unpack_name ddt_7.0.3
