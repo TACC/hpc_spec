@@ -49,7 +49,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   5%{?dist}
 License:   GPL
 Group:     Module Magic
 Packager:  TACC - cproctor@tacc.utexas.edu
@@ -65,12 +65,14 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
+Welcome to the TACC Module way!
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
+Welcome to the TACC Module way!
 
 %description
 Welcome to the TACC Module way!
@@ -133,7 +135,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-
   # Nothing to see here!
 
 #-----------------------  
@@ -145,6 +146,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 %if %{?BUILD_MODULEFILE}
 #---------------------------
 
+%define MODULE_DIR %{MODULE_PREFIX}/modulefiles
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
   
   #######################################
@@ -156,7 +158,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/TACC.lua << 'EOF'
 local helpMsg = [[
 The %{MODULE_VAR} modulefile defines the default paths and environment
 variables needed to use the local software and utilities
@@ -167,28 +169,18 @@ paths in PATH and MANPATH.
 help(helpMsg)
 
 
---------------------------------------------------------------------------
--- Define TACC_SYSTEM and TACC_DOMAIN
-
-local syshost = posix.uname("%n"):gsub("%.tacc%.utexas%.edu",""):gsub("^[^.]*%.","")
-local domain  = syshost
-
-if (domain:find("^ls%d$"))then
-   domain = "lonestar"
-end
-
-
-setenv(         "TACC_SYSTEM",  syshost)
-setenv(         "TACC_DOMAIN",  domain)
-
 if (os.getenv("USER") ~= "root") then
   append_path("PATH",  ".")
 end
 
--- load("intel")
--- load("cray_mpich")
+load("intel")
+load("impi")
+load("git")
+load("autotools")
+load("python2")
+load("cmake")
+try_load("xalt")
 
-setenv("APPS","/opt/apps")
 prepend_path("MANPATH","/usr/local/man:/usr/share/man:/usr/X11R6/man:/usr/kerberos/man:/usr/man")
 
 -- Environment change - assume single threaded to fix silly MKL
@@ -196,21 +188,9 @@ if (mode() == "load" and os.getenv("OMP_NUM_THREADS") == nil) then
   setenv("OMP_NUM_THREADS","1")
 end
 
-prepend_path{ "PATH", "/opt/apps/tacc/bin", priority=10 }
+--prepend_path{ "PATH", "/opt/apps/tacc/bin", priority=10 }
 
 EOF
-  
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module3.1.1#################################################
-##
-## version file for %{BASENAME}%{version}
-##
-
-set     ModulesVersion      "%{version}"
-EOF
-  
-  # Check the syntax of the generated lua modulefile
-  ####%{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
