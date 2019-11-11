@@ -3,7 +3,7 @@
 
 Summary:   Standard LS5 TACC Login scripts
 Name:      %{name_prefix}-%{base_name}
-Version:   1.3
+Version:   1.4
 Release:   1
 License:   Proprietary
 Group:     System Environment/Base
