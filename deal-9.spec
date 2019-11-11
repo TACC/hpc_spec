@@ -13,8 +13,10 @@ Summary: Dealii install
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
-%define dealiipetscversion 3.11
+%define dealiipetscversion 3.12
+%define DEAL_USE_PETSC 1
 %define dealiitrilinosversion 12.14.1
+%define DEAL_USE_TRILINOS 1
 
 %include rpm-dir.inc
 %include compiler-defines.inc
@@ -126,13 +128,28 @@ mount -t tmpfs tmpfs %{INSTALL_DIR}
 module list
 for m in boost cmake \
     metis p4est \
-    petsc/%{dealiipetscversion} slepc/%{dealiipetscversion} \
-    trilinos/%{dealiitrilinosversion} \
     ; do
   module --ignore_cache load $m ; 
 done
 
-find ${TACC_TRILINOS_DIR} -name \*.cmake -exec grep python {} \;
+%if "${DEAL_USE_PETSC}" == "1"
+  export CMAKE_USE_PETSC="ON"
+  module load petsc/%{dealiipetscversion} slepc/%{dealiipetscversion}
+  echo "Installing deal with Petsc: ${PETSC_DIR}/${PETSC_ARCH}"
+%else
+  export CMAKE_USE_PETSC="OFF"
+  export PETSC_DIR="/dev/null"
+  export PETSC_ARCH="foobar"
+%endif
+
+%if "${DEAL_USE_TRILINOS}" == "1"
+  export CMAKE_USE_TRILINOS="ON"
+  module load trilinos/%{dealiitrilinosversion}
+  find ${TACC_TRILINOS_DIR} -name \*.cmake -exec grep python {} \;
+%else
+  export CMAKE_USE_TRILINOS="OFF"
+  export TACC_TRILINOS_DIR="/dev/null"
+%endif
 
 %if "%{comp_fam}" == "intel"
   module load mumps netcdf phdf5
@@ -161,15 +178,24 @@ pushd /tmp/dealii-build
 
 rm -f CMakeCache.txt
 
-echo "Installing deal with Petsc: ${PETSC_DIR}/${PETSC_ARCH}"
+#export BASIC_FLAGS="-g %{TACC_OPT}"
+export BASIC_FLAGS="-g -march=native"
 
+##
+## add TBBROOT
+##
 %if "%{comp_fam}" == "gcc"
-echo "Figure out TBB directory"
-exit 1
-export TBBROOT=${TACC_INTEL_DIR}/tbb
+  export TACC_INTEL_DIR=/opt/intel/compilers_and_libraries_2019.5.281/linux
+  if [ ! -d ${TACC_INTEL_DIR} ] ; then 
+      echo "Invalid TACC_INTEL_DIR: ${TACC_INTEL_DIR}" ; exit 1
+  fi
+  export TBBROOT=${TACC_INTEL_DIR}/tbb
 %endif
-#export BASIC_FLAGS="-march=native"
-export BASIC_FLAGS="-g %{TACC_OPT} -I${TBBROOT}/include"
+if [ ! -d "${TBBROOT}" ] ; then
+  echo "Trouble setting TBBROOT"
+  exit 1
+fi
+export BASIC_FLAGS="${BASIC_FLAGS} -I${TBBROOT}/include"
 
 ##  CC=`which mpicc` CXX=`which mpicxx` F90=`which mpif90`
 
@@ -177,17 +203,13 @@ export BASIC_FLAGS="-g %{TACC_OPT} -I${TBBROOT}/include"
     -DCMAKE_INSTALL_PREFIX=%{INSTALL_DIR} \
     \
     -DDEAL_II_WITH_CXX11=ON \
-    -DDEAL_II_WITH_CXX17=ON \
+    -DDEAL_II_WITH_CXX17=OFF \
     -DDEAL_II_CXX_FLAGS_DEBUG="${BASIC_FLAGS} -O0" \
     -DDEAL_II_CXX_FLAGS_RELEASE="${BASIC_FLAGS} -O2" \
     \
     -DDEAL_II_COMPONENT_MESH_CONVERTER=ON \
-    -DDEAL_II_HAVE_AVX=ON \
-    -DDEAL_II_HAVE_AVX512=ON \
-    -DDEAL_II_HAVE_ALTIVEC=OFF \
     \
     -DDEAL_II_WITH_MPI=ON \
-        -DVLE_DISABLE_MPI_FOUND=TRUE \
     -DMPICH_IGNORE_CXX_SEEK=ON \
     -DBOOST_DIR=${TACC_BOOST_DIR} \
     -DHDF5_DIR=${TACC_HDF5_DIR} \
@@ -196,11 +218,12 @@ export BASIC_FLAGS="-g %{TACC_OPT} -I${TBBROOT}/include"
         -DMETIS_DIR=${TACC_METIS_DIR} \
         -DSLEPC_DIR=${TACC_SLEPC_DIR} \
     " ; fi ` \
-    -DDEAL_II_WITH_PETSC=ON -DDEAL_II_WITH_SLEPC=ON \
+    -DDEAL_II_WITH_PETSC=${CMAKE_USE_PETSC} \
         -DPETSC_DIR=${PETSC_DIR} -DPETSC_ARCH=${PETSC_ARCH} \
+    -DDEAL_II_WITH_SLEPC=${CMAKE_USE_PETSC} \
     -DDEAL_II_WITH_P4EST=ON \
         -DP4EST_DIR=${P4ESTDIR} \
-    -DDEAL_II_WITH_TRILINOS=ON \
+    -DDEAL_II_WITH_TRILINOS=${CMAKE_USE_TRILINOS} \
         -DTRILINOS_DIR=${TACC_TRILINOS_DIR} \
     ${DEALDIR}/dealii-${DEALVERSION} \
     \
@@ -208,6 +231,8 @@ export BASIC_FLAGS="-g %{TACC_OPT} -I${TBBROOT}/include"
     2>&1 | tee ${LOGDIR}/dealii_cmake.log
 
 export nocmake="\
+    -DDEAL_II_HAVE_AVX=ON \
+    -DDEAL_II_HAVE_AVX512=ON \
     -DDEAL_II_HAVE_FLAG_Wimplicit_fallthrough=0 \
     "
 

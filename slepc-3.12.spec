@@ -10,9 +10,9 @@ Summary: Slepc install
 
 # Create some macros (spec file variables)
 %define major_version 3
-%define minor_version 11
-%define micro_version 2
-%define versionpatch 3.11.2
+%define minor_version 12
+%define micro_version 0
+%define versionpatch 3.12.0
 
 %define pkg_version %{major_version}.%{minor_version}
 
@@ -36,7 +36,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 3%{?dist}
+Release: 1%{?dist}
 License: GPL
 Vendor: Universitat Politecnica De Valencia http://www.grycap.upv.es/slepc/
 Group: Development/Numerical-Libraries
@@ -99,12 +99,12 @@ pushd %{INSTALL_DIR}
 export SLEPC_DIR=`pwd`
 
 # same as in petsc
-export dynamiccc="i64 debug i64debug complexi64 complexi64debug uni unidebug"
-export dynamiccxx="cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug cxxi64 cxxi64debug"
+export dynamiccc="i64 debug i64debug complex complexdebug complexi64 complexi64debug uni unidebug"
+export dynamiccxx="cxx cxxdebug cxxcomplex cxxcomplexdebug cxxi64 cxxi64debug"
 
 for ext in \
   single "" \
-  ${dynamiccc} ${dynamiccxx} ; do
+  ${dynamiccc} ; do
 
 export architecture=clx
 if [ -z "${ext}" ] ; then
@@ -210,9 +210,5 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Fri Oct 04 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: point update to 3.11.2
-* Tue Oct 01 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: using tmpfs
-* Tue Jun 04 2019 eijkhout <eijkhout@tacc.utexas.edu>
+* Sat Oct 05 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial build

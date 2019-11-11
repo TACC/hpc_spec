@@ -1,4 +1,12 @@
 #
+# Spec file for GMT:
+# Generic Mapping Tools
+# See http://gmt.soest.hawaii.edu/
+#
+# Victor Eijkhout, 2017
+# based on:
+#
+# Bar.spec, 
 # W. Cyrus Proctor
 # Antonio Gomez
 # 2015-08-25
@@ -18,33 +26,30 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: A Nice little relocatable skeleton spec file example.
+Summary:    Set of tools for manipulating geographic and Cartesian data sets
 
 # Give the package a base name
-%define pkg_base_name namd
-%define MODULE_VAR    NAMD
+%define pkg_base_name gmt
+%define MODULE_VAR    GMT
 
 # Create some macros (spec file variables)
-%define major_version 2
-%define minor_version 13
+%define major_version 6
+%define minor_version 0
 %define micro_version 0
 
-#%define pkg_version %{major_version}.%{minor_version}
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+
 ### Toggle On/Off ###
-%include rpm-dir.inc
-
+%include rpm-dir.inc                  
 %include compiler-defines.inc
-%include mpi-defines.inc
-
-#%include name-defines-noreloc.inc
-
+#%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
-
-
+#%include name-defines.inc
+%include name-defines-noreloc-home1.inc
+#%include name-defines-hidden.inc
+#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -55,45 +60,39 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
-License:   GPL
-Group:     Theoretical and Computational Biophysics Group, UIUC
-URL:       http://www.ks.uiuc.edu/Development/Download/download.cgi?PackageName=NAMD
-Packager:  TACC - huang@tacc.utexas.edu
-Source:    NAMD_2.13_Source.tar.gz
-#Source1:   tcl8.5.9-linux-x86_64-threaded.tar.gz
+Release:   1%{?dist}
+License:   GNU
+Group:     Development/Tools
+Vendor:     SOEST - hawaii
+Group:      Libraries/maps
+Source:	    gmt-%{version}-src.tar.gz
+URL:	    http://gmt.soest.hawaii.edu/ 
+Packager:   eijkhout@tacc.utexas.edu
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
+%global _python_bytecompile_errors_terminate_build 0
 
+# coastlines database
+%define gshhg_version 2.3.6
 
 %package %{PACKAGE}
-Summary: The NAMD RPM
-Group: Applications/Chemistry
+Summary: GMT is an open source collection of tools for manipulating geographic and Cartesian data sets
+Group: Applications
 %description package
-NAMD, recipient of a 2002 Gordon Bell Award, is a parallel molecular dynamics
-code designed for high-performance simulation of large biomolecular systems.
-Based on Charm++ parallel objects, NAMD scales to hundreds of processors on
-high-end parallel platforms and tens of processors on commodity clusters
-using gigabit ethernet.
+This is the long description for the package RPM...
 
 %package %{MODULEFILE}
-Summary: The modulefile RPM
-Group: Lmod/Modulefiles
+Summary: GMT is an open source collection of tools for manipulating geographic and Cartesian data sets
+Group: Applications
 %description modulefile
-NAMD, recipient of a 2002 Gordon Bell Award, is a parallel molecular dynamics
-code designed for high-performance simulation of large biomolecular systems.
-Based on Charm++ parallel objects, NAMD scales to hundreds of processors on
-high-end parallel platforms and tens of processors on commodity clusters
-using gigabit ethernet.
+This is the long description for the modulefile RPM...
 
 %description
-NAMD, recipient of a 2002 Gordon Bell Award, is a parallel molecular dynamics
-code designed for high-performance simulation of large biomolecular systems.
-Based on Charm++ parallel objects, NAMD scales to hundreds of processors on
-high-end parallel platforms and tens of processors on commodity clusters
-using gigabit ethernet.
+GMT is an open source collection of 60 
+tools for manipulating geographic and Cartesian data sets
+
 
 #---------------------------------------
 %prep
@@ -104,6 +103,9 @@ using gigabit ethernet.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+%setup -n %{pkg_base_name}-%{pkg_version}
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -117,12 +119,12 @@ using gigabit ethernet.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n NAMD_%{pkg_version}_Source
 
 
 #---------------------------------------
 %build
 #---------------------------------------
+
 
 #---------------------------------------
 %install
@@ -131,12 +133,17 @@ using gigabit ethernet.
 # Setup modules
 %include system-load.inc
 module purge
+# Load Compiler
 %include compiler-load.inc
-%include mpi-load.inc
+# Load MPI Library
+#%include mpi-load.inc
 
+# Insert further module commands
+# need netcdf libs also
+ module load netcdf
+ export NETCDF_INC=${TACC_NETCDF_INC}
+ export NETCDF_LIB=${TACC_NETCDF_LIB}
 
-# Insert necessary module commands
-#module purge
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -146,6 +153,12 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  
+#
+# Use mount temp trick
+#
+mkdir -p             %{INSTALL_DIR}
+mount -t tmpfs tmpfs %{INSTALL_DIR}
 
   #######################################
   ##### Create TACC Canary Files ########
@@ -158,20 +171,60 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-
+  
   # Create some dummy directories and files for fun
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
+  
+#
+# config/make
+#
 
-  cp -p bin/{namd2,namd2_memopt,psfgen,flipbinpdb,flipdcd,sortreplicas} $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
-  cp -r lib $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  chmod -Rf u+rwX,g+rwX,o=rX                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}
+mkdir -p %{INSTALL_DIR}/share
 
+sed \
+    -e '/GSHHG_ROOT/s/^#//' \
+    -e '/COPY_GSHHG/s/^#//' \
+    -e 's!gshhg_path!%{INSTALL_DIR}/share/gshhg-gmt-%{gshhg_version}!' \
+    cmake/ConfigUserTemplate.cmake > cmake/ConfigUser.cmake
+grep -i gshhg cmake/ConfigUser*.cmake
 
-  # Copy everything from tarball over to the installation directory
-#  cp * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+pushd %{INSTALL_DIR}
 
-#-----------------------
+# unpack extra datasets
+( cd share ; tar fxz %{_topdir}/SOURCES/gshhg-gmt-%{gshhg_version}.tar.gz )
+
+# recent versions use cmake instead of configure
+module load cmake
+
+# use icc not gcc
+ export CC=`which icc`
+
+# VLE i can't find this file.....
+# tar jxvf /home1/0000/build/rpms/SOURCES/GMT4.5.5_triangle_repack_JL.tar.bz2
+
+cmake \
+  -D CMAKE_INSTALL_PREFIX:PATH=%{INSTALL_DIR} \
+  %{_topdir}/BUILD/gmt-%{version} \
+
+make 
+
+mkdir -p                 $RPM_BUILD_ROOT/%{INSTALL_DIR}
+make install
+
+#create gmt.conf to make GMT use SI units instead of US
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/share
+cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/share/gmt.conf << 'EOF'
+SI
+EOF
+
+popd
+  
+cp -r %{INSTALL_DIR}/* ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
+umount tmpfs
+
+#-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
 
@@ -181,7 +234,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-
+  
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -189,83 +242,49 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-
+  
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
-The TACC NAMD module appends the path to the namd2 executable
-to the PATH environment variable. Also TACC_NAMD_DIR,
-TACC_NAMD_BIN, and TACC_NAMD_LIB are set to NAMD home
-bin, and lib directories; lib directory contains information for
-ABF, random acceleration MD(RAMD), replica exchange MD(REMD).
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
+help( [[
+Module %{name} loads environmental variables defining
+the location of GMT directory, libraries, and binaries:
+TACC_GMT_DIR TACC_GMT_LIB TACC_GMT_BIN
 
+Version: %{version}
+]] )
 
-Note: The way to run NAMD on Cascade Lake node is shown as following.
+whatis( "GMT" )
+whatis( "Version: %{version}" )
+whatis( "Category: system, development" )
+whatis( "Keywords: System, Cartesian Grids" )
+whatis( "Description: Generic Mapping Tools: Tools for manipulating geographic and Cartesian data sets" )
+whatis( "URL: http://gmt.soest.hawaii.edu/" )
 
-Example of 4 tasks per node. Good for small number of nodes. 
+local version =  "%{version}"
+local gmt_dir =  "%{INSTALL_DIR}"
 
-#!/bin/bash
-#SBATCH -J test   # Job Name
-#SBATCH -o test.o%j
-#SBATCH -N 2      # Total number of nodes
-#SBATCH -n 8      # Total number of mpi tasks
-#SBATCH -p normal # Queue name
-#SBATCH -t 24:00:00 # Run time (hh:mm:ss) - 24 hours
+setenv("TACC_GMT_DIR",gmt_dir)
+setenv("TACC_GMT_BIN",pathJoin( gmt_dir,"bin" ) )
+setenv("TACC_GMT_LIB",pathJoin( gmt_dir,"lib" ) )
+setenv("TACC_GMT_SHARE",pathJoin( gmt_dir,"share" ) )
 
-ibrun namd2 +ppn 13 +pemap 2-26:2,30-54:2,3-27:2,31-55:2 +commap 0,28,1,29 input &> output
-
-Example of 8 tasks per node. Scale better for large number of nodes.
-
-#!/bin/bash
-#SBATCH -J test   # Job Name
-#SBATCH -o test.o%j
-#SBATCH -N 12      # Total number of nodes
-#SBATCH -n 96      # Total number of mpi tasks
-#SBATCH -p normal # Queue name
-#SBATCH -t 24:00:00 # Run time (hh:mm:ss) - 24 hours
-
-ibrun namd2 +ppn 6 +pemap 2-12:2,16-26:2,30-40:2,44-54:2,3-13:2,17-27:2,31-41:2,45-55:2 +commap 0,14,28,42,1,15,29,43 input &> output
-or
-ibrun namd2_memopt +ppn 6 +pemap 2-12:2,16-26:2,30-40:2,44-54:2,3-13:2,17-27:2,31-41:2,45-55:2 +commap 0,14,28,42,1,15,29,43 input &> output
-
-Version %{version}
-]]
-
---help(help_msg)
-help(help_msg)
-
-whatis("Name: NAMD")
-whatis("Version: %{pkg_version}%{dbg}")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
-
-whatis("Category: application, chemistry")
-whatis("Keywords: Chemistry, Biology, Molecular Dynamics, Application")
-whatis("URL: http://www.ks.uiuc.edu/Research/namd/")
-whatis("Description: Scalable Molecular Dynamics software")
-
--- Create environment variables.
-local namd_dir           = "%{INSTALL_DIR}"
-
-family("namd")
-prepend_path(    "PATH",                pathJoin(namd_dir, "bin"))
-setenv( "TACC_%{MODULE_VAR}_DIR",                namd_dir)
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(namd_dir, "bin"))
-
+prepend_path ("PATH",pathJoin( gmt_dir,"share" ) )
+prepend_path ("PATH",pathJoin( gmt_dir,"bin" ) )
+prepend_path ("LD_LIBRARY_PATH",pathJoin( gmt_dir, "lib" ) )
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module3.1.1#################################################
+#%Module1.0####################################################################
 ##
-## version file for %{BASENAME}%{version}
+## Version file for %{name} version %{version}
 ##
-
-set     ModulesVersion      "%{version}"
+set ModulesVersion "%version"
 EOF
 
-  # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
+  %endif
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
@@ -286,7 +305,7 @@ EOF
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile
+%files modulefile 
 #---------------------------
 
   %defattr(-,root,install,)
@@ -296,7 +315,6 @@ EOF
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
 
 ########################################
 ## Fix Modulefile During Post Install ##
@@ -319,3 +337,6 @@ export PACKAGE_PREUN=1
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
 
+%changelog
+* Wed Nov 06 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial release

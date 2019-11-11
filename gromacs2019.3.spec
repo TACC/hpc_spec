@@ -1,12 +1,9 @@
 #
-# rpmbuild -bb --define 'is_intel19 1' --define 'is_impi 1' --define 'mpiV 19_4' gromacs2019.3.spec 2>&1 | tee gromacs2019.3.spec_r#_a.log
+# rpmbuild -bb --define 'is_intel19 1' --define 'is_impi 1' --define 'mpiV 19_5' gromacs2019.3.spec 2>&1 | tee gromacs2019.3.spec_ic+im1905#_r1_a.log
 
 # r=/admin/build/admin/rpms/frontera/RPMS/x86_64
-#rpm -hiv --nodeps $r/tacc-gromacs-intel19-impi19_0-package-2019.3-1.el7.x86_64.rpm
-#rpm -hiv --nodeps $r/tacc-gromacs-intel19-impi19_0-modulefile-2019.3-1.el7.x86_64.rpm
-
-#rpm -hiv --nodeps --relocate /tmprpm=/opt/apps $r/tacc-gromacs-intel19-impi19_0-package-2019.3-1.el7.x86_64.rpm
-#rpm -hiv --nodeps --relocate /tmpmod=/opt/apps $r/tacc-gromacs-intel19-impi19_0-modulefile-2019.3-1.el7.x86_64.rpm
+#rpm -hiv --nodeps --relocate /tmprpm=/opt/apps    $r/tacc-gromacs-intel19-impi19_0-package-2019.3-2.el7.x86_64.rpm
+#rpm -hiv --nodeps --relocate /tmpmod=/opt/apps $r/tacc-gromacs-intel19-impi19_0-modulefile-2019.3-2.el7.x86_64.rpm
 
 #rpm -e tacc-gromacs-intel19-impi19_0-package-2019.3-1.el7.x86_64
 #rpm -e tacc-gromacs-intel19-impi19_0-modulefile-2019.3-1.el7.x86_64
@@ -61,7 +58,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_base_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GPL
 Group:     Development/Tools
 Group: Applications/Biology

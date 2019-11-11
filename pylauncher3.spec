@@ -1,4 +1,10 @@
 #
+# pylauncher3.spec
+# Victor Eijkhout
+#
+# based on
+#
+# Bar.spec
 # W. Cyrus Proctor
 # Antonio Gomez
 # 2015-08-25
@@ -21,30 +27,27 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name namd
-%define MODULE_VAR    NAMD
+%define pkg_base_name pylauncher
+%define MODULE_VAR    PYLAUNCHER
 
 # Create some macros (spec file variables)
-%define major_version 2
-%define minor_version 13
-%define micro_version 0
+%define major_version 3
+%define minor_version 0
 
-#%define pkg_version %{major_version}.%{minor_version}
 %define pkg_version %{major_version}.%{minor_version}
+%define pylauncherversion %{major_version}.%{minor_version}
+
 ### Toggle On/Off ###
-%include rpm-dir.inc
-
-%include compiler-defines.inc
-%include mpi-defines.inc
-
-#%include name-defines-noreloc.inc
-
+%include rpm-dir.inc                  
+#%include compiler-defines.inc
+#%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
-
-
+#%include name-defines.inc
+%include name-defines-noreloc-home1.inc
+#%include name-defines-hidden.inc
+#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -55,45 +58,39 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
-License:   GPL
-Group:     Theoretical and Computational Biophysics Group, UIUC
-URL:       http://www.ks.uiuc.edu/Development/Download/download.cgi?PackageName=NAMD
-Packager:  TACC - huang@tacc.utexas.edu
-Source:    NAMD_2.13_Source.tar.gz
-#Source1:   tcl8.5.9-linux-x86_64-threaded.tar.gz
+Release:   1
+Group:     Development/Tools
+License: GPL
+Url: https://github.com/TACC/pylauncher
+Group: TACC
+Packager: eijkhout@tacc.utexas.edu 
+Source:    %{pkg_base_name}-%{pkg_version}.tgz
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
 
+# Turn off the brp-python-bytecompile script
+%global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
+
 
 %package %{PACKAGE}
-Summary: The NAMD RPM
-Group: Applications/Chemistry
+Summary: The package RPM
+Group: Development/Tools
 %description package
-NAMD, recipient of a 2002 Gordon Bell Award, is a parallel molecular dynamics
-code designed for high-performance simulation of large biomolecular systems.
-Based on Charm++ parallel objects, NAMD scales to hundreds of processors on
-high-end parallel platforms and tens of processors on commodity clusters
-using gigabit ethernet.
+This is the long description for the package RPM...
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-NAMD, recipient of a 2002 Gordon Bell Award, is a parallel molecular dynamics
-code designed for high-performance simulation of large biomolecular systems.
-Based on Charm++ parallel objects, NAMD scales to hundreds of processors on
-high-end parallel platforms and tens of processors on commodity clusters
-using gigabit ethernet.
+This is the long description for the modulefile RPM...
 
 %description
-NAMD, recipient of a 2002 Gordon Bell Award, is a parallel molecular dynamics
-code designed for high-performance simulation of large biomolecular systems.
-Based on Charm++ parallel objects, NAMD scales to hundreds of processors on
-high-end parallel platforms and tens of processors on commodity clusters
-using gigabit ethernet.
+The longer-winded description of the package that will 
+end in up inside the rpm and is queryable if installed via:
+rpm -qi <rpm-name>
+
 
 #---------------------------------------
 %prep
@@ -104,6 +101,9 @@ using gigabit ethernet.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+%setup -n %{pkg_base_name}-%{pkg_version}
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -117,12 +117,12 @@ using gigabit ethernet.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n NAMD_%{pkg_version}_Source
 
 
 #---------------------------------------
 %build
 #---------------------------------------
+
 
 #---------------------------------------
 %install
@@ -131,12 +131,12 @@ using gigabit ethernet.
 # Setup modules
 %include system-load.inc
 module purge
-%include compiler-load.inc
-%include mpi-load.inc
+# Load Compiler
+#%include compiler-load.inc
+# Load MPI Library
+#%include mpi-load.inc
 
-
-# Insert necessary module commands
-#module purge
+# Insert further module commands
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -146,7 +146,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
+  
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -158,20 +158,11 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-
-  # Create some dummy directories and files for fun
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
-
-  cp -p bin/{namd2,namd2_memopt,psfgen,flipbinpdb,flipdcd,sortreplicas} $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
-  cp -r lib $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  chmod -Rf u+rwX,g+rwX,o=rX                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-
+  
   # Copy everything from tarball over to the installation directory
-#  cp * $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-#-----------------------
+  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  
+#-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
 
@@ -181,7 +172,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-
+  
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -189,72 +180,40 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-
+  
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_msg=[[
-The TACC NAMD module appends the path to the namd2 executable
-to the PATH environment variable. Also TACC_NAMD_DIR,
-TACC_NAMD_BIN, and TACC_NAMD_LIB are set to NAMD home
-bin, and lib directories; lib directory contains information for
-ABF, random acceleration MD(RAMD), replica exchange MD(REMD).
+The %{MODULE_VAR} module defines the following environment variables:
+TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_DOC, 
+for the location of the %{MODULE_VAR} distribution, and documentation
+respectively.
 
-
-Note: The way to run NAMD on Cascade Lake node is shown as following.
-
-Example of 4 tasks per node. Good for small number of nodes. 
-
-#!/bin/bash
-#SBATCH -J test   # Job Name
-#SBATCH -o test.o%j
-#SBATCH -N 2      # Total number of nodes
-#SBATCH -n 8      # Total number of mpi tasks
-#SBATCH -p normal # Queue name
-#SBATCH -t 24:00:00 # Run time (hh:mm:ss) - 24 hours
-
-ibrun namd2 +ppn 13 +pemap 2-26:2,30-54:2,3-27:2,31-55:2 +commap 0,28,1,29 input &> output
-
-Example of 8 tasks per node. Scale better for large number of nodes.
-
-#!/bin/bash
-#SBATCH -J test   # Job Name
-#SBATCH -o test.o%j
-#SBATCH -N 12      # Total number of nodes
-#SBATCH -n 96      # Total number of mpi tasks
-#SBATCH -p normal # Queue name
-#SBATCH -t 24:00:00 # Run time (hh:mm:ss) - 24 hours
-
-ibrun namd2 +ppn 6 +pemap 2-12:2,16-26:2,30-40:2,44-54:2,3-13:2,17-27:2,31-41:2,45-55:2 +commap 0,14,28,42,1,15,29,43 input &> output
-or
-ibrun namd2_memopt +ppn 6 +pemap 2-12:2,16-26:2,30-40:2,44-54:2,3-13:2,17-27:2,31-41:2,45-55:2 +commap 0,14,28,42,1,15,29,43 input &> output
-
-Version %{version}
+Usage:
+  import pylauncher3
+and use one of the launcher classes. See the examples 
+directory for inspiration. Preferably used with python3.
 ]]
 
 --help(help_msg)
 help(help_msg)
 
-whatis("Name: NAMD")
+whatis("Name: %{pkg_base_name}")
 whatis("Version: %{pkg_version}%{dbg}")
 %if "%{is_debug}" == "1"
 setenv("TACC_%{MODULE_VAR}_DEBUG","1")
 %endif
 
-whatis("Category: application, chemistry")
-whatis("Keywords: Chemistry, Biology, Molecular Dynamics, Application")
-whatis("URL: http://www.ks.uiuc.edu/Research/namd/")
-whatis("Description: Scalable Molecular Dynamics software")
-
 -- Create environment variables.
-local namd_dir           = "%{INSTALL_DIR}"
+local launcher_dir           = "%{INSTALL_DIR}"
 
-family("namd")
-prepend_path(    "PATH",                pathJoin(namd_dir, "bin"))
-setenv( "TACC_%{MODULE_VAR}_DIR",                namd_dir)
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(namd_dir, "bin"))
+prepend_path(    "PYTHONPATH",     launcher_dir )
+setenv( "TACC_%{MODULE_VAR}_DIR",                launcher_dir)
+setenv( "TACC_%{MODULE_VAR}_DOC",       pathJoin(launcher_dir, "docs"))
 
+depends_on( "python3" )
 EOF
-
+  
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -263,10 +222,11 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 
 set     ModulesVersion      "%{version}"
 EOF
-
-  # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-
+  
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %endif
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -286,7 +246,7 @@ EOF
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile
+%files modulefile 
 #---------------------------
 
   %defattr(-,root,install,)
@@ -296,7 +256,6 @@ EOF
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
 
 ########################################
 ## Fix Modulefile During Post Install ##
@@ -319,3 +278,6 @@ export PACKAGE_PREUN=1
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
 
+%changelog
+* Thu Oct 03 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial build

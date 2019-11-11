@@ -1,8 +1,8 @@
 ## export NO_PACKAGE  # for no package compile
 
-## rpmbuild -bb --clean --define 'is_intel19 1' --define 'is_impi 1' --define 'mpiV 19_5' tau-2.28.2spec 2>&1 | tee tau-2.28.2_intel19_r1_a.log
+## rpmbuild -bb --clean --define 'is_intel19 1' --define 'is_impi 1' --define 'mpiV 19_5' tau-2.28.2spec 2>&1 | tee tau-2.28.2_ic+im_905_r1_a.log
 # r=/admin/build/admin/rpms/frontera/RPMS/x86_64
-# rpm -hiv --nodeps $r/tacc-tau-intel19-impi19_0-package-2.28.2-1.el7.x86_64.rpm
+# rpm -hiv --nodeps    $r/tacc-tau-intel19-impi19_0-package-2.28.2-1.el7.x86_64.rpm
 # rpm -hiv --nodeps $r/tacc-tau-intel19-impi19_0-modulefile-2.28.2-1.el7.x86_64.rpm
 
 ## rpmbuild -bb --clean --define 'is_intel19 1' --define 'is_impi 1' --define 'mpiV 19_5' tau-2.28.spec 2>&1 | tee tau-2.28_intel19_r1_a.log
@@ -23,9 +23,9 @@
 # Create some macros (spec file variables)
 %define major_version 2
 %define minor_version 28
-%define micro_version 0
+%define micro_version 2
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 %include rpm-dir.inc
 %include compiler-defines.inc
@@ -36,11 +36,11 @@
 Summary:   Spec file for TAU
 Name:      %{pkg_name}
 Version:   %{pkg_version}
-Release:   2%{?dist}
+Release:   1%{?dist}
 License:   University of Oregon, ZAM, and LANL
 Vendor:    Department of Computer Science, Oregon 
 Group:     Development/Languages
-Source:    %{pkg_base_name}-%{pkg_version}.tar
+Source:    %{pkg_base_name}-%{pkg_version}.tgz
 Packager:  milfeld@tacc.utexas.edu
 URL:       http://www.cs.uoregon.edu/research/tau/
 

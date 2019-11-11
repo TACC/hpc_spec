@@ -6,8 +6,8 @@ Summary: PETSc install
 
 # Create some macros (spec file variables)
 %define major_version 3
-%define minor_version 11
-%define micro_version 4
+%define minor_version 12
+%define micro_version 0
 %define versionpatch %{major_version}.%{minor_version}.%{micro_version}
 
 %define pkg_version %{major_version}.%{minor_version}
@@ -32,7 +32,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 5%{?dist}
+Release: 1%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -163,20 +163,13 @@ export PLAPACKOPTIONS=
 ##
 export logdir=%{_topdir}/../apps/petsc/logs
 mkdir -p ${logdir}; rm -rf ${logdir}/*
-export dynamiccc="i64 debug i64debug complexi64 complexi64debug uni unidebug nohdf5 hyprefei"
-export dynamiccxx="cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug cxxi64 cxxi64debug"
+export dynamiccc="i64 debug i64debug complex complexdebug complexi64 complexi64debug uni unidebug nohdf5 hyprefei"
 
 for ext in \
   "" \
   single \
-  ${dynamiccc} ${dynamiccxx} \
+  ${dynamiccc} \
   ; do
-
-export noext="\
-  reinstate: \
-  \
-  ${static} we don't do static anymore \
-  nono"
 
 echo "configure install for ${ext}"
 export versionextra=
@@ -193,49 +186,31 @@ fi
 export XOPTFLAGS="%{TACC_OPT} -O2 -g"
 case "${ext}" in 
   ( *complex* )
-  export XOPTFLAGS="-xCORE-AVX2 -axMIC-AVX512,COMMON-AVX512 -O1 -g"
+  export XOPTFLAGS="%{TACC_OPT} -O1 -g"
+  #-xCORE-AVX2 -axMIC-AVX512,COMMON-AVX512 -O1 -g"
   ;;
 esac
-
-#### LOPTFLAGS are not being used at the moment. should really
-# %if "%{comp_fam}" == "gcc"
-# export XOPTFLAGS="%{TACC_OPT} -O2 -g"
-# export LOPFLAGS=${XOPTFLAGS}
-# %endif
-
-# %if "%{is_intel}" == "1"
-# export XOPTFLAGS="-xCORE-AVX2 -axMIC-AVX512,COMMON-AVX512 -O2 -g"
-# export LOPFLAGS=${XOPTFLAGS}
-# case "${ext}" in 
-#   ( *complex* )
-#   export LOPTFLAGS="-xCORE-AVX2 -axMIC-AVX512,COMMON-AVX512 -O1 -g"
-#   ;;
-# esac
-# %endif
 
 export COPTFLAGS=${XOPTFLAGS}
 export CXXOPTFLAGS=${XOPTFLAGS}
 export FOPTFLAGS=${XOPTFLAGS}
-export CNOOPTFLAGS="-O0 -g" ; export CXXNOOPTFLAGS="-O0 -g" ; export FNOOPTFLAGS="-O0 -g"
+export CNOOPTFLAGS="-O0 -g"
+export CXXNOOPTFLAGS="-O0 -g"
+export FNOOPTFLAGS="-O0 -g"
 
-export usedebug=no
 export CFLAGS=${COPTFLAGS}
 export CXXFLAGS=${CXXOPTFLAGS}
 export FFLAGS=${FOPTFLAGS}
-  # --COPTFLAGS=<string>
-  #      Override the debugging/optimization flags for the C compiler
-  # --CXXOPTFLAGS=<string>
-  #      Override the debugging/optimization flags for the C++ compiler
-  # --FOPTFLAGS=<string>
-  #      Override the debugging/optimization flags for the Fortran compiler
-  # --CUDAOPTFLAGS=<string>
-  #      Override the debugging/optimization flags for the CUDA compiler
+case "${ext}" in 
+*debug ) export CFLAGS=${CNOOPTFLAGS}
+	 export CXXFLAGS=${CXXNOOPTFLAGS}
+	 export FFLAGS=${FNOOPTFLAGS}
+         ;;
+esac
+
+export usedebug=no
 case "${ext}" in 
 *debug ) export usedebug=yes 
-	export CFLAGS=${CNOOPTFLAGS}
-	export CXXFLAGS=${CXXNOOPTFLAGS}
-	export FFLAGS=${FNOOPTFLAGS}
-         ;;
 esac
 
 ## 
@@ -452,15 +427,22 @@ export MPIF90=`which mpif90`
 echo "setting mpicc=${MPICC}"
 ls -l ${MPICC}
 
-export MPI_OPTIONS="--with-mpi=1 --with-cc=${MPICC} --with-cxx=${MPICXX} --with-fc=${MPIF90}"
+export MPI_OPTIONS="--with-mpi=1"
+# compilers are found by giving the "--with-mpi-dir"
+# --with-cc=${MPICC} --with-cxx=${MPICXX} --with-fc=${MPIF90}"
 %if "%{is_impi}" == "1"
+  # why do we define this?
   export PETSC_MPICH_HOME="${MPICH_HOME}/intel64"
-  export MPI_OPTIONS="${MPI_OPTIONS} \
-    --with-mpi-include=${TACC_IMPI_INC} --with-mpi-lib=${TACC_IMPI_LIB}/release_mt/libmpi.so"
+  export MPI_OPTIONS="${MPI_OPTIONS} --with-mpi-dir=${PETSC_MPICH_HOME}"
 %else
+  # why do we define this?
   export PETSC_MPICH_HOME="${MPICH_HOME}"
   export MPI_OPTIONS="${MPI_OPTIONS} --with-mpi-dir=${MPICH_HOME}"
 %endif
+# up to 3.11 we used this for Intel MPI:
+export petsc311_mpi_release="\
+    --with-mpi-include=${TACC_IMPI_INC} --with-mpi-lib=${TACC_IMPI_LIB}/release_mt/libmpi.so \
+    "
 echo "Finding mpi in ${MPICH_HOME}"
 
 case "${ext}" in
@@ -519,10 +501,11 @@ else
     ${PETSC_CONFIGURE_OPTIONS} \
     --with-packages-search-path=[${EXTERNAL_PACKAGES_DIR}] \
     --with-packages-build-dir=${PACKAGES_BUILD_DIR} \
-    ${MPI_OPTIONS} ${clanguage} ${scalar} ${dynamicshared} ${precision} ${packages} \
+    ${MPI_OPTIONS} ${MPI_EXTRA_OPTIONS} \
+    ${clanguage} ${scalar} ${dynamicshared} ${precision} ${packages} \
     --with-debugging=${usedebug} \
-    ${BLAS_LAPACK_OPTIONS} ${MPI_EXTRA_OPTIONS} ${CUDA_OPTIONS} ${INDEX_OPTIONS} \
-    COPTFLAGS="${CFLAGS}" FOPTFLAGS="${FFLAGS}" CXXOPTFLAGS="${CXXFLAGS}"
+    ${BLAS_LAPACK_OPTIONS} ${CUDA_OPTIONS} ${INDEX_OPTIONS} \
+    CFLAGS="${CFLAGS}" FFLAGS="${FFLAGS}" CXXFLAGS="${CXXFLAGS}"
 fi
 
 export noops="\
@@ -536,13 +519,13 @@ pushd ${architecture}
 pwd
 ls
 ls ./lib
-for f in ./lib/petsc/conf/configure.log \
-    ./lib/petsc/conf/petscvariables \
-    ./lib/petsc/conf/PETScBuildInternal.cmake \
-    ./lib/petsc/conf/RDict.db \
-    ./include/petscmachineinfo.h ; do
-  sed -i -e "s/debug-mt/release_mt/" $f
-done
+# for f in ./lib/petsc/conf/configure.log \
+#     ./lib/petsc/conf/petscvariables \
+#     ./lib/petsc/conf/PETScBuildInternal.cmake \
+#     ./lib/petsc/conf/RDict.db \
+#     ./include/petscmachineinfo.h ; do
+#   sed -i -e "s/debug-mt/release_mt/" $f
+# done
 
 # fix a weird bug that trips up John Peterson
 if [ `ls ./lib/libsundials*.la | wc -l` -gt 0 ] ; then
@@ -688,30 +671,22 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
   %{INSTALL_DIR}/clx-unidebug
   %{INSTALL_DIR}/clx-nohdf5
   %{INSTALL_DIR}/clx-hyprefei
-%files %{PACKAGE}-xx
-  %defattr(-,root,install,)
-  %{INSTALL_DIR}/clx-cxx
-  %{INSTALL_DIR}/clx-cxxi64
   %{INSTALL_DIR}/clx-complex
   %{INSTALL_DIR}/clx-complexi64
-  %{INSTALL_DIR}/clx-cxxcomplex
-  # and debug variants
-  %{INSTALL_DIR}/clx-cxxdebug
-  %{INSTALL_DIR}/clx-cxxi64debug
   %{INSTALL_DIR}/clx-complexdebug
   %{INSTALL_DIR}/clx-complexi64debug
-  %{INSTALL_DIR}/clx-cxxcomplexdebug
+# %files %{PACKAGE}-xx
+#   %defattr(-,root,install,)
+#   %{INSTALL_DIR}/clx-cxx
+#   %{INSTALL_DIR}/clx-cxxi64
+#   %{INSTALL_DIR}/clx-cxxcomplex
+#   # and debug variants
+#   %{INSTALL_DIR}/clx-cxxdebug
+#   %{INSTALL_DIR}/clx-cxxi64debug
+#   %{INSTALL_DIR}/clx-cxxcomplexdebug
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
-* Fri Oct 04 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 5: update to 3.11.4
-* Fri Sep 27 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 4: regenerate with McLay hdf5
-* Fri Aug 02 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: using McLay's hdf5 (except gcc/9.1: that was without)
-* Thu Jul 04 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: point update, use "clx"
-* Mon Jun 03 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 1: initial release
+* Sat Oct 05 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial release; no longer cxx

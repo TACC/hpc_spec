@@ -17,3 +17,5 @@ iarchived/
 siliu/
 mclay/
 stampede2/
+*.sh
+log_*

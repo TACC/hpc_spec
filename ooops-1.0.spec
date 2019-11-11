@@ -18,15 +18,15 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: A Nice little relocatable skeleton spec file example.
+Summary: A Nice little relocatable skeleton spec file.
 
 # Give the package a base name
-%define pkg_base_name namd
-%define MODULE_VAR    NAMD
+%define pkg_base_name ooops
+%define MODULE_VAR    OOOPS
 
 # Create some macros (spec file variables)
-%define major_version 2
-%define minor_version 13
+%define major_version 1
+%define minor_version 0
 %define micro_version 0
 
 #%define pkg_version %{major_version}.%{minor_version}
@@ -35,7 +35,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 %include rpm-dir.inc
 
 %include compiler-defines.inc
-%include mpi-defines.inc
+#%include mpi-defines.inc
 
 #%include name-defines-noreloc.inc
 
@@ -55,12 +55,11 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
-License:   GPL
-Group:     Theoretical and Computational Biophysics Group, UIUC
-URL:       http://www.ks.uiuc.edu/Development/Download/download.cgi?PackageName=NAMD
+Release:   1%{?dist}
+License:   MIT
+URL:       https://github.com/TACC/ooops
 Packager:  TACC - huang@tacc.utexas.edu
-Source:    NAMD_2.13_Source.tar.gz
+Source:    ooops-1.0.tgz
 #Source1:   tcl8.5.9-linux-x86_64-threaded.tar.gz
 
 # Turn off debug package mode
@@ -69,31 +68,22 @@ Source:    NAMD_2.13_Source.tar.gz
 
 
 %package %{PACKAGE}
-Summary: The NAMD RPM
-Group: Applications/Chemistry
+Summary: The OOOPS RPM
+Group: Tools/Optimization
 %description package
-NAMD, recipient of a 2002 Gordon Bell Award, is a parallel molecular dynamics
-code designed for high-performance simulation of large biomolecular systems.
-Based on Charm++ parallel objects, NAMD scales to hundreds of processors on
-high-end parallel platforms and tens of processors on commodity clusters
-using gigabit ethernet.
+OOOPS, an innovative IO workload managing system that optimally throttles the IO 
+workload from the users' side. 
 
 %package %{MODULEFILE}
-Summary: The modulefile RPM
+Summary: The OOOPS modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-NAMD, recipient of a 2002 Gordon Bell Award, is a parallel molecular dynamics
-code designed for high-performance simulation of large biomolecular systems.
-Based on Charm++ parallel objects, NAMD scales to hundreds of processors on
-high-end parallel platforms and tens of processors on commodity clusters
-using gigabit ethernet.
+OOOPS, an innovative IO workload managing system that optimally throttles the IO
+workload from the users' side.
 
 %description
-NAMD, recipient of a 2002 Gordon Bell Award, is a parallel molecular dynamics
-code designed for high-performance simulation of large biomolecular systems.
-Based on Charm++ parallel objects, NAMD scales to hundreds of processors on
-high-end parallel platforms and tens of processors on commodity clusters
-using gigabit ethernet.
+OOOPS, an innovative IO workload managing system that optimally throttles the IO
+workload from the users' side.
 
 #---------------------------------------
 %prep
@@ -117,7 +107,7 @@ using gigabit ethernet.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n NAMD_%{pkg_version}_Source
+%setup -n ooops-%{pkg_version}
 
 
 #---------------------------------------
@@ -132,7 +122,7 @@ using gigabit ethernet.
 %include system-load.inc
 module purge
 %include compiler-load.inc
-%include mpi-load.inc
+#%include mpi-load.inc
 
 
 # Insert necessary module commands
@@ -162,9 +152,11 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Create some dummy directories and files for fun
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/conf
 
-  cp -p bin/{namd2,namd2_memopt,psfgen,flipbinpdb,flipdcd,sortreplicas} $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
-  cp -r lib $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  cp -p conf/{config_high,config_medium,config_low} $RPM_BUILD_ROOT/%{INSTALL_DIR}/conf/
+  cp -p bin/set_io_param $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
+  cp -p lib/ooops.so $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/
   chmod -Rf u+rwX,g+rwX,o=rX                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 
@@ -193,65 +185,35 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_msg=[[
-The TACC NAMD module appends the path to the namd2 executable
-to the PATH environment variable. Also TACC_NAMD_DIR,
-TACC_NAMD_BIN, and TACC_NAMD_LIB are set to NAMD home
-bin, and lib directories; lib directory contains information for
-ABF, random acceleration MD(RAMD), replica exchange MD(REMD).
+Optimal Overloaded IO Protection System (OOOPS) is an easy to use tool
+that helps HPC users optimize heavy IO requests.
 
+It will also help system administrator prevent IO overload caused by improper IO request.
 
-Note: The way to run NAMD on Cascade Lake node is shown as following.
-
-Example of 4 tasks per node. Good for small number of nodes. 
-
-#!/bin/bash
-#SBATCH -J test   # Job Name
-#SBATCH -o test.o%j
-#SBATCH -N 2      # Total number of nodes
-#SBATCH -n 8      # Total number of mpi tasks
-#SBATCH -p normal # Queue name
-#SBATCH -t 24:00:00 # Run time (hh:mm:ss) - 24 hours
-
-ibrun namd2 +ppn 13 +pemap 2-26:2,30-54:2,3-27:2,31-55:2 +commap 0,28,1,29 input &> output
-
-Example of 8 tasks per node. Scale better for large number of nodes.
-
-#!/bin/bash
-#SBATCH -J test   # Job Name
-#SBATCH -o test.o%j
-#SBATCH -N 12      # Total number of nodes
-#SBATCH -n 96      # Total number of mpi tasks
-#SBATCH -p normal # Queue name
-#SBATCH -t 24:00:00 # Run time (hh:mm:ss) - 24 hours
-
-ibrun namd2 +ppn 6 +pemap 2-12:2,16-26:2,30-40:2,44-54:2,3-13:2,17-27:2,31-41:2,45-55:2 +commap 0,14,28,42,1,15,29,43 input &> output
-or
-ibrun namd2_memopt +ppn 6 +pemap 2-12:2,16-26:2,30-40:2,44-54:2,3-13:2,17-27:2,31-41:2,45-55:2 +commap 0,14,28,42,1,15,29,43 input &> output
-
-Version %{version}
+Lei Huang (huang@tacc.utexas.edu)
+Si Liu    (siliu@tacc.utexas.edu)
 ]]
 
 --help(help_msg)
 help(help_msg)
 
-whatis("Name: NAMD")
-whatis("Version: %{pkg_version}%{dbg}")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
-
-whatis("Category: application, chemistry")
-whatis("Keywords: Chemistry, Biology, Molecular Dynamics, Application")
-whatis("URL: http://www.ks.uiuc.edu/Research/namd/")
-whatis("Description: Scalable Molecular Dynamics software")
+whatis("Name: OOOPS")
+whatis("Version: 1.0")
+whatis("Category: Tools/Optimization ")
+whatis("Keywords: Tools, IO, Optimization")
+whatis("Description: Optimal Overloaded IO Protection System (OOOPS) us an easy to use tool ")
 
 -- Create environment variables.
-local namd_dir           = "%{INSTALL_DIR}"
+local ooops_dir           = "%{INSTALL_DIR}"
 
-family("namd")
-prepend_path(    "PATH",                pathJoin(namd_dir, "bin"))
-setenv( "TACC_%{MODULE_VAR}_DIR",                namd_dir)
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(namd_dir, "bin"))
+family("ooops")
+prepend_path( "PATH",                   pathJoin(ooops_dir, "bin"))
+prepend_path( "LD_LIBRARY_PATH",        pathJoin(ooops_dir, "lib"))
+prepend_path( "LD_PRELOAD",             pathJoin(ooops_dir, "lib/ooops.so") )
+
+setenv( "TACC_%{MODULE_VAR}_DIR",                ooops_dir)
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(ooops_dir, "bin"))
+setenv( "IO_LIMIT_CONFIG",              pathJoin(ooops_dir, "conf/config_high") )
 
 EOF
 

@@ -21,8 +21,8 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name namd
-%define MODULE_VAR    NAMD
+%define pkg_base_name namd_gpu
+%define MODULE_VAR    NAMD_GPU
 
 # Create some macros (spec file variables)
 %define major_version 2
@@ -60,7 +60,7 @@ License:   GPL
 Group:     Theoretical and Computational Biophysics Group, UIUC
 URL:       http://www.ks.uiuc.edu/Development/Download/download.cgi?PackageName=NAMD
 Packager:  TACC - huang@tacc.utexas.edu
-Source:    NAMD_2.13_Source.tar.gz
+Source:    namd_gpu_2.13.tgz
 #Source1:   tcl8.5.9-linux-x86_64-threaded.tar.gz
 
 # Turn off debug package mode
@@ -117,7 +117,7 @@ using gigabit ethernet.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n NAMD_%{pkg_version}_Source
+%setup -n namd_gpu_%{pkg_version}
 
 
 #---------------------------------------
@@ -163,7 +163,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
 
-  cp -p bin/{namd2,namd2_memopt,psfgen,flipbinpdb,flipdcd,sortreplicas} $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
+  cp -p bin/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
   cp -r lib $RPM_BUILD_ROOT/%{INSTALL_DIR}
   chmod -Rf u+rwX,g+rwX,o=rX                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
@@ -200,33 +200,18 @@ bin, and lib directories; lib directory contains information for
 ABF, random acceleration MD(RAMD), replica exchange MD(REMD).
 
 
-Note: The way to run NAMD on Cascade Lake node is shown as following.
-
-Example of 4 tasks per node. Good for small number of nodes. 
+Note: In most cases, once task per node is recommended. gtx queue 
+should be used. 
 
 #!/bin/bash
 #SBATCH -J test   # Job Name
 #SBATCH -o test.o%j
 #SBATCH -N 2      # Total number of nodes
-#SBATCH -n 8      # Total number of mpi tasks
-#SBATCH -p normal # Queue name
+#SBATCH -n 2      # Total number of mpi tasks
+#SBATCH -p gtx    # Queue name
 #SBATCH -t 24:00:00 # Run time (hh:mm:ss) - 24 hours
 
-ibrun namd2 +ppn 13 +pemap 2-26:2,30-54:2,3-27:2,31-55:2 +commap 0,28,1,29 input &> output
-
-Example of 8 tasks per node. Scale better for large number of nodes.
-
-#!/bin/bash
-#SBATCH -J test   # Job Name
-#SBATCH -o test.o%j
-#SBATCH -N 12      # Total number of nodes
-#SBATCH -n 96      # Total number of mpi tasks
-#SBATCH -p normal # Queue name
-#SBATCH -t 24:00:00 # Run time (hh:mm:ss) - 24 hours
-
-ibrun namd2 +ppn 6 +pemap 2-12:2,16-26:2,30-40:2,44-54:2,3-13:2,17-27:2,31-41:2,45-55:2 +commap 0,14,28,42,1,15,29,43 input &> output
-or
-ibrun namd2_memopt +ppn 6 +pemap 2-12:2,16-26:2,30-40:2,44-54:2,3-13:2,17-27:2,31-41:2,45-55:2 +commap 0,14,28,42,1,15,29,43 input &> output
+run_namd_gpu namd_inpu output
 
 Version %{version}
 ]]
@@ -252,6 +237,7 @@ family("namd")
 prepend_path(    "PATH",                pathJoin(namd_dir, "bin"))
 setenv( "TACC_%{MODULE_VAR}_DIR",                namd_dir)
 setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(namd_dir, "bin"))
+add_property("arch","gpu")
 
 EOF
 
