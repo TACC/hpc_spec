@@ -4,5 +4,5 @@ if [ -f "$BASH_ENV" ]; then
   module purge
   clearMT
   export MODULEPATH=/opt/apps/tools/modulefiles:/opt/apps/modulefiles:/opt/modulefiles
-  module load TACC
+#  module load TACC
 fi

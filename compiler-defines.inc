@@ -12,6 +12,13 @@
   %define is_xl 1
   %define comp_module xl/13.1.6
 %endif
+%if "%{is_gcc48}" == "1"
+  %define comp_fam gcc
+  %define comp_fam_ver gcc4_8
+  %define comp_fam_name GNU
+  %define is_gcc 1
+  %define comp_module gcc/4.8.5
+%endif
 %if "%{is_gcc49}" == "1"
   %define comp_fam gcc
   %define comp_fam_ver gcc4_9
