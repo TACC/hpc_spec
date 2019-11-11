@@ -27,12 +27,14 @@ Summary: A Nice little non-relocatable skeleton spec file example.
 %define MODULE_VAR    GCC
 
 # Create some macros (spec file variables)
-%define major_version 7
-%define minor_version 3
+%define major_version 9
+%define minor_version 1
 %define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
-%define gcc_ver gcc7_3
+%define gcc_ver gcc9_1
+
+%global __os_install_post %{nil}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -85,6 +87,8 @@ Fortran, Java, Ada, and Go, as well as libraries for these languages
 (libstdc++, libgcj,...). GCC was originally written as the compiler for the GNU
 operating system. The GNU system was developed to be 100% free software, free
 in the sense that it respects the user's freedom.
+#--------------------------------------- '
+
 
 %description
 The GNU Compiler Collection includes front ends for C, C++, Objective-C,
@@ -93,7 +97,7 @@ Fortran, Java, Ada, and Go, as well as libraries for these languages
 operating system. The GNU system was developed to be 100% free software, free
 in the sense that it respects the user's freedom.
 
-#---------------------------------------
+#--------------------------------------- '
 %prep
 #---------------------------------------
 
@@ -130,8 +134,6 @@ in the sense that it respects the user's freedom.
 
 # Insert necessary module commands
 module purge
-#module load TACC
-#module load gcc/4.9.3
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -174,24 +176,31 @@ export gmp_patch=2
 export isl_major=0
 #export isl_minor=16
 #export isl_patch=1
-export isl_minor=19
+#export isl_minor=19
+export isl_minor=21
 
-export mpfr_major=3
-export mpfr_minor=1
+#export mpfr_major=3
+#export mpfr_minor=1
 #export mpfr_patch=4
-export mpfr_patch=6
+#export mpfr_patch=6
+export mpfr_major=4
+export mpfr_minor=0
+export mpfr_patch=2
 
 export mpc_major=1
-export mpc_minor=0
-export mpc_patch=3
+#export mpc_minor=0
+#export mpc_patch=3
+export mpc_minor=1
+export mpc_patch=0
 
 export binutils_major=2
 #export binutils_minor=26
 #export binutils_minor=27
-export binutils_minor=30
+#export binutils_minor=30
+export binutils_minor=32
 
-export gcc_major=7
-export gcc_minor=3
+export gcc_major=9
+export gcc_minor=1
 export gcc_patch=0
 
 export gmp_version=${gmp_major}.${gmp_minor}.${gmp_patch}
@@ -202,7 +211,7 @@ export mpc_version=${mpc_major}.${mpc_minor}.${mpc_patch}
 export binutils_version=${binutils_major}.${binutils_minor}
 export gcc_version=${gcc_major}.${gcc_minor}.${gcc_patch}
 
-export ncores=48
+export ncores=96
 
 export CC=gcc 
 export CFLAGS=-fPIC 
@@ -222,7 +231,8 @@ cd gmp-${gmp_version}
 
 ${gcc}/gmp-${gmp_version}/configure \
 --prefix=${gcc_install} \
---enable-cxx
+--enable-cxx \
+--enable-fat
 
 make -j ${ncores}
 make install -j ${ncores}
@@ -299,7 +309,6 @@ ${gcc}/binutils-${binutils_version}/configure \
 --enable-ld=default                           \
 --enable-plugins                              \
 --enable-lto                                  \
---enable-install-libiberty                    \
 --with-gmp=${gcc_install}                     \
 --with-mpfr=${gcc_install}                    \
 --with-mpc=${gcc_install}                     \
@@ -322,20 +331,19 @@ tar xvfJ gcc-${gcc_version}.tar.xz
 
 cd gcc-${gcc_version}
 
-${gcc}/gcc-${gcc_version}/configure   \
---enable-libssp                       \
---enable-gold=yes                     \
---enable-ld=default                   \
---enable-plugins                      \
---enable-lto                          \
---enable-languages='c,c++,fortran'    \
---disable-multilib                    \
---prefix=${gcc_install}               \
---enable-install-libiberty            \
---with-gmp=${gcc_install}             \
---with-mlgmp=${gcc_install}           \
---with-mpfr=${gcc_install}            \
---with-mpc=${gcc_install}             \
+${gcc}/gcc-${gcc_version}/configure \
+--enable-libssp                     \
+--enable-gold=yes                   \
+--enable-ld=default                 \
+--enable-plugins                    \
+--enable-lto                        \
+--enable-languages='c,c++,fortran'  \
+--disable-multilib                  \
+--prefix=${gcc_install}             \
+--with-gmp=${gcc_install}           \
+--with-mlgmp=${gcc_install}         \
+--with-mpfr=${gcc_install}          \
+--with-mpc=${gcc_install}           \
 --with-isl=${gcc_install}
 
 make BOOT_CFLAGS='-O2' bootstrap -j ${ncores}
@@ -417,7 +425,9 @@ setenv(       "TACC_%{MODULE_VAR}_LIB"   , pathJoin(gcc_dir,"lib"       )       
 setenv(       "TACC_%{MODULE_VAR}_LIB64" , pathJoin(gcc_dir,"lib64"     )               )
 setenv(       "TACC_%{MODULE_VAR}_INC"   , pathJoin(gcc_dir,"include"   )               )
 
-if (os.getenv("TACC_SYSTEM") == "stampede2") then
+if (os.getenv("TACC_SYSTEM") == "frontera") then
+  setenv( "TACC_VEC_FLAGS" ,      "-march=broadwell -mtune=skylake-avx512" )
+elseif (os.getenv("TACC_SYSTEM") == "stampede2") then
   setenv( "TACC_VEC_FLAGS" ,      "-march=broadwell -mtune=knl" )
 elseif (os.getenv("TACC_SYSTEM") == "ls5") then
   setenv( "TACC_VEC_FLAGS" ,      "-march=ivybridge -mtune=haswell" )

@@ -17,7 +17,7 @@
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
 Summary: A Nice little relocatable skeleton spec file example.
-
+%define NO_PACKAGE 1
 # Give the package a base name
 %define pkg_base_name cuda
 %define MODULE_VAR    CUDA
@@ -30,7 +30,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 %define patch_version 148
 %define driver_version 396.37
 %define update_version 1
-%define local_release 1
+%define local_release 2
 
 %define pkg_version %{major_version}.%{minor_version}
 %define cuda_fam_ver %{pkg_base_name}%{major_version}_%{minor_version}
@@ -144,8 +144,8 @@ programs that make use of CUDA.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -q -T -c %{SOURCE0}
-%setup -q -T -c %{SOURCE1}
+#%setup -q -T -c %{SOURCE0}
+#%setup -q -T -c %{SOURCE1}
 
 
 #---------------------------------------
@@ -263,7 +263,7 @@ whatis("Description: NVIDIA CUDA Toolkit for Linux")
 whatis("URL: http://www.nvidia.com/cuda")
 
 -- Export environmental variables
-local cuda_dir="%{INSTALL_DIR}"
+local cuda_dir="/usr/local/cuda-9.2"
 local cuda_bin=pathJoin(cuda_dir,"bin")
 local cuda_lib=pathJoin(cuda_dir,"lib64")
 local cuda_inc=pathJoin(cuda_dir,"include")

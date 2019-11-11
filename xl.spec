@@ -1,6 +1,6 @@
 #
 # W. Cyrus Proctor
-# 2015-11-07
+# 2015-11-12
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -20,13 +20,13 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name cmake
-%define MODULE_VAR    CMAKE
+%define pkg_base_name xl
+%define MODULE_VAR    xl
 
 # Create some macros (spec file variables)
-%define major_version 3
-%define minor_version 13
-%define micro_version 4
+%define major_version 16
+%define minor_version 1
+%define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -49,10 +49,10 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   2%{?dist}
-License:   BSD
-Group:     System/Utils
-URL:       http://www.cmake.org
-Packager:  TACC - cproctor@tacc.utexas.edu
+License:   proprietary
+Group:     Compiler
+URL:       https://ibm.com
+Packager:  TACC - mclay@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -65,36 +65,20 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
-CMake  is an extensible, open-source system that manages the build process in
-an operating system and in a compiler-independent manner. Unlike many cross-
-platform systems, CMake is designed to be used in conjunction with the native
-build environment. Simple configuration files placed in each source directory
-(called CMakeLists.txt files) are used to generate standard build files (e.g.,
-makefiles on Unix and projects/workspaces in Windows MSVC) which are used in
-the usual way.
+This is specifically an rpm for the Intel Compiler modulefile
+used on Stampede2.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
-CMake  is an extensible, open-source system that manages the build process in
-an operating system and in a compiler-independent manner. Unlike many cross-
-platform systems, CMake is designed to be used in conjunction with the native
-build environment. Simple configuration files placed in each source directory
-(called CMakeLists.txt files) are used to generate standard build files (e.g.,
-makefiles on Unix and projects/workspaces in Windows MSVC) which are used in
-the usual way.
+This is specifically an rpm for the Intel Compiler modulefile
+used on Stampede2.
 
 %description
-CMake  is an extensible, open-source system that manages the build process in
-an operating system and in a compiler-independent manner. Unlike many cross-
-platform systems, CMake is designed to be used in conjunction with the native
-build environment. Simple configuration files placed in each source directory
-(called CMakeLists.txt files) are used to generate standard build files (e.g.,
-makefiles on Unix and projects/workspaces in Windows MSVC) which are used in
-the usual way.
-
+This is specifically an rpm for the Intel Compiler modulefile
+used on longhorn 3.
 
 #---------------------------------------
 %prep
@@ -117,8 +101,6 @@ the usual way.
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
-%setup -n %{pkg_base_name}-%{pkg_version}
 
 
 #---------------------------------------
@@ -157,17 +139,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
  
-  export CC=gcc
-  export ncores=24
-  export CFLAGS=""
-  #export LDFLAGS="-Wl,-rpath,${GCC_LIB} -march=core-avx -mtune=core-avx2" # Location of correct libstdc++.so.6
-  export LDFLAGS="" # Location of correct libstdc++.so.6
-  echo ${LD_LIBRARY_PATH}
-  echo ${LDFLAGS}
-  # DO NOT preppend $RPM_BUILD_ROOT in prefix
-  ./bootstrap --prefix=%{INSTALL_DIR}
-  make -j ${ncores}
-  make DESTDIR=$RPM_BUILD_ROOT install -j ${ncores}
+  # Nothing to do!
   
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -190,45 +162,29 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_message = [[
-CMake is an open-source, cross-platform family of tools designed to build, test
-and package software. CMake is used to control the software compilation process
-using simple platform and compiler independent configuration files, and
-generate native makefiles and workspaces that can be used in the compiler
-environment of your choice. 
+local help_msg=[[
+IBM XL compilers %{version} produce optimized code for the power9
 
-This module defines the environmental variables TACC_%{MODULE_VAR}_BIN
-and TACC_%{MODULE_VAR}_DIR for the location of the main CMake directory
-and the binaries.
-
-The location of the binary files is also added to your PATH.
-
-Extended documentation on CMake can be found under $TACC_%{MODULE_VAR}_DIR/doc.
+See the man pages for xlc, xlc++, xlf and xlf90 for detailed information on
+available compiler options and command-line syntax.
 
 Version %{version}
 ]]
 
-help(help_message,"\n")
+help(help_msg)
 
-whatis("Name: %{name}")
-whatis("Version: %{version}")
-whatis("Category: system, utilities")
-whatis("Keywords: System, Utility")
-whatis("Description: tool for generation of files from source")
-whatis("URL: http://www.cmake.org")
+whatis("Name: IBM XL Compiler"                                              )
+whatis("Version: %{version}"                                                )
+whatis("Category: compiler, Runtime Support"                                )
+whatis("Description: IBM XL Compiler Family (C/C++/Fortran for power9)"     )
+whatis("URL: http://ibm.com"                                                )
 
--- Export environmental variables
-local cmake_dir="%{INSTALL_DIR}"
-local cmake_bin=pathJoin(cmake_dir,"bin")
-setenv("TACC_CMAKE_DIR",cmake_dir)
-setenv("TACC_CMAKE_BIN",cmake_bin)
-
--- Prepend the cmake directories to the adequate PATH variables
-prepend_path("PATH",cmake_bin)
-
+prepend_path( "MODULEPATH" , "/opt/apps/xl16/modulefiles" )
+family("compiler")
 EOF
-  
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
+
+#cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version << 'EOF'
 #%Module3.1.1#################################################
 ##
 ## version file for %{BASENAME}%{version}

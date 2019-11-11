@@ -208,9 +208,15 @@ export CC=gcc
 #  export CFLAGS="-fPIC -march=core-avx -mtune=core-avx2"
 #  export CXXFLAGS="-march=core-avx -mtune=core-avx2"
 #  export LDFLAGS="-march=core-avx -mtune=core-avx2"
-export CFLAGS=
-export CXXFLAGS=
-export LDFLAGS=
+MACH=$(uname -m)
+MTUNE=
+if  [ "$MACH" = "x86_64" ]; then
+  MTUNE="-mtune=generic"
+fi
+export CFLAGS="-fPIC $MTUNE"
+export CXXFLAGS="$MTUNE"
+export LDFLAGS="$MTUNE"
+
 
 
 ### M4
@@ -219,8 +225,7 @@ wget https://ftp.gnu.org/gnu/m4/m4-${m4_version}.tar.gz
 tar xvfz m4-${m4_version}.tar.gz
 cd m4-${m4_version}
 ${auto}/m4-${m4_version}/configure \
---prefix=${auto_install}           \
---build=%{_host}
+--prefix=${auto_install}
 make -j ${ncores}
 make -j ${ncores} install
 
@@ -231,8 +236,9 @@ wget https://ftp.gnu.org/gnu/autoconf/autoconf-${autoconf_version}.tar.gz
 tar xvfz autoconf-${autoconf_version}.tar.gz
 cd autoconf-${autoconf_version}
 ${auto}/autoconf-${autoconf_version}/configure \
---prefix=${auto_install}                       \
---build=%{_host}
+   --prefix=${auto_install}                    \
+   --build=powerpc64le-redhat-linux-gnu        \
+   --host=powerpc64le-redhat-linux-gnu 
 make -j ${ncores}
 make -j ${ncores} install
 
@@ -243,8 +249,7 @@ wget https://ftp.gnu.org/gnu/automake/automake-${automake_version}.tar.gz
 tar xvfz automake-${automake_version}.tar.gz
 cd automake-${automake_version}
 ${auto}/automake-${automake_version}/configure \
---prefix=${auto_install}                       \
---build=%{_host}
+--prefix=${auto_install}
 make -j ${ncores}
 make -j ${ncores} install
 
@@ -254,8 +259,7 @@ wget ftp://ftp.gnu.org/gnu/libtool/libtool-${libtool_version}.tar.gz
 tar xvfz libtool-${libtool_version}.tar.gz
 cd libtool-${libtool_version}
 ${auto}/libtool-${libtool_version}/configure \
---prefix=${auto_install}                     \
---build=%{_host}
+--prefix=${auto_install}
 make -j ${ncores}
 make -j ${ncores} install
 
