@@ -12,8 +12,8 @@ Summary: Local ParMETIS binary install
 #
 
 Name: %{name_prefix}-%{base_name}
-Version: 4.0.2
-Release: 4
+Version: 4.0.3
+Release: 1
 License: GPL
 Vendor: George Karypis
 Group: System Environment/Base
