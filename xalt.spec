@@ -2,8 +2,8 @@
 
 Summary: XALT
 Name: xalt
-Version: 2.7.11
-Release: 1
+Version: 2.7.18
+Release: 2
 License: LGPLv2
 Group: System Environment/Base
 Source0:  xalt-%{version}.tar.bz2
@@ -41,7 +41,29 @@ if [ -f "$BASH_ENV" ]; then
 fi
 
 
-CXX=/usr/bin/g++ CC=/usr/bin/gcc ./configure CXX=/usr/bin/g++ CC=/usr/bin/gcc --prefix=%{APPS} --with-syshostConfig=nth_name:2 --with-config=Config/TACC_config.py --with-transmission=syslog --with-MySQL=no
+myhost=$(hostname -f)
+myhost=${myhost%.tacc.utexas.edu}
+HOST=$myhost
+first=${myhost%%.*}
+SYSHOST=${myhost#*.}
+
+TRANSMISSION=syslog
+SYSHOST_CONF=nth_name:2
+ETC_DIR=/tmp/moduleData
+if [[ $SYSHOST = "ls5" ]]; then
+  TRANSMISSION=file
+  CONF_OPTS="--with-xaltFilePrefix=/scratch/projects/XALT"
+  SYSHOST_CONF=hardcode:ls5
+  ETC_DIR=/home1/moduleData
+fi
+
+if [[ $SYSHOST = "frontera" ]]; then
+  CONF_OPTS="--with-trackGPU=yes"
+fi
+
+CXX=/usr/bin/g++ CC=/usr/bin/gcc ./configure CXX=/usr/bin/g++ CC=/usr/bin/gcc --prefix=%{APPS} --with-syshostConfig=$SYSHOST_CONF \
+   --with-config=Config/TACC_config.py --with-transmission=$TRANSMISSION --with-MySQL=no                                          \
+   --with-etcDir=$ETC_DIR $CONF_OPTS
 
 make CXX=/usr/bin/g++ CC=/usr/bin/gcc DESTDIR=$RPM_BUILD_ROOT install Inst_TACC
 rm -f $RPM_BUILD_ROOT/%{INSTALL_DIR}/sbin/xalt_db.conf
