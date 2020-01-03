@@ -13,10 +13,12 @@ Summary: Dealii install
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
-%define dealiipetscversion 3.12
 %define DEAL_USE_PETSC 1
-%define dealiitrilinosversion 12.14.1
+%define dealiipetscversion git20200101
+# 3.12
+
 %define DEAL_USE_TRILINOS 1
+%define dealiitrilinosversion 12.14.1
 
 %include rpm-dir.inc
 %include compiler-defines.inc
@@ -38,7 +40,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tar.gz
@@ -127,12 +129,16 @@ mount -t tmpfs tmpfs %{INSTALL_DIR}
 
 module list
 for m in boost cmake \
+    gsl \
     metis p4est \
     ; do
   module --ignore_cache load $m ; 
 done
 
-%if "${DEAL_USE_PETSC}" == "1"
+CMAKE_USE_METIS="ON"
+module load metis
+
+%if "%{DEAL_USE_PETSC}" == "1"
   export CMAKE_USE_PETSC="ON"
   module load petsc/%{dealiipetscversion} slepc/%{dealiipetscversion}
   echo "Installing deal with Petsc: ${PETSC_DIR}/${PETSC_ARCH}"
@@ -142,7 +148,7 @@ done
   export PETSC_ARCH="foobar"
 %endif
 
-%if "${DEAL_USE_TRILINOS}" == "1"
+%if "%{DEAL_USE_TRILINOS}" == "1"
   export CMAKE_USE_TRILINOS="ON"
   module load trilinos/%{dealiitrilinosversion}
   find ${TACC_TRILINOS_DIR} -name \*.cmake -exec grep python {} \;
@@ -199,6 +205,11 @@ export BASIC_FLAGS="${BASIC_FLAGS} -I${TBBROOT}/include"
 
 ##  CC=`which mpicc` CXX=`which mpicxx` F90=`which mpif90`
 
+## https://www.dealii.org/developer/users/cmake.html
+
+## TACC_IMPI_LIB = /opt/intel/compilers_and_libraries_2019.5.281/linux/mpi/intel64/lib
+##    -DMPI_LIBRARIES=${TACC_IMPI_LIB}/libmpicxx.so\;${TACC_IMPI_LIB}/libmpifort.so\;${TACC_IMPI_LIB}/release_mt/libmpi.so\;/lib64/librt.so\;/lib64/libpthread.so\;/lib64/libdl.so
+
   cmake -VV \
     -DCMAKE_INSTALL_PREFIX=%{INSTALL_DIR} \
     \
@@ -211,16 +222,23 @@ export BASIC_FLAGS="${BASIC_FLAGS} -I${TBBROOT}/include"
     \
     -DDEAL_II_WITH_MPI=ON \
     -DMPICH_IGNORE_CXX_SEEK=ON \
+    \
     -DBOOST_DIR=${TACC_BOOST_DIR} \
+    -DDEAL_II_WITH_GSL=ON \
+      -DGSL_INCLUDE_DIR=${TACC_GSL_INC:-NO_GSL_INC} \
+      -DGSL_LIBRARY_DIR=${TACC_GSL_LIB:-NO_GSL_LIB} \
+      -DGSL_LIBRARY=${TACC_GSL_LIB:-NO_GSL_LIB}/libgsl.so\;${TACC_GSL_LIB:-NO_GSL_LIB}/libgslcblas.so \
     -DHDF5_DIR=${TACC_HDF5_DIR} \
+    -DDEAL_II_WITH_METIS=${CMAKE_USE_METIS} \
+        -DMETIS_DIR=${TACC_METIS_DIR} \
+    \
     ` if [ ${TACC_FAMILY_COMPILER} = "intel" ] ; then echo " \
         -DMUMPS_DIR=${TACC_MUMPS_DIR} \
-        -DMETIS_DIR=${TACC_METIS_DIR} \
-        -DSLEPC_DIR=${TACC_SLEPC_DIR} \
     " ; fi ` \
     -DDEAL_II_WITH_PETSC=${CMAKE_USE_PETSC} \
         -DPETSC_DIR=${PETSC_DIR} -DPETSC_ARCH=${PETSC_ARCH} \
     -DDEAL_II_WITH_SLEPC=${CMAKE_USE_PETSC} \
+        -DSLEPC_DIR=${TACC_SLEPC_DIR} \
     -DDEAL_II_WITH_P4EST=ON \
         -DP4EST_DIR=${P4ESTDIR} \
     -DDEAL_II_WITH_TRILINOS=${CMAKE_USE_TRILINOS} \
@@ -329,5 +347,7 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Mon Dec 02 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: adding GSL, Metis under gcc
 * Mon Sep 02 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release of 9.1.1

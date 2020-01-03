@@ -19,3 +19,4 @@ mclay/
 stampede2/
 *.sh
 log_*
+.nfs*

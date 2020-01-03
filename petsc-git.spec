@@ -5,12 +5,12 @@ Summary: PETSc install
 %define MODULE_VAR    PETSC
 
 # Create some macros (spec file variables)
-%define major_version 3
-%define minor_version 12
-%define micro_version 2
-%define versionpatch %{major_version}.%{minor_version}.%{micro_version}
+%define major_version git20200101
+%define minor_version 1
+%define micro_version 1
+%define versionpatch %{major_version}
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}
 
 %include rpm-dir.inc
 %include compiler-defines.inc
@@ -32,7 +32,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 3%{?dist}
+Release: 1%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -168,10 +168,11 @@ export dynamiccc="i64 debug i64debug complex complexdebug complexi64 complexi64d
 for ext in \
   "" \
   single single-debug \
-  rtx rtx-debug \
   ${dynamiccc} \
   ; do
-
+export noext="\
+  rtx rtx-debug \
+  "
 echo "configure install for ${ext}"
 export versionextra=
 
@@ -445,6 +446,7 @@ export petsc311_mpi_release="\
     --with-mpi-include=${TACC_IMPI_INC} --with-mpi-lib=${TACC_IMPI_LIB}/release_mt/libmpi.so \
     "
 echo "Finding mpi in ${MPICH_HOME}"
+export MPI_OPTIONS="--with-mpi=1"
 
 case "${ext}" in
 uni* ) export MPI_OPTIONS="--with-mpi=0 --with-cc=${CC} --with-fc=${FC} --with-cxx=0";
@@ -689,25 +691,10 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 %files %{PACKAGE}
   %defattr(-,root,install,)
   %{INSTALL_DIR}/clx*
-  # %{INSTALL_DIR}/clx-single
-  # %{INSTALL_DIR}/clx-i64
-  # %{INSTALL_DIR}/clx-debug
-  # %{INSTALL_DIR}/clx-i64debug
-  # %{INSTALL_DIR}/clx-uni
-  # %{INSTALL_DIR}/clx-unidebug
-  # %{INSTALL_DIR}/clx-nohdf5
-  # %{INSTALL_DIR}/clx-hyprefei
-  # %{INSTALL_DIR}/clx-complex
-  # %{INSTALL_DIR}/clx-complexi64
-  # %{INSTALL_DIR}/clx-complexdebug
-  # %{INSTALL_DIR}/clx-complexi64debug
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
-* Thu Dec 26 2019 eijkhout <eijkhout@tacc.utexas.edu>
-_ release 3: tinkering with release_mt
-* Thu Dec 12 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: adding rtx cuda, point update to 3.12.2
-* Sat Oct 05 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 1: initial release; no longer cxx
+* Wed Jan 01 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: clone 2020/01/01
+
