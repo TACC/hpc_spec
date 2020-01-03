@@ -56,6 +56,10 @@
     %define mpi_label 2_1
     %define mpi_module_version 2.1
   %endif
+  %if "%{mpiV}" == "2_3"
+    %define mpi_label 2_3
+    %define mpi_module_version 2.3.1
+  %endif
 
   %define mpi_fam     mvapich2-largemem
   %define mpi_fam_ver mvapich2-largemem_%{mpi_label}

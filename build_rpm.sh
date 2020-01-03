@@ -55,7 +55,7 @@ python="none"
 pythonV="%{nil}"
 build=b
 
-TEMP=`getopt -o hb:fdlg:i:j:p:m:o:v --long help,build:,debug,log,gcc:,intel:,pgi:,impi:,,mvapich2:,openmpi:,cmpich:,python:,force,show,version \
+TEMP=`getopt -o hb:fdlg:c:i:j:p:m:o:v --long help,build:,debug,log,gcc:,intel:,pgi:,impi:,,mvapich2:,openmpi:,cmpich:,python:,force,show,version \
      -n 'build' -- "$@"`
 if [ $? != 0 ] ; then
   echo "For usage of $0 do: $0 --help"

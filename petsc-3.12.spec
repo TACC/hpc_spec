@@ -28,7 +28,7 @@ Summary: PETSc rpm build script
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 12
-%define micro_version 0
+%define micro_version 2
 
 %define pkg_version %{major_version}.%{minor_version}
 %define pkg_full_version %{major_version}.%{minor_version}.%{micro_version}
@@ -52,7 +52,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   5
+Release:   2
 License:   GPL
 Group:     Development/Tools
 URL:       http://www.mcs.anl.gov/petsc/
@@ -529,12 +529,12 @@ export FPIC_OPTIONS=
 %if "%{is_impi}" == "1"
   export PETSC_MPICH_HOME="${MPICH_HOME}/intel64"
 #  export mpi="--with-cc=/opt/apps/intel15/impi/5.0.2.044/intel64/bin/mpicc
-  export PETSC_MPICH_HOME=/opt/cray/mpt/7.3.0/gni/mpich-intel/14.0
+#  export PETSC_MPICH_HOME=/opt/cray/mpt/7.3.0/gni/mpich-intel/14.0
 %else
   export PETSC_MPICH_HOME="${MPICH_HOME}"
 %endif
 
-export mpi="--with-mpi-compilers=1 --with-mpi-dir=${PETSC_MPICH_HOME} --with-mpiexec=ibrun"
+export mpi="--with-mpi-compilers=1 --with-mpi-dir=${PETSC_MPICH_HOME}" # --with-mpiexec=ibrun"
 echo "Finding mpi in ${PETSC_MPICH_HOME}"
 
 case "${ext}" in
@@ -754,5 +754,5 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Mon Oct 21 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 1: initial release
+* Thu Dec 26 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: point update to 3.12.2

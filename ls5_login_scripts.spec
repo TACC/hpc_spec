@@ -3,7 +3,7 @@
 
 Summary:   Standard LS5 TACC Login scripts
 Name:      %{name_prefix}-%{base_name}
-Version:   1.4
+Version:   1.8
 Release:   1
 License:   Proprietary
 Group:     System Environment/Base
@@ -63,34 +63,47 @@ PROFILE_D_FILES="
                profile.d/zzz91_tracker.csh
                profile.d/zzz91_tracker.sh
 "
+SCRIPT_FILES="
+               scripts/archive
+               scripts/check_changedir.pl
+               scripts/fsMounted
+               scripts/taccinfo
+               scripts/workdir
+"
 
-find taccinfo fsMounted workdir archive | cpio -pduv --owner=build: $RPM_BUILD_ROOT/etc/tacc
 
+find $SCRIPT_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/
+mv $RPM_BUILD_ROOT/scripts/* $RPM_BUILD_ROOT/etc/tacc
+rmdir $RPM_BUILD_ROOT/scripts
 
 find ./profile.d $PROFILE_D_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT%{PROFILE_D_PATH}/..
 find ./.version                   | cpio -pduv --owner=build: $RPM_BUILD_ROOT%{PROFILE_D_PATH}/
 
 SHELL_STARTUP_FILES="
-         bash.bashrc
-         bash_logout
-         profile
-         tacc_functions
-         csh.login
-         csh.logout
-         csh.cshrc
+               startup/bash.bashrc
+               startup/bash_logout
+               startup/csh.login
+               startup/csh.logout
+               startup/csh.cshrc
+               startup/profile
+               startup/tacc_functions
 "
 
-find $SHELL_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/etc/tacc
+find $SHELL_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/
+mv $RPM_BUILD_ROOT/startup/* $RPM_BUILD_ROOT/etc/tacc
+rmdir $RPM_BUILD_ROOT/startup
 
 ZSH_STARTUP_FILES="
-         zsh/zlogin
-         zsh/zlogout
-         zsh/zprofile
-         zsh/zshenv
-         zsh/zshrc
+               startup/zsh/zlogin
+               startup/zsh/zlogout
+               startup/zsh/zprofile
+               startup/zsh/zshenv
+               startup/zsh/zshrc
 "
 
-find $ZSH_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/etc/tacc
+find $ZSH_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/
+mv $RPM_BUILD_ROOT/startup/zsh/* $RPM_BUILD_ROOT/etc/tacc/zsh
+rm -rf $RPM_BUILD_ROOT/startup
 
 %files -n %{name}-compute
 %defattr(755,root,root,)
@@ -117,6 +130,7 @@ find $ZSH_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/etc/tacc
 /etc/tacc/csh.logout
 /etc/tacc/tacc_functions
 /etc/tacc/archive
+/etc/tacc/check_changedir.pl
 /etc/tacc/fsMounted
 /etc/tacc/workdir
 /etc/tacc/zsh/zlogin
@@ -150,6 +164,7 @@ find $ZSH_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/etc/tacc
 /etc/tacc/csh.logout
 /etc/tacc/tacc_functions
 /etc/tacc/archive
+/etc/tacc/check_changedir.pl
 /etc/tacc/fsMounted
 /etc/tacc/taccinfo
 /etc/tacc/workdir
