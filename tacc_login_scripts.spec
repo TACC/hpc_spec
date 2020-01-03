@@ -63,6 +63,14 @@ PROFILE_D_FILES="
                profile.d/z90_login_modules.sh
 "
 
+SCRIPT_FILES="
+               scripts/archive
+               scripts/check_changedir.pl
+               scripts/fsMounted
+               scripts/available_fs
+               scripts/workdir
+"
+
 %install
 
 rm -rf $RPM_BUILD_ROOT/usr/local/bin       	   $RPM_BUILD_ROOT/usr/local/etc/
