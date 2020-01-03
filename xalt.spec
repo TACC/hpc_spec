@@ -2,7 +2,7 @@
 
 Summary: XALT
 Name: xalt
-Version: 2.7.3
+Version: 2.7.21
 Release: 1
 License: LGPLv2
 Group: System Environment/Base
@@ -51,7 +51,7 @@ TRANSMISSION=syslog
 SYSHOST_CONF=nth_name:2
 if [[ $SYSHOST = "ls5" ]]; then
   TRANSMISSION=file
-  CONF_OPTS="--with-xaltFilePrefix=/scratch/projects/XALT"
+  CONF_OPTS="--with-xaltFilePrefix=/scratch/projects/XALT --with-etcDir=/home1/moduleData/"
   SYSHOST_CONF=hardcode:ls5
 fi
 
