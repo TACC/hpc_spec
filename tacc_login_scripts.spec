@@ -3,8 +3,8 @@
 
 Summary:   Standard TACC Login scripts for our friendly Linux Clusters.
 Name:      tacc_login_scripts
-Version:   2.2.8
-Release:   1
+Version:   2.2.9
+Release:   2
 License:   Proprietary
 Group:     System Environment/Base
 Source0:   %{name}-%{version}.tar.gz
@@ -36,9 +36,7 @@ These are the scripts for compute nodes
 
 %build
 
-rm -rf   $RPM_BUILD_ROOT%{PROFILE_D_PATH}  $RPM_BUILD_ROOT/etc/tacc 
-mkdir -p $RPM_BUILD_ROOT%{PROFILE_D_PATH}  $RPM_BUILD_ROOT/etc/tacc/zsh
-
+%install
 
 PROFILE_D_FILES="
                profile.d/00_shell_startup.CSH
@@ -70,8 +68,8 @@ SCRIPT_FILES="
                scripts/available_fs
                scripts/workdir
 "
-
-%install
+rm -rf   $RPM_BUILD_ROOT%{PROFILE_D_PATH}  $RPM_BUILD_ROOT/etc/tacc 
+mkdir -p $RPM_BUILD_ROOT%{PROFILE_D_PATH}  $RPM_BUILD_ROOT/etc/tacc/zsh
 
 rm -rf $RPM_BUILD_ROOT/usr/local/bin       	   $RPM_BUILD_ROOT/usr/local/etc/
 mkdir -p                                   	   $RPM_BUILD_ROOT/usr/local/bin
@@ -109,7 +107,7 @@ SHELL_STARTUP_FILES="
 "
 
 find $SHELL_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/
-mv $RPM_BUILD_ROOT/startup/* $RPM_BUILD_ROOT/etc/tacc
+mv $RPM_BUILD_ROOT/startup/* $RPM_BUILD_ROOT/etc/tacc/
 rmdir $RPM_BUILD_ROOT/startup
 
 ZSH_STARTUP_FILES="
@@ -120,7 +118,7 @@ ZSH_STARTUP_FILES="
          startup/zsh/zshrc
 "
 
-find $ZSH_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/etc/tacc
+find $ZSH_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/
 mv     $RPM_BUILD_ROOT/startup/zsh/*                $RPM_BUILD_ROOT/etc/tacc/zsh
 rm -rf $RPM_BUILD_ROOT/startup
 
