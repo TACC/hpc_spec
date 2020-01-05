@@ -144,7 +144,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
 
-export ncores=$(grep -c '^processor' /proc/cpuinfo)
+ncores=$(grep -c '^processor' /proc/cpuinfo)
+ntasks=$(expr $ncores \* 2 / 3)
 export git=`pwd`
 export git_install=%{INSTALL_DIR}
 export git_version=%{pkg_version}
@@ -160,8 +161,8 @@ cd git-${git_version}
 ${git}/git-${git_version}/configure \
 --prefix=${git_install}
 
-make all -j ${ncores}
-make install -j ${ncores}
+make all     -j ${ntasks}
+make install -j ${ntasks}
 
 if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
