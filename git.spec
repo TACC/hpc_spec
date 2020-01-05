@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2
+Release:   1
 License:   GPLv2
 Group:     System Environment/Base
 URL:       https://git-scm.com
