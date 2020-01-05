@@ -25,7 +25,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 # Create some macros (spec file variables)
 %define major_version 2
-%define minor_version 19
+%define minor_version 24
 %define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
@@ -54,8 +54,6 @@ Group:     System Environment/Base
 URL:       https://git-scm.com
 Packager:  TACC - cproctor@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
-#PreReq:      tacc-openssl
-#BuildPrereq: tacc-openssl
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -146,32 +144,24 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
 
-export ncores=48
+export ncores=$(grep -c '^processor' /proc/cpuinfo)
 export git=`pwd`
 export git_install=%{INSTALL_DIR}
 export git_version=%{pkg_version}
 export CC=gcc
-#export PATH=/opt/curl/7.20.1/usr/bin:/opt/openssl/1.0.2o/usr/bin:$PATH
-#export LD_LIBRARY_PATH=/opt/curl/7.20.1/usr/lib64:/opt/openssl/1.0.2o/usr/lib:$LD_LIBRARY_PATH
-#export   CFLAGS="-I/opt/openssl/1.0.2o/usr/include -I/opt/openssl/1.0.2o/usr/include/openssl -mtune=generic"
-#export CPPFLAGS="-I/opt/openssl/1.0.2o/usr/include -I/opt/openssl/1.0.2o/usr/include/openssl"
-#export LDFLAGS="-Wl,-v -Wl,-rpath=/opt/openssl/1.0.2o/usr/lib -Wl,-rpath=/opt/curl/7.20.1/usr/lib64 -L/opt/openssl/1.0.2o/usr/lib -L/opt/curl/7.20.1/usr/lib64"
-#export LDFLAGS="-static -fPIC /opt/openssl/1.0.2o/usr/lib/libcrypto.a /opt/openssl/1.0.2o/usr/lib/libssl.a"
-#export LIBS="-lssl -lcrypto"
+export CFLAGS="-mtune=generic"
+export LDFLAGS="-mtune=generic"
 
 wget https://www.kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
 tar xvfz git-${git_version}.tar.gz
 
 cd git-${git_version}
 
-${git}/git-${git_version}/configure    \
+${git}/git-${git_version}/configure \
 --prefix=${git_install}
 
-#--with-openssl=/opt/openssl/1.0.2o/usr \
-#--with-curl=/opt/curl/7.20.1/usr
-
-make VERBOSE=1 all -j ${ncores}
-make VERBOSE=1 install -j ${ncores}
+make all -j ${ncores}
+make install -j ${ncores}
 
 if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
