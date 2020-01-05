@@ -48,7 +48,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3%{?dist}
+Release:   1%{?dist}
 License:   GPLv2
 Group:     System Environment/Base
 URL:       https://git-scm.com
@@ -144,7 +144,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
 
-export ncores=68
+export ncores=$(grep -c '^processor' /proc/cpuinfo)
 export git=`pwd`
 export git_install=%{INSTALL_DIR}
 export git_version=%{pkg_version}
