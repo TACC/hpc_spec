@@ -219,7 +219,7 @@ try_load("intel")
 try_load("cray_mpich")
 try_load("git")
 try_load("autotools")
-try_load("python2")
+try_load("python3")
 try_load("cmake")
 try_load("xalt")
 
