@@ -2,7 +2,7 @@
 
 Summary: XALT
 Name: xalt
-Version: 2.7.21
+Version: 2.7.28
 Release: 1
 License: LGPLv2
 Group: System Environment/Base
@@ -65,6 +65,8 @@ CXX=/usr/bin/g++ CC=/usr/bin/gcc ./configure CXX=/usr/bin/g++ CC=/usr/bin/gcc --
    --with-config=Config/TACC_config.py --with-transmission=$TRANSMISSION --with-MySQL=no                                          \
    --with-etcDir=$ETC_DIR $CONF_OPTS
 
+touch Makefile.in
+touch makefile
 make CXX=/usr/bin/g++ CC=/usr/bin/gcc DESTDIR=$RPM_BUILD_ROOT install Inst_TACC
 rm -f $RPM_BUILD_ROOT/%{INSTALL_DIR}/sbin/xalt_db.conf
 rm $RPM_BUILD_ROOT/%{INSTALL_DIR}/../%{name}

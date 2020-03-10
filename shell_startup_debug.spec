@@ -4,12 +4,12 @@
 
 Summary: Shell Startup tracing tool 
 Name: %{name_prefix}-%{base_name}
-Version: 1.9
+Version: 2.4
 Release: 1
 License:   LGPL
 Group: System Environment/Base
 URL: www.tacc.utexas.edu
-Source0: %{base_name}-%{version}.tar.gz
+Source0: %{base_name}-%{version}.tar.bz2
 BuildRoot: %{_tmppath}/%{base_name}-%{version}-%{release}-root
 %include rpm-dir.inc
 
