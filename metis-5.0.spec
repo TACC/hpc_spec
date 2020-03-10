@@ -13,7 +13,7 @@ Summary: Local METIS binary install
 
 Name: %{name_prefix}-%{base_name}
 Version: 5.0.2
-Release: 2
+Release: 3
 License: University of Minnesota
 Vendor: George Karypis
 Group: System Environment/Base
@@ -120,7 +120,7 @@ setenv(         "TACC_METIS_INC",        "%{INSTALL_DIR}/include")
 -- prepend path
 --
 
-prepend_path(   "PATH",                  "%{INSTALL_DIR}")
+prepend_path(   "PATH",                  "%{INSTALL_DIR}/bin")
 prepend_path(   "LD_LIBRARY_PATH",       "%{INSTALL_DIR}/lib")
 EOF
 

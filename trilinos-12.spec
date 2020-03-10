@@ -6,7 +6,7 @@ Summary: Trilinos install
 
 # Create some macros (spec file variables)
 %define major_version 12
-%define minor_version 14
+%define minor_version 18
 %define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
@@ -14,7 +14,7 @@ Summary: Trilinos install
 %include rpm-dir.inc
 %include compiler-defines.inc
 %include mpi-defines.inc
-%include python-defines.inc
+#### %include python-defines.inc
 
 ########################################
 ### Construct name based on includes ###
@@ -32,11 +32,11 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 9%{?dist}
+Release: 11%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tar.gz
-URL: http://trilinos.sandia.gov/
+URL: https://github.com/trilinos/Trilinos
 Vendor: Sandia National Labs
 Packager: TACC -- eijkhout@tacc.utexas.edu
 
@@ -106,7 +106,7 @@ varies with each package.
 %include mpi-defines.inc
 %include compiler-load.inc
 %include mpi-load.inc
-%include python-load.inc
+#### %include python-load.inc
 
 #
 # Set Up Installation Directory and tmp file system
@@ -131,6 +131,7 @@ export BOOST_ROOT=${TACC_BOOST_DIR}
 %else
   export MKLFLAG="-mkl"
 %endif
+export MKLLIBS=mkl_intel_lp64\;mkl_sequential\;mkl_core\;pthread
 
 export COPTFLAGS="-g %{TACC_OPT} -O2"
   export HAS_HDF5=ON
@@ -148,15 +149,24 @@ if [ "${HAS_NETCDF}" = "ON" ] ; then
   module load parallel-netcdf
 fi
 
-# if [ "${HAS_PYTHON}" = "ON" ] ; then
-# %if "%{comp_fam}" == "gcc"
-#   module load python2/2.7.15
-# %else
-#   module load python2/2.7.16
-# %endif
-# fi
+export HAS_MUMPS=OFF
+# https://github.com/trilinos/Trilinos/issues/6339
+if [ "${HAS_MUMPS}" = "ON" ] ; then
+  module load mumps 
+  export MUMPSLIBS="-L${TACC_MUMPS_LIB} -ldmumps -lmumps_common -lpord -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lmkl_blacs_intelmpi_lp64 -lpthread -lifcore"
+  export MUMPSLIBNAMES=dmumps\;mumps_common\;pord\;mkl_scalapack_lp64\;mkl_intel_lp64\;mkl_intel_thread\;mkl_core\;iomp5\;mkl_blacs_intelmpi_lp64\;pthread\;ifcore
+  export PARMETISLIBS=${TACC_PARMETIS_LIB}/libptscotchparmetis.a\;${TACC_PARMETIS_LIB}/libparmetis.so
+  export MKLLIBS=${MKLLIBS}\;libmkl_scalapack_lp64\;libmkl_blacs_intelmpi_lp64
+else
+  export MUMPSLIBS=NO_MUMPS_LOADED
+  export PARMETISLIBS=NO_PARMETIS_LOADED
+fi
 
 export HAS_PYTHON=OFF
+export removed_from_cmake="\
+  -D Trilinos_EXTRA_LINK_FLAGS=${PYTHON_LIB_SO} \
+  -D Trilinos_EXTRA_LD_FLAGS=${PYTHON_LIB_SO} \
+  "
 export HAS_SUPERLU=OFF
 
 if [ "${HAS_SUPERLU}" = "ON" ] ; then
@@ -188,11 +198,13 @@ export TRILINOS_LOCATION=%{_topdir}/BUILD/
 
 export SOURCEVERSION=%{version}
 export VERSION=%{version}
-%if "%{python_major_version}" == "3"
-  export PYTHONM=m
-%endif
-export PYTHON_LIB_SO=${TACC_PYTHON_LIB}/libpython%{python_major_version}.%{python_minor_version}${PYTHONM}.so
-%include %{SPEC_DIR}/victor.trilinos.cmake
+# %if "%{python_major_version}" == "3"
+#   export PYTHON_LIB_SO=${TACC_PYTHON3_LIB}/libpython%{python_major_version}.%{python_minor_version}m.so
+# %else
+#   export PYTHON_LIB_SO=${TACC_PYTHON2_LIB}/libpython%{python_major_version}.%{python_minor_version}.so
+# %endif
+
+%include %{SPEC_DIR}/victor_scripts/trilinos.cmake
 echo ${trilinos_extra_libs}
 
 ####
@@ -216,22 +228,22 @@ make install
 
 ## TACC_FAMILY_PYTHON_VERSION is 2.7.16 and such
 
-( cd %{INSTALL_DIR} && \
-  find . -name \*.cmake \
-         -exec sed -i -e '/STKDoc_testsConfig.cmake/d' \
-                      -e '/COMPILER_FLAGS/s/mkl/mkl -L\${TACC_PYTHON_LIB} -lpython${TACC_PYTHON_VER}/' \
-                      -e '/EXTRA_LD_FLAGS/s?""?"\${TACC_PYTHON_LIB}/libpython${TACC_PYTHON_VER}.so"?' \
-                      -e '/SET.*TPL_LIBRARIES/s?""?"\${TACC_PYTHON_LIB}/libpython${TACC_PYTHON_VER}.so"?' \
-                      -e '/SET.*TPL_LIBRARIES/s?so"?so;\${TACC_PYTHON_LIB}/libpython${TACC_PYTHON_VER}.so"?' \
-                   {} \; \
-         -print \
-)
+####
+#### this is hard to get to work.
+#### let's build without python for a while
+####
+# ( cd %{INSTALL_DIR} && \
+#   find . -name \*.cmake \
+#          -exec sed -i -e '/STKDoc_testsConfig.cmake/d' \
+#                       -e '/COMPILER_FLAGS/s/mkl/mkl -L\${TACC_PYTHON_LIB} -lpython${TACC_PYTHON_VER}/' \
+#                       -e '/EXTRA_LD_FLAGS/s?""?"\${TACC_PYTHON_LIB}/libpython${TACC_PYTHON_VER}.so"?' \
+#                       -e '/SET.*TPL_LIBRARIES/s?""?"\${TACC_PYTHON_LIB}/libpython${TACC_PYTHON_VER}.so"?' \
+#                       -e '/SET.*TPL_LIBRARIES/s?so"?so;\${TACC_PYTHON_LIB}/libpython${TACC_PYTHON_VER}.so"?' \
+#                    {} \; \
+#          -print \
+# )
+
 ## SET(Zoltan_TPL_LIBRARIES "")
-export nosed="\
-                      -e '/EXTRA_LD_FLAGS/s?""?"/opt/apps/intel17/python/2.7.16/lib/libpython2.7.so"?' \
-    "
-#SET(Trilinos_CXX_COMPILER_FLAGS " -mkl -DMPICH_SKIP_MPICXX -std=c++11 -O3 -DNDEBUG")
-#SET(Trilinos_C_COMPILER_FLAGS " -mkl -O3 -DNDEBUG")
 
 echo "are we still in /tmp/trilinos-build?"
 pwd
@@ -255,7 +267,7 @@ whatis( "Name: Trilinos" )
 whatis( "Version: %{version}${versionextra}${dynamicextra}" )
 whatis( "Version-notes: external packages installed: ${packages}" )
 whatis( "Category: library, mathematics" )
-whatis( "URL: https://trilinos.github.io" )
+whatis( "URL: https://github.com/trilinos/Trilinos" )
 whatis( "Description: Sandia computational engineering package" )
 
 local             trilinos_dir =     "%{INSTALL_DIR}/"
@@ -304,6 +316,10 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Sun Nov 24 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 11: adding mumps, update to 12.18.1
+* Thu Nov 14 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 10: without python
 * Mon Sep 16 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 9: making python handling more portable
 * Sun Jun 09 2019 eijkhout <eijkhout@tacc.utexas.edu>

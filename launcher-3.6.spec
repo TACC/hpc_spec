@@ -1,36 +1,30 @@
-#
+# $Id: launcher.spec,v 3.6 2020/02/10 
 # Si Liu
-# 2020-02-01
-#
 
-# Give the package a base name
-%define pkg_base_name sanitytool
-%define MODULE_VAR    SANITYTOOL
+# This launcher is not using the name convention
+# need to install the module before the package!!!!!!!!!!!
+
+%define pkg_base_name launcher
+%define MODULE_VAR LAUNCHER
 
 # Create some macros (spec file variables)
-%define major_version 2
-%define minor_version 0
+%define major_version 3
+%define minor_version 6
+%define micro_version 0
+
 %define pkg_version %{major_version}.%{minor_version}
 
-Summary: SanityTool
-Release: 1%{?dist}
-License: TACC
-Vendor: TACC
-Group: TACC-HPC-TOOL
-Source: %{name}-%{version}.tar.gz
-Packager:  TACC - siliu@tacc.utexas.edu
+Summary: Local TACC parametric-launcher install.
 
-### Toggle On/Off ###
-%include rpm-dir.inc                  
-#%include compiler-defines.inc
-#%include mpi-defines.inc
-########################################
-### Construct name based on includes ###
-########################################
+Release: 1%{?dist}
+Vendor: TACC
+License: none
+Group: Utility
+Source: %{pkg_base_name}-%{pkg_version}.tar.gz
+Packager: siliu@tacc.utexas.edu
+
+%include rpm-dir.inc
 %include name-defines-noreloc.inc
-########################################
-############ Do Not Remove #############
-########################################
 
 ############ Do Not Change #############
 Name:      %{pkg_name}
@@ -38,41 +32,42 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
+%define INSTALL_DIR  %{INSTALL_PREFIX}/%{pkg_base_name}/%{pkg_base_name}-%{pkg_version}
+
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
 
-%define APPS /home1/apps/
-%define MODULES modulefiles
-
 %package %{PACKAGE}
-Summary: The package RPM
-Group: TACC-HPC-TOOL
+Summary: Launcher package RPM
+Group: Applications
 %description package
-SanityTool 2.0 by Si Liu and Robert McLay
-Texas Advanced Computing Center
+TACC Parametric Job Launcher is a simple utility for submitting multiple serial applications simultaneously.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
-Group: Lmod/Modulefiles
+Group: Modulefiles
 %description modulefile
+TACC Parametric Job Launcher is a simple utility for submitting multiple serial applications simultaneously.
 
 %description
-
-
+TACC Parametric Job Launcher is a simple utility for submitting multiple serial applications simultaneously.
 
 #---------------------------------------
 %prep
-#---------------------------------------
+#- --------------------------------------
 
 #------------------------
 %if %{?BUILD_PACKAGE}
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+#%setup -n nwchem-%{pkg_version}
+%setup -n %{pkg_base_name}-%{pkg_version}
 #-----------------------
 %endif # BUILD_PACKAGE |
-#-----------------------
+#----------------------
 
 #---------------------------
 %if %{?BUILD_MODULEFILE}
@@ -84,10 +79,10 @@ Group: Lmod/Modulefiles
 #--------------------------
 
 
+
 #---------------------------------------
 %build
 #---------------------------------------
-
 
 #---------------------------------------
 %install
@@ -102,14 +97,13 @@ module purge
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
+
 #------------------------
 %if %{?BUILD_PACKAGE}
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-##  mount -t tmpfs tmpfs %{INSTALL_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -121,11 +115,14 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-  
+
+# Copy everything from tarball over to the installation directory
+cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+chmod -Rf u+rwX,g+rwX,o=rX  $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
-
 
 
 
@@ -134,7 +131,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -142,31 +139,40 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
+
 # Write out the modulefile associated with the application
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 
-help(
-[[
-The module loads TACC SanityTool for you.
-Version: 2.0
+local help_message=[[
+The %{name} module file defines the environment variable:
+$%{MODULE_VAR}_DIR for the location of the TACC Parametric 
+Job Launcher which is a simple utility for submitting multiple
+serial applications simultaneously.
 
-You can run the command "sanitycheck" to examine your current environment settings on Stampede2.
-If you encounter any problems, please send an email to siliu@tacc.utexas.edu with your user id and error messages.
-Please also contact siliu@tacc.utexas.edu, if you have any other concerns or require additional tests.
+For more information on using the Launcher, please consult
+the README.launcher file located in $%{MODULE_VAR}_DIR
 
-
+Version %{version}
 ]]
-)
 
-whatis("Name: SanityTool")
-whatis("Version: 2.0")
-whatis("Category: TACC HPC Tools")
+help(help_message,"\n")
 
-local sanitypath = "/home1/apps/sanitytool/2.0"
-append_path("PATH",sanitypath)
-setenv("TACC_SANITYTOOL_DIR", "/home1/apps/sanitytool/2.0")
+whatis ("Name: TACC Parametric Job Launcher")
+whatis ("Version: %{version}")
+whatis ("Category: utility, runtime support")
+whatis ("Keywords: System, Utility, Tools")
+whatis ("Description: Utility for starting parametric job sweeps")
+
+local launcher_dir="/opt/apps/launcher/launcher-3.6"
+local launcher_plugin_dir="/opt/apps/launcher/launcher-3.6/plugins"
+
+setenv("TACC_LAUNCHER_DIR", launcher_dir)
+setenv("LAUNCHER_DIR", launcher_dir)
+setenv("LAUNCHER_PLUGIN_DIR", launcher_plugin_dir)
+setenv("LAUNCHER_RMI", "SLURM")
+
+family("launcher")
 
 EOF
 
@@ -179,14 +185,14 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 set     ModulesVersion      "%{version}"
 EOF
 
-  
-
 # Check the syntax of the generated lua modulefile
 %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
+
+
 
 
 #------------------------
@@ -203,7 +209,7 @@ EOF
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile 
+%files modulefile
 #---------------------------
 
   %defattr(-,root,install,)
@@ -214,25 +220,46 @@ EOF
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
+#------------------------
+%if %{?BUILD_PACKAGE}
+%files package
+#------------------------
+
+  %defattr(-,root,install,)
+  # RPM package contains files within these directories
+  %{INSTALL_DIR}
+
+#-----------------------
+%endif # BUILD_PACKAGE |
+#-----------------------
+#---------------------------
+%if %{?BUILD_MODULEFILE}
+%files modulefile
+#---------------------------
+
+  %defattr(-,root,install,)
+  # RPM modulefile contains files within these directories
+  %{MODULE_DIR}
+
+#--------------------------
+%endif # BUILD_MODULEFILE |
+#--------------------------
 
 ########################################
 ## Fix Modulefile During Post Install ##
 ########################################
 %post %{PACKAGE}
 export PACKAGE_POST=1
-%include post-defines.inc
+%include post-defines-siliu.inc
 %post %{MODULEFILE}
 export MODULEFILE_POST=1
-%include post-defines.inc
+%include post-defines-siliu.inc
 %preun %{PACKAGE}
 export PACKAGE_PREUN=1
-%include post-defines.inc
+%include post-defines-siliu.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
 
-#---------------------------------------
-%clean
-#---------------------------------------
+##%clean
 rm -rf $RPM_BUILD_ROOT
-

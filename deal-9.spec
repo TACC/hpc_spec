@@ -6,13 +6,14 @@ Summary: Dealii install
 
 # Create some macros (spec file variables)
 %define major_version 9
-%define minor_version 0
-%define micro_version 0
+%define minor_version 1
+%define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
-%define dealiipetscversion 3.9
-%define dealiitrilinosversion git20180209
+%define dealiipetscversion 3.11
+%define dealiitrilinosversion 12.18.1
+# git20180209
 
 %include rpm-dir.inc
 %include compiler-defines.inc
@@ -34,7 +35,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 2%{?dist}
+Release: 5%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tar.gz
@@ -114,7 +115,9 @@ mkdir -p %{INSTALL_DIR}
 mount -t tmpfs tmpfs %{INSTALL_DIR}
 
 module list
+module avail boost
 for m in boost cmake \
+    gsl \
     metis p4est \
     petsc/%{dealiipetscversion} slepc/%{dealiipetscversion} \
     trilinos/%{dealiitrilinosversion} \
@@ -125,9 +128,6 @@ done
 %if "%{comp_fam}" == "intel"
   module load mumps netcdf phdf5
 %endif
-
-ls $TACC_P4EST_DIR
-ls $TACC_TRILINOS_DIR
 
 %if "%{comp_fam}" == "gcc"
   module load mkl
@@ -152,27 +152,39 @@ rm -f CMakeCache.txt
 echo "Installing deal with Petsc: ${PETSC_DIR}/${PETSC_ARCH}"
 
 %if "%{comp_fam}" == "gcc"
-echo "Figure out TBB directory"
-exit 1
-export TBBROOT=${TACC_INTEL_DIR}/tbb
+#echo "Figure out TBB directory"
+#exit 1
+#export TBBROOT=${TACC_INTEL_DIR}/tbb
+export TBBROOT=/opt/intel/compilers_and_libraries_2018.2.199/linux/
 %endif
 export BASIC_FLAGS="-march=native"
-export BASIC_FLAGS="-std=c++14 -g %{TACC_OPT} -I${TBBROOT}/include"
+export BASIC_FLAGS="-g %{TACC_OPT} -I${TBBROOT}/include"
+# disabled architecture optimizations becuase of internal compiler error
+export BASIC_FLAGS="-g -I${TBBROOT}/include"
 
 ##  CC=`which mpicc` CXX=`which mpicxx` F90=`which mpif90`
+
+## https://www.dealii.org/developer/users/cmake.html
 
   cmake -VV \
     -DCMAKE_INSTALL_PREFIX=%{INSTALL_DIR} \
     \
     -DDEAL_II_WITH_CXX11=ON \
+    -DDEAL_II_WITH_CXX14=ON \
     -DDEAL_II_CXX_FLAGS_DEBUG="${BASIC_FLAGS} -O0" \
     -DDEAL_II_CXX_FLAGS_RELEASE="${BASIC_FLAGS} -O2" \
     \
     -DDEAL_II_WITH_MPI=ON \
-        -DVLE_DISABLE_MPI_FOUND=TRUE \
     -DMPICH_IGNORE_CXX_SEEK=ON \
     -DDEAL_II_COMPONENT_MESH_CONVERTER=ON \
+    \
+    -DDEAL_II_WITH_BOOST=ON \
     -DBOOST_DIR=${TACC_BOOST_DIR} \
+    -DDEAL_II_WITH_GSL=ON \
+      -DGSL_INCLUDE_DIR=${TACC_GSL_INC:-NO_GSL_INC} \
+      -DGSL_LIBRARY_DIR=${TACC_GSL_LIB:-NO_GSL_LIB} \
+      -DGSL_LIBRARY=${TACC_GSL_LIB:-NO_GSL_LIB}/libgsl.so\;${TACC_GSL_LIB:-NO_GSL_LIB}/libgslcblas.so \
+    \
     -DHDF5_DIR=${TACC_HDF5_DIR} \
     ` if [ ${TACC_FAMILY_COMPILER} = "intel" ] ; then echo " \
         -DMUMPS_DIR=${TACC_MUMPS_DIR} \
@@ -220,7 +232,12 @@ cp -r examples/step* %{INSTALL_DIR}/examples
 ## start of module file section
 ##
 
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
+#
+# currently we have only one variant
+#
+export modulefilename=%{version}
+
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua << EOF
 help( [[
 The dealii module defines the following environment variables:
 TACC_DEALII_DIR, TACC_DEALII_BIN, and
@@ -251,6 +268,9 @@ setenv("TACC_DEALII_DIR",        dealii_dir)
 setenv("TACC_DEALII_BIN",        pathJoin(dealii_dir,dealii_arch,"bin") )
 setenv("TACC_DEALII_INC",        pathJoin(dealii_dir,dealii_arch,"include") )
 setenv("TACC_DEALII_LIB",        pathJoin(dealii_dir,dealii_arch,"lib") )
+
+depends_on("boost")
+
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
@@ -284,6 +304,13 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Tue Dec 10 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 5: module version fix, using trilinos 12.18.1
+  disabled architecture optimizations becuase of internal compiler error
+* Sun Dec 01 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 4: upgrade to 9.1.1, adding GSL
+* Wed Nov 13 2019 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: trying trilinos 12.14.1
 * Fri Aug 03 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: missing TACC_DEALII_INC,
 * Fri Jun 29 2018 eijkhout <eijkhout@tacc.utexas.edu>

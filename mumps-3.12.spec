@@ -1,5 +1,7 @@
-# PARMETIS specfile based on the petsc installation
-# Victor Eijkhout 2019
+# MUMPS specfile
+# Victor Eijkhout 2018
+# version 3.12 corresponds to the petsc version
+# we inherit from
 #
 # based on Bar.spec
 # W. Cyrus Proctor
@@ -21,16 +23,16 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: Parmetis, piggybacking on the PETSc install
+Summary: Mumps, piggybacking on the PETSc install
 
 # Give the package a base name
-%define pkg_base_name parmetis_petsc
-%define MODULE_VAR    PARMETISPETSC
+%define pkg_base_name mumps
+%define MODULE_VAR    MUMPS
 
 # Create some macros (spec file variables)
-%define major_version 4
-%define minor_version 0
-%define micro_version 3
+%define major_version 5
+%define minor_version 2
+%define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}
 %define petscversion 3.12
@@ -58,10 +60,10 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4%{?dist}
+Release:   1%{?dist}
 License:   BSD-like
 Group:     Development/Numerical-Libraries
-URL:       http://glaros.dtc.umn.edu/gkhome/metis/parmetis/overview
+URL:       http://graal.ens-lyon.fr/MUMPS/
 Packager:  TACC - eijkhout@tacc.utexas.edu
 #Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
@@ -77,13 +79,13 @@ Group: Development/Tools
 This is the long description for the package RPM...
 
 %package %{MODULEFILE}
-Summary: Parmetis local binary install
+Summary: Mumps local binary install
 Group: System Environment/Base
 %description modulefile
 This is the long description for the modulefile RPM...
 
 %description
-Parmetis package of graph partitioners
+Mumps is a solver library for distributed sparse linear system.
 
 #---------------------------------------
 %prep
@@ -134,7 +136,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 ##
 ## configure install loop
 ##
-export dynamic="debug complex complexdebug"
+export dynamic="debug complex complexdebug  "
 
 for ext in \
   "" \
@@ -165,36 +167,34 @@ fi
 echo 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua << EOF
 help( [[
-The Parmetis module defines the following environment variables:
-TACC_PARMETIS_INC and TACC_PARMETIS_LIB for the location
-of the Parmetis include files and libraries.
+The Mumps module defines the following environment variables:
+TACC_MUMPS_INC and TACC_MUMPS_LIB for the location
+of the Mumps include files and libraries.
 
 Version %{version}
 ]] )
 
-whatis( "Name: Parmetis" )
+whatis( "Name: Mumps" )
 whatis( "Version: %{version}" )
 whatis( "Category: library, mathematics" )
-whatis( "URL: http://graal.ens-lyon.fr/PARMETIS/" )
+whatis( "URL: http://graal.ens-lyon.fr/MUMPS/" )
 whatis( "Description: Numerical library for sparse solvers" )
 
-local             parmetis_arch =    "${architecture}"
-local             parmetis_dir  =     "${TACC_PETSC_DIR}"
-local             parmetis_inc  = pathJoin(parmetis_dir,parmetis_arch,"include")
-local             parmetis_lib  = pathJoin(parmetis_dir,parmetis_arch,"lib")
+local             mumps_arch =    "${architecture}"
+local             mumps_dir  =     "${TACC_PETSC_DIR}"
+local             mumps_inc  = pathJoin(mumps_dir,mumps_arch,"include")
+local             mumps_lib  = pathJoin(mumps_dir,mumps_arch,"lib")
 
-prepend_path("LD_LIBRARY_PATH", parmetis_lib)
+prepend_path("LD_LIBRARY_PATH", mumps_lib)
 
-setenv("TACC_PARMETIS_INC",        parmetis_inc )
-setenv("TACC_PARMETIS_LIB",        parmetis_lib)
-
-conflict("pmetis")
+setenv("TACC_MUMPS_INC",        mumps_inc )
+setenv("TACC_MUMPS_LIB",        mumps_lib)
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
 #%Module1.0#################################################
 ##
-## version file for Parmetis %version
+## version file for Mumps %version
 ##
 
 set     ModulesVersion      "${modulefilename}"
@@ -253,10 +253,4 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 * Mon Nov 25 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 4: based on petsc 3.12, cxx versions removed
-* Mon Feb 04 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: knightslanding -> skylake
-* Mon Jan 14 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: update to petsc 3.10
-* Mon Jun 05 2017 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

@@ -59,7 +59,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GNU
 Group:     Development/Tools
 Vendor:     Tuxfamily
@@ -74,7 +74,7 @@ Packager:   eijkhout@tacc.utexas.edu
 %global _python_bytecompile_errors_terminate_build 0
 
 %package %{PACKAGE}
-Summary: Trng is a C++ template library for linear algebra: matrices, vectors, numerical solvers, and related algorithms.
+Summary: Trng is a C++ library for random number generation.
 Group:      Development/Numerical-Libraries
 %description package
 Tina's Random Number Generator
@@ -196,10 +196,12 @@ umount tmpfs
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
 help( [[
+Tina's Random Number Generator Library.
+
 Module %{name} loads environmental variables defining
 the location of TRNG directory, libraries, and binaries:
 TACC_TRNG_DIR 
-TACC_TRNG_BIN TACC_TRNG_INC TACC_TRNG_LIB
+TACC_TRNG_INC TACC_TRNG_LIB
 TACC_TRNG_SHARE
 
 Version: %{version}
@@ -208,21 +210,19 @@ Version: %{version}
 whatis( "TRNG" )
 whatis( "Version: %{version}" )
 whatis( "Category: system, development" )
-whatis( "Keywords: Linear Algebra, C++" )
-whatis( "Description: C++ template library for linear algebra" )
+whatis( "Keywords: Random number generation, C++" )
+whatis( "Description: C++ template library for random number generation" )
 whatis( "URL: https://numbercrunch.de/trng/" )
 
 local version =  "%{version}"
 local trng_dir =  "%{INSTALL_DIR}"
 
 setenv("TACC_TRNG_DIR",trng_dir)
-setenv("TACC_TRNG_BIN",pathJoin( trng_dir,"bin" ) )
 setenv("TACC_TRNG_INC",pathJoin( trng_dir,"include" ) )
 setenv("TACC_TRNG_LIB",pathJoin( trng_dir,"lib" ) )
 setenv("TACC_TRNG_SHARE",pathJoin( trng_dir,"share" ) )
 
 prepend_path ("PATH",pathJoin( trng_dir,"share" ) )
-prepend_path ("PATH",pathJoin( trng_dir,"bin" ) )
 prepend_path ("LD_LIBRARY_PATH",pathJoin( trng_dir,"lib" ) )
 EOF
 
@@ -291,5 +291,7 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Thu Mar 05 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: better description in module help, remove bin definition
 * Thu May 16 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

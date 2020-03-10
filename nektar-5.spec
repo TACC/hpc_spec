@@ -1,6 +1,13 @@
 #
+# Spec file for NEKTAR:
+#
+# Victor Eijkhout, 2019
+# based on:
+#
+# Bar.spec, 
 # W. Cyrus Proctor
-# 2015-11-07
+# Antonio Gomez
+# 2015-08-25
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -17,27 +24,30 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: A Nice little relocatable skeleton spec file example.
+Summary:    Set of tools for manipulating geographic and Cartesian data sets
 
 # Give the package a base name
-%define pkg_base_name cmake
-%define MODULE_VAR    CMAKE
+%define pkg_base_name nektar
+%define MODULE_VAR    NEKTAR
 
 # Create some macros (spec file variables)
-%define major_version 3
-%define minor_version 15
-%define micro_version 6
-
+%define major_version 5
+%define minor_version 0
+%define micro_version 0
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define modmetisversion 5.1.0_2
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
-#%include mpi-defines.inc
+%include compiler-defines.inc
+%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+#%include name-defines.inc
+%include name-defines-noreloc-home1.inc
+#%include name-defines-hidden.inc
+#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -49,51 +59,34 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1%{?dist}
-License:   BSD
-Group:     System/Utils
-URL:       http://www.cmake.org
-Packager:  TACC - cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+License:   GNU
+Group:     Development/Tools
+Vendor:     Nektar
+Group:      Libraries/maps
+# The nektar tarball unpacks to nektar++-4.4.1. That's silly.
+Source:	    nektar-%{version}.tar.gz
+URL:	    https://www.nektar.info/
+Packager:   eijkhout@tacc.utexas.edu
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
-
+%global _python_bytecompile_errors_terminate_build 0
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: NEKTAR install
+Group: System Environment/Base
 %description package
 This is the long description for the package RPM...
-CMake  is an extensible, open-source system that manages the build process in
-an operating system and in a compiler-independent manner. Unlike many cross-
-platform systems, CMake is designed to be used in conjunction with the native
-build environment. Simple configuration files placed in each source directory
-(called CMakeLists.txt files) are used to generate standard build files (e.g.,
-makefiles on Unix and projects/workspaces in Windows MSVC) which are used in
-the usual way.
 
 %package %{MODULEFILE}
-Summary: The modulefile RPM
-Group: Lmod/Modulefiles
+Summary: NEKTAR install
+Group: System Environment/Base
 %description modulefile
 This is the long description for the modulefile RPM...
-CMake  is an extensible, open-source system that manages the build process in
-an operating system and in a compiler-independent manner. Unlike many cross-
-platform systems, CMake is designed to be used in conjunction with the native
-build environment. Simple configuration files placed in each source directory
-(called CMakeLists.txt files) are used to generate standard build files (e.g.,
-makefiles on Unix and projects/workspaces in Windows MSVC) which are used in
-the usual way.
 
 %description
-CMake  is an extensible, open-source system that manages the build process in
-an operating system and in a compiler-independent manner. Unlike many cross-
-platform systems, CMake is designed to be used in conjunction with the native
-build environment. Simple configuration files placed in each source directory
-(called CMakeLists.txt files) are used to generate standard build files (e.g.,
-makefiles on Unix and projects/workspaces in Windows MSVC) which are used in
-the usual way.
+Nektar
 
 
 #---------------------------------------
@@ -105,6 +98,9 @@ the usual way.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+%setup -n %{pkg_base_name}-%{pkg_version}
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -118,7 +114,6 @@ the usual way.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n %{pkg_base_name}-%{pkg_version}
 
 
 #---------------------------------------
@@ -132,12 +127,10 @@ the usual way.
 
 # Setup modules
 %include system-load.inc
-
-# Insert necessary module commands
-module purge
-
-echo "Building the package?:    %{BUILD_PACKAGE}"
-echo "Building the modulefile?: %{BUILD_MODULEFILE}"
+# Load Compiler
+%include compiler-load.inc
+# Load MPI Library
+%include mpi-load.inc
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -156,19 +149,60 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
- 
-  export CC=gcc
-  export ncores=24
-  export CFLAGS="-mtune=generic"
-  #export LDFLAGS="-Wl,-rpath,${GCC_LIB} -march=core-avx -mtune=core-avx2" # Location of correct libstdc++.so.6
-  export LDFLAGS="-mtune=generic" # Location of correct libstdc++.so.6
-  echo ${LD_LIBRARY_PATH}
-  echo ${LDFLAGS}
-  # DO NOT preppend $RPM_BUILD_ROOT in prefix
-  ./bootstrap --prefix=%{INSTALL_DIR}
-  make -j ${ncores}
-  make DESTDIR=$RPM_BUILD_ROOT install -j ${ncores}
   
+%if "%{comp_fam}" == "intel"
+  %{error: Nektar is for now only with gcc}
+  exit
+%endif
+
+#
+# Use mount temp trick
+#
+mkdir -p             %{INSTALL_DIR}
+mount -t tmpfs tmpfs %{INSTALL_DIR}
+
+module load boost mkl
+
+export NEKTARDIR=`pwd`
+
+# source directories
+export WORK=%{SPEC_DIR}/../BUILD/
+export NEKTARSRC=${WORK}/nektar-%{pkg_version}
+export BOOST_HOME=${TACC_BOOST_DIR}
+export GSMPI_LIBRARY=${NEKTARSRC}/ThirdParty/gsmpi-1.2
+( cd ${NEKTARSRC} \
+  && if [ -d modmetis* ] ; then rm -rf modmetis* ; fi \
+  && tar fx %{SPEC_DIR}/../SOURCES/modmetis-%{modmetisversion}.tar \
+)
+export MODMETIS_LIBRARY=${NEKTARSRC}/modmetis-%{modmetisversion}
+
+# build location, we do cmake there
+export BUILDDIR=/tmp/nektar-build
+rm -rf ${BUILDDIR}
+mkdir -p ${BUILDDIR}
+pushd ${BUILDDIR}
+
+# how does it find MKL with gcc?
+# http://doc.nektar.info/userguide/latest/user-guidese3.html#x7-180001.3.5
+# https://www.nektar.info/building-nektar-offline-deps/
+
+cmake \
+          -D CMAKE_CXX_COMPILER=mpicxx \
+          -D CMAKE_C_COMPILER=mpicc \
+          -D THIRDPARTY_BUILD_BOOST:BOOL=OFF \
+          -D THIRDPARTY_BUILD_GSMPI:BOOL=ON \
+          -D NEKTAR_USE_MKL:BOOL=ON \
+          -D NEKTAR_USE_MPI:BOOL=ON \
+          \
+          -D CMAKE_INSTALL_PREFIX:PATH=%{INSTALL_DIR} \
+        ${NEKTARSRC}
+make install
+popd
+
+cp -r %{INSTALL_DIR}/* $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+# umount %{INSTALL_DIR}
+
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -189,56 +223,42 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_message = [[
-CMake is an open-source, cross-platform family of tools designed to build, test
-and package software. CMake is used to control the software compilation process
-using simple platform and compiler independent configuration files, and
-generate native makefiles and workspaces that can be used in the compiler
-environment of your choice. 
-
-This module defines the environmental variables TACC_%{MODULE_VAR}_BIN
-and TACC_%{MODULE_VAR}_DIR for the location of the main CMake directory
-and the binaries.
-
-The location of the binary files is also added to your PATH.
-
-Extended documentation on CMake can be found under $TACC_%{MODULE_VAR}_DIR/doc.
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
+help( [[
+Simplified Wrapper and Interface Generator
+This module loads nektar.
+The command directory is added to PATH.
+The include directory is added to INCLUDE.
+The lib     directory is added to LD_LIBRARY_PATH.
 
 Version %{version}
-]]
+]] )
 
-help(help_message,"\n")
+whatis( "Simplified Wrapper and Interface Generator" )
+whatis( "Version: %{version}" )
+whatis( "Category: Development/Tools" )
+whatis( "Description: NEKTAR is a software development tool that connects programs written in C and C++ with a variety of high-level programming languages." )
+whatis( "https://www.nektar.info/" )
 
-whatis("Name: %{name}")
-whatis("Version: %{version}")
-whatis("Category: system, utilities")
-whatis("Keywords: System, Utility")
-whatis("Description: tool for generation of files from source")
-whatis("URL: http://www.cmake.org")
+local nektar_dir = "%{INSTALL_DIR}"
 
--- Export environmental variables
-local cmake_dir="%{INSTALL_DIR}"
-local cmake_bin=pathJoin(cmake_dir,"bin")
-setenv("TACC_CMAKE_DIR",cmake_dir)
-setenv("TACC_CMAKE_BIN",cmake_bin)
-
--- Prepend the cmake directories to the adequate PATH variables
-prepend_path("PATH",cmake_bin)
-
+prepend_path( "PATH", pathJoin( nektar_dir,"bin" ) )
+setenv("TACC_NEKTAR_DIR", nektar_dir )
+setenv("TACC_NEKTAR_BIN", pathJoin(nektar_dir,"bin" ) )
 EOF
-  
+
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module3.1.1#################################################
+#%Module1.0####################################################################
 ##
-## version file for %{BASENAME}%{version}
+## Version file for %{name} version %{version}
 ##
-
-set     ModulesVersion      "%{version}"
+set ModulesVersion "%version"
 EOF
-  
-  # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
+  %endif
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
@@ -270,7 +290,6 @@ EOF
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-
 ########################################
 ## Fix Modulefile During Post Install ##
 ########################################
@@ -291,4 +310,8 @@ export PACKAGE_PREUN=1
 %clean
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
+
+%changelog
+* Mon Jan 06 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial release of 5.0.0
 

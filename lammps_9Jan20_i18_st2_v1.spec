@@ -3,9 +3,9 @@
 #    LAMMPS SPEC FILE
 #
 #    MACHINE       :   TACC STAMPEDE2
-#    VERSION       :   5 JUN 2019 - patch_5Jun2019
+#    VERSION       :   9 JAN 2020 - patch_9Jan2020
 #    AUTHOR        :   Albert Lu
-#    LAST MODIFIED :   06-22-2019
+#    LAST MODIFIED :   02-19-2020
 #
 ################################################################
 
@@ -25,13 +25,13 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 #
-# rpmbuild -bb --define 'is_intel18 1' --define 'is_impi 1' --define 'mpiV 18_2' lammps_5Jun19_i18_v2.spec | tee log_lammps_5Jun19
+# rpmbuild -bb --define 'is_intel18 1' --define 'is_impi 1' --define 'mpiV 18_2' lammps_9Jan20_i18_st2_v1.spec | tee log_lammps_9Jan20
 #
 
 %define pkg_base_name lammps
 %define MODULE_VAR    LAMMPS 
 
-%define major_version 5Jun19
+%define major_version 9Jan20
 %define minor_version 0
 %define micro_version 0
 
@@ -52,7 +52,7 @@ Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
-Release:   3%{?dist}
+Release:   2%{?dist}
 License:   GPL
 Vendor:    Sandia
 Group:     applications/chemistry
@@ -68,9 +68,7 @@ Packager:  TACC Albert Lu- alu@tacc.utexas.edu
 %define    dbg           %{nil}
 
 # External packages
-%define    kimver   2.0.2
 %define    vorover  0.4.6
-%define    kim_src  kim-api-v%{kimver}
 
 ################################################################
 
@@ -126,9 +124,10 @@ as well as a syntax for looping over runs and breaking out of loops.
   
   module load python3/3.7.0
   module load hdf5/1.10.4
-  module load qt5/5.11.2
-  module load vtk/8.1.1
-  module load gsl/2.3
+  module load eigen
+  #module load qt5/5.11.2
+  #module load vtk/8.1.1
+  #module load gsl/2.3
   module load netcdf/4.6.2
   module load cmake
   set -x
@@ -144,7 +143,7 @@ as well as a syntax for looping over runs and breaking out of loops.
   mkliblist=()
 
   # List of additional library to be installed
-  liblist="atc awpmd colvars compress h5md kim linalg netcdf plumed poems python        scafacos smd voronoi vtk ffmpeg"
+  liblist="atc awpmd colvars compress h5md      linalg netcdf        poems python               smd voronoi           "
   #liblist="atc awpmd colvars compress h5md     linalg netcdf plumed poems python quip scafacos smd voronoi vtk ffmpeg"
 
   #liblist="atc awpmd colvars compress h5md    linalg netcdf plumed poems python     scafacos smd voronoi vtk ffmpeg"
@@ -567,7 +566,7 @@ EOF
     echo "Working on smd ..."
     cd lib/smd
 
-    ln -s eigen includelink
+    ln -s ${TACC_EIGEN_INC} includelink
 
 cat > Makefile.lammps <<EOF
     user-smd_SYSINC  = -I../../lib/smd/includelink
@@ -880,26 +879,16 @@ python, and source respectively. The modulefile also appends TACC_LAMMPS_BIN to 
 
 The following packages were not installed:
 
-  GPU, KOKKOS, LATTE, MESSAGE, MSCG, QUIP, REAX, USER-ADIOS USER-MOLFILE, USER-QMMM
+  GPU, KIM, KOKKOS, LATTE, MESSAGE, MSCG, QUIP, REAX, USER-ADIOS USER-MOLFILE, USER-QMMM, USER-VTK
+
+Use command 'ibrun lmp_lonestar -h' (in idev mode) to list all supported functions
 
 Library REAX was not compiled with this version, because the default virtual 
 space of the library consumes 1.6 GB/task (for a total of 2.2 GB per task), and
 the TACC monitor kills jobs that use over 2.0 GB/task (32 GB for 16 tasks). 
 Please use REAXC package instead.
 
-Information of external libraries:
-
-  * OpenKIM
-    kim-api-v%{kimver}
-    https://openkim.org
-
-    The KIM package defines environment variables KIM_API_MODELS_DIR and 
-    KIM_API_MODEL_DRIVERS_DIR for the locations of the installed KIM models 
-    and model drivers. Use command : 
-    
-      $ kim-api-v1-collections-management list
-    
-    to show the collections.
+Information of external library
 
   * VORONOI  
     voro++-%{vorover}
@@ -934,27 +923,9 @@ setenv("TACC_LAMMPS_POT"       ,pathJoin(lmp_dir,"potentials"))
 setenv("TACC_LAMMPS_PYTHON"    ,pathJoin(lmp_dir,"python"))
 setenv("TACC_LAMMPS_SRC"       ,pathJoin(lmp_dir,"src"))
 
-local kim_dir="%{INSTALL_DIR}/lib/kim/"
-local kim_model_dir="%{INSTALL_DIR}/lib/kim/kim_env_collection/models"
-local kim_driver_dir="%{INSTALL_DIR}/lib/kim/kim_env_collection/model_drivers"
-local kim_simulator_dir="%{INSTALL_DIR}/lib/kim/kim_env_collection/simulators"
-local kim_bin_dir="%{INSTALL_DIR}/lib/kim/installed-kim-api/bin"
-
 append_path("PATH",pathJoin(lmp_dir,"bin"))
-append_path("PATH",pathJoin(lmp_dir,"lib/ffmpeg/bin"))
-append_path("PATH",kim_bin_dir)
 
-setenv("TACC_KIM_DIR"              ,kim_dir)
-setenv("TACC_KIM_API"              ,pathJoin(kim_dir,"installed-kim-api"))
-setenv("TACC_KIM_MODEL"            ,kim_model_dir)
-setenv("TACC_KIM_DRIVER"           ,kim_driver_dir)
-setenv("KIM_API_MODELS_DIR"        ,kim_model_dir)
-setenv("KIM_API_MODEL_DRIVERS_DIR" ,kim_driver_dir)
-setenv("KIM_API_SIMULATORS_DIR"    ,kim_simulator_dir)
-
-append_path("LD_LIBRARY_PATH",pathJoin(lmp_dir,"lib/ffmpeg/lib"))
 append_path("LD_LIBRARY_PATH",pathJoin(lmp_dir,"lib/lammps"))
-append_path("LD_LIBRARY_PATH",pathJoin(lmp_dir,"lib/kim/installed-kim-api/lib64"))
 append_path("LD_LIBRARY_PATH","/opt/apps/gcc/7.1.0/lib64/")
 append_path("LD_LIBRARY_PATH","/opt/intel/compilers_and_libraries_2018.2.199/linux/mkl/lib/intel64_lin/")
 append_path("LD_LIBRARY_PATH","/opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64_lin/")
@@ -963,9 +934,6 @@ append_path("LD_LIBRARY_PATH","/opt/apps/intel18/hdf5/1.8.16/x86_64/lib/")
 prepend_path("PYTHONPATH", pathJoin(lmp_dir,"python"))
 prepend_path("PYTHONPATH", pathJoin(lmp_dir,"lib/lammps"))
 
-load("qt5/5.11.2")
-load("vtk/8.1.1")
-load("gsl/2.3")
 load("hdf5/1.10.4")
 load("netcdf/4.6.2")
 load("python3/3.7.0")

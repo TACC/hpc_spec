@@ -16,3 +16,5 @@ victor*
 iarchived/
 siliu/
 mclay/
+*.zip
+log_lammps*

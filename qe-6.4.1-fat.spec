@@ -1,6 +1,5 @@
-#
-# W. Cyrus Proctor
-# 2015-11-07
+# Quantum Espresso 6.4.1.SPEC
+# 10/2017
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -17,27 +16,33 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: A Nice little relocatable skeleton spec file example.
+Summary: Quantum Espresso
 
 # Give the package a base name
-%define pkg_base_name cmake
-%define MODULE_VAR    CMAKE
+%define pkg_base_name qe
+%define MODULE_VAR    QE
 
 # Create some macros (spec file variables)
-%define major_version 3
-%define minor_version 15
-%define micro_version 6
+%define major_version 6
+%define minor_version 4
+%define micro_version 1 
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
-#%include mpi-defines.inc
+
+%include compiler-defines.inc
+%include mpi-defines.inc
+
+#%include name-defines-noreloc.inc
+
 ########################################
 ### Construct name based on includes ###
 ########################################
 %include name-defines.inc
+
+
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -48,12 +53,15 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
-License:   BSD
-Group:     System/Utils
-URL:       http://www.cmake.org
-Packager:  TACC - cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Release:   1
+License:   GPL
+Group:     Applications/Chemistry
+URL:       http://www.quantum-espresso.org
+Packager:  TACC - hliu@tacc.utexas.edu
+Source:    %{pkg_base_name}-%{pkg_version}-TACC-fat.tar.gz
+#Source0:   %{pkg_base_name}-%{pkg_version}.tar.bz2
+#Source1:   libint-1.1.5.tar.gz
+#Source2:   libxc-2.0.1.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -61,40 +69,24 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale.
+Group: Applications/Chemistry
 %description package
-This is the long description for the package RPM...
-CMake  is an extensible, open-source system that manages the build process in
-an operating system and in a compiler-independent manner. Unlike many cross-
-platform systems, CMake is designed to be used in conjunction with the native
-build environment. Simple configuration files placed in each source directory
-(called CMakeLists.txt files) are used to generate standard build files (e.g.,
-makefiles on Unix and projects/workspaces in Windows MSVC) which are used in
-the usual way.
-
+Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
+It is based on density-functional theory, plane waves, and pseudopotentials.
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...
-CMake  is an extensible, open-source system that manages the build process in
-an operating system and in a compiler-independent manner. Unlike many cross-
-platform systems, CMake is designed to be used in conjunction with the native
-build environment. Simple configuration files placed in each source directory
-(called CMakeLists.txt files) are used to generate standard build files (e.g.,
-makefiles on Unix and projects/workspaces in Windows MSVC) which are used in
-the usual way.
-
+Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
+It is based on density-functional theory, plane waves, and pseudopotentials.
 %description
-CMake  is an extensible, open-source system that manages the build process in
-an operating system and in a compiler-independent manner. Unlike many cross-
-platform systems, CMake is designed to be used in conjunction with the native
-build environment. Simple configuration files placed in each source directory
-(called CMakeLists.txt files) are used to generate standard build files (e.g.,
-makefiles on Unix and projects/workspaces in Windows MSVC) which are used in
-the usual way.
+Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
+It is based on density-functional theory, plane waves, and pseudopotentials.
 
+# install package at /home1/apps, install module file at /opt/apps 
+%define HOME1 /home1/apps
+%define INSTALL_DIR %{HOME1}/%{comp_fam_ver}/%{mpi_fam_ver}/%{pkg_base_name}/%{pkg_version}
 
 #---------------------------------------
 %prep
@@ -118,12 +110,48 @@ the usual way.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n %{pkg_base_name}-%{pkg_version}
-
+%setup -n %{pkg_base_name}-%{pkg_version}-TACC-fat
 
 #---------------------------------------
 %build
 #---------------------------------------
+%include compiler-load.inc
+%include mpi-load.inc
+
+export VERSION=6.4.1
+
+# get source
+
+wget http://elpa.mpcdf.mpg.de/html/Releases/2018.11.001/elpa-2018.11.001.tar.gz
+wget https://gitlab.com/QEF/q-e/-/archive/qe-6.4.1/q-e-qe-6.4.1.tar.bz2
+
+# build ELPA
+tar xvf elpa-2018.11.001.tar.gz
+cd elpa-2018.11.001
+wget --no-check-certificate https://github.com/hfp/xconfigure/raw/master/configure-get.sh
+chmod +x configure-get.sh
+./configure-get.sh elpa
+
+# replace core avx512 by fat 512
+sed -i 's/-xCORE-AVX512/-xCORE-AVX2 -axCORE-AVX512,MIC-AVX512/g' configure-elpa-skx-omp.sh
+./configure-elpa-skx-omp.sh
+make -j ; make install
+
+cd ..
+
+#build qe and linked against the built elpa
+tar xvf q-e-qe-6.4.1.tar.bz2
+cd q-e-qe-6.4.1
+wget --no-check-certificate https://github.com/hfp/xconfigure/raw/master/configure-get.sh
+chmod +x configure-get.sh
+./configure-get.sh qe
+sed -i 's/-xCORE-AVX512/-xCORE-AVX2 -axCORE-AVX512,MIC-AVX512/g' configure-qe-skx-omp.sh
+./configure-qe-skx-omp.sh
+make all
+
+# Remove non active symbolic links in packages
+#rm S3DE/iotk/iotk
+#rm -rf Doc
 
 
 #---------------------------------------
@@ -156,19 +184,14 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
- 
-  export CC=gcc
-  export ncores=24
-  export CFLAGS="-mtune=generic"
-  #export LDFLAGS="-Wl,-rpath,${GCC_LIB} -march=core-avx -mtune=core-avx2" # Location of correct libstdc++.so.6
-  export LDFLAGS="-mtune=generic" # Location of correct libstdc++.so.6
-  echo ${LD_LIBRARY_PATH}
-  echo ${LDFLAGS}
-  # DO NOT preppend $RPM_BUILD_ROOT in prefix
-  ./bootstrap --prefix=%{INSTALL_DIR}
-  make -j ${ncores}
-  make DESTDIR=$RPM_BUILD_ROOT install -j ${ncores}
   
+  # Create some dummy directories and files for fun
+#  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+#  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+
+cp -r ./q-e-qe-6.4.1/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+chmod -Rf u+rwX,g+rwX,o=rX  $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -190,41 +213,48 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_message = [[
-CMake is an open-source, cross-platform family of tools designed to build, test
-and package software. CMake is used to control the software compilation process
-using simple platform and compiler independent configuration files, and
-generate native makefiles and workspaces that can be used in the compiler
-environment of your choice. 
+local help_msg=[[
 
-This module defines the environmental variables TACC_%{MODULE_VAR}_BIN
-and TACC_%{MODULE_VAR}_DIR for the location of the main CMake directory
-and the binaries.
 
-The location of the binary files is also added to your PATH.
+To run codes in quantum espresso, e.g. pw.x, include the following lines in
+your job script, using the appropriate input file name:
+module load qe/6.4.1
+ibrun pw.x -input input.scf
 
-Extended documentation on CMake can be found under $TACC_%{MODULE_VAR}_DIR/doc.
+IMPORTANT NOTES:
+
+1. Run your jobs on $SCRATCH rather than $WORK. The $SCRATCH file system is better able to handle these kinds of loads.
+
+2. Especially when running pw.x, set the keyword disk_io to low or none in input so that wavefunction
+will not be written to file at each scf iteration step, but stored in memory.
+
+3. When running ph.x, set the  reduced_io to .true. and run it and redirect its IO to $SCRATCH.
+Do not run multiple ph.x jobs at given time.
 
 Version %{version}
 ]]
 
-help(help_message,"\n")
+--help(help_msg)
+help(help_msg)
 
-whatis("Name: %{name}")
-whatis("Version: %{version}")
-whatis("Category: system, utilities")
-whatis("Keywords: System, Utility")
-whatis("Description: tool for generation of files from source")
-whatis("URL: http://www.cmake.org")
+whatis("Name: Quantum Espresso")
+whatis("Version: %{pkg_version}%{dbg}")
+%if "%{is_debug}" == "1"
+setenv("TACC_%{MODULE_VAR}_DEBUG","1")
+%endif
+whatis "Category: application, chemistry"
+whatis "Keywords: Chemistry, Density Functional Theory, Plane Wave, Peudo potentials"
+whatis "URL: http://www.quantum-espresso.org"
+whatis "Description: Integrated suite of computer codes for electronic structure calculations and material modeling at the nanoscale."
 
--- Export environmental variables
-local cmake_dir="%{INSTALL_DIR}"
-local cmake_bin=pathJoin(cmake_dir,"bin")
-setenv("TACC_CMAKE_DIR",cmake_dir)
-setenv("TACC_CMAKE_BIN",cmake_bin)
+-- Create environment variables.
+local qe_dir="%{INSTALL_DIR}"
 
--- Prepend the cmake directories to the adequate PATH variables
-prepend_path("PATH",cmake_bin)
+prepend_path(    "PATH",                pathJoin(qe_dir, "bin"))
+
+setenv( "TACC_%{MODULE_VAR}_DIR",                qe_dir)
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(qe_dir, "bin"))
+setenv("TACC_%{MODULE_VAR}_PSEUDO",pathJoin(qe_dir,"pseudo"))
 
 EOF
   

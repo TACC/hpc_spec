@@ -1,6 +1,5 @@
-#
-# W. Cyrus Proctor
-# 2015-11-07
+# VASP Hang Liu
+# 2020-01-10
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -20,24 +19,27 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name cmake
-%define MODULE_VAR    CMAKE
+%define pkg_base_name vasp
+%define MODULE_VAR    VASP
 
 # Create some macros (spec file variables)
-%define major_version 3
-%define minor_version 15
-%define micro_version 6
+%define major_version 5
+%define minor_version 4
+%define micro_version 4.pl2
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
-%include rpm-dir.inc                  
-#%include compiler-defines.inc
-#%include mpi-defines.inc
+%include rpm-dir.inc
+%include compiler-defines.inc
+%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
 %include name-defines.inc
+#%include name-defines-noreloc.inc
+#%include name-defines-hidden.inc
+#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -49,11 +51,11 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1%{?dist}
-License:   BSD
-Group:     System/Utils
-URL:       http://www.cmake.org
-Packager:  TACC - cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+License:   VASP
+Group:     Applications/Chemistry
+URL:       https://www.vasp.at/
+Packager:  TACC - hliu@tacc.utexas.edu
+Source:    %{pkg_base_name}-%{pkg_version}_all_TACC_fat.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -61,41 +63,18 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: The Vienna Ab initio Simulation Package (VASP)
+Group: Applications/Chemistry
 %description package
-This is the long description for the package RPM...
-CMake  is an extensible, open-source system that manages the build process in
-an operating system and in a compiler-independent manner. Unlike many cross-
-platform systems, CMake is designed to be used in conjunction with the native
-build environment. Simple configuration files placed in each source directory
-(called CMakeLists.txt files) are used to generate standard build files (e.g.,
-makefiles on Unix and projects/workspaces in Windows MSVC) which are used in
-the usual way.
+The Vienna Ab initio Simulation Package (VASP)
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...
-CMake  is an extensible, open-source system that manages the build process in
-an operating system and in a compiler-independent manner. Unlike many cross-
-platform systems, CMake is designed to be used in conjunction with the native
-build environment. Simple configuration files placed in each source directory
-(called CMakeLists.txt files) are used to generate standard build files (e.g.,
-makefiles on Unix and projects/workspaces in Windows MSVC) which are used in
-the usual way.
-
+The Vienna Ab initio Simulation Package (VASP)
 %description
-CMake  is an extensible, open-source system that manages the build process in
-an operating system and in a compiler-independent manner. Unlike many cross-
-platform systems, CMake is designed to be used in conjunction with the native
-build environment. Simple configuration files placed in each source directory
-(called CMakeLists.txt files) are used to generate standard build files (e.g.,
-makefiles on Unix and projects/workspaces in Windows MSVC) which are used in
-the usual way.
-
-
+The Vienna Ab initio Simulation Package (VASP)
 #---------------------------------------
 %prep
 #---------------------------------------
@@ -105,6 +84,8 @@ the usual way.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+%setup -n %{pkg_base_name}-%{pkg_version}_all_TACC_fat
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -118,7 +99,6 @@ the usual way.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n %{pkg_base_name}-%{pkg_version}
 
 
 #---------------------------------------
@@ -132,9 +112,13 @@ the usual way.
 
 # Setup modules
 %include system-load.inc
-
-# Insert necessary module commands
 module purge
+# Load Compiler
+%include compiler-load.inc
+# Load MPI Library
+%include mpi-load.inc
+
+# Insert further module commands
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -144,7 +128,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -156,20 +140,47 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
- 
-  export CC=gcc
-  export ncores=24
-  export CFLAGS="-mtune=generic"
-  #export LDFLAGS="-Wl,-rpath,${GCC_LIB} -march=core-avx -mtune=core-avx2" # Location of correct libstdc++.so.6
-  export LDFLAGS="-mtune=generic" # Location of correct libstdc++.so.6
-  echo ${LD_LIBRARY_PATH}
-  echo ${LDFLAGS}
-  # DO NOT preppend $RPM_BUILD_ROOT in prefix
-  ./bootstrap --prefix=%{INSTALL_DIR}
-  make -j ${ncores}
-  make DESTDIR=$RPM_BUILD_ROOT install -j ${ncores}
-  
-#-----------------------  
+
+cd wannier90-1.2/
+make lib
+
+cd ../beef
+./configure CC=icc --prefix=$PWD
+make
+make install
+
+cd ../vasp.5.4.4.pl2
+make all
+
+cd ../vasp.5.4.4.pl2.vtst
+make all
+
+cd ./bin
+mv vasp_std vasp_std_vtst
+mv vasp_gam vasp_gam_vtst
+mv vasp_ncl vasp_ncl_vtst
+
+cd ../../
+
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+rm   -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}/*
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+
+cd vasp.5.4.4.pl2/bin/
+cp vasp_std $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_gam $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_ncl $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+
+cd ../../vasp.5.4.4.pl2.vtst/bin
+cp vasp_std_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_gam_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_ncl_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cd ../../beef/bin
+cp bee $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cd ../../
+cp -r vtstscripts-947 $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+
+#-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
 
@@ -179,7 +190,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -187,47 +198,69 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
+
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_message = [[
-CMake is an open-source, cross-platform family of tools designed to build, test
-and package software. CMake is used to control the software compilation process
-using simple platform and compiler independent configuration files, and
-generate native makefiles and workspaces that can be used in the compiler
-environment of your choice. 
+local help_message=[[
+The TACC VASP module appends the path to the vasp executables
+to the PATH environment variable.  Also TACC_VASP_DIR, and
+TACC_VASP_BIN are set to VASP home and bin directories.
 
-This module defines the environmental variables TACC_%{MODULE_VAR}_BIN
-and TACC_%{MODULE_VAR}_DIR for the location of the main CMake directory
-and the binaries.
+Users have to show their licenses and be confirmed by
+VASP team that they are registered users under that licenses
+Scan a copy of the license with the license number and send to hliu@tacc.utexas.edu
 
-The location of the binary files is also added to your PATH.
+The VASP executables are
+vasp_std: compiled with pre processing flag: -DNGZhalf
+vasp_gam: compiled with pre processing flag: -DNGZhalf -DwNGZhalf
+vasp_ncl: compiled without above pre processing flags
+vasp_std_vtst: vasp_std with VTST
+vasp_gam_vtst: vasp_gam with VTST
+vasp_ncl_vtst: vasp_ncl with VTST
+vtstscripts-947/: utility scripts of VTST
+bee: BEEF analysis code
 
-Extended documentation on CMake can be found under $TACC_%{MODULE_VAR}_DIR/doc.
+This the VASP.5.4.4.pl2 release.
 
 Version %{version}
 ]]
 
+
+whatis("Version: %{pkg_version}")
+whatis("Category: application, chemistry")
+whatis("Keywords: Chemistry, Density Functional Theory, Molecular Dynamics")
+whatis("URL:https://www.vasp.at/")
+whatis("Description: Vienna Ab-Initio Simulation Package")
 help(help_message,"\n")
 
-whatis("Name: %{name}")
-whatis("Version: %{version}")
-whatis("Category: system, utilities")
-whatis("Keywords: System, Utility")
-whatis("Description: tool for generation of files from source")
-whatis("URL: http://www.cmake.org")
 
--- Export environmental variables
-local cmake_dir="%{INSTALL_DIR}"
-local cmake_bin=pathJoin(cmake_dir,"bin")
-setenv("TACC_CMAKE_DIR",cmake_dir)
-setenv("TACC_CMAKE_BIN",cmake_bin)
+local group = "G-802400"
+found = userInGroup(group)
 
--- Prepend the cmake directories to the adequate PATH variables
-prepend_path("PATH",cmake_bin)
+
+local err_message = [[
+You do not have access to VASP.5.4.4.pl2!
+
+
+Users have to show their licenses and be confirmed by the
+VASP team that they are registered users under that license.
+Scan a copy of the license with the license number and send to hliu@tacc.utexas.edu
+]]
+
+
+if (found) then
+local vasp_dir="%{INSTALL_DIR}"
+
+prepend_path(    "PATH",                pathJoin(vasp_dir, "bin"))
+setenv( "TACC_%{MODULE_VAR}_DIR",                vasp_dir)
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(vasp_dir, "bin"))
+
+else
+  LmodError(err_message,"\n")
+end
 
 EOF
-  
+
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -236,10 +269,10 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 
 set     ModulesVersion      "%{version}"
 EOF
-  
-  # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %endif
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -250,7 +283,8 @@ EOF
 %files package
 #------------------------
 
-  %defattr(-,root,install,)
+#  %defattr(-,root,install,)
+%defattr(750,root,G-802400)
   # RPM package contains files within these directories
   %{INSTALL_DIR}
 
@@ -259,7 +293,7 @@ EOF
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile 
+%files modulefile
 #---------------------------
 
   %defattr(-,root,install,)
@@ -269,7 +303,6 @@ EOF
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
 
 ########################################
 ## Fix Modulefile During Post Install ##

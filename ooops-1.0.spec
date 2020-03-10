@@ -1,33 +1,50 @@
 #
-# Si Liu
-# 2020-02-01
+# W. Cyrus Proctor
+# Antonio Gomez
+# 2015-08-25
 #
+# Important Build-Time Environment Variables (see name-defines.inc)
+# NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
+# NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
+#
+# Important Install-Time Environment Variables (see post-defines.inc)
+# VERBOSE=1       -> Print detailed information at install time
+# RPM_DBPATH      -> Path To Non-Standard RPM Database Location
+#
+# Typical Command-Line Example:
+# ./build_rpm.sh Bar.spec
+# cd ../RPMS/x86_64
+# rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+# rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+# rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
+
+Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name sanitytool
-%define MODULE_VAR    SANITYTOOL
+%define pkg_base_name ooops
+%define MODULE_VAR    ooops
 
 # Create some macros (spec file variables)
-%define major_version 2
+%define major_version 1
 %define minor_version 0
+%define micro_version 0
+
+#%define pkg_version %{major_version}.%{minor_version}
 %define pkg_version %{major_version}.%{minor_version}
-
-Summary: SanityTool
-Release: 1%{?dist}
-License: TACC
-Vendor: TACC
-Group: TACC-HPC-TOOL
-Source: %{name}-%{version}.tar.gz
-Packager:  TACC - siliu@tacc.utexas.edu
-
 ### Toggle On/Off ###
-%include rpm-dir.inc                  
-#%include compiler-defines.inc
-#%include mpi-defines.inc
+%include rpm-dir.inc
+
+##%include compiler-defines.inc
+##%include mpi-defines.inc
+
+#%include name-defines-noreloc.inc
+
 ########################################
 ### Construct name based on includes ###
 ########################################
+#%include name-defines.inc
 %include name-defines-noreloc.inc
+
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -38,32 +55,38 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
+Release:   1%{?dist}
+License:   GPL
+URL:       https://github.com/TACC/ooops
+Packager:  TACC - huang@tacc.utexas.edu
+Source: empty.tar.gz
+
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
 
-%define APPS /home1/apps/
-%define MODULES modulefiles
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: TACC-HPC-TOOL
+Summary: ooops
+Group: Tools/Optimization
 %description package
-SanityTool 2.0 by Si Liu and Robert McLay
-Texas Advanced Computing Center
+Optimal Overloaded IO Protection System (OOOPS) is an easy to use tool that helps HPC users optimize heavy IO requests.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
+Optimal Overloaded IO Protection System (OOOPS) is an easy to use tool that helps HPC users optimize heavy IO requests.
 
 %description
-
-
+Optimal Overloaded IO Protection System (OOOPS) is an easy to use tool that helps HPC users optimize heavy IO requests.
 
 #---------------------------------------
 %prep
 #---------------------------------------
+
+rm   -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -83,13 +106,14 @@ Group: Lmod/Modulefiles
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
+#%setup -n NAMD_%{pkg_version}_Source
+
 
 #---------------------------------------
 %build
 #---------------------------------------
+##%include compiler-load.inc
 
-
-#---------------------------------------
 %install
 #---------------------------------------
 
@@ -99,42 +123,17 @@ Group: Lmod/Modulefiles
 # Insert necessary module commands
 module purge
 
-echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
-
-#------------------------
-%if %{?BUILD_PACKAGE}
-#------------------------
-
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-##  mount -t tmpfs tmpfs %{INSTALL_DIR}
-  
-  #######################################
-  ##### Create TACC Canary Files ########
-  #######################################
-  touch $RPM_BUILD_ROOT/%{INSTALL_DIR}/.tacc_install_canary
-  #######################################
-  ########### Do Not Remove #############
-  #######################################
-
-  #========================================
-  # Insert Build/Install Instructions Here
-  #========================================
-  
-#-----------------------  
-%endif # BUILD_PACKAGE |
-#-----------------------
-
-
 
 
 #---------------------------
 %if %{?BUILD_MODULEFILE}
 #---------------------------
 
+mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
+
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -142,47 +141,45 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
-# Write out the modulefile associated with the application
 
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 
-help(
-[[
-The module loads TACC SanityTool for you.
-Version: 2.0
+cat >    $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
+local help_message=[[
+Optimal Overloaded IO Protection System (OOOPS) is an easy to use tool that helps HPC users optimize heavy IO requests.
 
-You can run the command "sanitycheck" to examine your current environment settings on Stampede2.
-If you encounter any problems, please send an email to siliu@tacc.utexas.edu with your user id and error messages.
-Please also contact siliu@tacc.utexas.edu, if you have any other concerns or require additional tests.
+It will also help system administrator prevent IO overload caused by improper IO request.
 
+Lei Huang (huang@tacc.utexas.edu)
+Si Liu    (siliu@tacc.utexas.edu)
 
 ]]
-)
 
-whatis("Name: SanityTool")
-whatis("Version: 2.0")
-whatis("Category: TACC HPC Tools")
+help(help_message,"\n")
 
-local sanitypath = "/home1/apps/sanitytool/2.0"
-append_path("PATH",sanitypath)
-setenv("TACC_SANITYTOOL_DIR", "/home1/apps/sanitytool/2.0")
+whatis("Name: OOOPS")
+whatis("Version: 1.0")
+whatis("Category: Tools/Optimization ")
+whatis("Keywords: Tools, IO, Optimization")
+whatis("Description: Optimal Overloaded IO Protection System (OOOPS) us an easy to use tool ")
+
+
+-- Create environment variables.
+local ooops_dir           = "/work/00410/huang/share/patch/ooops/"
+
+family("ooops")
+
+prepend_path(    "PATH",                pathJoin(ooops_dir, "bin"))
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(ooops_dir, "lib"))
+append_path(    "LD_PRELOAD",          pathJoin(ooops_dir, "lib/ooops.so") )
+
+setenv( "IO_LIMIT_CONFIG", "/work/00410/huang/share/patch/ooops/conf/config_sp2.low")
+setenv( "LIMIT_IO_DEBUG", "0")
 
 EOF
 
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module3.1.1#################################################
-##
-## version file for %{BASENAME}%{version}
-##
 
-set     ModulesVersion      "%{version}"
-EOF
-
-  
-
-# Check the syntax of the generated lua modulefile
-%{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  # Check the syntax of the generated lua modulefile
+#  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
@@ -203,7 +200,7 @@ EOF
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile 
+%files modulefile
 #---------------------------
 
   %defattr(-,root,install,)

@@ -7,7 +7,7 @@ Summary: PETSc install
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 12
-%define micro_version 0
+%define micro_version 3
 %define versionpatch %{major_version}.%{minor_version}.%{micro_version}
 
 %define pkg_version %{major_version}.%{minor_version}
@@ -32,7 +32,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -284,6 +284,13 @@ export ELEMENTAL_OPTIONS="--with-elemental=1 --download-elemental --with-cxx-dia
 export ELEMENTAL_STRING=elemental
 
 #
+# Fftw
+#
+module load fftw3
+export FFTW_OPTIONS="--with-fftw=1 --with-fftw-dir=${TACC_FFTW3_DIR}"
+export FFTW_STRING=fftw
+
+#
 # Hypre
 #
 export HYPRE_OPTIONS="--with-hypre=1 --download-hypre"
@@ -293,8 +300,8 @@ hyprefei )
     export HYPRE_OPTIONS="${HYPRE_OPTIONS} --download-hypre-configure-arguments=--with-fei"
     ;;
 esac
-export HYPRE_OPTIONS=
-export HYPRESTRING=
+# export HYPRE_OPTIONS=
+# export HYPRESTRING=
 
 #
 # Mumps & Superlu depend on parmetis which depends on metis
@@ -362,9 +369,10 @@ esac
 ##
 ## define packages; some are real & complex, others real only.
 ##
-export complexpackages="${ELEMENTAL_STRING} mumps scalapack ${SPOOLES_STRING} ${SUITESPARSE_STRING} ${superlustring} ${ZOLTANSTRING} ${hdf5string}"
+export complexpackages="${ELEMENTAL_STRING} ${FFTW_STRING} mumps scalapack ${SPOOLES_STRING} ${SUITESPARSE_STRING} ${superlustring} ${ZOLTANSTRING} ${hdf5string}"
 export PETSC_COMPLEX_PACKAGES="\
   ${ELEMENTAL_OPTIONS} \
+  ${FFTW_OPTIONS} \
   ${hdf5download} \
   ${MUMPS_OPTIONS}\
   ${SCALAPACK_OPTIONS} ${SPOOLES_OPTIONS} \
@@ -677,5 +685,10 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 rm -rf $RPM_BUILD_ROOT
 %changelog
 # remember to notify OpenSees: Ian Wang
+* Mon Jan 06 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: 
+    update to 3.12.3, 
+    enabling fftw,
+    re-enable hypre?
 * Mon Oct 14 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release, disable hypre for now
