@@ -77,6 +77,7 @@ Fortran, Java, Ada, and Go, as well as libraries for these languages
 operating system. The GNU system was developed to be 100% free software, free
 in the sense that it respects the user's freedom.
 
+%'
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
@@ -88,6 +89,7 @@ Fortran, Java, Ada, and Go, as well as libraries for these languages
 operating system. The GNU system was developed to be 100% free software, free
 in the sense that it respects the user's freedom.
 
+%'
 %description
 The GNU Compiler Collection includes front ends for C, C++, Objective-C,
 Fortran, Java, Ada, and Go, as well as libraries for these languages
@@ -95,6 +97,7 @@ Fortran, Java, Ada, and Go, as well as libraries for these languages
 operating system. The GNU system was developed to be 100% free software, free
 in the sense that it respects the user's freedom.
 
+%'
 #---------------------------------------
 %prep
 #---------------------------------------
