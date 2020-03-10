@@ -72,6 +72,11 @@
     %define mpi_label 2_3
     %define mpi_module_version 2.3.1
   %endif
+  # Victor added this
+  %if "%{mpiV}" == "2_x"
+    %define mpi_label 2_x
+    %define mpi_module_version 2.X
+  %endif
   %define mpi_fam     mvapich2
   %define mpi_fam_ver mvapich2_%{mpi_label}
   %define mpi_module  %{mpi_fam}/%{mpi_module_version}

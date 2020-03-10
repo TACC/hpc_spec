@@ -1,11 +1,11 @@
 Summary: Shell Startup tracing tool 
 Name: shell_startup_debug
-Version: 2.3
+Version: 2.4
 Release: 1%{?dist}
 License:   LGPL
 Group: System Environment/Base
 URL: www.tacc.utexas.edu
-Source0: %{name}-%{version}.tar.gz
+Source0: %{name}-%{version}.tar.bz2
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 
 %define debug_package %{nil}

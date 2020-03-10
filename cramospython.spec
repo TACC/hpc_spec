@@ -8,7 +8,7 @@ Release:    3%{?dist}
 License:    GPLv2
 Vendor:     Python Software Foundation
 Group:      Applications
-Packager:   TACC - rtevans@tacc.utexas.edu
+Packager:   TACC - rtevans@tacc.utexas.edu, cramos@tacc.utexas.edu
 
 
 %global _python_bytecompile_errors_terminate_build 0

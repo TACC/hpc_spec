@@ -100,7 +100,7 @@ if [ ! -f "%{INSTALL_DIR}/bin/python%{python_major_version}" ]; then
     ls
 
     %if "%{comp_fam_name}" == "Intel"
-    ./configure --prefix=%{INSTALL_DIR} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc -lssp' CFLAGS="-Wformat -Wformat-security -D_FORTIFY_SOURCE=2 -fstack-protector -fwrapv -fpic -O3" LDFLAGS="-Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth --without-gcc --with-libm=-limf --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip --enable-unicode=ucs4    
+    ./configure --prefix=%{INSTALL_DIR} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc -lssp' CXXFLAGS="-std=c++11" CFLAGS="-Wformat -Wformat-security -D_FORTIFY_SOURCE=2 -fstack-protector -fwrapv -fpic -O3" LDFLAGS="-Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth --without-gcc --with-libm=-limf --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip --enable-unicode=ucs4    
     %endif
     %if "%{comp_fam_name}" == "GNU"
     #./configure --prefix=%{INSTALL_DIR} CC=gcc CXX=g++  LD=ld   AR=ar   LIBS='-lpthread' CFLAGS="-Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -fwrapv -fpic -O2" LDFLAGS="-fpic -Xlinker -export-dynamic" --with-system-ffi --enable-shared --with-pth --with-threads --with-ensurepip --with-computed-gotos --with-lto --enable-unicode=ucs4
@@ -148,13 +148,13 @@ ${PIP} install --upgrade setuptools
 ### Numpy
 if ! $(%{INSTALL_DIR}/bin/python%{python_major_version} -c "import numpy"); then
     cd %{_topdir}/SOURCES	
-    if [ ! -f "%{_topdir}/SOURCES/numpy-1.16.4.tar.gz" ]; then	
-	wget https://github.com/numpy/numpy/releases/download/v1.16.4/numpy-1.16.4.tar.gz
+    if [ ! -f "%{_topdir}/SOURCES/numpy-1.18.1.tar.gz" ]; then	
+	wget https://github.com/numpy/numpy/releases/download/v1.18.1/numpy-1.18.1.tar.gz
     fi	   
     
-    rm -rf %{_topdir}/SOURCES/numpy-1.16.4 	   
-    tar -xzvf %{_topdir}/SOURCES/numpy-1.16.4.tar.gz -C %{_topdir}/SOURCES	
-    cd %{_topdir}/SOURCES/numpy-1.16.4
+    rm -rf %{_topdir}/SOURCES/numpy-1.18.1 	   
+    tar -xzvf %{_topdir}/SOURCES/numpy-1.18.1.tar.gz -C %{_topdir}/SOURCES	
+    cd %{_topdir}/SOURCES/numpy-1.18.1
 
     echo "[mkl]
 library_dirs = ${MKL_LIB}:${OMP_LIB}
@@ -178,13 +178,13 @@ fi
 ### Scipy
 if ! $(%{INSTALL_DIR}/bin/python%{python_major_version} -c "import scipy"); then
     cd %{_topdir}/SOURCES	
-    if [ ! -f "%{_topdir}/SOURCES/scipy-1.2.0.tar.gz" ]; then	
-	wget -O scipy-1.2.0.tar.gz https://github.com/scipy/scipy/releases/download/v1.2.0/scipy-1.2.0.tar.gz
+    if [ ! -f "%{_topdir}/SOURCES/scipy-1.2.3.tar.gz" ]; then	
+	wget -O scipy-1.2.3.tar.gz https://github.com/scipy/scipy/releases/download/v1.2.3/scipy-1.2.3.tar.gz
     fi	   
 
-    rm -rf %{_topdir}/SOURCES/scipy-1.2.0
-    tar -xzvf scipy-1.2.0.tar.gz -C %{_topdir}/SOURCES	 
-    cd %{_topdir}/SOURCES/scipy-1.2.0
+    rm -rf %{_topdir}/SOURCES/scipy-1.2.3
+    tar -xzvf scipy-1.2.3.tar.gz -C %{_topdir}/SOURCES	 
+    cd %{_topdir}/SOURCES/scipy-1.2.3
 
     %if "%{comp_fam_name}" == "Intel"
     %{INSTALL_DIR}/bin/python%{python_major_version} setup.py config --compiler=intelem --fcompiler=intelem build_clib --compiler=intelem --fcompiler=intelem build_ext --compiler=intelem --fcompiler=intelem install
@@ -195,15 +195,15 @@ if ! $(%{INSTALL_DIR}/bin/python%{python_major_version} -c "import scipy"); then
 fi
 
 ### pycairo
-if ! $(%{INSTALL_DIR}/bin/python%{python_major_version} -c "import cairo"); then
-    if [ ! -f "%{_topdir}/SOURCES/pycairo-1.15.1.tar.gz" ]; then		
-	wget -O pycairo-1.15.1.tar.gz https://github.com/pygobject/pycairo/releases/download/v1.15.1/pycairo-1.15.1.tar.gz
-    fi
-    rm -rf %{_topdir}/SOURCES/pycairo-1.15.1
-    tar -xzvf pycairo-1.15.1.tar.gz -C %{_topdir}/SOURCES	 
-    cd %{_topdir}/SOURCES/pycairo-1.15.1
-    %{INSTALL_DIR}/bin/python%{python_major_version} setup.py install --prefix=%{INSTALL_DIR}
-fi	   
+#if ! $(%{INSTALL_DIR}/bin/python%{python_major_version} -c "import cairo"); then
+#    if [ ! -f "%{_topdir}/SOURCES/pycairo-1.15.1.tar.gz" ]; then		
+#	wget -O pycairo-1.15.1.tar.gz https://github.com/pygobject/pycairo/releases/download/v1.15.1/pycairo-1.15.1.tar.gz
+#    fi
+#    rm -rf %{_topdir}/SOURCES/pycairo-1.15.1
+#    tar -xzvf pycairo-1.15.1.tar.gz -C %{_topdir}/SOURCES	 
+#    cd %{_topdir}/SOURCES/pycairo-1.15.1
+#    %{INSTALL_DIR}/bin/python%{python_major_version} setup.py install --prefix=%{INSTALL_DIR}
+#fi	   
 
 ### pygobject 2.28.6
 if ! $(%{INSTALL_DIR}/bin/python%{python_major_version} -c "import gobject"); then
@@ -232,6 +232,7 @@ if ! $(%{INSTALL_DIR}/bin/python%{python_major_version} -c "import pygtk"); then
     PYTHON=%{INSTALL_DIR}/bin/python%{python_major_version} ./configure --prefix=%{INSTALL_DIR}; make; make install   
 fi	   
 
+${PIP} install --no-binary :all: pycairo
 ${PIP} install --no-binary :all: matplotlib
 CFLAGS="-O2" ${PIP} install --no-binary :all: cython	
 ${PIP} install --no-binary :all: cffi	
@@ -388,7 +389,7 @@ EOF
 #----------------------------------------------------------
 %if %{defined mpiV}
 
-rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
+rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}
 mkdir -p $RPM_BUILD_ROOT/%{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/python%{python_label}/modulefiles
 

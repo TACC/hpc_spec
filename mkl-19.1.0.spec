@@ -1,6 +1,6 @@
 #
 # W. Cyrus Proctor
-# 2016-02-06
+# 2015-12-11
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -20,39 +20,39 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name TACC
-%define MODULE_VAR    TACC
+%define pkg_base_name mkl
+%define MODULE_VAR    MKL
 
 # Create some macros (spec file variables)
-%define major_version 1
+%define major_version 19
 %define minor_version 1
+%define patch_version 0
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{patch_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
+%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines-noreloc.inc
+%include name-defines.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
 
 ############ Do Not Change #############
-#Name:      %{pkg_name}
-# 2016-02-06 Hacked name to keep TACC
-Name:      tacc-base_modules
+Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   6%{?dist}
-License:   GPL
-Group:     Module Magic
-Packager:  TACC - cproctor@tacc.utexas.edu
+Release:   1%{?dist}
+License:   proprietary
+Group:     Compiler
+URL:       https://software.intel.com/en-us/intel-compilers
+Packager:  TACC - aruhela@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -65,17 +65,20 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
-Welcome to the TACC Module way!
+This is specifically an rpm for the Intel MKL modulefile
+used on Frontera for GCC.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
-Welcome to the TACC Module way!
+This is specifically an rpm for the Intel MKL modulefile
+used on Frontera for GCC.
 
 %description
-Welcome to the TACC Module way!
+This is specifically an rpm for the Intel MKL modulefile
+used on Frontera for GCC.
 
 #---------------------------------------
 %prep
@@ -110,10 +113,10 @@ Welcome to the TACC Module way!
 #---------------------------------------
 
 # Setup modules
-# Nothing to do!
+%include system-load.inc
 
 # Insert necessary module commands
-# None to have!
+module purge
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -135,8 +138,9 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-  # Nothing to see here!
-
+ 
+  # Nothing to do!
+  
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -146,7 +150,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 %if %{?BUILD_MODULEFILE}
 #---------------------------
 
-%define MODULE_DIR %{MODULE_PREFIX}/modulefiles
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
   
   #######################################
@@ -158,42 +161,73 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/TACC.lua << 'EOF'
-local helpMsg = [[
-The %{MODULE_VAR} modulefile defines the default paths and environment
-variables needed to use the local software and utilities
-available, placing them after the vendor-supplied
-paths in PATH and MANPATH.
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
+local help_msg=[[
+The Intel Math Kernel Library (Intel MKL) improves performance with math
+routines for software applications that solve large computational problems.
+Intel MKL provides BLAS and LAPACK linear algebra routines, fast Fourier
+transforms, vectorized math functions, random number generation functions, and
+other functionality.
+
+The Intel MKL module enables the use of the MKL with the GNU GCC compilers by
+updating the $LD_LIBRARY_PATH, and $INCLUDE environment variables to
+access the MKL libraries, and include files, respectively.
+
+The following additional environment variables are also defined:
+
+$TACC_MKL_DIR           (path to Math Kernel Library root         )
+$TACC_MKL_LIB           (path to Math Kernel Library libs         )
+$TACC_MKL_INC           (path to Math Kernel Library includes     )
+
+To use the MKL with Intel compilers, please see the Intel module help
+by issuing a "module help intel".
+
+Also see the Intel MKL Link Line Advisor:
+https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor
+
+Version %{version}
 ]]
 
-help(helpMsg)
+--help(help_msg)
+help(help_msg)
 
+whatis("Name: Intel MKL"                                                    )
+whatis("Version: %{version}"                                                )
+whatis("Category: Library, Runtime Support"                                 )
+whatis("Description: Intel Math Kernel Library"                             )
+whatis("URL: https://software.intel.com/en-us/intel-mkl"                    )
 
-if (os.getenv("USER") ~= "root") then
-  append_path("PATH",  ".")
-end
+-- Create environment variables.
+local base         = "/opt/intel"
+local full_xe      = "compilers_and_libraries_2020.0.166/linux"
+local installDir   = pathJoin(base,full_xe)
+local mklRoot      = pathJoin(installDir,"mkl")
 
-load("intel")
-load("impi")
-load("git")
-load("autotools")
-load("python3")
-load("cmake")
-load("ucx")
-load("pmix")
-load("hwloc/1.11.12")
-try_load("xalt")
+setenv( "MKLROOT"      ,              mklRoot )
+setenv( "TACC_MKL_DIR" ,              mklRoot )
+setenv( "TACC_MKL_LIB" ,              pathJoin( mklRoot    , "lib/intel64" ) )
+setenv( "TACC_MKL_INC" ,              pathJoin( mklRoot    , "include" ) )
 
-prepend_path("MANPATH","/usr/local/man:/usr/share/man:/usr/X11R6/man:/usr/kerberos/man:/usr/man")
+prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( mklRoot    , "lib/intel64" ) )
 
--- Environment change - assume single threaded to fix silly MKL
-if (mode() == "load" and os.getenv("OMP_NUM_THREADS") == nil) then
-  setenv("OMP_NUM_THREADS","1")
-end
+prepend_path( "INCLUDE" ,             pathJoin( mklRoot    , "include" ) )
 
---prepend_path{ "PATH", "/opt/apps/tacc/bin", priority=10 }
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2020/en/debugger/gdb-ia/man" ) )
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2020/en/man/common" ) )
 
 EOF
+  
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
+#%Module3.1.1#################################################
+##
+## version file for %{BASENAME}%{version}
+##
+
+set     ModulesVersion      "%{version}"
+EOF
+  
+  # Check the syntax of the generated lua modulefile
+  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------
 %endif # BUILD_MODULEFILE |

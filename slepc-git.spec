@@ -9,12 +9,12 @@ Summary: Slepc install
 %define MODULE_VAR    SLEPC
 
 # Create some macros (spec file variables)
-%define major_version 3
-%define minor_version 12
-%define micro_version 0
-%define versionpatch 3.12.0
+%define major_version git20200101
+%define minor_version 1
+%define micro_version 1
+%define versionpatch %{major_version}
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}
 
 %include rpm-dir.inc
 %include compiler-defines.inc

@@ -32,7 +32,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -163,20 +163,14 @@ export PLAPACKOPTIONS=
 ##
 export logdir=%{_topdir}/../apps/petsc/logs
 mkdir -p ${logdir}; rm -rf ${logdir}/*
-export dynamiccc="i64 debug i64debug complexi64 complexi64debug uni unidebug nohdf5 hyprefei"
-export dynamiccxx="cxx cxxdebug complex complexdebug cxxcomplex cxxcomplexdebug cxxi64 cxxi64debug"
+export dynamiccc="i64 debug i64debug complex complexdebug complexi64 complexi64debug uni unidebug nohdf5 hyprefei"
 
 for ext in \
   "" \
-  single \
-  ${dynamiccc} ${dynamiccxx} \
+  rtx rtx-debug \
+  single single-debug \
+  ${dynamiccc} \
   ; do
-
-export noext="\
-  reinstate: \
-  \
-  ${static} we don't do static anymore \
-  nono"
 
 echo "configure install for ${ext}"
 export versionextra=
@@ -193,43 +187,25 @@ fi
 export XOPTFLAGS="%{TACC_OPT} -O2 -g"
 case "${ext}" in 
   ( *complex* )
-  export XOPTFLAGS="-xCORE-AVX2 -axMIC-AVX512,COMMON-AVX512 -O1 -g"
+  export XOPTFLAGS="%{TACC_OPT} -O1 -g"
+  #-xCORE-AVX2 -axMIC-AVX512,COMMON-AVX512 -O1 -g"
+  ;;
+  ( *rtx* )
+  export XOPTFLAGS="-O2 -g"
   ;;
 esac
-
-#### LOPTFLAGS are not being used at the moment. should really
-# %if "%{comp_fam}" == "gcc"
-# export XOPTFLAGS="%{TACC_OPT} -O2 -g"
-# export LOPFLAGS=${XOPTFLAGS}
-# %endif
-
-# %if "%{is_intel}" == "1"
-# export XOPTFLAGS="-xCORE-AVX2 -axMIC-AVX512,COMMON-AVX512 -O2 -g"
-# export LOPFLAGS=${XOPTFLAGS}
-# case "${ext}" in 
-#   ( *complex* )
-#   export LOPTFLAGS="-xCORE-AVX2 -axMIC-AVX512,COMMON-AVX512 -O1 -g"
-#   ;;
-# esac
-# %endif
 
 export COPTFLAGS=${XOPTFLAGS}
 export CXXOPTFLAGS=${XOPTFLAGS}
 export FOPTFLAGS=${XOPTFLAGS}
-export CNOOPTFLAGS="-O0 -g" ; export CXXNOOPTFLAGS="-O0 -g" ; export FNOOPTFLAGS="-O0 -g"
+export CNOOPTFLAGS="-O0 -g"
+export CXXNOOPTFLAGS="-O0 -g"
+export FNOOPTFLAGS="-O0 -g"
 
-export usedebug=no
 export CFLAGS=${COPTFLAGS}
 export CXXFLAGS=${CXXOPTFLAGS}
 export FFLAGS=${FOPTFLAGS}
-  # --COPTFLAGS=<string>
-  #      Override the debugging/optimization flags for the C compiler
-  # --CXXOPTFLAGS=<string>
-  #      Override the debugging/optimization flags for the C++ compiler
-  # --FOPTFLAGS=<string>
-  #      Override the debugging/optimization flags for the Fortran compiler
-  # --CUDAOPTFLAGS=<string>
-  #      Override the debugging/optimization flags for the CUDA compiler
+export usedebug=no
 case "${ext}" in 
 *debug ) export usedebug=yes 
 	export CFLAGS=${CNOOPTFLAGS}
@@ -438,13 +414,7 @@ export noblas="\
   "
 
 #
-# we have no cuda on stampede
-#
-export CUDA_OPTIONS=
-
-#
-# petsc can run single processor with a fake mpi
-# in that case: no external packages, and explicit non-mp cc/fc compilers
+# MPI settings
 #
 export MPICC=`which mpicc`
 export MPICXX=`which mpicxx`
@@ -463,17 +433,28 @@ export MPI_OPTIONS="--with-mpi=1 --with-cc=${MPICC} --with-cxx=${MPICXX} --with-
 %endif
 echo "Finding mpi in ${MPICH_HOME}"
 
-case "${ext}" in
-uni* ) export MPI_OPTIONS="--with-mpi=0 --with-cc=${CC} --with-fc=${FC} --with-cxx=0";
-       export packages= ;;
-esac
-
 #
 # single precision
+# (see also the rtx clause)
 #
 export precision=--with-precision=double
 case "${ext}" in
-single ) 
+( *single* ) 
+    export precision=--with-precision=single ;
+    export packageslisting= ;
+    export packages= ;;
+esac
+
+#
+# Cuda
+# (see also the XOPTFLAGS)
+#
+export CUDA_OPTIONS=
+case "${ext}" in
+( *rtx* )
+    module load cuda
+    export CUDA_OPTIONS="--with-cuda=yes --with-cudac=nvcc --with-cuda-include=${TACC_CUDA_DIR}/targets/x86_64-linux/include/ --with-cuda-lib=[${TACC_CUDA_DIR}/targets/x86_64-linux/lib/libcufft.so,libcusparse.so,libcusolver.so,libcublas.so,libcuda.so,libcudart.so] --download-cusp=yes CUDAFLAGS=-arch=sm_70 "
+    # CUDAOPTFLAGS="-O2 -g"
     export precision=--with-precision=single ;
     export packageslisting= ;
     export packages= ;;
@@ -485,13 +466,15 @@ case "${ext}" in
     export packages= ;;
 esac 
 
-# if [ "%{comp_fam}" = "gcc" ] ; then
-#   # this is TACC_INTEL_LIB
-#   # -L/opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/ -lirc
-#   # /opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/libirc.so
-# ls /opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/libirc.so
-# #  export LIBS="/opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/libirc.so"
-# fi
+#
+# Uni: petsc can run single processor with a fake mpi
+# in that case: no external packages, and explicit non-mp cc/fc compilers
+#
+case "${ext}" in
+uni* ) export MPI_OPTIONS="--with-mpi=0 --with-cc=${CC} --with-fc=${FC} --with-cxx=0";
+       export packageslisting= ;
+       export packages= ;;
+esac
 
 ##
 ## here we go
@@ -532,24 +515,34 @@ export noops="\
 #### post-processing fixes
 #### <<<<<<<<<<<<<<<<
 ####
+
+case "${ext}" in
+( *rtx* )
+    find ${architecture} \
+	-type f \
+        -exec grep wd1572 {} \; \
+	-exec sed -i -e 's/-wd1572//' {} \; 
+    ;;
+esac
+
 pushd ${architecture}
 pwd
 ls
 ls ./lib
-for f in ./lib/petsc/conf/configure.log \
-    ./lib/petsc/conf/petscvariables \
-    ./lib/petsc/conf/PETScBuildInternal.cmake \
-    ./lib/petsc/conf/RDict.db \
-    ./include/petscmachineinfo.h ; do
-  sed -i -e "s/debug-mt/release_mt/" $f
-done
+# for f in ./lib/petsc/conf/configure.log \
+#     ./lib/petsc/conf/petscvariables \
+#     ./lib/petsc/conf/PETScBuildInternal.cmake \
+#     ./lib/petsc/conf/RDict.db \
+#     ./include/petscmachineinfo.h ; do
+#   /bin/true sed -i -e "s/debug-mt/release_mt/" $f
+# done
 
-# fix a weird bug that trips up John Peterson
-if [ `ls ./lib/libsundials*.la | wc -l` -gt 0 ] ; then
-  for f in ./lib/libsundials*.la ; do
-    sed -i -e "/dependency_libs/s/lmpi./lmpi/" $f
-  done
-fi
+# # fix a weird bug that trips up John Peterson
+# if [ `ls ./lib/libsundials*.la | wc -l` -gt 0 ] ; then
+#   for f in ./lib/libsundials*.la ; do
+#     sed -i -e "/dependency_libs/s/lmpi./lmpi/" $f
+#   done
+# fi
 
 popd
 ####
@@ -579,13 +572,26 @@ PETSC_DIR=`pwd` PETSC_ARCH=${architecture} make MAKE_NP=12 V=1
 ##
 ##
 
-#
-# cleanup
-#
+##
+## cleanup
+##
 # as of 3.7 the object files are kept. I don't think we need them
 /bin/rm -rf $PETSC_ARCH/obj/src
 find $PETSC_ARCH -name \*.o -exec rm -f {} \;
 #/bin/rm -rf ${architecture}/obj
+
+# the CUDA leaves behind an unparsable file?
+
+# error: Recognition of file
+# "/root/rpmbuild/BUILDROOT/tacc-petsc-intel19-impi19_0-3.11-6.el7.x86_64/home1/apps/intel19/impi19_0/petsc/3.11/clx-rtx-debug/CMakeFiles/3.16.1/CMakeDetermineCompilerABI_C.bin"
+# failed: mode 100755 ELF 64-bit LSB executable, x86-64, version 1
+# (SYSV), dynamically linked (uses shared libs)error reading (Invalid
+# argument)
+
+case "${ext}" in
+( *rtx* )
+/bin/rm -rf ${architecture}/CMakeFiles
+esac
 
 ##
 ## modulefile part of the configure install loop
@@ -635,6 +641,15 @@ setenv("TACC_PETSC_INC",        pathJoin(petsc_dir,petsc_arch,"include") )
 setenv("TACC_PETSC_LIB",        pathJoin(petsc_dir,petsc_arch,"lib") )
 EOF
 
+case "${ext}" in
+( *rtx* ) 
+cat >> $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua << EOF
+
+depends_on("cuda")
+EOF
+;;
+esac
+
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
 #%Module1.0#################################################
 ##
@@ -679,32 +694,13 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 %files %{PACKAGE}
   %defattr(-,root,install,)
-  %{INSTALL_DIR}/clx
-  %{INSTALL_DIR}/clx-single
-  %{INSTALL_DIR}/clx-i64
-  %{INSTALL_DIR}/clx-debug
-  %{INSTALL_DIR}/clx-i64debug
-  %{INSTALL_DIR}/clx-uni
-  %{INSTALL_DIR}/clx-unidebug
-  %{INSTALL_DIR}/clx-nohdf5
-  %{INSTALL_DIR}/clx-hyprefei
-%files %{PACKAGE}-xx
-  %defattr(-,root,install,)
-  %{INSTALL_DIR}/clx-cxx
-  %{INSTALL_DIR}/clx-cxxi64
-  %{INSTALL_DIR}/clx-complex
-  %{INSTALL_DIR}/clx-complexi64
-  %{INSTALL_DIR}/clx-cxxcomplex
-  # and debug variants
-  %{INSTALL_DIR}/clx-cxxdebug
-  %{INSTALL_DIR}/clx-cxxi64debug
-  %{INSTALL_DIR}/clx-complexdebug
-  %{INSTALL_DIR}/clx-complexi64debug
-  %{INSTALL_DIR}/clx-cxxcomplexdebug
+  %{INSTALL_DIR}/clx*
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Sun Jan 19 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 6: adding cuda
 * Fri Oct 04 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 5: update to 3.11.4
 * Fri Sep 27 2019 eijkhout <eijkhout@tacc.utexas.edu>

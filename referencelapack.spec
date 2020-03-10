@@ -1,81 +1,66 @@
 #
-# W. Cyrus Proctor
-# 2016-02-06
+# Spec file for reference blas/lapack
 #
-# Important Build-Time Environment Variables (see name-defines.inc)
-# NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
-# NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
-#
-# Important Install-Time Environment Variables (see post-defines.inc)
-# VERBOSE=1       -> Print detailed information at install time
-# RPM_DBPATH      -> Path To Non-Standard RPM Database Location
-#
-# Typical Command-Line Example:
-# ./build_rpm.sh Bar.spec
-# cd ../RPMS/x86_64
-# rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
-# rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
-# rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
-
-Summary: A Nice little relocatable skeleton spec file example.
+Summary:   Netlib blas and lapack
 
 # Give the package a base name
-%define pkg_base_name TACC
-%define MODULE_VAR    TACC
+%define pkg_base_name referencelapack
+%define MODULE_VAR    REFERENCELAPACK
 
 # Create some macros (spec file variables)
-%define major_version 1
-%define minor_version 1
+%define major_version 3
+%define minor_version 5
+%define micro_version 0
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_full_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
+%include compiler-defines.inc
 #%include mpi-defines.inc
+
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines-noreloc.inc
+%include name-defines-noreloc-home1.inc
+
 ########################################
 ############ Do Not Remove #############
 ########################################
 
 ############ Do Not Change #############
-#Name:      %{pkg_name}
-# 2016-02-06 Hacked name to keep TACC
-Name:      tacc-base_modules
+Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   6%{?dist}
+Release:   1
 License:   GPL
-Group:     Module Magic
-Packager:  TACC - cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Group:     Development/Tools
+Source:    referencelapack-%{version}.tgz
+URL:       http://netlib.org/lapack
+Vendor:    University of Tennessee, Knoxville
+Packager:  TACC - eijkhout@tacc.utexas.edu
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
 
-
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: Reference blas and lapack
+Group: development/libraries
 %description package
-This is the long description for the package RPM...
-Welcome to the TACC Module way!
+Netlib blas and lapack
 
 %package %{MODULEFILE}
-Summary: The modulefile RPM
-Group: Lmod/Modulefiles
+Summary: Reference blas and lapack
+Group: development/libraries
 %description modulefile
-This is the long description for the modulefile RPM...
-Welcome to the TACC Module way!
+Netlib blas and lapack
 
 %description
-Welcome to the TACC Module way!
+Lapack
 
 #---------------------------------------
 %prep
@@ -86,6 +71,9 @@ Welcome to the TACC Module way!
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+%setup -n %{pkg_base_name}-%{pkg_full_version}
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -110,10 +98,12 @@ Welcome to the TACC Module way!
 #---------------------------------------
 
 # Setup modules
-# Nothing to do!
+%include system-load.inc
+%include compiler-load.inc
+#%include mpi-load.inc
 
 # Insert necessary module commands
-# None to have!
+#module purge
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -123,7 +113,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -135,18 +125,15 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-  # Nothing to see here!
-
-#-----------------------  
+  
+#-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
-
 
 #---------------------------
 %if %{?BUILD_MODULEFILE}
 #---------------------------
 
-%define MODULE_DIR %{MODULE_PREFIX}/modulefiles
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
   
   #######################################
@@ -157,57 +144,99 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   ########### Do Not Remove #############
   #######################################
   
-# Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/TACC.lua << 'EOF'
-local helpMsg = [[
-The %{MODULE_VAR} modulefile defines the default paths and environment
-variables needed to use the local software and utilities
-available, placing them after the vendor-supplied
-paths in PATH and MANPATH.
+#--------------------------
+%endif # BUILD_MODULEFILE |
+#--------------------------
+
+##
+## here we go
+##
+#------------------------
+%if %{?BUILD_PACKAGE}
+#------------------------
+
+#
+# config/make:
+#
+
+module load cmake
+
+mkdir -p %{INSTALL_DIR}
+mount -t tmpfs tmpfs %{INSTALL_DIR} 
+
+cmake -DCMAKE_INSTALL_PREFIX:PATH=%{INSTALL_DIR} .
+make all install
+
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+cp -r %{INSTALL_DIR}/* $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+umount %{INSTALL_DIR}
+
+# make test
+
+#-----------------------
+%endif # BUILD_PACKAGE |
+#-----------------------
+
+#---------------------------
+%if %{?BUILD_MODULEFILE}
+#---------------------------
+
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
+local help_message = [[
+The %{name} module file defines the following environment variables:
+TACC_REFERENCELAPACK_DIR, TACC_REFERENCELAPACK_LIB, and 
+for the location of sources and libraries respectively.
+
+This Module Should NOT, I repeat !!!NOT!!!, Be Used In Production!
+
+This module serves for debugging purposes or to compare against MKL.
+
+Version %{version}
+
 ]]
 
-help(helpMsg)
+help(help_message,"\n")
 
 
-if (os.getenv("USER") ~= "root") then
-  append_path("PATH",  ".")
-end
+whatis("ReferenceLapack: Reference implementation of blas and lapack")
+whatis("Version: %{version}")
+whatis("Category: development, mathematics")
+whatis("Keywords: Library, development, mathematics")
+whatis("Description: Fortran reference implementation of Blas and Lapack.")
+whatis("URL: http://netlib.org/lapack/")
 
-load("intel")
-load("impi")
-load("git")
-load("autotools")
-load("python3")
-load("cmake")
-load("ucx")
-load("pmix")
-load("hwloc/1.11.12")
-try_load("xalt")
+-- Prerequisites
 
-prepend_path("MANPATH","/usr/local/man:/usr/share/man:/usr/X11R6/man:/usr/kerberos/man:/usr/man")
+--Prepend paths
+prepend_path("LD_LIBRARY_PATH","%{INSTALL_DIR}/lib")
 
--- Environment change - assume single threaded to fix silly MKL
-if (mode() == "load" and os.getenv("OMP_NUM_THREADS") == nil) then
-  setenv("OMP_NUM_THREADS","1")
-end
+--Env variables 
+setenv("TACC_REFERENCELAPACK_DIR", "%{INSTALL_DIR}")
+setenv("TACC_REFERENCELAPACK_LIB", "%{INSTALL_DIR}/lib")
 
---prepend_path{ "PATH", "/opt/apps/tacc/bin", priority=10 }
+EOF
 
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
+#%Module1.0#################################################
+##
+## version file for Referencelapack
+##
+ 
+set     ModulesVersion      "%{version}"
 EOF
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-
 #------------------------
 %if %{?BUILD_PACKAGE}
 %files package
 #------------------------
 
-  %defattr(-,root,install,)
-  # RPM package contains files within these directories
-  %{INSTALL_DIR}
+%defattr(-,root,install,-)
+%{INSTALL_DIR}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -217,14 +246,12 @@ EOF
 %files modulefile 
 #---------------------------
 
-  %defattr(-,root,install,)
-  # RPM modulefile contains files within these directories
-  %{MODULE_DIR}
+%defattr(-,root,install,-)
+%{MODULE_DIR}
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
 
 ########################################
 ## Fix Modulefile During Post Install ##
@@ -247,3 +274,6 @@ export PACKAGE_PREUN=1
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
 
+%changelog
+* Mon Feb 24 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial install

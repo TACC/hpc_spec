@@ -7,7 +7,7 @@ Summary: PETSc install
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 12
-%define micro_version 2
+%define micro_version 4
 %define versionpatch %{major_version}.%{minor_version}.%{micro_version}
 
 %define pkg_version %{major_version}.%{minor_version}
@@ -32,7 +32,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -167,8 +167,8 @@ export dynamiccc="i64 debug i64debug complex complexdebug complexi64 complexi64d
 
 for ext in \
   "" \
-  single single-debug \
   rtx rtx-debug \
+  single single-debug \
   ${dynamiccc} \
   ; do
 
@@ -192,6 +192,7 @@ case "${ext}" in
   ;;
   ( *rtx* )
   export XOPTFLAGS="-O2 -g"
+  ;;
 esac
 
 export COPTFLAGS=${XOPTFLAGS}
@@ -416,8 +417,7 @@ export noblas="\
   "
 
 #
-# petsc can run single processor with a fake mpi
-# in that case: no external packages, and explicit non-mp cc/fc compilers
+# MPI settings
 #
 export MPICC=`which mpicc`
 export MPICXX=`which mpicxx`
@@ -425,31 +425,30 @@ export MPIF90=`which mpif90`
 echo "setting mpicc=${MPICC}"
 ls -l ${MPICC}
 
+echo ${MPICH_HOME}
 export MPI_OPTIONS="--with-mpi=1"
 # compilers are found by giving the "--with-mpi-dir"
 # --with-cc=${MPICC} --with-cxx=${MPICXX} --with-fc=${MPIF90}"
 %if "%{is_impi}" == "1"
-  # why do we define this?
-  export PETSC_MPICH_HOME="${MPICH_HOME}/intel64"
-  # --with-mpi-dir=${PETSC_MPICH_HOME}
   export MPI_OPTIONS="${MPI_OPTIONS} \
-    --with-mpi-include=${TACC_IMPI_INC} --with-mpi-lib=${TACC_IMPI_LIB}/release_mt/libmpi.so \
+    --with-mpi-dir=${MPICH_HOME}/intel64 \
     "
+  # up to 3.11 we used this for Intel MPI:
+  export OLD_MPI_OPTIONS="${MPI_OPTIONS} \
+    --with-mpi-dir=${MPICH_HOME} \
+    --with-mpi-include=${TACC_IMPI_INC} \
+    --with-mpi-lib=${TACC_IMPI_LIB}/release_mt/libmpi.so \
+     "
 %else
   # why do we define this?
-  export PETSC_MPICH_HOME="${MPICH_HOME}"
   export MPI_OPTIONS="${MPI_OPTIONS} --with-mpi-dir=${MPICH_HOME}"
 %endif
-# up to 3.11 we used this for Intel MPI:
-export petsc311_mpi_release="\
-    --with-mpi-include=${TACC_IMPI_INC} --with-mpi-lib=${TACC_IMPI_LIB}/release_mt/libmpi.so \
-    "
-echo "Finding mpi in ${MPICH_HOME}"
 
-case "${ext}" in
-uni* ) export MPI_OPTIONS="--with-mpi=0 --with-cc=${CC} --with-fc=${FC} --with-cxx=0";
-       export packages= ;;
-esac
+#
+# Petsc4py
+#
+module load python3
+export petsc4py="--download-petsc4py=yes --with-python=1 --with-python-exec=python3"
 
 #
 # single precision
@@ -484,13 +483,14 @@ case "${ext}" in
     export packages= ;;
 esac 
 
-# if [ "%{comp_fam}" = "gcc" ] ; then
-#   # this is TACC_INTEL_LIB
-#   # -L/opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/ -lirc
-#   # /opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/libirc.so
-# ls /opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/libirc.so
-# #  export LIBS="/opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64/libirc.so"
-# fi
+#
+# petsc can run single processor with a fake mpi
+# in that case: no external packages, and explicit non-mp cc/fc compilers
+#
+case "${ext}" in
+uni* ) export MPI_OPTIONS="--with-mpi=0 --with-cc=${CC} --with-fc=${FC} --with-cxx=0";
+       export packages= ;;
+esac
 
 ##
 ## here we go
@@ -520,6 +520,7 @@ else
     --with-packages-build-dir=${PACKAGES_BUILD_DIR} \
     ${MPI_OPTIONS} ${MPI_EXTRA_OPTIONS} \
     ${clanguage} ${scalar} ${dynamicshared} ${precision} ${packages} \
+    ${petsc4py} \
     --with-debugging=${usedebug} \
     ${BLAS_LAPACK_OPTIONS} ${CUDA_OPTIONS} ${INDEX_OPTIONS} \
     CFLAGS="${CFLAGS}" FFLAGS="${FFLAGS}" CXXFLAGS="${CXXFLAGS}"
@@ -535,14 +536,6 @@ export noops="\
 pushd ${architecture}
 pwd
 ls
-ls ./lib
-# for f in ./lib/petsc/conf/configure.log \
-#     ./lib/petsc/conf/petscvariables \
-#     ./lib/petsc/conf/PETScBuildInternal.cmake \
-#     ./lib/petsc/conf/RDict.db \
-#     ./include/petscmachineinfo.h ; do
-#   sed -i -e "s/debug-mt/release_mt/" $f
-# done
 
 # fix a weird bug that trips up John Peterson
 if [ `ls ./lib/libsundials*.la | wc -l` -gt 0 ] ; then
@@ -559,22 +552,6 @@ popd
 ##
 ## Make!
 
-# lower optimization for intel complex
-# this is the petsc 3.8 location. no longer works in 3.9
-%if "%{is_intel}" == "1"
-case "${ext}" in 
-  ( *pomplex* )
-    for c in src/mat/impls/baij/seq/*.c ; do
-      export CFLAGS=${LOPTFLAGS} ; \
-      make -f gmakefile V=1 PCC_FLAGS="${LOPTFLAGS} -fPIC" \
-          ${PETSC_ARCH}/obj/${c%%.c}.o
-    done
-    export CFLAGS=${XOPTFLAGS}
-  ;;
-esac
-%endif
-
-# and now the rest with full optimization
 PETSC_DIR=`pwd` PETSC_ARCH=${architecture} make MAKE_NP=12 V=1
 ##
 ##
@@ -689,24 +666,15 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 %files %{PACKAGE}
   %defattr(-,root,install,)
   %{INSTALL_DIR}/clx*
-  # %{INSTALL_DIR}/clx-single
-  # %{INSTALL_DIR}/clx-i64
-  # %{INSTALL_DIR}/clx-debug
-  # %{INSTALL_DIR}/clx-i64debug
-  # %{INSTALL_DIR}/clx-uni
-  # %{INSTALL_DIR}/clx-unidebug
-  # %{INSTALL_DIR}/clx-nohdf5
-  # %{INSTALL_DIR}/clx-hyprefei
-  # %{INSTALL_DIR}/clx-complex
-  # %{INSTALL_DIR}/clx-complexi64
-  # %{INSTALL_DIR}/clx-complexdebug
-  # %{INSTALL_DIR}/clx-complexi64debug
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Mon Mar 09 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 4: update to 3.12.4
 * Thu Dec 26 2019 eijkhout <eijkhout@tacc.utexas.edu>
-_ release 3: tinkering with release_mt
+_ release 3: update to 3.12.3
+    for now using maint branch
 * Thu Dec 12 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: adding rtx cuda, point update to 3.12.2
 * Sat Oct 05 2019 eijkhout <eijkhout@tacc.utexas.edu>

@@ -14,8 +14,7 @@ Summary: Dealii install
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 %define DEAL_USE_PETSC 1
-%define dealiipetscversion git20200101
-# 3.12
+%define dealiipetscversion 3.12
 
 %define DEAL_USE_TRILINOS 1
 %define dealiitrilinosversion 12.14.1
@@ -124,20 +123,71 @@ mount -t tmpfs tmpfs %{INSTALL_DIR}
   module load python2 ## only for boost! should not have to.
 %else
   # all of a sudden we can load boost without python?
-  # module load python3 ## only for boost! should not have to.
+  module load python3 ## only for boost! should not have to.
 %endif
 
 module list
 for m in boost cmake \
     gsl \
-    metis p4est \
+    p4est \
     ; do
   module --ignore_cache load $m ; 
 done
 
+#export BASIC_FLAGS="-g %{TACC_OPT}"
+export BASIC_FLAGS="-g -march=native"
+
+####
+#### MPI handling
+####
+%if "%{comp_fam}" == "intel"
+export I_MPI_LIBRARY_KIND=release_mt
+#     -DMPICH_IGNORE_CXX_SEEK=ON
+%endif
+
+#### problem:
+#   PETSC has to be compiled against the same MPI library as deal.II but the
+#   link line of PETSC contains:
+#
+#     /opt/intel/compilers_and_libraries_2019.5.281/linux/mpi/intel64/lib/release_mt/libmpi.so
+#
+#   which is not listed in MPI_LIBRARIES:
+#
+#     MPI_LIBRARIES = "/opt/intel/compilers_and_libraries_2019.5.281/linux/mpi/intel64/lib/libmpifort.so /opt/intel/compilers_and_libraries_2019.5.281/linux/mpi/intel64/lib/release/libmpi.so /lib64/librt.so /lib64/libpthread.so /lib64/libdl.so"
+#
+
+export no_mpi_spec="\
+    -D MPI_LIBRARIES=${TACC_IMPI_DIR}/intel64/lib/libmpicxx.so;${TACC_IMPI_DIR}/intel64/lib/libmpifort.so;${TACC_IMPI_DIR}/intel64/lib/release_mt/libmpi.so;/lib64/librt.so;/lib64/libpthread.so;/lib64/libdl.so \
+    "
+export MPI_SPECIFICATION="\
+    -D MPI_LIBRARIES=${TACC_IMPI_DIR}/intel64/lib/release_mt/libmpi.so \
+    -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc \
+    -DMPICH_IGNORE_CXX_SEEK=ON
+    "
+
+####
+#### Metis
+####
 CMAKE_USE_METIS="ON"
 module load metis
 
+####
+#### MKL
+####
+%if "%{comp_fam}" == "gcc"
+  module load mkl
+%else
+  export MKLFLAG="-mkl"
+%endif
+export LAPACK_SPECIFICATION="-D LAPACK_LIBRARIES=\
+${MKLROOT}/libmkl_intel_lp64.so\
+\;\
+${MKLROOT}/libmklcore.so\
+"
+
+####
+#### PETSc
+####
 %if "%{DEAL_USE_PETSC}" == "1"
   export CMAKE_USE_PETSC="ON"
   module load petsc/%{dealiipetscversion} slepc/%{dealiipetscversion}
@@ -148,6 +198,26 @@ module load metis
   export PETSC_ARCH="foobar"
 %endif
 
+##
+## TBBROOT
+##
+%if "%{comp_fam}" == "gcc"
+  export TACC_INTEL_DIR=/opt/intel/compilers_and_libraries_2019.5.281/linux
+  if [ ! -d ${TACC_INTEL_DIR} ] ; then 
+      echo "Invalid TACC_INTEL_DIR: ${TACC_INTEL_DIR}" ; exit 1
+  fi
+  export TBBROOT=${TACC_INTEL_DIR}/tbb
+%endif
+if [ ! -d "${TBBROOT}" ] ; then
+  echo "Trouble setting TBBROOT"
+  exit 1
+fi
+export BASIC_FLAGS="${BASIC_FLAGS} -I${TBBROOT}/include"
+
+####
+#### Trilinos
+#### (p4est gets loaded higher up)
+####
 %if "%{DEAL_USE_TRILINOS}" == "1"
   export CMAKE_USE_TRILINOS="ON"
   module load trilinos/%{dealiitrilinosversion}
@@ -157,17 +227,11 @@ module load metis
   export TACC_TRILINOS_DIR="/dev/null"
 %endif
 
+####
+#### Netcdf, Hdf5
+####
 %if "%{comp_fam}" == "intel"
   module load mumps netcdf phdf5
-%endif
-
-ls $TACC_P4EST_DIR
-ls $TACC_TRILINOS_DIR
-
-%if "%{comp_fam}" == "gcc"
-  module load mkl
-%else
-  export MKLFLAG="-mkl"
 %endif
 
 ##
@@ -184,30 +248,11 @@ pushd /tmp/dealii-build
 
 rm -f CMakeCache.txt
 
-#export BASIC_FLAGS="-g %{TACC_OPT}"
-export BASIC_FLAGS="-g -march=native"
-
-##
-## add TBBROOT
-##
-%if "%{comp_fam}" == "gcc"
-  export TACC_INTEL_DIR=/opt/intel/compilers_and_libraries_2019.5.281/linux
-  if [ ! -d ${TACC_INTEL_DIR} ] ; then 
-      echo "Invalid TACC_INTEL_DIR: ${TACC_INTEL_DIR}" ; exit 1
-  fi
-  export TBBROOT=${TACC_INTEL_DIR}/tbb
-%endif
-if [ ! -d "${TBBROOT}" ] ; then
-  echo "Trouble setting TBBROOT"
-  exit 1
-fi
-export BASIC_FLAGS="${BASIC_FLAGS} -I${TBBROOT}/include"
-
 ##  CC=`which mpicc` CXX=`which mpicxx` F90=`which mpif90`
 
 ## https://www.dealii.org/developer/users/cmake.html
 
-## TACC_IMPI_LIB = /opt/intel/compilers_and_libraries_2019.5.281/linux/mpi/intel64/lib
+## TACC_IMPI_LIB = ${TACC_IMPI_DIR}/intel64/lib
 ##    -DMPI_LIBRARIES=${TACC_IMPI_LIB}/libmpicxx.so\;${TACC_IMPI_LIB}/libmpifort.so\;${TACC_IMPI_LIB}/release_mt/libmpi.so\;/lib64/librt.so\;/lib64/libpthread.so\;/lib64/libdl.so
 
   cmake -VV \
@@ -221,7 +266,8 @@ export BASIC_FLAGS="${BASIC_FLAGS} -I${TBBROOT}/include"
     -DDEAL_II_COMPONENT_MESH_CONVERTER=ON \
     \
     -DDEAL_II_WITH_MPI=ON \
-    -DMPICH_IGNORE_CXX_SEEK=ON \
+    ${MPI_SPECIFICATION} \
+    ${LAPACK_SPECIFICATION} \
     \
     -DBOOST_DIR=${TACC_BOOST_DIR} \
     -DDEAL_II_WITH_GSL=ON \

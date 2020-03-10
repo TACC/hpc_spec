@@ -1,6 +1,6 @@
 #
 # Si Liu
-# 08-15-2019
+# 01-20-2020
 #
 
 # Give the package a base name
@@ -8,8 +8,8 @@
 %define MODULE_VAR    SANITYTOOL
 
 # Create some macros (spec file variables)
-%define major_version 1
-%define minor_version 6
+%define major_version 2
+%define minor_version 0
 %define pkg_version %{major_version}.%{minor_version}
 
 Summary: SanityTool
@@ -40,7 +40,7 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 Summary: The package RPM
 Group: TACC-HPC-TOOL
 %description package
-SanityTool 1.6 by Si Liu and Robert McLay
+SanityTool 2.0 by Si Liu and Robert McLay
 Texas Advanced Computing Center
 
 %package %{MODULEFILE}
@@ -146,23 +146,22 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help(
 [[
 The module loads TACC SanityTool for you.
-Version: 1.6
+Version: 2.0
 
-You can run the command "sanitycheck" to examine your current environment settings on Stampede2.
+You can run the command "sanitycheck" to examine your current environment settings on this TACC system.
 If you encounter any problems, please send an email to siliu@tacc.utexas.edu with your user id and error messages.
 Please also contact siliu@tacc.utexas.edu, if you have any other concerns or require additional tests.
-
 
 ]]
 )
 
 whatis("Name: SanityTool")
-whatis("Version: 1.6")
+whatis("Version: 2.0")
 whatis("Category: TACC HPC Tools")
 
-local sanitypath = "/opt/apps/sanitytool/1.6"
+local sanitypath = "/opt/apps/sanitytool/2.0"
 append_path("PATH",sanitypath)
-setenv("TACC_SANITYTOOL_DIR", "/opt/apps/sanitytool/1.6")
+setenv("TACC_SANITYTOOL_DIR", "/opt/apps/sanitytool/2.0")
 
 EOF
 

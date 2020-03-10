@@ -95,6 +95,20 @@
   %define is_intel 1
   %define comp_module intel/19.0.5
 %endif
+%if "%{is_intel191}" == "1"
+  %define comp_fam intel
+  %define comp_fam_ver intel19_1
+  %define comp_fam_name Intel
+  %define is_intel 1
+  %define comp_module intel/19.1.0
+%endif
+%if "%{is_intel20}" == "1"
+  %define comp_fam intel
+  %define comp_fam_ver intel20
+  %define comp_fam_name Intel
+  %define is_intel 1
+  %define comp_module intel/20.0.0
+%endif
 
 %if "%{comp_fam}" == "error"
   %{error: You must define which compiler you are using!}

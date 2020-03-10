@@ -20,3 +20,7 @@ stampede2/
 *.sh
 log_*
 .nfs*
+*.zip
+.\#*
+slepc
+
