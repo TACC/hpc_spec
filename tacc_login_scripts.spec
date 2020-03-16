@@ -3,8 +3,8 @@
 
 Summary:   Standard TACC Login scripts for our friendly Linux Clusters.
 Name:      tacc_login_scripts
-Version:   2.2.2
-Release:   1
+Version:   2.5
+Release:   1%{?dist}
 License:   Proprietary
 Group:     System Environment/Base
 Source0:   %{name}-%{version}.tar.gz
@@ -36,9 +36,7 @@ These are the scripts for compute nodes
 
 %build
 
-rm -rf   $RPM_BUILD_ROOT%{PROFILE_D_PATH}  $RPM_BUILD_ROOT/etc/tacc 
-mkdir -p $RPM_BUILD_ROOT%{PROFILE_D_PATH}  $RPM_BUILD_ROOT/etc/tacc/zsh
-
+%install
 
 PROFILE_D_FILES="
                profile.d/00_shell_startup.CSH
@@ -63,11 +61,23 @@ PROFILE_D_FILES="
                profile.d/z90_login_modules.sh
 "
 
-%install
+SCRIPT_FILES="
+               scripts/archive
+               scripts/check_changedir.pl
+               scripts/fsMounted
+               scripts/available_fs
+               scripts/workdir
+"
+rm -rf   $RPM_BUILD_ROOT%{PROFILE_D_PATH}  $RPM_BUILD_ROOT/etc/tacc 
+mkdir -p $RPM_BUILD_ROOT%{PROFILE_D_PATH}  $RPM_BUILD_ROOT/etc/tacc/zsh
 
 rm -rf $RPM_BUILD_ROOT/usr/local/bin       	   $RPM_BUILD_ROOT/usr/local/etc/
 mkdir -p                                   	   $RPM_BUILD_ROOT/usr/local/bin
-find available_fs fsMounted workdir | cpio -pduv --owner=build: $RPM_BUILD_ROOT/usr/local/bin/
+mkdir -p                                           $RPM_BUILD_ROOT/usr/local/etc/
+find $SCRIPT_FILES | cpio -pduv --owner=build:     $RPM_BUILD_ROOT
+mv    $RPM_BUILD_ROOT/scripts/archive              $RPM_BUILD_ROOT/usr/local/etc/
+mv    $RPM_BUILD_ROOT/scripts/*                    $RPM_BUILD_ROOT/usr/local/bin
+rmdir $RPM_BUILD_ROOT/scripts
 
 OLD_TACC_STARTUP_FILES="
        etc/cshrc
@@ -75,8 +85,7 @@ OLD_TACC_STARTUP_FILES="
        etc/profile
 "
 
-mkdir -p                                                 $RPM_BUILD_ROOT/usr/local/etc/
-find archive | cpio -pduv --owner=build:                 $RPM_BUILD_ROOT/usr/local/etc/
+
 find $OLD_TACC_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/usr/local
 
 find ./profile.d $PROFILE_D_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT%{PROFILE_D_PATH}/..
@@ -87,27 +96,31 @@ find ./.version                   | cpio -pduv --owner=build: $RPM_BUILD_ROOT%{P
 #
 
 SHELL_STARTUP_FILES="
-         bash_logout
-         bashrc
-         profile
-         csh.login
-         csh.cshrc
-         csh.logout
-         tacc_functions
-         ksh.kshrc
+         startup/bash_logout
+         startup/bashrc
+         startup/profile
+         startup/csh.login
+         startup/csh.cshrc
+         startup/csh.logout
+         startup/tacc_functions
+         startup/ksh.kshrc
 "
 
-find $SHELL_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/etc/tacc
+find $SHELL_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/
+mv $RPM_BUILD_ROOT/startup/* $RPM_BUILD_ROOT/etc/tacc/
+rmdir $RPM_BUILD_ROOT/startup
 
 ZSH_STARTUP_FILES="
-         zsh/zlogin
-         zsh/zlogout
-         zsh/zprofile
-         zsh/zshenv
-         zsh/zshrc
+         startup/zsh/zlogin
+         startup/zsh/zlogout
+         startup/zsh/zprofile
+         startup/zsh/zshenv
+         startup/zsh/zshrc
 "
 
-find $ZSH_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/etc/tacc
+find $ZSH_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/
+mv     $RPM_BUILD_ROOT/startup/zsh/*                $RPM_BUILD_ROOT/etc/tacc/zsh
+rm -rf $RPM_BUILD_ROOT/startup
 
 
 ###%build
@@ -131,16 +144,17 @@ find $ZSH_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/etc/tacc
 %{PROFILE_D_PATH}/z90_compute_modules.sh
 /etc/tacc/bash_logout
 /etc/tacc/bashrc
-/etc/tacc/profile
-/etc/tacc/csh.login
 /etc/tacc/csh.cshrc
+/etc/tacc/csh.login
 /etc/tacc/csh.logout
 /etc/tacc/ksh.kshrc
+/etc/tacc/profile
 /etc/tacc/tacc_functions
 /etc/tacc/zsh
-/usr/local/bin/workdir
 /usr/local/bin/available_fs
+/usr/local/bin/check_changedir.pl
 /usr/local/bin/fsMounted
+/usr/local/bin/workdir
 /usr/local/etc/archive
 /usr/local/etc/cshrc
 /usr/local/etc/login
@@ -165,16 +179,17 @@ find $ZSH_STARTUP_FILES | cpio -pduv --owner=build: $RPM_BUILD_ROOT/etc/tacc
 %{PROFILE_D_PATH}/z90_login_modules.sh
 /etc/tacc/bash_logout
 /etc/tacc/bashrc
-/etc/tacc/profile
-/etc/tacc/csh.login
 /etc/tacc/csh.cshrc
+/etc/tacc/csh.login
 /etc/tacc/csh.logout
 /etc/tacc/ksh.kshrc
+/etc/tacc/profile
 /etc/tacc/tacc_functions
 /etc/tacc/zsh
 /usr/local/bin/available_fs
-/usr/local/bin/workdir
+/usr/local/bin/check_changedir.pl
 /usr/local/bin/fsMounted
+/usr/local/bin/workdir
 /usr/local/etc/archive
 /usr/local/etc/cshrc
 /usr/local/etc/login
