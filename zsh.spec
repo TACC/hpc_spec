@@ -2,11 +2,11 @@
 
 Summary: Zsh: The one shell to rule them all
 Name: zsh
-Version: 5.3.1
-Release: 3%{?dist}
+Version: 5.8
+Release: 1%{?dist}
 License: Zsh Development Group
 Group: System Environment/Shells
-Source: zsh-%{version}.tar.gz
+Source: zsh-%{version}.tar.xz
 Packager: TACC- mclay@tacc.utexas.edu
 Buildroot: /var/tmp/%{name}-%{version}-buildroot
 
