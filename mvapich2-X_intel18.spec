@@ -110,10 +110,14 @@ MVAPICH is developed at the Ohio State University. See whttp://mvapich.cse.ohio-
 # Setup modules
 %include system-load.inc
 module purge
-#%include compiler-load.inc
-module av
-module --ignore-cache load intel/18.0.2
-module list
+%include compiler-load.inc
+
+#echo "MODULEPATH: $MODULEPATH"
+#ls /opt/apps/modulefiles/intel
+
+#module av
+#module --ignore-cache load intel/18.0.2
+#module list
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"

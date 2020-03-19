@@ -94,6 +94,8 @@ module purge
 %include mpi-load.inc
 module list
 
+export P4P=1
+
 #
 # Set Up Installation Directory and tmp file system
 #
@@ -231,14 +233,16 @@ esac
 ##
 
 export HAS_HDF5=1
-##%if "%{comp_fam}" == "intel"
+
   module load phdf5
   export hdf5string="hdf5"
   export hdf5download="--with-hdf5=1 --with-hdf5-dir=${TACC_HDF5_DIR}"
   # --download-hdf5=1"
   export hdf5versionextra="; hdf5 support"
-##%endif
 
+
+# sometimes actually we don't load hdf5 because the serial and parallel 
+# are not compatible
 case "${ext}" in
 *nohdf5* ) export HAS_HDF5=0
         export hdf5string=
@@ -261,13 +265,6 @@ case "${ext}" in
        export USECXX=yes
        ;;
 esac
-%if "%{is_petsc_dev}" == "1"
-case "${ext}" in
-*cxx* ) export clanguage="--with-clanguage=C++ --with-sieve=1 --with-opt-sieve=1 --with-boost="
-       export clanguageversionextra="; C++ support, sieve & boost included"
-       ;;
-esac
-%endif
 export versionextra="${versionextra}${clanguageversionextra}"
 
 #
@@ -448,7 +445,9 @@ export MPI_OPTIONS="--with-mpi=1"
 # Petsc4py
 #
 module load python3
-export petsc4py="--download-petsc4py=yes --with-python=1 --with-python-exec=python3"
+if [ "${P4P}" -eq 1 ] ; then
+  export petsc4py="--download-petsc4py=yes --with-python=1 --with-python-exec=python3"
+fi
 
 #
 # single precision
@@ -611,6 +610,12 @@ setenv("TACC_PETSC_BIN",        pathJoin(petsc_dir,petsc_arch,"bin") )
 setenv("TACC_PETSC_INC",        pathJoin(petsc_dir,petsc_arch,"include") )
 setenv("TACC_PETSC_LIB",        pathJoin(petsc_dir,petsc_arch,"lib") )
 EOF
+
+if [ "${P4P}" -eq 1 ] ; then
+cat >> $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua << EOF
+prepend_path("PYTHONPATH", pathJoin(petsc_dir,petsc_arch,"lib") )
+EOF
+fi
 
 case "${ext}" in
 ( *rtx* ) 
