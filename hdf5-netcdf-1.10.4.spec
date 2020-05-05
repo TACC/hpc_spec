@@ -7,12 +7,13 @@ Summary: HDF5 Library
 # This spec file can be built in parallel with mpi or not.
 #
 #
-%define hdf5_pkg_version   1.8.16
-%define ncdf_pkg_version   4.3.3.1
+#  netcdf-c-4.7.4.tar.gz  netcdf-cxx4-4.3.1.tar.gz  netcdf-fortran-4.5.2.tar.gz  
+%define hdf5_pkg_version   1.10.4
+%define ncdf_pkg_version   4.7.4
 %define ncdf_cxx_version   4.2
-%define ncdf_cxx4_version  4.2.1
-%define ncdf_ftn_version   4.4.2
-%define szip_version 2.1
+%define ncdf_cxx4_version  4.3.1
+%define ncdf_ftn_version   4.5.2
+%define szip_version 2.1.1
 
 %define dbg %{nil}
 %if "%{is_debug}" == "1"
@@ -27,14 +28,14 @@ Summary: HDF5 Library
 
 Name: hdf5-netcdf
 Version: %{hdf5_version}
-Release: 6%{?dist}
+Release: 2%{?dist}
 License: see included Copyright
 Vendor: NCSA
 Group: Development/Libraries
 Source:  hdf5-%{hdf5_pkg_version}.tar.bz2
 Source1: szip-%{szip_version}.tar.gz
 Patch2:  szip-config.patch
-Source2: netcdf-%{ncdf_pkg_version}.tar.gz
+Source2: netcdf-c-%{ncdf_pkg_version}.tar.gz
 Patch3:  netcdf_hdf5_1.8.13.patch
 Source3: netcdf-fortran-%{ncdf_ftn_version}.tar.gz
 Source4: netcdf-cxx4-%{ncdf_cxx4_version}.tar.gz
@@ -61,13 +62,13 @@ URL: http://hdf.ncsa.uiuc.edu/HDF5/
    %define pkg_base_name         hdf5
    %define HDF5_BASE_DIR         %{APPS}/%{comp_fam_ver}/%{pkg_base_name}/%{hdf5_version}
 
-   %define HDF5_INSTALL_DIR      %{HDF5_BASE_DIR}/%{_arch}
+   %define HDF5_INSTALL_DIR      %{HDF5_BASE_DIR}/x86_64
    %define MIC_HDF5_INSTALL_DIR  %{HDF5_BASE_DIR}/k1om
    %define HDF5_MODULE_DIR       %{APPS}/%{comp_fam_ver}/%{MODULES}/%{pkg_base_name}
 
    %define NCDF_BASE_DIR         %{APPS}/%{comp_fam_ver}/netcdf/%{ncdf_version}
 
-   %define NCDF_INSTALL_DIR      %{NCDF_BASE_DIR}/%{_arch}
+   %define NCDF_INSTALL_DIR      %{NCDF_BASE_DIR}/x86_64
    %define MIC_NCDF_INSTALL_DIR  %{NCDF_BASE_DIR}/k1om
    %define NCDF_MODULE_DIR       %{APPS}/%{comp_fam_ver}/%{MODULES}/netcdf
 
@@ -81,13 +82,13 @@ URL: http://hdf.ncsa.uiuc.edu/HDF5/
    %define pkg_base_name         phdf5
    %define HDF5_BASE_DIR         %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{pkg_base_name}/%{hdf5_version}
 
-   %define HDF5_INSTALL_DIR      %{HDF5_BASE_DIR}/%{_arch}
+   %define HDF5_INSTALL_DIR      %{HDF5_BASE_DIR}/x86_64
    %define MIC_HDF5_INSTALL_DIR  %{HDF5_BASE_DIR}/k1om
    %define HDF5_MODULE_DIR       %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{MODULES}/%{pkg_base_name}
 
    %define NCDF_BASE_DIR         %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/parallel-netcdf/%{ncdf_version}
 
-   %define NCDF_INSTALL_DIR      %{NCDF_BASE_DIR}/%{_arch}
+   %define NCDF_INSTALL_DIR      %{NCDF_BASE_DIR}/x86_64
    %define MIC_NCDF_INSTALL_DIR  %{NCDF_BASE_DIR}/k1om
    %define NCDF_MODULE_DIR       %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{MODULES}/parallel-netcdf
 
@@ -99,7 +100,7 @@ URL: http://hdf.ncsa.uiuc.edu/HDF5/
 %endif
 
 %package -n %{RPM_NAME}
-Summary: HDF5 library, Netcfd 4
+Summary: HDF5 library, NetCDF 4
 Group: Development/Libraries
 
 %description
@@ -130,12 +131,12 @@ rm -rf hdf5-%{hdf5_pkg_version}
 #    default source will unpack twice... a weird RPMism.
 # -D prevents the top-level directory from being deleted before we can get there!
 %setup -n hdf5-%{hdf5_pkg_version} -T -D -a 1
-cd szip-2.1
+cd szip-%{szip_version}
 %patch2 -p0 
 
 # netcfd
-rm -rf ../netcdf-%{ncdf_pkg_version}
-%setup -T -D -b 2 -n netcdf-%{ncdf_pkg_version}
+rm -rf ../netcdf-c-%{ncdf_pkg_version}
+%setup -T -D -b 2 -n netcdf-c-%{ncdf_pkg_version}
 #patch3 -p1
 
 # netcdf-fortran
@@ -215,7 +216,7 @@ TmpfsA=()
 
 archA=()
 
-archA+=("%{_arch}")
+archA+=("x86_64")
 
 cd ../hdf5-%{hdf5_pkg_version}
 ########################################################################
@@ -250,7 +251,7 @@ for ARCH in "${archA[@]}"; do
      FFLAGS="$FFLAGS -mmic"
      FCLAGS="$FCFLAGS -mmic"
      CXXFLAGS="$CXXFLAGS -mmic"
-     HOST="--host=%{_arch}-linux"
+     HOST="--host=x86_64-linux"
      ZLIB_LIB=$MIC_TACC_ZLIB_LIB
   fi
   echo $PATH | sed -e 's/:/\n/g'
@@ -268,7 +269,9 @@ for ARCH in "${archA[@]}"; do
   echo  "Building HDF5: szip $ARCH"
   echo  "%@@%========================================="
 
-  CC=$CC_serial CFLAGS=$CFLAGS ./configure --build=%{_host} --prefix=$INSTALL_DIR $HOST
+  CC=$CC_serial CFLAGS=$CFLAGS ./configure --prefix=$INSTALL_DIR $HOST \
+  			   --build=powerpc64le-redhat-linux-gnu        \
+  			   --host=powerpc64le-redhat-linux-gnu 
   make
   make install
   make distclean
@@ -300,9 +303,10 @@ for ARCH in "${archA[@]}"; do
 
   export LD_LIBRARY_PATH="$INSTALL_DIR:$LD_LIBRARY_PATH:$INSTALL_DIR"
 
-  ./configure --build=%{_host} --prefix=$INSTALL_DIR --enable-production --with-szlib=$INSTALL_DIR --enable-fortran --enable-fortran2003 --enable-shared $CONF_OPTS $DEBUG_FLAGS
+  ./configure --prefix=$INSTALL_DIR --enable-build-mode=production --with-szlib=$INSTALL_DIR --enable-fortran --enable-fortran2003 --enable-shared \
+              --build=powerpc64le-redhat-linux-gnu --host=powerpc64le-redhat-linux-gnu  --with-default-api-version=v18 $CONF_OPTS $DEBUG_FLAGS
 
-  make V=1 -j 48
+  make V=1 -j 4
 
   make install
   make distclean
@@ -425,7 +429,7 @@ EOF
 ########################################################################
 
 cd $HDF5_DIR
-cd ../netcdf-%{ncdf_pkg_version}
+cd ../netcdf-c-%{ncdf_pkg_version}
 
 WD=`pwd`
 
@@ -488,14 +492,17 @@ for ARCH in "${archA[@]}"; do
   export LDFLAGS="${LDFLAGS} -Wl,-rpath,${TACC_HDF5_LIB} -L${TACC_HDF5_LIB}" 
   
   cd $HDF5_DIR
-  cd ../netcdf-%{ncdf_pkg_version}
+  cd ../netcdf-c-%{ncdf_pkg_version}
 
   rm -rf tacc_${ARCH}
   mkdir tacc_${ARCH}
   cd tacc_${ARCH}
 
-  ../configure --build=%{_host} --prefix=$INSTALL_DIR --disable-dap --enable-shared --enable-netcdf-4 
-  make -j 48
+  ../configure --prefix=$INSTALL_DIR --disable-dap --enable-shared --enable-netcdf-4   \
+  					   --build=powerpc64le-redhat-linux-gnu        \
+  					   --host=powerpc64le-redhat-linux-gnu 
+
+  make -j 3
   make install
   make distclean
   cd ..
@@ -522,8 +529,10 @@ for ARCH in "${archA[@]}"; do
   mkdir tacc_${ARCH}
   cd tacc_${ARCH}
 
-  ../configure --build=%{_host} --prefix=$INSTALL_DIR --enable-shared $PARALLEL
-  make -j 48
+  ../configure --prefix=$INSTALL_DIR --enable-shared        \
+  		--build=powerpc64le-redhat-linux-gnu        \
+  		--host=powerpc64le-redhat-linux-gnu 
+  make -j 3
   make install
   make distclean
   cd ..
@@ -541,8 +550,10 @@ for ARCH in "${archA[@]}"; do
   rm -rf tacc_${ARCH}
   mkdir tacc_${ARCH}
   cd tacc_${ARCH}
-  ../configure --build=%{_host} --prefix=$INSTALL_DIR --enable-shared $PARALLEL
-  make -j 48
+  ../configure --prefix=$INSTALL_DIR --enable-shared           \
+  		   --build=powerpc64le-redhat-linux-gnu        \
+  		   --host=powerpc64le-redhat-linux-gnu 
+  make -j 3
   make install
   make distclean
   cd ..
@@ -554,8 +565,10 @@ for ARCH in "${archA[@]}"; do
   rm -rf tacc_${ARCH}
   mkdir tacc_${ARCH}
   cd tacc_${ARCH}
-  ../configure --build=%{_host} --prefix=$INSTALL_DIR --enable-shared 
-  make -j 48
+  ../configure --prefix=$INSTALL_DIR --enable-shared           \
+  		   --build=powerpc64le-redhat-linux-gnu        \
+  		   --host=powerpc64le-redhat-linux-gnu 
+  make -j 3
   make install
   make distclean
   cd ..
@@ -572,7 +585,7 @@ for i in "${TmpfsA[@]}"; do
       ssh mic0 tacctmpfs -u $i
       tacctmpfs -u $i
       ;;
-    *%{_arch}*)
+    *x86_64*)
       #tacctmpfs -u $i
       umount $i
       ;;

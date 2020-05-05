@@ -12,6 +12,13 @@
   %define is_xl 1
   %define comp_module xl/13.1.6
 %endif
+%if "%{is_xl161}" == "1"
+  %define comp_fam xl
+  %define comp_fam_ver xl16
+  %define comp_fam_name XL
+  %define is_xl 1
+  %define comp_module xl/16.1.1
+%endif
 %if "%{is_gcc48}" == "1"
   %define comp_fam gcc
   %define comp_fam_ver gcc4_8
@@ -66,6 +73,13 @@
   %define comp_fam_name GNU
   %define is_gcc 1
   %define comp_module gcc/7.3.0
+%endif
+%if "%{is_gcc91}" == "1"
+  %define comp_fam gcc
+  %define comp_fam_ver gcc9_1
+  %define comp_fam_name GNU
+  %define is_gcc 1
+  %define comp_module gcc/9.1.0
 %endif
 %if "%{is_intel16}" == "1"
   %define comp_fam intel

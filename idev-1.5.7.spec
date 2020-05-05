@@ -1,6 +1,6 @@
-# rpmbuild -bb --clean idev-1.5.7.spec 2>&1 | tee idev-1.5.7.r2.log
+# rpmbuild -bb --clean idev-1.5.7.spec 2>&1 | tee idev-1.5.7.r3.log
 #           r=/root/rpmbuild/RPMS/ppc64le
-# rpm -hiv $r/tacc-idev-1.5.7-2.el7a.ppc64le.rpm
+# rpm -hiv $r/tacc-idev-1.5.7-3.el7a.ppc64le.rpm
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
@@ -21,7 +21,7 @@ Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 
-Release:   2%{?dist}
+Release:   3%{?dist}
 License:   GPL
 Group:     Development/Tools
 URL:       https:/github.com/tacc/idev

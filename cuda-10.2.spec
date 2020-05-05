@@ -25,12 +25,12 @@ Summary: A Nice little relocatable skeleton spec file example.
 %define __jar_repack %{nil}
 
 # Create some macros (spec file variables)
-%define major_version 9
+%define major_version 10
 %define minor_version 2
-%define patch_version 148
-%define driver_version 396.37
+%define patch_version 89
+%define driver_version 440.33.01
 %define update_version 1
-%define local_release 2
+%define local_release 1
 
 %define pkg_version %{major_version}.%{minor_version}
 %define cuda_fam_ver %{pkg_base_name}%{major_version}_%{minor_version}
@@ -58,10 +58,10 @@ License:   http://docs.nvidia.com/cuda/eula
 Group:     Development/Languages
 URL:       http://www.nvidia.com/cuda
 Packager:  TACC - jbarbosa@tacc.utexas.edu, cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}_%{pkg_version}.%{patch_version}_%{driver_version}_linux.run
-Source1:   %{pkg_base_name}_%{pkg_version}.%{patch_version}.%{update_version}_linux.run
+Source:    %{pkg_base_name}_%{pkg_version}.%{patch_version}_%{driver_version}_linux_ppc64le.run
+#Source1:   %{pkg_base_name}_%{pkg_version}.%{patch_version}.%{update_version}_linux.run
 Provides:  %{pkg_base_name}
-AutoReqProv: no
+#AutoReqProv: no
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -189,26 +189,26 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #   -samples            : Install CUDA X.X Samples
 #   -samplespath=<PATH> : Specify path for Samples location (default: /usr/local/cuda-X.X/samples)
 
-%global install_options -silent -override -toolkit -toolkitpath=$RPM_BUILD_ROOT%{INSTALL_DIR} -samples -samplespath=$RPM_BUILD_ROOT%{INSTALL_DIR}/samples
+%global install_options --silent --override --toolkit --toolkitpath=$RPM_BUILD_ROOT%{INSTALL_DIR} --samples --samplespath=$RPM_BUILD_ROOT%{INSTALL_DIR}/samples
 bash %{SOURCE0} %{install_options}
 
 #     --silent            : Specify a command-line, silent installation
 #     --installdir=dir    : Customize installation directory
 #     --accept-eula       : Implies acceptance of the EULA
 #     --help              : Print help message
-%global patch_install_options --silent --installdir=$RPM_BUILD_ROOT%{INSTALL_DIR} --accept-eula
+#%global patch_install_options --silent --installdir=$RPM_BUILD_ROOT%{INSTALL_DIR} --accept-eula
 # Patch it!
-bash %{SOURCE1} %{patch_install_options}
+#bash %{SOURCE1} %{patch_install_options}
 
 #Remove the error about gcc 4.6, it's what we have and seems to work
 sed -i -e '/error -- unsupported GNU version/d' $RPM_BUILD_ROOT%{INSTALL_DIR}/include/host_config.h
 
 # Remove buildroot
-sed -i -e s,$RPM_BUILD_ROOT,,g $RPM_BUILD_ROOT%{INSTALL_DIR}/bin/nsight
-sed -i -e s,$RPM_BUILD_ROOT,,g $RPM_BUILD_ROOT%{INSTALL_DIR}/bin/.uninstall_manifest_do_not_delete.txt
-sed -i -e s,$RPM_BUILD_ROOT,,g $RPM_BUILD_ROOT%{INSTALL_DIR}/bin/.patch_%{major_version}.%{minor_version}.%{patch_version}.%{update_version}_uninstall_manifest_do_not_delete.txt
-find $RPM_BUILD_ROOT%{INSTALL_DIR}/samples -name Makefile | xargs sed -i -e s,$RPM_BUILD_ROOT,,g
-find $RPM_BUILD_ROOT%{INSTALL_DIR}/pkgconfig -name "*.pc" | xargs sed -i -e s,$RPM_BUILD_ROOT,,g
+#sed -i -e s,$RPM_BUILD_ROOT,,g $RPM_BUILD_ROOT%{INSTALL_DIR}/bin/nsight
+#sed -i -e s,$RPM_BUILD_ROOT,,g $RPM_BUILD_ROOT%{INSTALL_DIR}/bin/.uninstall_manifest_do_not_delete.txt
+#sed -i -e s,$RPM_BUILD_ROOT,,g $RPM_BUILD_ROOT%{INSTALL_DIR}/bin/.patch_%{major_version}.%{minor_version}.%{patch_version}.%{update_version}_uninstall_manifest_do_not_delete.txt
+#find $RPM_BUILD_ROOT%{INSTALL_DIR}/samples -name Makefile | xargs sed -i -e s,$RPM_BUILD_ROOT,,g
+#find $RPM_BUILD_ROOT%{INSTALL_DIR}/pkgconfig -name "*.pc" | xargs sed -i -e s,$RPM_BUILD_ROOT,,g
   
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -263,7 +263,7 @@ whatis("Description: NVIDIA CUDA Toolkit for Linux")
 whatis("URL: http://www.nvidia.com/cuda")
 
 -- Export environmental variables
-local cuda_dir="/usr/local/cuda-9.2"
+local cuda_dir="/usr/local/cuda-10.2"
 local cuda_bin=pathJoin(cuda_dir,"bin")
 local cuda_lib=pathJoin(cuda_dir,"lib64")
 local cuda_inc=pathJoin(cuda_dir,"include")
@@ -330,20 +330,20 @@ EOF
 ## Fix Modulefile During Post Install ##
 ########################################
 %post %{PACKAGE}
-export PACKAGE_POST=1
-%include post-defines.inc
+#export PACKAGE_POST=1
+#%include post-defines.inc
 # Modify %{INSTALL_PREFIX} to ${POST_INSTALL_PREFIX} 
-sed -i -e s,%{INSTALL_PREFIX},${POST_INSTALL_PREFIX},g ${POST_INSTALL_PREFIX}/%{INSTALL_SUFFIX}/bin/nsight
-sed -i -e s,%{INSTALL_PREFIX},${POST_INSTALL_PREFIX},g ${POST_INSTALL_PREFIX}/%{INSTALL_SUFFIX}/bin/.uninstall_manifest_do_not_delete.txt
-sed -i -e s,%{INSTALL_PREFIX},${POST_INSTALL_PREFIX},g ${POST_INSTALL_PREFIX}/%{INSTALL_SUFFIX}/bin/.patch_%{major_version}.%{minor_version}.%{patch_version}.%{update_version}_uninstall_manifest_do_not_delete.txt
-find ${POST_INSTALL_PREFIX}/%{INSTALL_SUFFIX}/samples -name Makefile | xargs sed -i -e s,%{INSTALL_PREFIX},${POST_INSTALL_PREFIX},g
-find ${POST_INSTALL_PREFIX}/%{INSTALL_SUFFIX}/pkgconfig -name "*.pc" | xargs sed -i -e s,%{INSTALL_PREFIX},${POST_INSTALL_PREFIX},g
-%post %{MODULEFILE}
-export MODULEFILE_POST=1
-%include post-defines.inc
-%preun %{PACKAGE}
-export PACKAGE_PREUN=1
-%include post-defines.inc
+#sed -i -e s,%{INSTALL_PREFIX},${POST_INSTALL_PREFIX},g ${POST_INSTALL_PREFIX}/%{INSTALL_SUFFIX}/bin/nsight
+#sed -i -e s,%{INSTALL_PREFIX},${POST_INSTALL_PREFIX},g ${POST_INSTALL_PREFIX}/%{INSTALL_SUFFIX}/bin/.uninstall_manifest_do_not_delete.txt
+#sed -i -e s,%{INSTALL_PREFIX},${POST_INSTALL_PREFIX},g ${POST_INSTALL_PREFIX}/%{INSTALL_SUFFIX}/bin/.patch_%{major_version}.%{minor_version}.%{patch_version}.%{update_version}_uninstall_manifest_do_not_delete.txt
+#find ${POST_INSTALL_PREFIX}/%{INSTALL_SUFFIX}/samples -name Makefile | xargs sed -i -e s,%{INSTALL_PREFIX},${POST_INSTALL_PREFIX},g
+#find ${POST_INSTALL_PREFIX}/%{INSTALL_SUFFIX}/pkgconfig -name "*.pc" | xargs sed -i -e s,%{INSTALL_PREFIX},${POST_INSTALL_PREFIX},g
+#%post %{MODULEFILE}
+#export MODULEFILE_POST=1
+#%include post-defines.inc
+#%preun %{PACKAGE}
+#export PACKAGE_PREUN=1
+#%include post-defines.inc
 ########################################
 ############ Do Not Remove #############
 ########################################

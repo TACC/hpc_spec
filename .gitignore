@@ -17,4 +17,8 @@ mclay
 siliu
 *.spec_ori
 *.spec_orig
-
+gramA
+gramB
+ibm-xl-compiler-eval.repo
+mpi-defines.inc.backup
+repomd.xml.key

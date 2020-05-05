@@ -21,13 +21,13 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name openmpi
-%define MODULE_VAR    OPENMPI
+%define pkg_base_name spectrum_mpi
+%define MODULE_VAR    SPECTRUM_MPI
 
 # Create some macros (spec file variables)
-%define major_version 3
-%define minor_version 1
-%define micro_version 2
+%define major_version 10
+%define minor_version 3
+%define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 %define pkg_version_dash %{major_version}_%{minor_version}
@@ -55,59 +55,60 @@ License:   BSD
 Group:     MPI
 URL:       https://www.open-mpi.org
 Packager:  TACC - cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+#Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
 
 
-%package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
-%description package
-This is the long description for the package RPM...
-The Open MPI Project is an open source Message Passing Interface implementation
-that is developed and maintained by a consortium of academic, research, and
-industry partners. Open MPI is therefore able to combine the expertise,
-technologies, and resources from all across the High Performance Computing
-community in order to build the best MPI library available. Open MPI offers
-advantages for system and software vendors, application developers and computer
-science researchers.
+#%package %{PACKAGE}
+#Summary: The package RPM
+#Group: Development/Tools
+#%description package
+#This is the long description for the package RPM...
+#The Open MPI Project is an open source Message Passing Interface implementation
+#that is developed and maintained by a consortium of academic, research, and
+#industry partners. Open MPI is therefore able to combine the expertise,
+#technologies, and resources from all across the High Performance Computing
+#community in order to build the best MPI library available. Open MPI offers
+#advantages for system and software vendors, application developers and computer
+#science researchers.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
-The Open MPI Project is an open source Message Passing Interface implementation
-that is developed and maintained by a consortium of academic, research, and
-industry partners. Open MPI is therefore able to combine the expertise,
-technologies, and resources from all across the High Performance Computing
-community in order to build the best MPI library available. Open MPI offers
-advantages for system and software vendors, application developers and computer
-science researchers.
+IBM Spectrum MPI is a high-performance, production-quality implementation of
+Message Passing Interface (MPI). It accelerates application performance in
+distributed computing environments. It provides a familiar portable interface
+based on the open-source MPI. It goes beyond Open MPI and adds some unique
+features of its own, such as advanced CPU affinity features, dynamic selection
+of interface libraries, superior workload manager integrations and better
+performance. 
 
 %description
-The Open MPI Project is an open source Message Passing Interface implementation
-that is developed and maintained by a consortium of academic, research, and
-industry partners. Open MPI is therefore able to combine the expertise,
-technologies, and resources from all across the High Performance Computing
-community in order to build the best MPI library available. Open MPI offers
-advantages for system and software vendors, application developers and computer
-science researchers.
+IBM Spectrum MPI is a high-performance, production-quality implementation of
+Message Passing Interface (MPI). It accelerates application performance in
+distributed computing environments. It provides a familiar portable interface
+based on the open-source MPI. It goes beyond Open MPI and adds some unique
+features of its own, such as advanced CPU affinity features, dynamic selection
+of interface libraries, superior workload manager integrations and better
+performance. 
+
 
 #---------------------------------------
 %prep
 #---------------------------------------
 
 #------------------------
-%if %{?BUILD_PACKAGE}
+#%if %{?BUILD_PACKAGE}
 #------------------------
   # Delete the package installation directory.
-  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+#  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 #-----------------------
-%endif # BUILD_PACKAGE |
+#%endif # BUILD_PACKAGE |
 #-----------------------
 
 #---------------------------
@@ -137,21 +138,21 @@ ml purge
 ml %{comp_module}
 ml
 
-echo "Building the package?:    %{BUILD_PACKAGE}"
+#echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
 #------------------------
-%if %{?BUILD_PACKAGE}
+#%if %{?BUILD_PACKAGE}
 #------------------------
 
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
+#  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+#  mkdir -p %{INSTALL_DIR}
+#  mount -t tmpfs tmpfs %{INSTALL_DIR}
     
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
-  touch $RPM_BUILD_ROOT/%{INSTALL_DIR}/.tacc_install_canary
+#  touch $RPM_BUILD_ROOT/%{INSTALL_DIR}/.tacc_install_canary
   #######################################
   ########### Do Not Remove #############
   #######################################
@@ -160,77 +161,17 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
  
- 
-export openmpi=`pwd`
-export openmpi_install=%{INSTALL_DIR}
-export ncores=64
-export openmpi_major=%{major_version}
-export openmpi_minor=%{minor_version}
-export openmpi_patch=%{micro_version}
-export openmpi_version=${openmpi_major}.${openmpi_minor}.${openmpi_patch}
-if [ "%{comp_fam}" == "gcc" ]; then
-  echo "GCC Build"
-  export CC=gcc
-  export CXX=g++
-  export FC=gfortran
-  export CFLAGS=
-  export CXXFLAGS=
-  export FCFLAGS=
-  export LDFLAGS=
-elif [ "%{comp_fam}" == "intel" ]; then
-  echo "Intel Build"
-  export CC=icc
-  export CXX=icpc
-  export FC=ifort
-  export CFLAGS="-xCORE-AVX2"
-  export CXXFLAGS="-xCORE-AVX2"
-  export FCFLAGS="-xCORE-AVX2"
-  export LDFLAGS="-xCORE-AVX2"
-else
-  echo "Unrecognized compiler! Exiting!"
-  exit -1
-fi
 
+#if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
+#  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+#fi
 
-cd ${openmpi}
-wget https://www.open-mpi.org/software/ompi/v${openmpi_major}.${openmpi_minor}/downloads/openmpi-${openmpi_version}.tar.gz --no-check-certificate
-
-tar xvfz openmpi-${openmpi_version}.tar.gz
-cd openmpi-${openmpi_version}
-
-
-${openmpi}/openmpi-${openmpi_version}/configure    \
---prefix=${openmpi_install}                \
---with-cuda=/opt/apps/cuda/10.1            \
---with-pmix                                \
---with-verbs=/usr                          \
---with-cma                                 \
---enable-orterun-prefix-by-default         \
---with-slurm                               \
---with-pic                                 \
---enable-static=yes                        \
---enable-shared=yes
-
-#--with-ofi=/opt/apps/libfabric/1.6.2       \
-#--with-pmi                                 \
-#--with-hcoll=/opt/mellanox/hcoll           \
-
-make -j ${ncores}
-make -j ${ncores} install
-
-
-if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-fi
-
-cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-umount %{INSTALL_DIR}/
+#cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+#umount %{INSTALL_DIR}/
   
 
-
-
 #-----------------------  
-%endif # BUILD_PACKAGE |
+#%endif # BUILD_PACKAGE |
 #-----------------------
 
 
@@ -251,36 +192,26 @@ umount %{INSTALL_DIR}/
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_msg=[[
-The Open MPI Project is an open source Message Passing Interface implementation
-that is developed and maintained by a consortium of academic, research, and
-industry partners. Open MPI is therefore able to combine the expertise,
-technologies, and resources from all across the High Performance Computing
-community in order to build the best MPI library available. Open MPI offers
-advantages for system and software vendors, application developers and computer
-science researchers.
+IBM Spectrum MPI is a high-performance, production-quality implementation of
+Message Passing Interface (MPI). It accelerates application performance in
+distributed computing environments. It provides a familiar portable interface
+based on the open-source MPI. It goes beyond Open MPI and adds some unique
+features of its own, such as advanced CPU affinity features, dynamic selection
+of interface libraries, superior workload manager integrations and better
+performance. 
 
-This module loads the openmpi environment built with
-Intel compilers. By loading this module, the following commands
+This module loads the spectrum MPI environment built with
+XL compilers. By loading this module, the following commands
 will be automatically available for compiling MPI applications:
 mpif77       (F77 source)
 mpif90       (F90 source)
 mpicc        (C   source)
-mpiCC/mpicxx (C++ source)
+mpicxx       (C++ source)
 
 The %{MODULE_VAR} module also defines the following environment variables:
 TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
 TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
 include files, and tools respectively.
-
-Supports:
-OFI (Open Fabrics Initiative)
-CUDA (10.1)
-PMIx (PMI exascale)
-Verbs
-CMA (Cross Memory Attach)
-Slurm (srun bootstrap)
-PMI (Process Management Interface)
-HCOL (Mellanox hierarchical collectives via Fabric Collective Accelerator)
 
 Version %{version}
 ]]
@@ -289,25 +220,29 @@ Version %{version}
 help(help_msg)
 
 
-whatis("Name: OpenMPI"                                                       )
+whatis("Name: Spectrum MPI"                                                  )
 whatis("Version: %{version}"                                                 )
 whatis("Category: MPI library, Runtime Support"                              )
-whatis("Description: OpenMPI Library (C/C++/Fortran for ppcle64)"            )
-whatis("URL: https://www.open-mpi.org"                                       )
+whatis("Description: Spectrum MPI Library (C/C++/Fortran for ppcle64)"       )
+whatis("URL: https://www.ibm.com/us-en/marketplace/spectrum-mpi"             )
 
 
 -- Create environment variables
-local base = "%{INSTALL_DIR}"
-prepend_path( "MPICH_HOME"            , base )
+local base = "/opt/ibm/spectrum_mpi"
+setenv(       "MPI_ROOT"              , base )
+setenv(       "OMPI_MCA_routed"       , "binomial" )
 prepend_path( "PATH"                  , pathJoin( base, "bin" ))
 prepend_path( "LD_LIBRARY_PATH"       , pathJoin( base, "lib" ))
+prepend_path( "LD_LIBRARY_PATH"       , "/opt/ibmmath/essl/6.2/lib64" )
 prepend_path( "MANPATH"               , pathJoin( base, "share/man" ))
-prepend_path( "MODULEPATH"            , "%{MODULE_PREFIX}/%{comp_fam_ver}/ompi_%{pkg_version_dash}/modulefiles")
+prepend_path( "MODULEPATH"            , "%{MODULE_PREFIX}/%{comp_fam_ver}/spectrum_mpi_%{pkg_version_dash}/modulefiles" )
 
-setenv(       "TACC_OPENMPI_DIR"        , base )
-setenv(       "TACC_OPENMPI_BIN"        , pathJoin( base, "bin" ))
-setenv(       "TACC_OPENMPI_LIB"        , pathJoin( base, "lib" ))
-setenv(       "TACC_OPENMPI_INC"        , pathJoin( base, "include" ))
+setenv(       "TACC_SPECTRUM_MPI_DIR"        , base )
+setenv(       "TACC_SPECTRUM_MPI_BIN"        , pathJoin( base, "bin" ))
+setenv(       "TACC_SPECTRUM_MPI_LIB"        , pathJoin( base, "lib" ))
+setenv(       "TACC_SPECTRUM_MPI_INC"        , pathJoin( base, "include" ))
+
+setenv(       "TACC_MPI_GETMODE"      , "spectrum_ssh" )
 
 family("MPI")
 
@@ -333,16 +268,16 @@ EOF
 
 
 #------------------------
-%if %{?BUILD_PACKAGE}
-%files package
+#%if %{?BUILD_PACKAGE}
+#%files package
 #------------------------
 
-  %defattr(-,root,install,)
+#  %defattr(-,root,install,)
   # RPM package contains files within these directories
-  %{INSTALL_DIR}
+#  %{INSTALL_DIR}
 
 #-----------------------
-%endif # BUILD_PACKAGE |
+#%endif # BUILD_PACKAGE |
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
@@ -361,15 +296,15 @@ EOF
 ########################################
 ## Fix Modulefile During Post Install ##
 ########################################
-%post %{PACKAGE}
-export PACKAGE_POST=1
-%include post-defines.inc
+#%post %{PACKAGE}
+#export PACKAGE_POST=1
+#%include post-defines.inc
 %post %{MODULEFILE}
 export MODULEFILE_POST=1
 %include post-defines.inc
-%preun %{PACKAGE}
-export PACKAGE_PREUN=1
-%include post-defines.inc
+#%preun %{PACKAGE}
+#export PACKAGE_PREUN=1
+#%include post-defines.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
