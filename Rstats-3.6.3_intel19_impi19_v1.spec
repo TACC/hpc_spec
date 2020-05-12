@@ -1,7 +1,7 @@
 Summary:    R is a free software environment for statistical computing and graphics.
 Name:       Rstats
-Version:    3.5.1
-Release:    2%{?dist}
+Version:    3.6.3
+Release:    1%{?dist}
 License:    GPLv2
 Vendor:     R Foundation for Statistical Computing
 Group:      Applications/Statistics
@@ -64,7 +64,6 @@ echo "Once more into the breach...."
 
 module purge
 module load TACC
-module swap intel intel/18.0.2
 
 
 # Want default of intel17 and impi17
@@ -96,8 +95,8 @@ cd ${SRC_DIR}
 
 
 # Using a custom modified version of R source that should live in SOURCES
-R_VERSION='R-3.5.1'
-cp /admin/build/admin/rpms/stampede2/SOURCES/Rstats/${R_VERSION}-custom.tar.gz ${R_VERSION}.tar.gz
+R_VERSION='R-3.6.3'
+cp /admin/build/admin/rpms/frontera/SOURCES/${R_VERSION}-custom.tar.gz ${R_VERSION}.tar.gz
 tar zxfp ${R_VERSION}.tar.gz
 cd ${R_VERSION}
 
@@ -138,11 +137,11 @@ export PATH=%{INSTALL_DIR}/bin:$PATH
 export LD_LIBRARY_PATH=%{INSTALL_DIR}/lib64:%{INSTALL_DIR}/lib:$LD_LIBRARY_PATH
 
 # packagestats tracker
-cp /admin/build/admin/rpms/stampede2/SOURCES/Rstats/packagestats/packagestats_0.0.5.0000.tar.gz packagestats.tar.gz
-R CMD INSTALL packagestats.tar.gz
+#cp /admin/build/admin/rpms/stampede2/SOURCES/Rstats/packagestats/packagestats_0.0.5.0000.tar.gz packagestats.tar.gz
+#R CMD INSTALL packagestats.tar.gz
 
-mkdir %{INSTALL_DIR}/etc
-cp /admin/build/admin/rpms/stampede2/SOURCES/Rstats/packagestats/Rprofile.site %{INSTALL_DIR}/etc/
+#mkdir %{INSTALL_DIR}/etc
+#cp /admin/build/admin/rpms/stampede2/SOURCES/Rstats/packagestats/Rprofile.site %{INSTALL_DIR}/etc/
 
 #----------------------------------------------------------
 # Copy from tmpfs to RPM_BUILD_ROOT so that everything is in the right
@@ -206,7 +205,7 @@ prepend_path("MANPATH", r_man)
 
 prepend_path("LD_LIBRARY_PATH", r_lib)
 
-try_load("RstatsPackages/3.5.1")
+try_load("RstatsPackages/3.6.3")
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'

@@ -14,10 +14,10 @@ Summary: Dealii install
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 %define DEAL_USE_PETSC 1
-%define dealiipetscversion 3.12
+%define dealiipetscversion 3.11
 
 %define DEAL_USE_TRILINOS 1
-%define dealiitrilinosversion 12.14.1
+%define dealiitrilinosversion 12.18.1
 
 %include rpm-dir.inc
 %include compiler-defines.inc
@@ -39,7 +39,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tar.gz
@@ -133,6 +133,7 @@ for m in boost cmake \
     ; do
   module --ignore_cache load $m ; 
 done
+module list
 
 #export BASIC_FLAGS="-g %{TACC_OPT}"
 export BASIC_FLAGS="-g -march=native"
@@ -158,11 +159,11 @@ export I_MPI_LIBRARY_KIND=release_mt
 
 export no_mpi_spec="\
     -D MPI_LIBRARIES=${TACC_IMPI_DIR}/intel64/lib/libmpicxx.so;${TACC_IMPI_DIR}/intel64/lib/libmpifort.so;${TACC_IMPI_DIR}/intel64/lib/release_mt/libmpi.so;/lib64/librt.so;/lib64/libpthread.so;/lib64/libdl.so \
-    "
-export MPI_SPECIFICATION="\
-    -D MPI_LIBRARIES=${TACC_IMPI_DIR}/intel64/lib/release_mt/libmpi.so \
+    -D MPI_LIBRARIES=${TACC_IMPI_DIR}/intel64/lib/release/libmpi.so \
     -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc \
     -DMPICH_IGNORE_CXX_SEEK=ON
+    "
+export MPI_SPECIFICATION="\
     "
 
 ####
@@ -180,9 +181,9 @@ module load metis
   export MKLFLAG="-mkl"
 %endif
 export LAPACK_SPECIFICATION="-D LAPACK_LIBRARIES=\
-${MKLROOT}/libmkl_intel_lp64.so\
+${MKLROOT}/lib/intel64_lin/libmkl_intel_lp64.so\
 \;\
-${MKLROOT}/libmklcore.so\
+${MKLROOT}/lib/intel64_lin/libmkl_core.so\
 "
 
 ####
@@ -238,6 +239,12 @@ export BASIC_FLAGS="${BASIC_FLAGS} -I${TBBROOT}/include"
 ## start of configure install
 ##
 
+# pushd 
+ls -l %{_topdir}/SPECS/victor_scripts/remove_pthread_workarounds.patch 
+ls -l %{_topdir}/BUILD/dealii-9.1.1/cmake/configure/configure_1_threads.cmake
+patch -p1 < %{_topdir}/SPECS/victor_scripts/remove_pthread_workarounds.patch
+# popd 
+
 export LOGDIR=`pwd`
 export DEALDIR=`pwd`
 export DEALVERSION=%{pkg_version}
@@ -252,8 +259,7 @@ rm -f CMakeCache.txt
 
 ## https://www.dealii.org/developer/users/cmake.html
 
-## TACC_IMPI_LIB = ${TACC_IMPI_DIR}/intel64/lib
-##    -DMPI_LIBRARIES=${TACC_IMPI_LIB}/libmpicxx.so\;${TACC_IMPI_LIB}/libmpifort.so\;${TACC_IMPI_LIB}/release_mt/libmpi.so\;/lib64/librt.so\;/lib64/libpthread.so\;/lib64/libdl.so
+( set | grep pthreads ) || /bin/true
 
   cmake -VV \
     -DCMAKE_INSTALL_PREFIX=%{INSTALL_DIR} \
@@ -393,7 +399,11 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
-* Mon Dec 02 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: adding GSL, Metis under gcc
+* Fri May 01 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: trying trilinos again, using 12.18.1
+* Sat Apr 18 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: using petsc 3.11 which has release-{non-mt} MPI
+             adding GSL, Metis under gcc
+             disabled: trilinos
 * Mon Sep 02 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release of 9.1.1

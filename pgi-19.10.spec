@@ -1,9 +1,7 @@
 #
-# W. Cyrus Proctor
-# 2015-12-01 Add name-defines-noreloc.inc
-# 2015-11-20 Need to investigate relocation -- use /opt/apps for now
-# 2015-11-10 Update for LS5 Chroot Jail
-# 2015-10-27
+# Amit Ruhela
+# 2020-03-20 Add name-defines-noreloc.inc
+# 2020-03-20 Need to investigate relocation -- use /opt/apps for now
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -16,9 +14,11 @@
 # Typical Command-Line Example:
 # ./build_rpm.sh Bar.spec
 # cd ../RPMS/x86_64
-# rpm -i Bar-package-1.1-1.x86_64.rpm
-# rpm -i Bar-modulefile-1.1-1.x86_64.rpm
-# rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
+# rpm -qilp tacc-pgi-package-19.10.0-1.el7.x86_64.rpm
+# rpm -qilp tacc-pgi-modulefile-19.10.0-1.el7.x86_64.rpm
+# rpm –hiv --relocate /tmprpm=/opt/apps tacc-pgi-package-19.10.0-1.el7.x86_64.rpm
+# rpm –hiv --relocate /tmpmod=/opt/apps tacc-pgi-modulefile-19.10.0-1.el7.x86_64.rpm
+# rpm -e tacc-pgi-package-19.10.0-1.el7.x86_64.rpm tacc-pgi-modulefile-19.10.0-1.el7.x86_64.rpm
 
 Summary: A Nice little non-relocatable skeleton spec file example.
 
@@ -31,19 +31,27 @@ Summary: A Nice little non-relocatable skeleton spec file example.
 %define minor_version 10
 %define micro_version 0
 
+%define year 2019
+%define pgversion %{major_version}.%{minor_version}
+
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
-%define pgi_ver pgi19_10
+%define pgi_ver pgi%{pgversion}
 
 %global __os_install_post %{nil}
 
 ### Toggle On/Off ###
-%include rpm-dir.inc                  
+%include rpm-dir.inc
 #%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines-noreloc.inc
+%include name-defines.inc
+#%include name-defines-noreloc.inc
+
+%define lib_dir linux86-64-llvm/%{major_version}.%{minor_version}
+%{echo: INSTALL_DIR = %{INSTALL_DIR} }
+
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -55,7 +63,7 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1%{?dist}
-License:   GPL
+License:   Community
 Group:     Development/Tools
 URL:       https://www.pgroup.com/products/community.htm
 Packager:  TACC - aruhela@tacc.utexas.edu
@@ -65,41 +73,40 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 %define debug_package %{nil}
 %define dbg           %{nil}
 
-
+#--------------------------------------- '
 %package %{PACKAGE}
 Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the package RPM...
 The PGI Compiler Collection includes PGI C, C++, Fortran, OpenMP, and OpenACC.
-PGI C and C++ optimize ANSI C11 and GNU-compatible C++17 compilers. Both 
+PGI C and C++ optimize ANSI C11 and GNU-compatible C++17 compilers. Both
 compilers implement OpenMP 4.5 pragma-based parallel programming for multicore
-CPUs, and OpenACC 2.6 pragma-based parallel programming for CPUs and NVIDIA 
-GPUs. PGI Fortran supports the industry standard ISO_C_BINDING, which allows 
-for easy argument passing and procedure invocation between Fortran, C, and C++.   
+CPUs, and OpenACC 2.6 pragma-based parallel programming for CPUs and NVIDIA
+GPUs. PGI Fortran supports the industry standard ISO_C_BINDING, which allows
+for easy argument passing and procedure invocation between Fortran, C, and C++.
 
+#--------------------------------------- '
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the modulefile RPM...
 The PGI Compiler Collection includes PGI C, C++, Fortran, OpenMP, and OpenACC.
-PGI C and C++ optimize ANSI C11 and GNU-compatible C++17 compilers. Both 
+PGI C and C++ optimize ANSI C11 and GNU-compatible C++17 compilers. Both
 compilers implement OpenMP 4.5 pragma-based parallel programming for multicore
-CPUs, and OpenACC 2.6 pragma-based parallel programming for CPUs and NVIDIA 
-GPUs. PGI Fortran supports the industry standard ISO_C_BINDING, which allows 
-for easy argument passing and procedure invocation between Fortran, C, and C++.   
+CPUs, and OpenACC 2.6 pragma-based parallel programming for CPUs and NVIDIA
+GPUs. PGI Fortran supports the industry standard ISO_C_BINDING, which allows
+for easy argument passing and procedure invocation between Fortran, C, and C++.
 
 #--------------------------------------- '
-
-
 %description
 The PGI Compiler Collection includes PGI C, C++, Fortran, OpenMP, and OpenACC.
-PGI C and C++ optimize ANSI C11 and GNU-compatible C++17 compilers. Both 
+PGI C and C++ optimize ANSI C11 and GNU-compatible C++17 compilers. Both
 compilers implement OpenMP 4.5 pragma-based parallel programming for multicore
-CPUs, and OpenACC 2.6 pragma-based parallel programming for CPUs and NVIDIA 
-GPUs. PGI Fortran supports the industry standard ISO_C_BINDING, which allows 
-for easy argument passing and procedure invocation between Fortran, C, and C++.   
+CPUs, and OpenACC 2.6 pragma-based parallel programming for CPUs and NVIDIA
+GPUs. PGI Fortran supports the industry standard ISO_C_BINDING, which allows
+for easy argument passing and procedure invocation between Fortran, C, and C++.
 
 #--------------------------------------- '
 %prep
@@ -149,7 +156,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
   mkdir -p %{INSTALL_DIR}
   mount -t tmpfs tmpfs %{INSTALL_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -161,196 +168,59 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-
+export LMOD_SH_DBG_ON=1
 ##################################################
-export gcc=`pwd`
-export pgi_install=%{INSTALL_DIR}
+export pgi=`pwd`
 ##################################################
 
-export PATH=${pgi_install}/linux86-64/19.10/bin:${PATH}
-export LD_LIBRARY_PATH=${pgi_install}//linux86-64/19.10/lib:${LD_LIBRARY_PATH}
+export PATH=${pgi_install}/${lib_dir}/bin:${PATH}
+export LD_LIBRARY_PATH=${pgi_install}/${lib_dir}/lib:${LD_LIBRARY_PATH}
 
-#export gmp_major=19
-#export gmp_minor=10
-#export gmp_patch=0
+export pgi_major=%{major_version}
+export pgi_minor=%{minor_version}
+export pgi_patch=%{micro_version}
 
-#export isl_major=0
-#export isl_minor=16
-#export isl_patch=1
-#export isl_minor=19
-#export isl_minor=21
+export pgi_version=${pgi_major}.${pgi_minor}.${pgi_patch}
 
-#export mpfr_major=3
-#export mpfr_minor=1
-#export mpfr_patch=4
-#export mpfr_patch=6
-#export mpfr_major=4
-#export mpfr_minor=0
-#export mpfr_patch=2
+#export ncores=56
 
-#export mpc_major=1
-#export mpc_minor=0
-#export mpc_patch=3
-#export mpc_minor=1
-#export mpc_patch=0
-
-#export binutils_major=2
-#export binutils_minor=26
-#export binutils_minor=27
-#export binutils_minor=30
-#export binutils_minor=32
-
-export gcc_major=19
-export gcc_minor=10
-export gcc_patch=0
-
-export gmp_version=${gmp_major}.${gmp_minor}.${gmp_patch}
-#export isl_version=${isl_major}.${isl_minor}.${isl_patch}
-#export isl_version=${isl_major}.${isl_minor}
-#export mpfr_version=${mpfr_major}.${mpfr_minor}.${mpfr_patch}
-#export mpc_version=${mpc_major}.${mpc_minor}.${mpc_patch}
-#export binutils_version=${binutils_major}.${binutils_minor}
-#export gcc_version=${gcc_major}.${gcc_minor}.${gcc_patch}
-
-export ncores=96
-
-export CC=pgcc 
-export CFLAGS=-fPIC 
-export CPPFLAGS=-I${gcc_install}/linux86-64/19.10/include
-
-
-cd ${gcc}
-
-#printf "\n\n************************************************************\n"
-#printf "gmp\n"
-#printf "************************************************************\n\n"
-
-#wget ftp://ftp.gnu.org/gnu/gmp/gmp-${gmp_version}.tar.bz2
-#tar xvfj gmp-${gmp_version}.tar.bz2
-
-#cd gmp-${gmp_version}
-
-#${gcc}/gmp-${gmp_version}/configure \
-#--prefix=${gcc_install} \
-#--enable-cxx \
-#--enable-fat
-
-#make -j ${ncores}
-#make install -j ${ncores}
-
-#cd ${gcc}
-
-#printf "\n\n************************************************************\n"
-#printf "isl\n"
-#printf "************************************************************\n\n"
-
-#wget http://isl.gforge.inria.fr/isl-${isl_version}.tar.gz
-#tar xvfz isl-${isl_version}.tar.gz
-
-#cd isl-${isl_version}
-
-#${gcc}/isl-${isl_version}/configure \
-#--prefix=${gcc_install} \
-#--with-gmp-prefix=${gcc_install}
-
-#make -j ${ncores}
-#make install -j ${ncores}
-
-#cd ${gcc}
-
-#printf "\n\n************************************************************\n"
-#printf "mpfr\n"
-#printf "************************************************************\n\n"
-
-#wget ftp://ftp.gnu.org/gnu/mpfr/mpfr-${mpfr_version}.tar.gz
-#tar xvfz mpfr-${mpfr_version}.tar.gz
-
-#cd mpfr-${mpfr_version}
-
-#${gcc}/mpfr-${mpfr_version}/configure \
-#--prefix=${gcc_install} \
-#--with-gmp=${gcc_install}
-
-#make -j ${ncores}
-#make install -j ${ncores}
-
-#cd ${gcc}
-
-#printf "\n\n************************************************************\n"
-#printf "mpc\n"
-#printf "************************************************************\n\n"
-
-#wget ftp://ftp.gnu.org/gnu/mpc/mpc-${mpc_version}.tar.gz
-#tar xvfz mpc-${mpc_version}.tar.gz
-
-#cd mpc-${mpc_version}
-
-#${gcc}/mpc-${mpc_version}/configure \
-#--prefix=${gcc_install} \
-#--with-mpfr=${gcc_install} \
-#--with-gmp=${gcc_install}
-
-#make -j ${ncores}
-#make install -j ${ncores}
-
-#cd ${gcc}
-
-#printf "\n\n************************************************************\n"
-#printf "binutils\n"
-#printf "************************************************************\n\n"
-
-#wget https://ftp.gnu.org/gnu/binutils/binutils-${binutils_version}.tar.gz
-#tar xvfz binutils-${binutils_version}.tar.gz
-
-#cd binutils-${binutils_version}
-
-#${gcc}/binutils-${binutils_version}/configure \
-#--prefix=${gcc_install}                       \
-#--enable-gold=yes                             \
-#--enable-ld=default                           \
-#--enable-plugins                              \
-#--enable-lto                                  \
-#--with-gmp=${gcc_install}                     \
-#--with-mpfr=${gcc_install}                    \
-#--with-mpc=${gcc_install}                     \
-#--with-isl=${gcc_install}
-
-
-#make -j ${ncores}
-#make install -j ${ncores}
-
-#export cc=gcc
-
-cd ${gcc}
+cd ${pgi}
 
 printf "\n\n************************************************************\n"
-printf "gcc\n"
+printf "Installing PGI\n"
 printf "************************************************************\n\n"
 
-wget ftp://gcc.gnu.org/pub/gcc/releases/gcc-${gcc_version}/gcc-${gcc_version}.tar.xz
-tar xvfJ gcc-${gcc_version}.tar.xz
+#wget https://www.pgroup.com/support/download_community.php?file=pgi-community-linux-x64
 
-cd gcc-${gcc_version}
+#cp /admin/build/admin/rpms/frontera/amit/pgilinux-2019-1910-x86-64.tar.gz pgi-${pgi_version}.tar.gz
+#tar xfz pgi-${pgi_version}.tar.gz
+cd /admin/build/admin/rpms/frontera/amit
 
-${gcc}/gcc-${gcc_version}/configure \
---enable-libssp                     \
---enable-gold=yes                   \
---enable-ld=default                 \
---enable-plugins                    \
---enable-lto                        \
---with-tune=generic                 \
---enable-languages='c,c++,fortran'  \
---disable-multilib                  \
---prefix=${gcc_install}             \
---with-gmp=${gcc_install}           \
---with-mlgmp=${gcc_install}         \
---with-mpfr=${gcc_install}          \
---with-mpc=${gcc_install}           \
---with-isl=${gcc_install}
+export PGI_SILENT=true
+export PGI_ACCEPT_EULA=accept
+export PGI_INSTALL_TYPE=single
+export PGI_INSTALL_DIR=%{INSTALL_DIR}
+export PGI_INSTALL_NVIDIA=false
+export PGI_INSTALL_MPI=false
+export PGI_MPI_GPU_SUPPORT=false
+./install
 
-make BOOT_CFLAGS='-O2' bootstrap -j ${ncores}
-make install -j ${ncores}
+cd  %{INSTALL_DIR}/linux86-64
+unlink %{pgversion}
+ln -sf ../linux86-64-llvm/%{pgversion} %{pgversion}
+rm -rf %{year}
 
+cd %{INSTALL_DIR}/linux86-64-llvm
+rm -rf %{year}
+unlink flexlm
+cp -rf ../linux86-64/flexlm .
+
+cd %{INSTALL_DIR}/linux86-64-nollvm
+rm -rf %{year}
+unlink flexlm
+cp -rf ../linux86-64/flexlm .
+
+cd  %{INSTALL_DIR}/..
 
 if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
@@ -358,9 +228,9 @@ fi
 
 cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
 umount %{INSTALL_DIR}/
-  
-  
-#-----------------------  
+
+
+#-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
 
@@ -378,17 +248,20 @@ umount %{INSTALL_DIR}/
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
+
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_message = [[
-The GNU Compiler Collection %{pkg_version} includes front ends for C, C++,
-Objective-C, Fortran, Java, Ada, and Go, as well as libraries for these
-languages (libstdc++, libgcj,...). GCC was originally written as the compiler
-for the GNU operating system. The GNU system was developed to be 100% free
-software, free in the sense that it respects the users freedom.
+The PGI Compiler Collection %{pkg_version} includes PGI C, C++, Fortran, OpenMP, 
+and OpenACC. PGI C and C++ optimize ANSI C11 and GNU-compatible C++17 compilers. 
+Both compilers implement OpenMP 4.5 pragma-based parallel programming for 
+multicore CPUs, and OpenACC 2.6 pragma-based parallel programming for CPUs and 
+NVIDIA GPUs. PGI Fortran supports the industry standard ISO_C_BINDING, which 
+allows for easy argument passing and procedure invocation between Fortran, C, 
+and C++. 
 
-This module loads GCC Compiler variables.
+
+This module loads PGI Compiler variables.
 The command directory is added to PATH.
 The library directory is added to LD_LIBRARY_PATH.
 The include directory is added to INCLUDE.
@@ -398,43 +271,57 @@ Also Defined:
 TACC_%{MODULE_VAR}_DIR   = %{MODULE_VAR} base             directory
 TACC_%{MODULE_VAR}_BIN   = %{MODULE_VAR} binary           directory
 TACC_%{MODULE_VAR}_LIB   = %{MODULE_VAR} library          directory
-TACC_%{MODULE_VAR}_LIB64 = %{MODULE_VAR} library (64-bit) directory
 TACC_%{MODULE_VAR}_INC   = %{MODULE_VAR} include          directory
+
+Note: The $TACC_VEC_FLAGS environment variable is provided as a convenience
+during your compliation step. This variable specifies instruction sets
+appropriate to build and run on any Frontera node (login node, KNL compute
+node, SKX compute node).
+
+The PGI module also defines the following environment variables:
+TACC_PGI_DIR, TACC_PGI_LIB, TACC_PGI_INC and
+TACC_PGI_BIN for the location of the PGI distribution,
+libraries, include files, and tools respectively.
 
 Version %{pkg_version}
 ]]
 
 help(help_message,"\n")
 
-whatis("Name: GCC Compilers")
+whatis("Name: PGI Compilers")
 whatis("Version: %{pkg_version}")
 whatis("Category: compiler")
 whatis("Keywords: System, compiler")
-whatis("URL: http://gcc.gnu.org")
+whatis("URL: https://www.pgroup.com")
 
 -- Create environment variables
-local gcc_dir                              = "%{INSTALL_DIR}"
-prepend_path( "PATH"                     , pathJoin(gcc_dir,"bin"       )               )
-prepend_path( "LD_LIBRARY_PATH"          , pathJoin(gcc_dir,"lib"       )               )
-prepend_path( "LD_LIBRARY_PATH"          , pathJoin(gcc_dir,"lib64"     )               )
-prepend_path( "MANPATH"                  , pathJoin(gcc_dir,"share/man" )               )
-prepend_path( "INCLUDE"                  , pathJoin(gcc_dir,"include"   )               )
-prepend_path( "MODULEPATH"               , "%{MODULE_PREFIX}/%{gcc_ver}/modulefiles" )
-setenv(       "%{MODULE_VAR}_LIB"        , pathJoin(gcc_dir,"lib64"     )               )
-setenv(       "TACC_%{MODULE_VAR}_DIR"   , gcc_dir                                      )
-setenv(       "TACC_%{MODULE_VAR}_BIN"   , pathJoin(gcc_dir,"bin"       )               )
-setenv(       "TACC_%{MODULE_VAR}_LIB"   , pathJoin(gcc_dir,"lib"       )               )
-setenv(       "TACC_%{MODULE_VAR}_LIB64" , pathJoin(gcc_dir,"lib64"     )               )
-setenv(       "TACC_%{MODULE_VAR}_INC"   , pathJoin(gcc_dir,"include"   )               )
+local pgi_dir                              = "%{INSTALL_DIR}/%{lib_dir}"
+prepend_path( "PATH"                     , pathJoin(pgi_dir,"bin"       )               )
+prepend_path( "LD_LIBRARY_PATH"          , pathJoin(pgi_dir,"lib"       )               )
+prepend_path( "MANPATH"                  , pathJoin(pgi_dir,"man" )               )
+prepend_path( "LM_LICENSE_FILE"          , pathJoin(pgi_dir,"license.dat"   )  )
+
+prepend_path( "INCLUDE"                  , pathJoin(pgi_dir,"include"   )               )
+prepend_path( "INCLUDE"                  , pathJoin(pgi_dir,"include_acc"   )               )
+prepend_path( "INCLUDE"                  , pathJoin(pgi_dir,"include_omp"   )               )
+prepend_path( "INCLUDE"                  , pathJoin(pgi_dir,"include-gcc70"   )               )
+prepend_path( "MODULEPATH"               , "%{MODULE_PREFIX}/%{pgi_ver}/modulefiles" )
+
+setenv(       "PGI"        ,    pgi_dir )
+setenv(       "%{MODULE_VAR}_LIB"        , pathJoin(pgi_dir,"lib"     )               )
+setenv(       "TACC_%{MODULE_VAR}_DIR"   , pgi_dir                                      )
+setenv(       "TACC_%{MODULE_VAR}_BIN"   , pathJoin(pgi_dir,"bin"       )               )
+setenv(       "TACC_%{MODULE_VAR}_LIB"   , pathJoin(pgi_dir,"lib"       )               )
+setenv(       "TACC_%{MODULE_VAR}_INC"   , pathJoin(pgi_dir,"include"   )               )
 
 if (os.getenv("TACC_SYSTEM") == "frontera") then
-  setenv( "TACC_VEC_FLAGS" ,      "-march=broadwell -mtune=skylake-avx512" )
+  setenv( "TACC_VEC_FLAGS" ,      "-i8 -m64 -mcmodel=medium -Mdalign -Mllalign -O2 -fastsse -Mipa=fast  -Mvect=simd:256" )
 elseif (os.getenv("TACC_SYSTEM") == "stampede2") then
-  setenv( "TACC_VEC_FLAGS" ,      "-march=broadwell -mtune=knl" )
+  setenv( "TACC_VEC_FLAGS" ,      "-i8 -m64 -mcmodel=medium -Mdalign -Mllalign -O2 -fastsse -Mipa=fast  -Mvect=simd:256" )
 elseif (os.getenv("TACC_SYSTEM") == "ls5") then
-  setenv( "TACC_VEC_FLAGS" ,      "-march=ivybridge -mtune=haswell" )
+  setenv( "TACC_VEC_FLAGS" ,      "-i8 -m64 -mcmodel=medium -Mdalign -Mllalign -O2 -fastsse -Mipa=fast  -Mvect=simd:256" )
 else
-  setenv( "TACC_VEC_FLAGS" ,      "-march=haswell -mtune=haswell" )
+  setenv( "TACC_VEC_FLAGS" ,      "-i8 -m64 -mcmodel=medium -Mdalign -Mllalign -O2 -fastsse -Mipa=fast  -Mvect=simd:256" )
 end
 
 family("compiler")
@@ -449,7 +336,7 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 
 set     ModulesVersion      "%{version}"
 EOF
-  
+
   # Check the syntax of the generated lua modulefile
   %if %{?VISIBLE}
     %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
@@ -474,7 +361,7 @@ EOF
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile 
+%files modulefile
 #---------------------------
 
   %defattr(-,root,install,)
@@ -492,6 +379,8 @@ EOF
 %post %{PACKAGE}
 export PACKAGE_POST=1
 %include post-defines.inc
+%{echo: "PKG_BASE = %{PKG_BASE}" }
+
 %post %{MODULEFILE}
 export MODULEFILE_POST=1
 %include post-defines.inc

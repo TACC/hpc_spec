@@ -6,10 +6,12 @@ Summary: Trilinos install
 
 # Create some macros (spec file variables)
 %define major_version 12
-%define minor_version 14
+%define minor_version 18
 %define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+
+%define HAS_MUMPS 1
 
 %include rpm-dir.inc
 %include compiler-defines.inc
@@ -31,7 +33,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 3%{?dist}
+Release: 5%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tar.gz
@@ -146,6 +148,19 @@ export HAS_SEACAS=${HAS_NETCDF}
 if [ "${HAS_HDF5}" = "ON" ] ; then
   module load phdf5
 fi
+
+# https://github.com/trilinos/Trilinos/issues/6339
+if [ %{HAS_MUMPS} -eq 1 ] ; then
+  module load mumps parmetis_petsc
+  export MUMPSLIBS="-L${TACC_MUMPS_LIB} -ldmumps -lmumps_common -lpord -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lmkl_blacs_intelmpi_lp64 -lpthread -\lifcore"
+  export MUMPSLIBNAMES=dmumps\;mumps_common\;pord\;mkl_scalapack_lp64\;mkl_intel_lp64\;mkl_intel_thread\;mkl_core\;iomp5\;mkl_blacs_intelmpi_lp64\;pthread\;ifcore
+  export PARMETISLIBS=${TACC_PARMETIS_LIB}/libptscotchparmetis.a\;${TACC_PARMETIS_LIB}/libparmetis.so
+  export MKLLIBS=${MKLLIBS}\;libmkl_scalapack_lp64\;libmkl_blacs_intelmpi_lp64
+else
+  export MUMPSLIBS=NO_MUMPS_LOADED
+  export PARMETISLIBS=NO_PARMETIS_LOADED
+fi
+
 if [ "${HAS_NETCDF}" = "ON" ] ; then
   module load parallel-netcdf
 fi
@@ -207,14 +222,15 @@ make install
 ( cd %{INSTALL_DIR} && \
   find . -name \*.cmake \
          -exec sed -i -e "/STKDoc_testsConfig.cmake/d" \
-                      -e "/COMPILER_FLAGS/s/mkl/mkl -L${TACC_PYTHON_LIB} -lpython2.7/" \
-                      -e "/EXTRA_LD_FLAGS/s?\"\"?\"${TACC_PYTHON_LIB}/libpython2.7.so\"?" \
-                      -e "/SET.*TPL_LIBRARIES/s?\"\"?\"${TACC_PYTHON_LIB}/libpython2.7.so\"?" \
-                      -e "/SET.*TPL_LIBRARIES/s?so\"?so;${TACC_PYTHON_LIB}/libpython2.7.so\"?" \
+                      -e "/INCLUDE.*ShyLU_NodeConfig.cmake/d" \
                    {} \; \
          -print \
 )
 ## SET(Zoltan_TPL_LIBRARIES "")
+                      # -e "/COMPILER_FLAGS/s/mkl/mkl -L${TACC_PYTHON_LIB} -lpython2.7/" \
+                      # -e "/EXTRA_LD_FLAGS/s?\"\"?\"${TACC_PYTHON_LIB}/libpython2.7.so\"?" \
+                      # -e "/SET.*TPL_LIBRARIES/s?\"\"?\"${TACC_PYTHON_LIB}/libpython2.7.so\"?" \
+                      # -e "/SET.*TPL_LIBRARIES/s?so\"?so;${TACC_PYTHON_LIB}/libpython2.7.so\"?" \
 export nosed="\
                 Q stands for doublequote \
                       -e '/COMPILER_FLAGS/s/mkl/mkl -L\${TACC_PYTHON_LIB} -lpython2.7/' \
@@ -264,13 +280,13 @@ setenv("TACC_TRILINOS_INC",        pathJoin(trilinos_dir,trilinos_arch,"include"
 setenv("TACC_TRILINOS_LIB",        pathJoin(trilinos_dir,trilinos_arch,"lib") )
 EOF
 
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << EOF
 #%Module1.0#################################################
 ##
 ## version file for Trilinos %version
 ##
 
-set     ModulesVersion      "${modulefilename}"
+set     ModulesVersion      "%{version}"
 EOF
 
 %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua 
@@ -295,8 +311,13 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Wed May 06 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 5: post-install fix for ShyLU
+* Sat Apr 25 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 4: up to 12.18.1 
+    including mumps
 * Fri Sep 06 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3 UNRELEASED : update explicit libpython
+- release 3 : update explicit libpython
 * Mon Jun 10 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: fix missing lib directory
 * Thu Jun 06 2019 eijkhout <eijkhout@tacc.utexas.edu>

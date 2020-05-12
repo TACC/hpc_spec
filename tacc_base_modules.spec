@@ -49,7 +49,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   6%{?dist}
+Release:   7%{?dist}
 License:   GPL
 Group:     Module Magic
 Packager:  TACC - cproctor@tacc.utexas.edu
@@ -183,6 +183,7 @@ load("ucx")
 load("pmix")
 load("hwloc/1.11.12")
 try_load("xalt")
+try_load("ooops")
 
 prepend_path("MANPATH","/usr/local/man:/usr/share/man:/usr/X11R6/man:/usr/kerberos/man:/usr/man")
 

@@ -10,9 +10,9 @@ Summary: Slepc install
 
 # Create some macros (spec file variables)
 %define major_version 3
-%define minor_version 11
-%define micro_version 2
-%define versionpatch 3.11.2
+%define minor_version 13
+%define micro_version 1
+%define versionpatch 3.13.1
 
 %define pkg_version %{major_version}.%{minor_version}
 
@@ -36,25 +36,29 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 4%{?dist}
+Release: 1%{?dist}
 License: GPL
 Vendor: Universitat Politecnica De Valencia http://www.grycap.upv.es/slepc/
 Group: Development/Numerical-Libraries
 Packager: TACC -- eijkhout@tacc.utexas.edu
-Source0: %{pkg_base_name}-%{major_version}.%{minor_version}.%{micro_version}.tar.gz
+Source0: %{pkg_base_name}-%{versionpatch}.tar.gz
 
 %define debug_package %{nil}
 ## %global _missing_build_ids_terminate_build 0
 %global _python_bytecompile_errors_terminate_build 0
 
+#---------------------------------------
 %package %{PACKAGE}
+#---------------------------------------
 Summary: Slepc local binary install
 Group: System Environment/Base
 %package %{MODULEFILE}
 Summary: Slepc local binary install
 Group: System Environment/Base
 
+#---------------------------------------
 %description
+#---------------------------------------
 %description %{PACKAGE}
 SLEPC is the Portable Extendible Toolkit for Scientific Computing.
 It contains solvers and tools mostly for PDE solving.
@@ -62,9 +66,13 @@ It contains solvers and tools mostly for PDE solving.
 SLEPC is the Portable Extendible Toolkit for Scientific Computing.
 It contains solvers and tools mostly for PDE solving.
 
+#---------------------------------------
 %prep 
+#---------------------------------------
 
+#---------------------------------------
 %setup -n slepc-%{versionpatch}
+#---------------------------------------
 
 #---------------------------------------
 %build
@@ -99,14 +107,12 @@ pushd %{INSTALL_DIR}
 export SLEPC_DIR=`pwd`
 
 # same as in petsc
-export dynamiccc="i64 debug i64debug complex complexdebug complexi64 complexi64debug uni unidebug nohdf5 hyprefei"
+export dynamiccc="i64 debug i64debug complex complexdebug complexi64 complexi64debug uni unidebug"
+export dynamiccxx="cxx cxxdebug cxxcomplex cxxcomplexdebug cxxi64 cxxi64debug"
 
 for ext in \
-  "" \
-  rtx rtx-debug \
-  single single-debug \
-  ${dynamiccc} \
-  ; do
+  single "" \
+  ${dynamiccc} ; do
 
 export architecture=clx
 if [ -z "${ext}" ] ; then
@@ -212,11 +218,5 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Sat Apr 18 2020 eijkhout <eijkhout@tacc.utexas.edu>
-- release 4: rebuilding with petsc release_{non-mt}
-* Fri Oct 04 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: point update to 3.11.2
-* Tue Oct 01 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: using tmpfs
-* Tue Jun 04 2019 eijkhout <eijkhout@tacc.utexas.edu>
+* Thu Apr 30 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial build

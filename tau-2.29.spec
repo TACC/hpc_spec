@@ -1,13 +1,17 @@
 ## export NO_PACKAGE  # for no package compile
 
-## rpmbuild -bb --clean --define 'is_intel19 1' --define 'is_impi 1' --define 'mpiV 19_5' tau-2.29.0.spec 2>&1 | tee tau-2.29.0_intel19_r1_a.log
+## rpmbuild -bb --clean --define 'is_intel19 1' --define 'is_impi 1' --define 'mpiV 19_5' tau-2.29.spec 2>&1 | tee tau-2.29_intel19_r3_a.log
+
 # r=/admin/build/admin/rpms/frontera/RPMS/x86_64
-# rpm -hiv --nodeps    $r/tacc-tau-intel19-impi19_0-package-2.29-0.el7.x86_64.rpm
-# rpm -hiv --nodeps $r/tacc-tau-intel19-impi19_0-modulefile-2.29-0.el7.x86_64.rpm
+# rpm -hiv --nodeps    $r/tacc-tau-intel19-impi19_0-package-2.29-1.el7.x86_64.rpm
+# rpm -hiv --nodeps $r/tacc-tau-intel19-impi19_0-modulefile-2.29-1.el7.x86_64.rpm
 #
 
 #  rpm -e   
 #  rpm -e   
+
+# rpm -e tacc-tau-intel19-impi19_0-package-2.28.2-1.el7.x86_64
+# rpm -e tacc-tau-intel19-impi19_0-modulefile-2.28.2-1.el7.x86_64
 
 
 # Give the package a base name
@@ -20,7 +24,7 @@
 %define minor_version 29
 %define micro_version 0
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{major_version}.%{minor_version}
 
 %include rpm-dir.inc
 %include compiler-defines.inc
@@ -134,33 +138,35 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
      %define PAPI_component_avail $TACC_PAPI_DIR/bin/papi_component_avail
      %define PAPI                 "-papi=%PAPI_dir"
 
-    #%define TAG       "-tag=whatever"
-     %define TAG       %{nil} 
-
-     ./configure %{TAG} %{PREFIX} -c++=mpicxx -cc=mpicc -fortran=mpif90 \
-                 %{PDT} %{PAPI}   -ompt=download \
-                 -bfd=download -iowrapper -unwind=download -ompt=download
-     make clean install -j 10
-
+    ##define TAG       "-tag=whatever"
      %define TAG       %{nil} 
 
      sed -i 's/fprintf(stderr, "TAU: WARNING: OMPT Callback for event %d could not be registered\\n", name);/TAU_VERBOSE("TAU: WARNING: OMPT Callback for event %d could not be registered\\n", name);/' src/Profile/TauOMPT.cpp
 
-     ./configure %{TAG} %{PREFIX} -c++=icpc   -cc=icc   -fortran=ifort \
-                 %{PDT} %{PAPI}   -ompt=download \
+     ./configure %{TAG} %{PREFIX} -c++=mpicxx -cc=mpicc -fortran=mpif90 \
+                 %{PDT} %{PAPI} \
                  -bfd=download -iowrapper -unwind=download -ompt=download
-
-     make clean install -j 10
+     make install -j 10
 
      cd   utils
      make tau_timecorrect
-     cp   tau_timecorrect ../x86_64/bin
+     cp   tau_timecorrect %{INSTALL_DIR}/x86_64/bin
      cd   ..
+
+   #%define TAG       %{nil} 
+
+   #./configure %{TAG} %{PREFIX} -c++=icpc   -cc=icc   -fortran=ifort \
+   #            %{PDT} %{PAPI} \
+   #            -bfd=download -iowrapper -unwind=download -ompt=download
+
+   #make clean install -j 10
+
 
   %endif  #BUILD_PACKAGE |
 
 %install
   %if %{?BUILD_PACKAGE}
+
 #mkdir -p /root/rpmbuild/BUILDROOT/tacc-tau-intel19-impi19_0-2.28-1.el7.x86_64//opt/apps/intel19/impi19_0/tau/2.28
     mkdir -p                  $RPM_BUILD_ROOT/%{INSTALL_DIR}
     cp    -rp %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
@@ -207,10 +213,12 @@ It also defines defaults:
 TAU_MAKEFILE sets the tools (pdt), compilers (intel) and parallel 
 paradigm (serial, or mpi and/or openmp) to be used in the instrumentation.
 
-For TAU %{pkg_version} it is only necessary to load up the TAU
-%{pkg_version} environment. Advanced users may need to load up
-papi/%{PAPI_VER} and pdtoolkit/%{PDT_version} for library and command access.
-For normal usage use the defaults: just load up tau, recompile, and run.
+For TAU %{pkg_version} it is only necessary to load the tau/%{pkg_version} 
+environment. Advanced users may need to load up papi/%{PAPI_VER} and 
+pdtoolkit/%{PDT_version} modules for library and command access.
+
+For normal usage the use the defaults: just load up tau, recompile, and run.
+
 See the User Guide and Reference pdf files in the $TACC_TAU_DOC directory. 
 Man pages are available for commands (e.g. paraprof, tauf90, etc.),
 and the application program interface. 
@@ -226,7 +234,7 @@ Load command:
 Java is used in the TAU gui, paraprof, and is available in the default
 environment.
 
-The TAU makefile is used by the Tau compiler wrappers shown below. 
+The TAU makefile is used by the tau compiler wrappers shown below. 
 The full path to this makefile is specified in the TAU_MAKEFILE 
 environement variable. It has been set for you.
 
@@ -241,9 +249,11 @@ and has component names that describe features of the build:
     PDtoolkit       (pdt)    now included by default
 
 The default TAU Makefile works for pure MPI, pure OpenMP,
-and hybrid applications.  For pure OpenMP applications set
+and hybrid applications.  
 
-     export TAU_SET_NODE=0   #bash shell 
+FOR PURE OpenMP APPLICATIONS SET
+
+     export TAU_SET_NODE=0   # FOR PURE MPI CODE, bash shell 
 
 Otherwise you will get a warning to set the variable, and no data.
 

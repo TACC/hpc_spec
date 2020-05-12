@@ -1,7 +1,7 @@
 Summary: Valgrind memory checker
 Name: valgrind
-Version: 3.12.0
-Release: 1%{?dist}
+Version: 3.15.0
+Release: 3%{?dist}
 License: GPL
 Vendor: http://valgrind.org/
 Group: System Environment/Base
@@ -44,7 +44,7 @@ if [ -f "$BASH_ENV" ]; then
 fi
 
 module purge
-module load gcc
+#module load gcc
 
 ./configure --prefix=%{INSTALL_DIR} --enable-only64bit
 make 
@@ -57,50 +57,38 @@ make DESTDIR=$RPM_BUILD_ROOT install
 ## Module for valgrind
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version} << 'EOF'
-#%Module1.0##################################################################
-#
-# This module file sets up the environment variables and path for the
-# valgrind distribution.
-#
-#############################################################################
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
+local msg = [[
+The %{INSTALL_NAME} modulefile defines the following environment via
 
-proc ModulesHelp { } {
-puts stderr "The %{INSTALL_NAME} modulefile defines the following environment va
-riables:"
-puts stderr "TACC_VALGRIND_DIR, TACC_VALGRIND_LIB, and TACC_VALGRIND_INC"
-puts stderr "for the location of the Valgrind %{version} distribution, "
-puts stderr "libraries, and include files respectively.\n"
+TACC_VALGRIND_DIR, TACC_VALGRIND_LIB, and TACC_VALGRIND_INC
+for the location of the Valgrind %{version} distribution, 
+libraries, and include files respectively
 
-puts stderr "To use the valgrind utility on an executable called a.out:"
-puts stderr ""
-puts stderr "valgrind ./a.out"
+To use the valgrind utility on an executable called a.out:
 
-puts stderr "\nVersion %{version}"
-}
-module-whatis "Name: Valgrind"
-module-whatis "Version: %{version}"
-module-whatis "Category: utility, runtime support"
-module-whatis "Keywords: Utility, Debugging"
-module-whatis "URL: http://valgrind.org"
-module-whatis "Description: Dynamic memory testing and debugging tools"
+valgrind ./a.out
 
-#
-# Create environment variables.
-#
+Version %{version}
+]]
+help(msg)
+whatis("Name: Valgrind")
+whatis("Version: %{version}")
+whatis("Category: utility, runtime support")
+whatis("Keywords: Utility, Debugging")
+whatis("URL: http://valgrind.org")
+whatis("Description: Dynamic memory testing and debugging tools")
 
-set             valgrind_dir        %{INSTALL_DIR}
+-- Create environment variables.
 
-setenv          TACC_VALGRIND_DIR        $valgrind_dir
-setenv          TACC_VALGRIND_LIB        $valgrind_dir/lib/valgrind/amd64-linux
-setenv          TACC_VALGRIND_INC        $valgrind_dir/include
+local           valgrind_dir  =      "%{INSTALL_DIR}"
 
-#
-# Append path
-#
+setenv(         "TACC_VALGRIND_DIR",  valgrind_dir)
+setenv(         "TACC_VALGRIND_LIB",  pathJoin(valgrind_dir,"lib/valgrind/amd64-linux"))
+setenv(         "TACC_VALGRIND_INC",  pathJoin(valgrind_dir,"include"))
 
-append-path     PATH                       $valgrind_dir/bin
-append-path     MANPATH                    $valgrind_dir/man
+prepend_path(   "PATH",               pathJoin(valgrind_dir,"bin"))
+append_path(    "MANPATH",            pathJoin(valgrind_dir,"man"))
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'

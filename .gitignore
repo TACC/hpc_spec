@@ -23,4 +23,6 @@ log_*
 *.zip
 .\#*
 slepc
-
+*.1log
+rstudio
+x

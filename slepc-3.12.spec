@@ -47,14 +47,18 @@ Source0: %{pkg_base_name}-%{versionpatch}.tar.gz
 ## %global _missing_build_ids_terminate_build 0
 %global _python_bytecompile_errors_terminate_build 0
 
+#---------------------------------------
 %package %{PACKAGE}
+#---------------------------------------
 Summary: Slepc local binary install
 Group: System Environment/Base
 %package %{MODULEFILE}
 Summary: Slepc local binary install
 Group: System Environment/Base
 
+#---------------------------------------
 %description
+#---------------------------------------
 %description %{PACKAGE}
 SLEPC is the Portable Extendible Toolkit for Scientific Computing.
 It contains solvers and tools mostly for PDE solving.
@@ -62,9 +66,13 @@ It contains solvers and tools mostly for PDE solving.
 SLEPC is the Portable Extendible Toolkit for Scientific Computing.
 It contains solvers and tools mostly for PDE solving.
 
+#---------------------------------------
 %prep 
+#---------------------------------------
 
+#---------------------------------------
 %setup -n slepc-%{versionpatch}
+#---------------------------------------
 
 #---------------------------------------
 %build

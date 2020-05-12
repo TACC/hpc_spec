@@ -1,6 +1,7 @@
 #
-# Anne Bowen
-# 2020-04-01
+# W. Cyrus Proctor
+# Antonio Gomez
+# 2015-08-25
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -11,36 +12,39 @@
 # RPM_DBPATH      -> Path To Non-Standard RPM Database Location
 #
 # Typical Command-Line Example:
-#./build_rpm.sh vmd-1.9.3.spec
+# ./build_rpm.sh Bar.spec
 # cd ../RPMS/x86_64
-# rpm -i --relocate /tmprpm=/opt/apps vmd-1.9.3-package-1.93-1.x86_64.rpm
-# rpm -i --relocate /tmpmod=/opt/apps vmd-1.9.3-modulefile-1.93-1.x86_64.rpm
-# rpm -e vmd-package-1.1-1.x86_64 vmd-1.9.3-modulefile-1.93-1.x86_64
+# rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+# rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+# rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: VMD, Visual Molecular Dynamics spec file (based on Bar.spec)
+Summary: A Nice little relocatable skeleton spec file.
 
 # Give the package a base name
-%define pkg_base_name vmd
-%define MODULE_VAR    VMD
+%define pkg_base_name ooops
+%define MODULE_VAR    OOOPS
 
 # Create some macros (spec file variables)
-%define major_version 1.9
-%define minor_version 3
-%define micro_version 3 
+%define major_version 1
+%define minor_version 2
+%define micro_version 0
 
+#%define pkg_version %{major_version}.%{minor_version}
 %define pkg_version %{major_version}.%{minor_version}
-
 ### Toggle On/Off ###
-%include rpm-dir.inc                  
+%include rpm-dir.inc
+
 #%include compiler-defines.inc
 #%include mpi-defines.inc
+
+#%include name-defines-noreloc.inc
+
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
-#%include name-defines-noreloc.inc
-#%include name-defines-hidden.inc
-#%include name-defines-hidden-noreloc.inc
+#%include name-defines.inc
+%include name-defines-noreloc.inc
+
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -51,37 +55,35 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4%{?dist}
-License:   VISUAL MOLECULAR DYNAMICS SOFTWARE LICENSE
-Group:     Development/Tools
-URL:       http://www.ks.uiuc.edu/Research/vmd/
-Packager:  TACC - adb@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Release:   1%{?dist}
+License:   GPL
+URL:       https://github.com/TACC/ooops
+Packager:  TACC - huang@tacc.utexas.edu
+Source:    ooops-1.2.tgz
+#Source1:   tcl8.5.9-linux-x86_64-threaded.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
 
-%define VMD_SRC vmd.%{version}.tar.gz
-
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: The OOOPS RPM
+Group: Tools/Optimization
 %description package
-The vmd package conains the VMD molecular visualization package. The package contains the precompiled binary and any libraries needed to support the various third party components.
-
+OOOPS, an innovative IO workload managing system that optimally throttles the IO 
+workload from the users' side. 
 
 %package %{MODULEFILE}
-Summary: The modulefile RPM
+Summary: The OOOPS modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-The module sets the required user environment needed to run VMD on TACC systems. It sets paths to executables and required libraries.
+OOOPS, an innovative IO workload managing system that optimally throttles the IO
+workload from the users' side.
 
 %description
-VMD is designed for modeling, visualization, and analysis of biological systems such as proteins, nucleic acids, lipid bilayer assemblies, etc. It may be used to view more general molecules, as VMD can read standard Protein Data Bank (PDB) files and display the contained structure. VMD provides a wide variety of methods for rendering and coloring a molecule: simple points and lines, CPK spheres and cylinders, licorice bonds, backbone tubes and ribbons, cartoon drawings, and others. VMD can be used to animate and analyze the trajectory of a molecular dynamics (MD) simulation. In particular, VMD can act as a graphical front end for an external MD program by displaying and animating a molecule undergoing simulation on a remote computer.
-rpm -qi <rpm-name>
-
+OOOPS, an innovative IO workload managing system that optimally throttles the IO
+workload from the users' side.
 
 #---------------------------------------
 %prep
@@ -91,10 +93,8 @@ rpm -qi <rpm-name>
 %if %{?BUILD_PACKAGE}
 #------------------------
   # Delete the package installation directory.
-  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-%setup -n %{pkg_base_name}-%{pkg_version}
-
+#  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+#mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -103,17 +103,18 @@ rpm -qi <rpm-name>
 %if %{?BUILD_MODULEFILE}
 #---------------------------
   #Delete the module installation directory.
-  rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
+#  rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
+#mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
+%setup -n ooops-%{pkg_version}
 
 
 #---------------------------------------
 %build
 #---------------------------------------
-
 
 #---------------------------------------
 %install
@@ -122,12 +123,12 @@ rpm -qi <rpm-name>
 # Setup modules
 %include system-load.inc
 module purge
-# Load Compiler
 #%include compiler-load.inc
-# Load MPI Library
 #%include mpi-load.inc
 
-# Insert further module commands
+
+# Insert necessary module commands
+#module purge
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -136,8 +137,9 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 %if %{?BUILD_PACKAGE}
 #------------------------
 
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
+  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -149,19 +151,22 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
- 
-  #module load swr 
+
   # Create some dummy directories and files for fun
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
 
-  echo "TACC_OPT %{TACC_OPT}"
-  
+  cp -p bin/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
+  cp -r lib $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+  cp -r conf $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+  cp -r test $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+
+  chmod -Rf u+rwX,g+rwX,o=rX                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+
   # Copy everything from tarball over to the installation directory
-  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
-#-----------------------  
+#  cp * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+#-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
 
@@ -170,8 +175,11 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 %if %{?BUILD_MODULEFILE}
 #---------------------------
 
-  mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-  
+  rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
+mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
+
+#  mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -179,38 +187,64 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
+
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_msg=[[
-The %{MODULE_VAR} module defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
-TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
-include files, and tools respectively.
+Optimal Overloaded IO Protection System (OOOPS) is an easy to use tool that helps HPC users optimize heavy IO requests.
+
+It will also help system administrator prevent IO overload caused by improper IO request.
+
+Lei Huang (huang@tacc.utexas.edu)
+Si Liu    (siliu@tacc.utexas.edu)
+
+You can use command "set_io_param_batch" to adjust allowed maximum frequency of open/stat on all nodes of one running job.
+
+Usage: set_io_param_batch jobid idx_fs t_open freq_open t_stat freq_stat
+
+jobid     - The slurm job id
+idx_fs    - The index of file server. On Frontera, 0 represents /scratch1. 1 represents /work. 2 represents /home1.
+t_open    - The estimated time to finish open(). Unit is microsecond.
+freq_open - The allowed max frequency of open() (times per second)
+t_stat    - The estimated time to finish stat(). Unit is microsecond.
+freq_stat - The allowed max frequency of stat() (times per second)
+
+Example to turn off the throttling on WORK.
+set_io_param_batch 12345 1 1000000 1000000 1000000 1000000
+
+Example to slow down open/stat on WORK a lot.
+set_io_param_batch 12345 1 1000 200 1000 500
+# In this example, the number of open and stat can NOT be more frequent than 200 times and 500 times per second respectively.
+
+If OOOPS finds intensive IO in your job, it will print out warning messages and create open/stat call report.
 ]]
 
 --help(help_msg)
 help(help_msg)
 
-whatis("Name: bar")
-whatis("Version: %{pkg_version}%{dbg}")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
+whatis("Name: OOOPS")
+whatis("Version: 1.2")
+whatis("Category: Tools/Optimization ")
+whatis("Keywords: Tools, IO, Optimization")
+whatis("Description: Optimal Overloaded IO Protection System (OOOPS) us an easy to use tool ")
 
 -- Create environment variables.
-local bar_dir           = "%{INSTALL_DIR}"
+local ooops_dir           = "%{INSTALL_DIR}"
 
-family("bar")
-prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "lib"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/bar1_1/modulefiles")
-setenv( "TACC_%{MODULE_VAR}_DIR",                bar_dir)
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(bar_dir, "include"))
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(bar_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(bar_dir, "bin"))
+family("ooops")
+prepend_path( "PATH",                   pathJoin(ooops_dir, "bin"))
+prepend_path( "LD_LIBRARY_PATH",        pathJoin(ooops_dir, "lib"))
+append_path(  "LD_PRELOAD",             pathJoin(ooops_dir, "lib/ooops.so") )
+
+setenv( "IO_LIMIT_CONFIG",              pathJoin(ooops_dir, "conf/config_frontera") )
+setenv( "TACC_OOOPS_BIN", pathJoin(ooops_dir, "bin"))
+setenv( "OOOPS_NCALL_REPORT_THRESHOLD", "60000")
+setenv( "OOOPS_NCALL_PS_REPORT_THRESHOLD", "2")
+setenv( "OOOPS_REPORT_T_INTERVAL", "30")
+
+
 EOF
-  
+
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -219,11 +253,10 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 
 set     ModulesVersion      "%{version}"
 EOF
-  
-  # Check the syntax of the generated lua modulefile only if a visible module
-  %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-  %endif
+
+  # Check the syntax of the generated lua modulefile
+  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -243,7 +276,7 @@ EOF
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile 
+%files modulefile
 #---------------------------
 
   %defattr(-,root,install,)
@@ -253,6 +286,7 @@ EOF
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
+
 
 ########################################
 ## Fix Modulefile During Post Install ##

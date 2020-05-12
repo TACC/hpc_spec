@@ -6,11 +6,18 @@ Summary: PETSc install
 
 # Create some macros (spec file variables)
 %define major_version 3
-%define minor_version 11
-%define micro_version 4
+%define minor_version 13
+%define micro_version 0
 %define versionpatch %{major_version}.%{minor_version}.%{micro_version}
 
 %define pkg_version %{major_version}.%{minor_version}
+
+####
+#### configuration switches:
+####
+%define p4p 1
+%define cuda 0
+# cuda probably fixed in 3.13.1
 
 %include rpm-dir.inc
 %include compiler-defines.inc
@@ -32,7 +39,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 7%{?dist}
+Release: 2%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -165,12 +172,21 @@ export logdir=%{_topdir}/../apps/petsc/logs
 mkdir -p ${logdir}; rm -rf ${logdir}/*
 export dynamiccc="i64 debug i64debug complex complexdebug complexi64 complexi64debug uni unidebug nohdf5 hyprefei"
 
+%if "%{cuda}" == "1"
+  export cudaext="rtx rtx-debug"
+%else
+  export cudaext=
+%endif
+
 for ext in \
   "" \
-  rtx rtx-debug \
   single single-debug \
   ${dynamiccc} \
+  ${cudaext} \
   ; do
+
+export no_ext="\
+  "
 
 echo "configure install for ${ext}"
 export versionextra=
@@ -205,13 +221,16 @@ export FNOOPTFLAGS="-O0 -g"
 export CFLAGS=${COPTFLAGS}
 export CXXFLAGS=${CXXOPTFLAGS}
 export FFLAGS=${FOPTFLAGS}
+case "${ext}" in 
+*debug ) export CFLAGS=${CNOOPTFLAGS}
+	 export CXXFLAGS=${CXXNOOPTFLAGS}
+	 export FFLAGS=${FNOOPTFLAGS}
+         ;;
+esac
+
 export usedebug=no
 case "${ext}" in 
 *debug ) export usedebug=yes 
-	export CFLAGS=${CNOOPTFLAGS}
-	export CXXFLAGS=${CXXNOOPTFLAGS}
-	export FFLAGS=${FNOOPTFLAGS}
-         ;;
 esac
 
 ## 
@@ -228,14 +247,16 @@ esac
 ##
 
 export HAS_HDF5=1
-##%if "%{comp_fam}" == "intel"
+
   module load phdf5
   export hdf5string="hdf5"
   export hdf5download="--with-hdf5=1 --with-hdf5-dir=${TACC_HDF5_DIR}"
   # --download-hdf5=1"
   export hdf5versionextra="; hdf5 support"
-##%endif
 
+
+# sometimes actually we don't load hdf5 because the serial and parallel 
+# are not compatible
 case "${ext}" in
 *nohdf5* ) export HAS_HDF5=0
         export hdf5string=
@@ -258,13 +279,6 @@ case "${ext}" in
        export USECXX=yes
        ;;
 esac
-%if "%{is_petsc_dev}" == "1"
-case "${ext}" in
-*cxx* ) export clanguage="--with-clanguage=C++ --with-sieve=1 --with-opt-sieve=1 --with-boost="
-       export clanguageversionextra="; C++ support, sieve & boost included"
-       ;;
-esac
-%endif
 export versionextra="${versionextra}${clanguageversionextra}"
 
 #
@@ -422,16 +436,33 @@ export MPIF90=`which mpif90`
 echo "setting mpicc=${MPICC}"
 ls -l ${MPICC}
 
-export MPI_OPTIONS="--with-mpi=1 --with-cc=${MPICC} --with-cxx=${MPICXX} --with-fc=${MPIF90}"
+echo ${MPICH_HOME}
+export MPI_OPTIONS="--with-mpi=1"
+# compilers are found by giving the "--with-mpi-dir"
+# --with-cc=${MPICC} --with-cxx=${MPICXX} --with-fc=${MPIF90}"
 %if "%{is_impi}" == "1"
-  export PETSC_MPICH_HOME="${MPICH_HOME}/intel64"
   export MPI_OPTIONS="${MPI_OPTIONS} \
-    --with-mpi-include=${TACC_IMPI_INC} --with-mpi-lib=${TACC_IMPI_LIB}/release/libmpi.so"
+    --with-mpi-dir=${MPICH_HOME}/intel64 \
+    "
+  # up to 3.11 we used this for Intel MPI:
+  # we may have to go back, to make sure we use release, non-mt
+  export OLD_MPI_OPTIONS="${MPI_OPTIONS} \
+    --with-mpi-dir=${MPICH_HOME} \
+    --with-mpi-include=${TACC_IMPI_INC} \
+    --with-mpi-lib=${TACC_IMPI_LIB}/release_mt/libmpi.so \
+     "
 %else
-  export PETSC_MPICH_HOME="${MPICH_HOME}"
+  # why do we define this?
   export MPI_OPTIONS="${MPI_OPTIONS} --with-mpi-dir=${MPICH_HOME}"
 %endif
-echo "Finding mpi in ${MPICH_HOME}"
+
+#
+# Petsc4py
+#
+module load python3
+if [ %{p4p} -eq 1 ] ; then
+  export petsc4py="--download-petsc4py=yes --with-python=1 --with-python-exec=python3"
+fi
 
 #
 # single precision
@@ -467,12 +498,11 @@ case "${ext}" in
 esac 
 
 #
-# Uni: petsc can run single processor with a fake mpi
+# petsc can run single processor with a fake mpi
 # in that case: no external packages, and explicit non-mp cc/fc compilers
 #
 case "${ext}" in
 uni* ) export MPI_OPTIONS="--with-mpi=0 --with-cc=${CC} --with-fc=${FC} --with-cxx=0";
-       export packageslisting= ;
        export packages= ;;
 esac
 
@@ -502,10 +532,12 @@ else
     ${PETSC_CONFIGURE_OPTIONS} \
     --with-packages-search-path=[${EXTERNAL_PACKAGES_DIR}] \
     --with-packages-build-dir=${PACKAGES_BUILD_DIR} \
-    ${MPI_OPTIONS} ${clanguage} ${scalar} ${dynamicshared} ${precision} ${packages} \
+    ${MPI_OPTIONS} ${MPI_EXTRA_OPTIONS} \
+    ${clanguage} ${scalar} ${dynamicshared} ${precision} ${packages} \
+    ${petsc4py} \
     --with-debugging=${usedebug} \
-    ${BLAS_LAPACK_OPTIONS} ${MPI_EXTRA_OPTIONS} ${CUDA_OPTIONS} ${INDEX_OPTIONS} \
-    COPTFLAGS="${CFLAGS}" FOPTFLAGS="${FFLAGS}" CXXOPTFLAGS="${CXXFLAGS}"
+    ${BLAS_LAPACK_OPTIONS} ${CUDA_OPTIONS} ${INDEX_OPTIONS} \
+    CFLAGS="${CFLAGS}" FFLAGS="${FFLAGS}" CXXFLAGS="${CXXFLAGS}"
 fi
 
 export noops="\
@@ -515,34 +547,16 @@ export noops="\
 #### post-processing fixes
 #### <<<<<<<<<<<<<<<<
 ####
-
-case "${ext}" in
-( *rtx* )
-    find ${architecture} \
-	-type f \
-        -exec grep wd1572 {} \; \
-	-exec sed -i -e 's/-wd1572//' {} \; 
-    ;;
-esac
-
 pushd ${architecture}
 pwd
 ls
-ls ./lib
-# for f in ./lib/petsc/conf/configure.log \
-#     ./lib/petsc/conf/petscvariables \
-#     ./lib/petsc/conf/PETScBuildInternal.cmake \
-#     ./lib/petsc/conf/RDict.db \
-#     ./include/petscmachineinfo.h ; do
-#   /bin/true sed -i -e "s/debug-mt/release_mt/" $f
-# done
 
-# # fix a weird bug that trips up John Peterson
-# if [ `ls ./lib/libsundials*.la | wc -l` -gt 0 ] ; then
-#   for f in ./lib/libsundials*.la ; do
-#     sed -i -e "/dependency_libs/s/lmpi./lmpi/" $f
-#   done
-# fi
+# fix a weird bug that trips up John Peterson
+if [ `ls ./lib/libsundials*.la | wc -l` -gt 0 ] ; then
+  for f in ./lib/libsundials*.la ; do
+    sed -i -e "/dependency_libs/s/lmpi./lmpi/" $f
+  done
+fi
 
 popd
 ####
@@ -552,46 +566,17 @@ popd
 ##
 ## Make!
 
-# lower optimization for intel complex
-# this is the petsc 3.8 location. no longer works in 3.9
-%if "%{is_intel}" == "1"
-case "${ext}" in 
-  ( *pomplex* )
-    for c in src/mat/impls/baij/seq/*.c ; do
-      export CFLAGS=${LOPTFLAGS} ; \
-      make -f gmakefile V=1 PCC_FLAGS="${LOPTFLAGS} -fPIC" \
-          ${PETSC_ARCH}/obj/${c%%.c}.o
-    done
-    export CFLAGS=${XOPTFLAGS}
-  ;;
-esac
-%endif
-
-# and now the rest with full optimization
 PETSC_DIR=`pwd` PETSC_ARCH=${architecture} make MAKE_NP=12 V=1
 ##
 ##
 
-##
-## cleanup
-##
+#
+# cleanup
+#
 # as of 3.7 the object files are kept. I don't think we need them
 /bin/rm -rf $PETSC_ARCH/obj/src
 find $PETSC_ARCH -name \*.o -exec rm -f {} \;
 #/bin/rm -rf ${architecture}/obj
-
-# the CUDA leaves behind an unparsable file?
-
-# error: Recognition of file
-# "/root/rpmbuild/BUILDROOT/tacc-petsc-intel19-impi19_0-3.11-6.el7.x86_64/home1/apps/intel19/impi19_0/petsc/3.11/clx-rtx-debug/CMakeFiles/3.16.1/CMakeDetermineCompilerABI_C.bin"
-# failed: mode 100755 ELF 64-bit LSB executable, x86-64, version 1
-# (SYSV), dynamically linked (uses shared libs)error reading (Invalid
-# argument)
-
-case "${ext}" in
-( *rtx* )
-/bin/rm -rf ${architecture}/CMakeFiles
-esac
 
 ##
 ## modulefile part of the configure install loop
@@ -640,6 +625,12 @@ setenv("TACC_PETSC_BIN",        pathJoin(petsc_dir,petsc_arch,"bin") )
 setenv("TACC_PETSC_INC",        pathJoin(petsc_dir,petsc_arch,"include") )
 setenv("TACC_PETSC_LIB",        pathJoin(petsc_dir,petsc_arch,"lib") )
 EOF
+
+if [ %{p4p} -eq 1 ] ; then
+cat >> $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua << EOF
+prepend_path("PYTHONPATH", pathJoin(petsc_dir,petsc_arch,"lib") )
+EOF
+fi
 
 case "${ext}" in
 ( *rtx* ) 
@@ -699,17 +690,10 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
-* Fri Apr 03 2020 eijkhout <eijkhout@tacc.utexas.edu>
-- release 7: trying to use "release" MPI, not "release_mt"
-* Sun Jan 19 2020 eijkhout <eijkhout@tacc.utexas.edu>
-- release 6: adding cuda
-* Fri Oct 04 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 5: update to 3.11.4
-* Fri Sep 27 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 4: regenerate with McLay hdf5
-* Fri Aug 02 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: using McLay's hdf5 (except gcc/9.1: that was without)
-* Thu Jul 04 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: point update, use "clx"
-* Mon Jun 03 2019 eijkhout <eijkhout@tacc.utexas.edu>
+* Fri Apr 24 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: adding petsc4py
+* Thu Apr 02 2020 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release
+    skipping cuda for now
+    skipping petsc4py for now (3.13 has not been released yet)
+

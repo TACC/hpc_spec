@@ -4,7 +4,7 @@ Summary:    Python is a high-level general-purpose programming language.
 
 Name:       tacc-python%{python_major_version}
 Version:    %{python_module_version}
-Release:    3%{?dist}
+Release:    1%{?dist}
 License:    GPLv2
 Vendor:     Python Software Foundation
 Group:      Applications
@@ -66,19 +66,37 @@ export PIP=%{INSTALL_DIR}/bin/pip%{python_major_version}
 ############################################################
 # System Specific Libraries
 ############################################################
+ml qt5
+export QT5_DIR=${TACC_QT5_DIR}
+export QT5_LIB=${TACC_QT5_LIB}
+export QT5_INC=${TACC_QT5_INC} 
+export QT5_BIN=${TACC_QT5_BIN}
+
 %if "%{comp_fam_name}" == "Intel"
     export MKL_INC=${TACC_MKL_INC}
     export MKL_LIB=${TACC_MKL_LIB}
     export OMP_LIB=${ICC_LIB}
+    
 %endif
 %if "%{comp_fam_name}" == "GNU"
     ml intel
     export MKL_INC=${TACC_MKL_INC}
     export MKL_LIB=${TACC_MKL_LIB}
     export OMP_LIB=${ICC_LIB}
-    ml gcc
+    %if "%{comp_fam_ver}" == "gcc9_1"
+      ml gcc/9.1.0
+    %endif
+    %if "%{comp_fam_ver}" == "gcc8_3"
+      ml gcc/8.3.0
+    %endif 
+    %if "%{comp_fam_ver}" == "gcc6_3"
+      ml gcc/6.3.0
+    %endif
     export LD_LIBRARY_PATH=${MKL_LIB}:${OMP_LIB}:${LD_LIBRARY_PATH}
 %endif
+
+
+
 
 ############################################################
 # Build core python here
@@ -103,8 +121,7 @@ if [ ! -f "%{INSTALL_DIR}/bin/python%{python_major_version}" ]; then
     ./configure --prefix=%{INSTALL_DIR} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc -lssp' CXXFLAGS="-std=c++11" CFLAGS="-Wformat -Wformat-security -D_FORTIFY_SOURCE=2 -fstack-protector -fwrapv -fpic -O3" LDFLAGS="-Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth --without-gcc --with-libm=-limf --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip --enable-unicode=ucs4    
     %endif
     %if "%{comp_fam_name}" == "GNU"
-    #./configure --prefix=%{INSTALL_DIR} CC=gcc CXX=g++  LD=ld   AR=ar   LIBS='-lpthread' CFLAGS="-Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -fwrapv -fpic -O2" LDFLAGS="-fpic -Xlinker -export-dynamic" --with-system-ffi --enable-shared --with-pth --with-threads --with-ensurepip --with-computed-gotos --with-lto --enable-unicode=ucs4
-    ./configure --prefix=%{INSTALL_DIR} CC=gcc CXX=g++  LD=ld   AR=ar   LIBS='-lpthread' CFLAGS="-Wp,-D_FORTIFY_SOURCE=2 -fexceptions --param=ssp-buffer-size=4 -grecord-gcc-switches -fwrapv -fpic -O2" LDFLAGS="-fpic -Xlinker -export-dynamic" --with-system-ffi --enable-shared --with-pth --with-threads --with-ensurepip --with-computed-gotos --with-lto --enable-unicode=ucs4
+    ./configure --prefix=%{INSTALL_DIR} CC=gcc CXX=g++ LD=ld AR=ar LIBS='-lpthread' CFLAGS="-Wp,-D_FORTIFY_SOURCE=2 -fexceptions --param=ssp-buffer-size=4 -grecord-gcc-switches -fwrapv -fpic -O2" LDFLAGS="-fpic -Xlinker -export-dynamic" --with-system-ffi --enable-shared --with-pth --with-threads --with-ensurepip --with-computed-gotos --with-lto --enable-unicode=ucs4
     %endif
 
     make -j 24
@@ -114,36 +131,79 @@ fi
 
 ############################################################
 # core python modules
+#
+# When adding modules please be sure to add a test
+# i.e. %{INSTALL_DIR}/bin/python%{python_major_version} -c 'import nose'
 ############################################################
+
+# Start Fresh
+rm -rf ~/.cache/pip/
+
 if [ ! -f "%{INSTALL_DIR}/bin/pip%{python_major_version}" ]; then
     wget https://bootstrap.pypa.io/get-pip.py
     %{INSTALL_DIR}/bin/python%{python_major_version} get-pip.py
 fi
+${PIP} install --upgrade pip
 ${PIP} install --trusted-host pypi.python.org certifi
-${PIP} install nose
-${PIP} install pytest
-${PIP} install virtualenv
-${PIP} install virtualenvwrapper    
-${PIP} install sympy
-${PIP} install brewer2mpl
+${PIP} install --upgrade setuptools
+
+${PIP} install wheel
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import wheel'
+
+${PIP} install --no-binary :all: nose
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import nose'
+
+${PIP} install --no-binary :all: pytest
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import pytest'
+
+${PIP} install --no-binary :all: virtualenv
+${PIP} install --no-binary :all: virtualenvwrapper
+rm -rf /tmp/pythonenv_test
+%{INSTALL_DIR}/bin/python%{python_major_version} -m venv /tmp/pythonenv_test
+rm -rf /tmp/pythonenv_test
+
+
+${PIP} install --no-binary :all: sympy
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import sympy'
+
+${PIP} install --no-binary :all: brewer2mpl
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import brewer2mpl'
+
 %if "%{python_major_version}" == "2"
 ${PIP} install futures
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import futures'
 %endif
-#${PIP} uninstall futures
-${PIP} install simpy    
-${PIP} install jsonpickle
-${PIP} install meld3
-#${PIP} install supervisor
-${PIP} install paramiko
-${PIP} install readline
-${PIP} install pybind11
-${PIP} install --upgrade pip
-${PIP} install --upgrade setuptools
+
+${PIP} install --no-binary :all: simpy    
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import simpy'
+
+
+${PIP} install --no-binary :all: jsonpickle
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import jsonpickle'
+
+${PIP} install --no-binary :all: meld3
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import meld3'
+
+${PIP} install --no-binary :all: cffi	
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import cffi'
+
+${PIP} install pynacl
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import nacl'
+
+${PIP} install --no-binary :all: paramiko
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import paramiko'
+
+${PIP} install --no-binary :all: pybind11
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import pybind11'
+
+
 #############################################################
 # scipy stack: use INSTALL_DIR . 
 # We need to know which pip modules are compiler specific.  
 # numpy scipy matplotlib jupyter pandas sympy
 ############################################################
+
+CFLAGS="-O2 -fPIC" ${PIP} install --no-binary :all: Cython
 
 ### Numpy
 if ! $(%{INSTALL_DIR}/bin/python%{python_major_version} -c "import numpy"); then
@@ -175,6 +235,22 @@ lapack_libs = " > site.cfg
     %endif
 fi
 
+# This test for SCIPY and NUMPY is very breakable, the string numpy reports (mkl_rt) i
+# has been changed within the last few years and we can expect it will change again
+
+cd %{INSTALL_DIR}/bin/
+echo "import numpy
+import sys
+if 'mkl_rt' in numpy.__config__.blas_mkl_info['libraries']:
+  print('MKL ENGAGED')
+  sys.exit(0)
+else:
+  print('MKL not found in numpy installation')
+  sys.exit(1)
+" > test_numpy_mkl.py
+
+%{INSTALL_DIR}/bin/python%{python_major_version} test_numpy_mkl.py
+
 ### Scipy
 if ! $(%{INSTALL_DIR}/bin/python%{python_major_version} -c "import scipy"); then
     cd %{_topdir}/SOURCES	
@@ -194,71 +270,118 @@ if ! $(%{INSTALL_DIR}/bin/python%{python_major_version} -c "import scipy"); then
     %endif
 fi
 
-### pycairo
-#if ! $(%{INSTALL_DIR}/bin/python%{python_major_version} -c "import cairo"); then
-#    if [ ! -f "%{_topdir}/SOURCES/pycairo-1.15.1.tar.gz" ]; then		
-#	wget -O pycairo-1.15.1.tar.gz https://github.com/pygobject/pycairo/releases/download/v1.15.1/pycairo-1.15.1.tar.gz
-#    fi
-#    rm -rf %{_topdir}/SOURCES/pycairo-1.15.1
-#    tar -xzvf pycairo-1.15.1.tar.gz -C %{_topdir}/SOURCES	 
-#    cd %{_topdir}/SOURCES/pycairo-1.15.1
-#    %{INSTALL_DIR}/bin/python%{python_major_version} setup.py install --prefix=%{INSTALL_DIR}
-#fi	   
+cd %{INSTALL_DIR}/bin/
+echo "import scipy
+import sys
+if 'mkl_rt' in scipy.__config__.blas_mkl_info['libraries']:
+  print('MKL ENGAGED')
+  sys.exit(0)
+else:
+  print('MKL not found in scipy installation')
+  sys.exit(1)
+" > test_scipy_mkl.py
+%{INSTALL_DIR}/bin/python%{python_major_version} test_scipy_mkl.py
 
-### pygobject 2.28.6
-if ! $(%{INSTALL_DIR}/bin/python%{python_major_version} -c "import gobject"); then
-    if [ ! -f "%{_topdir}/SOURCES/pygobject-2.28.6.tar.gz" ]; then	
-	wget -O pygobject-2.28.6.tar.gz http://ftp.gnome.org/pub/gnome/sources/pygobject/2.28/pygobject-2.28.6.tar.xz	     
-	wget -O pygobject-2.28.6-fixes-1.patch http://www.linuxfromscratch.org/patches/blfs/8.1/pygobject-2.28.6-fixes-1.patch
-    fi
-    rm -rf %{_topdir}/SOURCES/pygobject-2.28.6
-    tar xvf pygobject-2.28.6.tar.gz -C %{_topdir}/SOURCES	 
-    mv  pygobject-2.28.6-fixes-1.patch %{_topdir}/SOURCES/	 
-    cd %{_topdir}/SOURCES/pygobject-2.28.6
-    
-    patch -Np1 -i ../pygobject-2.28.6-fixes-1.patch
-
-    CPPFLAGS=-I%{INSTALL_DIR}/include PYTHON=%{INSTALL_DIR}/bin/python%{python_major_version} ./configure --prefix=%{INSTALL_DIR}; make; make install   
-fi	   
-
-### pygtk
-if ! $(%{INSTALL_DIR}/bin/python%{python_major_version} -c "import pygtk"); then
-    if [ ! -f "%{_topdir}/SOURCES/pygtk-2.24.0.tar.gz" ]; then		
-	wget -O pygtk-2.24.0.tar.gz http://ftp.gnome.org/pub/GNOME/sources/pygtk/2.24/pygtk-2.24.0.tar.gz
-    fi
-    rm -rf %{_topdir}/SOURCES/pygtk-2.24.0
-    tar -xzvf pygtk-2.24.0.tar.gz -C %{_topdir}/SOURCES	 
-    cd %{_topdir}/SOURCES/pygtk-2.24.0
-    PYTHON=%{INSTALL_DIR}/bin/python%{python_major_version} ./configure --prefix=%{INSTALL_DIR}; make; make install   
-fi	   
 
 ${PIP} install --no-binary :all: pycairo
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import cairo'
+
+${PIP} install --no-binary :all: cairocffi
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import cairocffi'
+
+${PIP} install --no-binary :all: PyGObject
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import gi;from gi.repository import Gtk'
+
+#TODO
+#${PIP} install --no-binary :all: wxpython
+
+
+${PIP} install --no-binary :all: PyQt5-sip
+${PIP} install --no-binary :all: PyQT5
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import PyQt5'
+
+# Start and stop a virtual frame buffer so $DISPLAY is set and will work
+Xvfb :99 &
+export DISPLAY=:99
+
 ${PIP} install --no-binary :all: matplotlib
-CFLAGS="-O2" ${PIP} install --no-binary :all: cython	
-${PIP} install --no-binary :all: cffi	
-CFLAGS="-O2" ${PIP} install --no-binary :all: pandas
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import matplotlib;matplotlib.use("PS")'
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import matplotlib;matplotlib.use("AGG")'
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import matplotlib;matplotlib.use("PDF")'
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import matplotlib;matplotlib.use("SVG")'
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import matplotlib;matplotlib.use("Cairo")'
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import matplotlib;matplotlib.use("GTK3Agg")'
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import matplotlib;matplotlib.use("GTK3Cairo")'
+#%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import matplotlib;matplotlib.use("WXAgg")'
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import matplotlib;matplotlib.use("TkAgg")'
+#%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import matplotlib;matplotlib.use("QT4Agg")'
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import matplotlib;matplotlib.use("QT5Agg")'
+
+killall Xvfb
+
+
+CFLAGS="-O2 -fPIC" ${PIP} install --no-binary :all: pandas
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import pandas'
+
 ${PIP} install --no-binary :all: psutil
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import psutil'
+
 ${PIP} install --no-binary :all: numexpr
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import numexpr'
+
 ${PIP} install --no-binary :all: rpyc	
-${PIP} install jupyter	
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import rpyc'
+
+${PIP} install --no-binary :all: jupyter	
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import jupyter'
+
 ${PIP} install --no-binary :all: mako
-CFLAGS="-O2" ${PIP} install --no-binary :all: lxml
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import mako'
+
+CFLAGS="-O2 -fPIC" ${PIP} install --no-binary :all: lxml
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import lxml'
+
 ${PIP} install --no-binary :all: pystuck
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import pystuck'
+
 ${PIP} install --no-binary :all: PyMySQL
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import pymysql'
+
 ${PIP} install --no-binary :all: psycopg2
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import psycopg2'
+
 %if "%{python_major_version}" == "2"
      ${PIP} install --no-binary :all: mercurial
 %endif
-#CFLAGS="-O0" ${PIP} install --no-binary :all: yt
-${PIP} install --no-binary :all: theano
-${PIP} install --no-binary :all: ply
-${PIP} install --no-binary :all: PyYAML
-#CFLAGS="-O2" ${PIP} install --no-binary :all: scikit_learn
 
+CFLAGS="-O0" ${PIP} install --no-binary :all: yt
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import yt'
+
+# This allows you to import mkl
+wget "https://github.com/IntelPython/mkl-service/archive/v2.3.0.tar.gz"
+mv v2.3.0.tar.gz /tmp
+cd /tmp
+tar xfvz /tmp/v2.3.0.tar.gz 
+${PIP} install /tmp/mkl-service-2.3.0
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import mkl'
+
+${PIP} install --no-binary :all: theano
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import theano'
+
+${PIP} install --no-binary :all: ply
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import ply'
+
+${PIP} install --no-binary :all: PyYAML
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import yaml'
+
+#${PIP} install --no-binary :all: scikit_learn
+module spider hdf5
 if module load hdf5; then
     HDF5_DIR=$TACC_HDF5_DIR ${PIP} install --no-binary :all: h5py
     ${PIP} install --no-binary :all: tables 
 fi
+exit 1
+
 #############################################################
 # mpi4py: use INSTALL_DIR_MPI
 ############################################################
@@ -269,17 +392,19 @@ fi
   fi
   module load python%{python_major_version}/%{version}	
   module load %{mpi_module}   
-  ${PIP} install --no-binary :all: --install-option="--prefix=%{INSTALL_DIR_MPI}" mpi4py
+  ${PIP} install --no-binary :all: --prefix=%{INSTALL_DIR_MPI} mpi4py
 
   if module load phdf5; then
       export PYTHONPATH=%{INSTALL_DIR_MPI}/lib/python%{python_major_version}.%{python_minor_version}/site-packages
-      CC="mpicc" HDF5_MPI="ON" HDF5_DIR=$TACC_HDF5_DIR ${PIP} install --no-binary=h5py --no-deps --install-option="--prefix=%{INSTALL_DIR_MPI}" --ignore-installed h5py
+      CC="mpicc" HDF5_MPI="ON" HDF5_DIR=$TACC_HDF5_DIR ${PIP} install --no-binary=h5py --no-deps --prefix=%{INSTALL_DIR_MPI} --ignore-installed h5py
       #${PIP} install tables
   fi
 %endif
 
 find %{INSTALL_DIR} -name '*.py' | xargs sed -i '1s|/usr/bin/python|%{INSTALL_DIR}/bin/python%{python_major_version}|'
 find %{INSTALL_DIR} -name '*.py' | xargs sed -i '1s|/usr/local/bin/python|%{INSTALL_DIR}/bin/python%{python_major_version}|'
+
+
 
 #----------------------------------------------------------
 # Copy into rpm directory
@@ -370,6 +495,7 @@ prepend_path("LD_LIBRARY_PATH", mkl_lib)
 prepend_path("LD_LIBRARY_PATH", omp_lib)
 %endif
 
+append_path("LD_LIBRARY_PATH", '/usr/lib64/')
 prepend_path("PATH",       "%{INSTALL_DIR}/bin")
 family("python")
 EOF

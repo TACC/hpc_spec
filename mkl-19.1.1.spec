@@ -1,6 +1,6 @@
 #
-# Anne Bowen
-# 2020-04-01
+# Amit Ruhela
+# 2020-04-24
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -11,36 +11,33 @@
 # RPM_DBPATH      -> Path To Non-Standard RPM Database Location
 #
 # Typical Command-Line Example:
-#./build_rpm.sh vmd-1.9.3.spec
+# ./build_rpm.sh Bar.spec
 # cd ../RPMS/x86_64
-# rpm -i --relocate /tmprpm=/opt/apps vmd-1.9.3-package-1.93-1.x86_64.rpm
-# rpm -i --relocate /tmpmod=/opt/apps vmd-1.9.3-modulefile-1.93-1.x86_64.rpm
-# rpm -e vmd-package-1.1-1.x86_64 vmd-1.9.3-modulefile-1.93-1.x86_64
+# rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+# rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+# rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: VMD, Visual Molecular Dynamics spec file (based on Bar.spec)
+Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name vmd
-%define MODULE_VAR    VMD
+%define pkg_base_name mkl
+%define MODULE_VAR    MKL
 
 # Create some macros (spec file variables)
-%define major_version 1.9
-%define minor_version 3
-%define micro_version 3 
+%define major_version 19
+%define minor_version 1
+%define patch_version 1
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{patch_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
+%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
 %include name-defines.inc
-#%include name-defines-noreloc.inc
-#%include name-defines-hidden.inc
-#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -51,37 +48,37 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4%{?dist}
-License:   VISUAL MOLECULAR DYNAMICS SOFTWARE LICENSE
-Group:     Development/Tools
-URL:       http://www.ks.uiuc.edu/Research/vmd/
-Packager:  TACC - adb@tacc.utexas.edu
+Release:   1%{?dist}
+License:   proprietary
+Group:     Compiler
+URL:       https://software.intel.com/en-us/intel-compilers
+Packager:  TACC - aruhela@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
 
-%define VMD_SRC vmd.%{version}.tar.gz
-
 
 %package %{PACKAGE}
 Summary: The package RPM
 Group: Development/Tools
 %description package
-The vmd package conains the VMD molecular visualization package. The package contains the precompiled binary and any libraries needed to support the various third party components.
-
+This is the long description for the package RPM...
+This is specifically an rpm for the Intel MKL modulefile
+used on Frontera for GCC.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-The module sets the required user environment needed to run VMD on TACC systems. It sets paths to executables and required libraries.
+This is the long description for the modulefile RPM...
+This is specifically an rpm for the Intel MKL modulefile
+used on Frontera for GCC.
 
 %description
-VMD is designed for modeling, visualization, and analysis of biological systems such as proteins, nucleic acids, lipid bilayer assemblies, etc. It may be used to view more general molecules, as VMD can read standard Protein Data Bank (PDB) files and display the contained structure. VMD provides a wide variety of methods for rendering and coloring a molecule: simple points and lines, CPK spheres and cylinders, licorice bonds, backbone tubes and ribbons, cartoon drawings, and others. VMD can be used to animate and analyze the trajectory of a molecular dynamics (MD) simulation. In particular, VMD can act as a graphical front end for an external MD program by displaying and animating a molecule undergoing simulation on a remote computer.
-rpm -qi <rpm-name>
-
+This is specifically an rpm for the Intel MKL modulefile
+used on Frontera for GCC.
 
 #---------------------------------------
 %prep
@@ -92,9 +89,6 @@ rpm -qi <rpm-name>
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-%setup -n %{pkg_base_name}-%{pkg_version}
-
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -109,7 +103,6 @@ rpm -qi <rpm-name>
 #--------------------------
 
 
-
 #---------------------------------------
 %build
 #---------------------------------------
@@ -121,13 +114,9 @@ rpm -qi <rpm-name>
 
 # Setup modules
 %include system-load.inc
-module purge
-# Load Compiler
-#%include compiler-load.inc
-# Load MPI Library
-#%include mpi-load.inc
 
-# Insert further module commands
+# Insert necessary module commands
+module purge
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -150,16 +139,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
  
-  #module load swr 
-  # Create some dummy directories and files for fun
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
-
-  echo "TACC_OPT %{TACC_OPT}"
-  
-  # Copy everything from tarball over to the installation directory
-  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  # Nothing to do!
   
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -183,32 +163,58 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_msg=[[
-The %{MODULE_VAR} module defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
-TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
-include files, and tools respectively.
+The Intel Math Kernel Library (Intel MKL) improves performance with math
+routines for software applications that solve large computational problems.
+Intel MKL provides BLAS and LAPACK linear algebra routines, fast Fourier
+transforms, vectorized math functions, random number generation functions, and
+other functionality.
+
+The Intel MKL module enables the use of the MKL with the GNU GCC compilers by
+updating the $LD_LIBRARY_PATH, and $INCLUDE environment variables to
+access the MKL libraries, and include files, respectively.
+
+The following additional environment variables are also defined:
+
+$TACC_MKL_DIR           (path to Math Kernel Library root         )
+$TACC_MKL_LIB           (path to Math Kernel Library libs         )
+$TACC_MKL_INC           (path to Math Kernel Library includes     )
+
+To use the MKL with Intel compilers, please see the Intel module help
+by issuing a "module help intel".
+
+Also see the Intel MKL Link Line Advisor:
+https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor
+
+Version %{version}
 ]]
 
 --help(help_msg)
 help(help_msg)
 
-whatis("Name: bar")
-whatis("Version: %{pkg_version}%{dbg}")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
+whatis("Name: Intel MKL"                                                    )
+whatis("Version: %{version}"                                                )
+whatis("Category: Library, Runtime Support"                                 )
+whatis("Description: Intel Math Kernel Library"                             )
+whatis("URL: https://software.intel.com/en-us/intel-mkl"                    )
 
 -- Create environment variables.
-local bar_dir           = "%{INSTALL_DIR}"
+local base         = "/opt/intel"
+local full_xe      = "compilers_and_libraries_2020.1.217/linux"
+local installDir   = pathJoin(base,full_xe)
+local mklRoot      = pathJoin(installDir,"mkl")
 
-family("bar")
-prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "lib"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/bar1_1/modulefiles")
-setenv( "TACC_%{MODULE_VAR}_DIR",                bar_dir)
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(bar_dir, "include"))
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(bar_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(bar_dir, "bin"))
+setenv( "MKLROOT"      ,              mklRoot )
+setenv( "TACC_MKL_DIR" ,              mklRoot )
+setenv( "TACC_MKL_LIB" ,              pathJoin( mklRoot    , "lib/intel64" ) )
+setenv( "TACC_MKL_INC" ,              pathJoin( mklRoot    , "include" ) )
+
+prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( mklRoot    , "lib/intel64" ) )
+
+prepend_path( "INCLUDE" ,             pathJoin( mklRoot    , "include" ) )
+
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2020/en/debugger/gdb-ia/man" ) )
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2020/en/man/common" ) )
+
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
@@ -220,10 +226,9 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 set     ModulesVersion      "%{version}"
 EOF
   
-  # Check the syntax of the generated lua modulefile only if a visible module
-  %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-  %endif
+  # Check the syntax of the generated lua modulefile
+  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -253,6 +258,7 @@ EOF
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
+
 
 ########################################
 ## Fix Modulefile During Post Install ##

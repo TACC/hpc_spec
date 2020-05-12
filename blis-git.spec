@@ -256,6 +256,7 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}/
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
+
 #---------------------------
 %if %{?BUILD_MODULEFILE}
 %files modulefile 

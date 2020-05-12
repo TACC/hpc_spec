@@ -34,7 +34,7 @@ Summary: A Nice little relocatable skeleton spec file.
 ### Toggle On/Off ###
 %include rpm-dir.inc
 
-%include compiler-defines.inc
+#%include compiler-defines.inc
 #%include mpi-defines.inc
 
 #%include name-defines-noreloc.inc
@@ -42,8 +42,8 @@ Summary: A Nice little relocatable skeleton spec file.
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
-
+#%include name-defines.inc
+%include name-defines-noreloc.inc
 
 ########################################
 ############ Do Not Remove #############
@@ -56,7 +56,7 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1%{?dist}
-License:   MIT
+License:   GPL
 URL:       https://github.com/TACC/ooops
 Packager:  TACC - huang@tacc.utexas.edu
 Source:    ooops-1.0.tgz
@@ -93,7 +93,8 @@ workload from the users' side.
 %if %{?BUILD_PACKAGE}
 #------------------------
   # Delete the package installation directory.
-  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+#  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+#mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -102,7 +103,8 @@ workload from the users' side.
 %if %{?BUILD_MODULEFILE}
 #---------------------------
   #Delete the module installation directory.
-  rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
+#  rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
+#mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -121,7 +123,7 @@ workload from the users' side.
 # Setup modules
 %include system-load.inc
 module purge
-%include compiler-load.inc
+#%include compiler-load.inc
 #%include mpi-load.inc
 
 
@@ -135,7 +137,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 %if %{?BUILD_PACKAGE}
 #------------------------
 
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
   #######################################
   ##### Create TACC Canary Files ########
@@ -151,12 +154,11 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   # Create some dummy directories and files for fun
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/conf
 
-  cp -p conf/{config_high,config_medium,config_low} $RPM_BUILD_ROOT/%{INSTALL_DIR}/conf/
   cp -p bin/set_io_param $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
-  cp -p lib/ooops.so $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/
+  cp -r lib $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+  cp -r conf $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+
   chmod -Rf u+rwX,g+rwX,o=rX                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 
@@ -172,7 +174,10 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 %if %{?BUILD_MODULEFILE}
 #---------------------------
 
-  mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
+  rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
+mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
+
+#  mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 
   #######################################
   ##### Create TACC Canary Files ########
@@ -209,11 +214,9 @@ local ooops_dir           = "%{INSTALL_DIR}"
 family("ooops")
 prepend_path( "PATH",                   pathJoin(ooops_dir, "bin"))
 prepend_path( "LD_LIBRARY_PATH",        pathJoin(ooops_dir, "lib"))
-prepend_path( "LD_PRELOAD",             pathJoin(ooops_dir, "lib/ooops.so") )
+append_path( "LD_PRELOAD",             pathJoin(ooops_dir, "lib/ooops.so") )
 
-setenv( "TACC_%{MODULE_VAR}_DIR",                ooops_dir)
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(ooops_dir, "bin"))
-setenv( "IO_LIMIT_CONFIG",              pathJoin(ooops_dir, "conf/config_high") )
+setenv( "IO_LIMIT_CONFIG",              pathJoin(ooops_dir, "conf/config_frontera") )
 
 EOF
 

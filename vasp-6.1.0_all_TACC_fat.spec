@@ -1,6 +1,6 @@
-#
-# Anne Bowen
-# 2020-04-01
+# VASP Hang Liu
+# 2020-03
+# Modified for KNL deployment.
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -11,29 +11,29 @@
 # RPM_DBPATH      -> Path To Non-Standard RPM Database Location
 #
 # Typical Command-Line Example:
-#./build_rpm.sh vmd-1.9.3.spec
+# ./build_rpm.sh Bar.spec
 # cd ../RPMS/x86_64
-# rpm -i --relocate /tmprpm=/opt/apps vmd-1.9.3-package-1.93-1.x86_64.rpm
-# rpm -i --relocate /tmpmod=/opt/apps vmd-1.9.3-modulefile-1.93-1.x86_64.rpm
-# rpm -e vmd-package-1.1-1.x86_64 vmd-1.9.3-modulefile-1.93-1.x86_64
+# rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+# rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+# rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: VMD, Visual Molecular Dynamics spec file (based on Bar.spec)
+Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name vmd
-%define MODULE_VAR    VMD
+%define pkg_base_name vasp
+%define MODULE_VAR    VASP
 
 # Create some macros (spec file variables)
-%define major_version 1.9
-%define minor_version 3
-%define micro_version 3 
+%define major_version 6
+%define minor_version 1
+%define micro_version 0
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
-%include rpm-dir.inc                  
-#%include compiler-defines.inc
-#%include mpi-defines.inc
+%include rpm-dir.inc
+%include compiler-defines.inc
+%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
@@ -51,38 +51,31 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4%{?dist}
-License:   VISUAL MOLECULAR DYNAMICS SOFTWARE LICENSE
-Group:     Development/Tools
-URL:       http://www.ks.uiuc.edu/Research/vmd/
-Packager:  TACC - adb@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Release:   1%{?dist}
+License:   VASP
+Group:     Applications/Chemistry
+URL:       https://www.vasp.at/
+Packager:  TACC - hliu@tacc.utexas.edu
+Source:    %{pkg_base_name}-%{pkg_version}_all_TACC_fat.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
 
-%define VMD_SRC vmd.%{version}.tar.gz
-
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: The Vienna Ab initio Simulation Package (VASP)
+Group: Applications/Chemistry
 %description package
-The vmd package conains the VMD molecular visualization package. The package contains the precompiled binary and any libraries needed to support the various third party components.
-
+The Vienna Ab initio Simulation Package (VASP)
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-The module sets the required user environment needed to run VMD on TACC systems. It sets paths to executables and required libraries.
-
+The Vienna Ab initio Simulation Package (VASP)
 %description
-VMD is designed for modeling, visualization, and analysis of biological systems such as proteins, nucleic acids, lipid bilayer assemblies, etc. It may be used to view more general molecules, as VMD can read standard Protein Data Bank (PDB) files and display the contained structure. VMD provides a wide variety of methods for rendering and coloring a molecule: simple points and lines, CPK spheres and cylinders, licorice bonds, backbone tubes and ribbons, cartoon drawings, and others. VMD can be used to animate and analyze the trajectory of a molecular dynamics (MD) simulation. In particular, VMD can act as a graphical front end for an external MD program by displaying and animating a molecule undergoing simulation on a remote computer.
-rpm -qi <rpm-name>
-
-
+The Vienna Ab initio Simulation Package (VASP)
 #---------------------------------------
 %prep
 #---------------------------------------
@@ -93,8 +86,7 @@ rpm -qi <rpm-name>
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%setup -n %{pkg_base_name}-%{pkg_version}
-
+%setup -n %{pkg_base_name}-%{pkg_version}_all_TACC_fat
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -123,9 +115,11 @@ rpm -qi <rpm-name>
 %include system-load.inc
 module purge
 # Load Compiler
-#%include compiler-load.inc
+%include compiler-load.inc
 # Load MPI Library
-#%include mpi-load.inc
+%include mpi-load.inc
+
+module load cuda/10.1
 
 # Insert further module commands
 
@@ -137,7 +131,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -149,19 +143,62 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
- 
-  #module load swr 
-  # Create some dummy directories and files for fun
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
 
-  echo "TACC_OPT %{TACC_OPT}"
-  
-  # Copy everything from tarball over to the installation directory
-  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
-#-----------------------  
+cd wannier90-2.1.0/
+make lib
+
+cd ../libbeef
+./configure CC=icc --prefix=$PWD
+make
+make install
+
+cd ../vasp.6.1.0
+make veryclean
+make std
+make gam
+make ncl
+
+cd ../vasp.6.1.0.gpu
+make veryclean
+make gpu
+make gpu_ncl
+
+cd ../vasp.6.1.0.vtst
+make veryclean
+make std
+make gam
+make ncl
+cd ./bin
+mv vasp_std vasp_std_vtst
+mv vasp_gam vasp_gam_vtst
+mv vasp_ncl vasp_ncl_vtst
+
+cd ../../
+
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+rm   -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}/*
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+
+cd vasp.6.1.0/bin/
+cp vasp_std $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_gam $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_ncl $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+
+cd ../../vasp.6.1.0.gpu/bin
+cp vasp_gpu $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_gpu_ncl $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+
+cd ../../vasp.6.1.0.vtst/bin
+cp vasp_std_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_gam_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_ncl_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+
+cd ../../libbeef/bin
+cp bee $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cd ../../
+cp -r vtstscripts-957 $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+
+#-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
 
@@ -171,7 +208,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -179,38 +216,83 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
+
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
-The %{MODULE_VAR} module defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
-TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
-include files, and tools respectively.
+local help_message=[[
+The TACC VASP module appends the path to the vasp executables
+to the PATH environment variable.  Also TACC_VASP_DIR, and
+TACC_VASP_BIN are set to VASP home and bin directories.
+
+Users have to show their licenses and be confirmed by
+VASP team that they are registered users under that licenses
+Scan a copy of the license with the license number and send to hliu@tacc.utexas.edu
+
+The VASP executables are
+
+MPI+OMP:
+vasp_std: compiled with pre processing flag: -DNGZhalf
+vasp_gam: compiled with pre processing flag: -DNGZhalf -DwNGZhalf
+vasp_ncl: compiled without above pre processing flags
+vasp_std_vtst: vasp_std with VTST
+vasp_gam_vtst: vasp_gam with VTST
+vasp_ncl_vtst: vasp_ncl with VTST
+
+Above compilations have optional libraries link: -DVASP2WANNIER90v2 -Dlibbeef
+
+
+MPI+GPU
+vasp_gpu: GPU version of vasp_std
+vasp_gpu_ncl: GPU version of vasp_ncl
+
+vtstscripts-957/: utility scripts of VTST
+
+bee: BEEF analysis code
+
+This the VASP.6.1.0 release.
+
+Version %{version}
 ]]
 
---help(help_msg)
-help(help_msg)
 
-whatis("Name: bar")
-whatis("Version: %{pkg_version}%{dbg}")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
+whatis("Version: %{pkg_version}")
+whatis("Category: application, chemistry")
+whatis("Keywords: Chemistry, Density Functional Theory, Molecular Dynamics")
+whatis("URL:https://www.vasp.at/")
+whatis("Description: Vienna Ab-Initio Simulation Package")
+help(help_message,"\n")
 
--- Create environment variables.
-local bar_dir           = "%{INSTALL_DIR}"
 
-family("bar")
-prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "lib"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/bar1_1/modulefiles")
-setenv( "TACC_%{MODULE_VAR}_DIR",                bar_dir)
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(bar_dir, "include"))
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(bar_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(bar_dir, "bin"))
+local group = "G-822359"
+found = userInGroup(group)
+
+
+local err_message = [[
+You do not have access to VASP.6.1.0!
+
+
+Users have to show their licenses and be confirmed by the
+VASP team that they are registered users under that license.
+Scan a copy of the license with the license number and send to hliu@tacc.utexas.edu
+]]
+
+
+if (found) then
+local vasp_dir="%{INSTALL_DIR}"
+
+prepend_path(    "PATH",                pathJoin(vasp_dir, "bin"))
+prepend_path(    "LD_PRELOAD",          "/home1/apps/tacc-patches/getcwd-patch.so")
+setenv( "TACC_%{MODULE_VAR}_DIR",                vasp_dir)
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(vasp_dir, "bin"))
+
+load("cuda/10.1")
+
+else
+  LmodError(err_message,"\n")
+end
+
 EOF
-  
+
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -219,7 +301,6 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 
 set     ModulesVersion      "%{version}"
 EOF
-  
   # Check the syntax of the generated lua modulefile only if a visible module
   %if %{?VISIBLE}
     %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
@@ -234,7 +315,8 @@ EOF
 %files package
 #------------------------
 
-  %defattr(-,root,install,)
+#  %defattr(-,root,install,)
+%defattr(750,root,G-822359)
   # RPM package contains files within these directories
   %{INSTALL_DIR}
 
@@ -243,7 +325,7 @@ EOF
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile 
+%files modulefile
 #---------------------------
 
   %defattr(-,root,install,)

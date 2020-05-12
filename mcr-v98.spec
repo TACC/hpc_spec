@@ -1,34 +1,24 @@
 #
-# Anne Bowen
-# 2020-04-01
+# Si Liu
+# 2020-4-21
 #
-# Important Build-Time Environment Variables (see name-defines.inc)
-# NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
-# NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
-#
-# Important Install-Time Environment Variables (see post-defines.inc)
-# VERBOSE=1       -> Print detailed information at install time
-# RPM_DBPATH      -> Path To Non-Standard RPM Database Location
-#
-# Typical Command-Line Example:
-#./build_rpm.sh vmd-1.9.3.spec
-# cd ../RPMS/x86_64
-# rpm -i --relocate /tmprpm=/opt/apps vmd-1.9.3-package-1.93-1.x86_64.rpm
-# rpm -i --relocate /tmpmod=/opt/apps vmd-1.9.3-modulefile-1.93-1.x86_64.rpm
-# rpm -e vmd-package-1.1-1.x86_64 vmd-1.9.3-modulefile-1.93-1.x86_64
-
-Summary: VMD, Visual Molecular Dynamics spec file (based on Bar.spec)
 
 # Give the package a base name
-%define pkg_base_name vmd
-%define MODULE_VAR    VMD
+%define pkg_base_name mcr
+%define MODULE_VAR    MCR
 
 # Create some macros (spec file variables)
-%define major_version 1.9
-%define minor_version 3
-%define micro_version 3 
-
+%define major_version 9
+%define minor_version 8
 %define pkg_version %{major_version}.%{minor_version}
+
+Summary: Matlab Compiler Runtime (MCR)
+Release: 1%{?dist}
+License: Mathworks License
+Vendor: Mathworks
+Group: Utility
+Source: %{name}-%{version}.tar.gz
+Packager:  TACC - siliu@tacc.utexas.edu
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -37,10 +27,7 @@ Summary: VMD, Visual Molecular Dynamics spec file (based on Bar.spec)
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
-#%include name-defines-noreloc.inc
-#%include name-defines-hidden.inc
-#%include name-defines-hidden-noreloc.inc
+%include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -51,36 +38,32 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4%{?dist}
-License:   VISUAL MOLECULAR DYNAMICS SOFTWARE LICENSE
-Group:     Development/Tools
-URL:       http://www.ks.uiuc.edu/Research/vmd/
-Packager:  TACC - adb@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
-
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
 
-%define VMD_SRC vmd.%{version}.tar.gz
-
+%define APPS /home1/apps/
+%define MODULES modulefiles
 
 %package %{PACKAGE}
 Summary: The package RPM
-Group: Development/Tools
+Group: Matlab 
 %description package
-The vmd package conains the VMD molecular visualization package. The package contains the precompiled binary and any libraries needed to support the various third party components.
-
+The MATLAB Compiler Runtime (MCR) is a standalone set of
+shared libraries that enables the execution of compiled
+MATLAB applications or components on computers that do
+not have MATLAB installed. When used together, MATLAB,
+MATLAB Compiler, and the MCR enable you to create and
+distribute numerical applications or software components
+quickly and securely.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-The module sets the required user environment needed to run VMD on TACC systems. It sets paths to executables and required libraries.
 
 %description
-VMD is designed for modeling, visualization, and analysis of biological systems such as proteins, nucleic acids, lipid bilayer assemblies, etc. It may be used to view more general molecules, as VMD can read standard Protein Data Bank (PDB) files and display the contained structure. VMD provides a wide variety of methods for rendering and coloring a molecule: simple points and lines, CPK spheres and cylinders, licorice bonds, backbone tubes and ribbons, cartoon drawings, and others. VMD can be used to animate and analyze the trajectory of a molecular dynamics (MD) simulation. In particular, VMD can act as a graphical front end for an external MD program by displaying and animating a molecule undergoing simulation on a remote computer.
-rpm -qi <rpm-name>
+
 
 
 #---------------------------------------
@@ -92,9 +75,6 @@ rpm -qi <rpm-name>
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-%setup -n %{pkg_base_name}-%{pkg_version}
-
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -109,7 +89,6 @@ rpm -qi <rpm-name>
 #--------------------------
 
 
-
 #---------------------------------------
 %build
 #---------------------------------------
@@ -121,13 +100,9 @@ rpm -qi <rpm-name>
 
 # Setup modules
 %include system-load.inc
-module purge
-# Load Compiler
-#%include compiler-load.inc
-# Load MPI Library
-#%include mpi-load.inc
 
-# Insert further module commands
+# Insert necessary module commands
+module purge
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -137,6 +112,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  mkdir -p %{INSTALL_DIR}
+##  mount -t tmpfs tmpfs %{INSTALL_DIR}
   
   #######################################
   ##### Create TACC Canary Files ########
@@ -149,21 +126,12 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
- 
-  #module load swr 
-  # Create some dummy directories and files for fun
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
-
-  echo "TACC_OPT %{TACC_OPT}"
-  
-  # Copy everything from tarball over to the installation directory
-  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
   
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
+
+
 
 
 #---------------------------
@@ -181,36 +149,40 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
-The %{MODULE_VAR} module defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
-TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
-include files, and tools respectively.
+
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
+
+help(
+[[
+The MATLAB Compiler Runtime (MCR) is a standalone set of
+shared libraries that enables the execution of compiled
+MATLAB applications or components on computers that do
+not have MATLAB installed. When used together, MATLAB,
+MATLAB Compiler, and the MCR enable you to create and
+distribute numerical applications or software components
+quickly and securely.
+
+Version v9.8
 ]]
+)
 
---help(help_msg)
-help(help_msg)
+whatis("Name: MCR")
+whatis("Version: v9.8")
+whatis("Category: library, mathematics")
+whatis("Keywords: Library, Mathematics, Tools")
+whatis("URL: http://www.mathworks.com/")
+whatis("Description: Matlab v9.8 Compiler Runtime from MathWorks")
 
-whatis("Name: bar")
-whatis("Version: %{pkg_version}%{dbg}")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
+append_path("LD_LIBRARY_PATH", "/home1/apps/mcr/9.8/bin/glnxa64")
+append_path("LD_LIBRARY_PATH", "/home1/apps/mcr/9.8/runtime/glnxa64")
+append_path("LD_LIBRARY_PATH", "/home1/apps/mcr/9.8/sys/os/glnxa64")
+append_path("LD_LIBRARY_PATH", "/home1/apps/mcr/9.8/sys/java/jre/glnxa64/jre/lib/amd64/server")
+append_path("LD_LIBRARY_PATH", "/home1/apps/mcr/9.8/sys/java/jre/glnxa64/jre/lib/amd64")
 
--- Create environment variables.
-local bar_dir           = "%{INSTALL_DIR}"
+setenv ("TACC_MCR_DIR", "/home1/apps/mcr/9.8")
 
-family("bar")
-prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "lib"))
-prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/bar1_1/modulefiles")
-setenv( "TACC_%{MODULE_VAR}_DIR",                bar_dir)
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(bar_dir, "include"))
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(bar_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(bar_dir, "bin"))
 EOF
-  
+
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -219,11 +191,12 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 
 set     ModulesVersion      "%{version}"
 EOF
+
   
-  # Check the syntax of the generated lua modulefile only if a visible module
-  %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-  %endif
+
+# Check the syntax of the generated lua modulefile
+%{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -254,6 +227,7 @@ EOF
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
+
 ########################################
 ## Fix Modulefile During Post Install ##
 ########################################
@@ -274,4 +248,3 @@ export PACKAGE_PREUN=1
 %clean
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
-
