@@ -1,12 +1,15 @@
+%define name_prefix tacc
+%define base_name zsh
+
 Summary: Zsh: The one shell to rule them all
-Name: zsh
-Version: 5.3.1
-Release: 2
+Name: %{name_prefix}-%{base_name}
+Version: 5.8
+Release: 1
 License: Zsh Development Group
 Group: System Environment/Shells
-Source: zsh-%{version}.tar.gz
+Source: zsh-%{version}.tar.xz
 Packager: TACC- mclay@tacc.utexas.edu
-Buildroot: /var/tmp/%{name}-%{version}-buildroot
+Buildroot: /var/tmp/%{base_name}-%{version}-buildroot
 
 
 %define debug_package %{nil}
@@ -37,9 +40,9 @@ from tcsh (another "custom" shell).
 #    mkdir -p $i $RPM_BUILD_ROOT/$i
 #done
 
-CC=gcc ./configure --prefix=/usr --mandir=/usr/share/man --bindir=/bin/     \
-                   --enable-etcdir=/etc/tacc/zsh --infodir=/usr/share/info  \
-		   --enable-cflags=-O2                                      \
+CC=gcc ./configure --prefix=/opt/apps/zsh --mandir=/opt/apps/zsh/share --bindir=/bin/     \
+                   --enable-etcdir=/etc/tacc/zsh --infodir=/opt/apps/info                 \
+		   --enable-cflags=-O2                                                    \
                    --enable-site-fndir=/opt/apps/zsh/site-functions
 make
 
@@ -74,9 +77,7 @@ rm -f $RPM_BUILD_ROOT%{_bindir}/zsh-*
 %defattr(-,root,install)
 
 %{_bindir}/zsh
-/usr/lib/zsh
-/usr/share/man/man1
-/usr/share/zsh
+/opt/apps/zsh
 
 %post
 if [ ! -f /etc/shells ]; then

@@ -45,7 +45,7 @@ Group:     Utility
 URL:       http://www.boost.org
 Packager:  TACC - siliu@tacc.utexas.edu
 Source0:   boost_1_74_0.tar.gz
-Source1:   icu4c-64_2-src.tgz
+Source1:   icu4c-67_1-src.tgz
 
 # Turn off debug package mode
 %define debug_package %{nil}

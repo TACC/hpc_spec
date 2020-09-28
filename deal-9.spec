@@ -11,10 +11,10 @@ Summary: Dealii install
 
 # Create some macros (spec file variables)
 %define major_version 9
-%define minor_version 0
-%define micro_version 1
+%define minor_version 2
+%define micro_version 0
 
-%define dealiipetscversion 3.10
+%define dealiipetscversion 3.11
 %define dealiitrilinosversion git20181012
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
@@ -40,7 +40,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tar.gz
@@ -153,7 +153,7 @@ module list
 for m in boost cmake \
     parallel-netcdf phdf5 \
     petsc/%{dealiipetscversion} slepc/%{dealiipetscversion} \
-    p4est trilinos/%{dealiitrilinosversion} \
+    p4est/2.2 trilinos/%{dealiitrilinosversion} \
     ; do
   module --ignore_cache load $m ;
 done
@@ -223,7 +223,7 @@ echo "Installing deal with Petsc: ${PETSC_DIR}/${PETSC_ARCH}"
     %{_topdir}/BUILD/dealii-%{version} \
     2>&1 | tee ${LOGDIR}/dealii_cmake.log
 
-make 2>&1 | tee ${LOGDIR}/dealii_compile.log
+make -j 8 2>&1 | tee ${LOGDIR}/dealii_compile.log
 
 make install
 ### fails with gcc because it uses mpiexec:
@@ -286,6 +286,9 @@ setenv("DEALII_DIR",             dealii_dir)
 setenv("TACC_DEALII_DIR",        dealii_dir)
 setenv("TACC_DEALII_BIN",        pathJoin(dealii_dir,dealii_arch,"bin") )
 setenv("TACC_DEALII_LIB",        pathJoin(dealii_dir,dealii_arch,"lib") )
+
+depends_on("boost-mpi")
+depends_on("gsl")
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
@@ -309,8 +312,11 @@ EOF
 
 cp -r %{INSTALL_DIR}/{include,lib,share} \
     ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
-cp -r %{INSTALL_DIR}/{LICENSE,README.md,examples} \
+cp -r %{INSTALL_DIR}/{LICENSE.md,README.md,examples} \
     ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
+mkdir ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/logs
+cp    %{INSTALL_DIR}/*.log \
+    ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/logs
 umount %{INSTALL_DIR}
 
 #------------------------
@@ -327,10 +333,9 @@ umount %{INSTALL_DIR}
 
 %files %{PACKAGE}-sources
   %defattr(-,root,install,)
-  %{INSTALL_DIR}/LICENSE
-  %{INSTALL_DIR}/README.md
-#  %{INSTALL_DIR}/build
+  %{INSTALL_DIR}/*.md
   %{INSTALL_DIR}/examples
+  %{INSTALL_DIR}/logs
 							
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -372,5 +377,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 #
-* Mon Oct 16 2018 eijkhout <eijkhout@tacc.utexas.edu>
+* Tue Aug 11 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: up to 9.2.0
+* Mon Oct 15 2018 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release
