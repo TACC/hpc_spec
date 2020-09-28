@@ -26,7 +26,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 # Create some macros (spec file variables)
 %define major_version 1
-%define minor_version 0
+%define minor_version 1
 %define micro_version 0
 
 #%define pkg_version %{major_version}.%{minor_version}
@@ -55,11 +55,11 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
+Release:   1%{?dist}
 License:   GPL
 URL:       https://github.com/TACC/ooops
 Packager:  TACC - huang@tacc.utexas.edu
-Source:    ooops-1.0.tgz
+Source:    ooops-1.1.tgz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -84,9 +84,6 @@ Optimal Overloaded IO Protection System (OOOPS) is an easy to use tool that help
 #---------------------------------------
 %prep
 #---------------------------------------
-
-rm   -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -123,9 +120,12 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 # Insert necessary module commands
 module purge
 
+  rm   -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+  touch $RPM_BUILD_ROOT/%{INSTALL_DIR}/.tacc_install_canary
 
+  mkdir $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
   cp -p bin/set_io_param $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
   cp -r lib $RPM_BUILD_ROOT/%{INSTALL_DIR}/
   cp -r conf $RPM_BUILD_ROOT/%{INSTALL_DIR}/
@@ -138,9 +138,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 %if %{?BUILD_MODULEFILE}
 #---------------------------
 
+  rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-
-  mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 
   #######################################
   ##### Create TACC Canary Files ########
@@ -165,7 +164,7 @@ Si Liu    (siliu@tacc.utexas.edu)
 help(help_message,"\n")
 
 whatis("Name: OOOPS")
-whatis("Version: 1.0")
+whatis("Version: 1.1")
 whatis("Category: Tools/Optimization ")
 whatis("Keywords: Tools, IO, Optimization")
 whatis("Description: Optimal Overloaded IO Protection System (OOOPS) us an easy to use tool ")
@@ -179,7 +178,7 @@ prepend_path(    "PATH",                pathJoin(ooops_dir, "bin"))
 prepend_path(    "LD_LIBRARY_PATH",     pathJoin(ooops_dir, "lib"))
 append_path(    "LD_PRELOAD",          pathJoin(ooops_dir, "lib/ooops.so") )
 
-setenv( "IO_LIMIT_CONFIG", "/opt/apps/ooops/1.0/conf/config_sp2.unlimited")
+setenv( "IO_LIMIT_CONFIG", "/opt/apps/ooops/1.1/conf/config_sp2")
 setenv( "LIMIT_IO_DEBUG", "0")
 
 EOF

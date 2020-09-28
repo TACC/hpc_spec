@@ -18,3 +18,13 @@ siliu/
 mclay/
 *.zip
 log_lammps*
+boost_python2_intel18_python_2_7.log_72good
+boost_python3_intel18_python_3_7.log_72good
+*.txt
+generateIntelRpms.sh
+gramA
+gramB
+*.out
+*.org
+*.orig
+

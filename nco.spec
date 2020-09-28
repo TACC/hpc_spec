@@ -1,35 +1,50 @@
 #
 # Spec file for NCO
 #
+
 Summary: NetCDF operators
-Name: nco
-Version: 4.6.9
-Release: 2%{?dist}
-License: GPL 3
-Source: nco-4.6.9.tar.gz
-Source1: antlr-2.7.7.tar.gz
-# Udunits is installed as a module
-#  Source2: udunits-2.1.20.tar.gz
-Source3: antlr_patches_2.7.7.tar.gz
-URL:  http://nco.sourceforge.net/
-Packager: TACC - cazes@tacc.utexas.edu,eijkhout@tacc.utexas.edu
+%define pkg_base_name nco
+%define MODULE_VAR    NCO
+
+# Create some macros (spec file variables)
+%define major_version 4
+%define minor_version 9
+%define micro_version 3
+
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+
+%define antlr_version 2.7.7
 
 %include rpm-dir.inc
-
-%define APPS /opt/apps
-%define MODULES modulefiles
-
 %include compiler-defines.inc
+%include name-defines-noreloc-home1.inc
 
-%define INSTALL_DIR %{APPS}/%{comp_fam_ver}/%{name}/%{version}
-%define MODULE_DIR  %{APPS}/%{comp_fam_ver}/%{MODULES}/%{name}
+############ Do Not Change #############
+Name:      %{pkg_name}
+Version:   %{pkg_version}
+BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
+########################################
 
-%package -n %{name}-%{comp_fam_ver}
+Release: 3%{?dist}
+License: GPL 3
+Source: nco-%{version}.tar.gz
+Source1: antlr-%{antlr_version}.tar.gz
+# Udunits is installed as a module
+#  Source2: udunits-2.1.20.tar.gz
+Source3: antlr_patches_%{antlr_version}.tar.gz
+URL:  http://nco.sourceforge.net/
+Packager: TACC - eijkhout@tacc.utexas.edu
+
+# Turn off debug package mode
+%define debug_package %{nil}
+%define dbg           %{nil}
+%global _python_bytecompile_errors_terminate_build 0
+
+%package %{PACKAGE}
 Summary: NetCDF operators
 Group: applications/io
 
-%description
-%description -n %{name}-%{comp_fam_ver}
+%description package
 The operators take netCDF files as input, then perform a set of
 operations (e.g., deriving new data, averaging, hyperslabbing, or
 metadata manipulation) and produce a netCDF file as output. The
@@ -37,7 +52,7 @@ operators are primarily designed to aid manipulation and analysis of
 gridded scientific data. The single command style of NCO allows users
 to manipulate and analyze files interactively and with simple scripts,
 avoiding the overhead (and some of the power) of a higher level
-programming environment. The NCO User's Guide illustrates their use
+programming environment. The NCO User Guide illustrates their use
 with examples from the field of climate modeling and analysis.
 * ncap2 netCDF Arithmetic Processor
 * ncatted netCDF Attribute Editor
@@ -52,11 +67,26 @@ with examples from the field of climate modeling and analysis.
 * ncrename netCDF Renamer
 * ncwa netCDF Weighted Averager
 
-%prep
+%package %{MODULEFILE}
+Summary: NetCDF operators
+Group: applications/io
+
+%description modulefile
+NetCDF operators
+
+%description
+NetCDF operators
+
+
+#---------------------------------------
+##%prep  -n %{pkg_base_name}-%{pkg_version}
+#---------------------------------------
+
 rm -rf  $RPM_BUILD_ROOT/%{INSTALL_DIR}
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 # The first call to setup untars the first source.  
+##%setup -n %{pkg_base_name}-%{pkg_version}
 %setup
 
 # The second call untars the second source, in a subdirectory
@@ -81,8 +111,42 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 %setup -T -D -a 3
 
 
+#---------------------------------------
 %build
+#---------------------------------------
 
+#------------------------
+%if %{?BUILD_PACKAGE}
+#------------------------
+  # Delete the package installation directory.
+  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+#-----------------------
+%endif # BUILD_PACKAGE |
+#-----------------------
+
+#---------------------------
+%if %{?BUILD_MODULEFILE}
+#---------------------------
+  #Delete the module installation directory.
+  rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
+#--------------------------
+%endif # BUILD_MODULEFILE |
+#--------------------------
+
+#---------------------------------------
+%install
+#---------------------------------------
+
+####
+#### this is only needed because of the defective %prep
+####
+cd %{pkg_base_name}-%{pkg_version}
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+tar fxz ../../SOURCES/antlr-%{antlr_version}.tar.gz
+tar fxz ../../SOURCES/antlr_patches_%{antlr_version}.tar.gz
+
+%include system-load.inc
 %include compiler-load.inc
 
 #nco needs netcdf and gsl
@@ -100,7 +164,7 @@ module list
 
 # Create temporary directory for the install.  We need this to
 # trick meep into thinking libctl is installed in its final location!
-rm -rf %{INSTALL_DIR}
+#rm -rf %{INSTALL_DIR}
 mkdir -p             %{INSTALL_DIR}
 #clean up old
 mount -t tmpfs tmpfs %{INSTALL_DIR}
@@ -108,7 +172,7 @@ mount -t tmpfs tmpfs %{INSTALL_DIR}
 
 
 #Build antlr first
-export ANTLR_PATH=%INSTALL_DIR
+export ANTLR_PATH=%{INSTALL_DIR}
 
 cd antlr-2.7.7
 
@@ -117,10 +181,10 @@ patch -p1 < ../antlr-config.patch
 patch -p1 < ../antlr-cs-signing.patch
 
 ./configure \
---prefix=${ANTLR_PATH} \
---disable-csharp \
---disable-java \
---disable-python 
+    --prefix=${ANTLR_PATH} \
+    --disable-csharp \
+    --disable-java \
+    --disable-python 
 make 
 make install 
 
@@ -134,8 +198,10 @@ make install
 
 
 # Finally, build NCO
-export NCO_PATH=%INSTALL_DIR
+export NCO_PATH=%{INSTALL_DIR}
+echo "done with antlr in `pwd`"
 cd ..
+echo "back to `pwd` for nco config"
 
 
 export LD_LIBRARY_PATH=${TACC_HDF5_LIB}:${LD_LIBRARY_PATH}
@@ -157,30 +223,29 @@ NETCDF4_ROOT=${TACC_NETCDF_DIR} \
 HDF5_LIB_DIR=${TACC_HDF5_LIB} \
 UDUNITS2_PATH=${TACC_UDUNITS_DIR} \
 LDFLAGS="-L${ANTLR_PATH}/lib -lantlr \
--lhdf5_hl -lhdf5 -L${TACC_NETCDF_LIB} -lnetcdf" \
+    -lhdf5_hl -lhdf5 -L${TACC_NETCDF_LIB} -lnetcdf" \
 CFLAGS="-I${TACC_HDF5_INC} \
--L${TACC_HDF5_LIB} \
--I${ANTLR_PATH}/include \
--L${ANTLR_PATH}/lib" \
+    -L${TACC_HDF5_LIB} \
+    -I${ANTLR_PATH}/include \
+    -L${ANTLR_PATH}/lib" \
 CPPFLAGS="-I${TACC_HDF5_INC} \
--L${TACC_HDF5_LIB} \
--I${ANTLR_PATH}/include \
--L${ANTLR_PATH}/lib" \
+    -L${TACC_HDF5_LIB} \
+    -I${ANTLR_PATH}/include \
+    -L${ANTLR_PATH}/lib" \
 ./configure \
--v \
---prefix=${NCO_PATH} \
---enable-shared \
---with-pic \
---enable-netcdf-4 
+    -v \
+    --prefix=${NCO_PATH} \
+    --enable-shared \
+    --with-pic \
+    --enable-netcdf-4 
 make 
 make install 
 
 
 # Copy from tmpfs to RPM_BUILD_ROOT so that everything is in the right
 # place for the rest of the RPM.  Then, unmount the tmpfs.
-cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
+cp -r %{INSTALL_DIR}/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/
 umount %{INSTALL_DIR}/
-# tacctmpfs -u  %{INSTALL_DIR}/
 
 
 #Module for nco
@@ -196,10 +261,10 @@ TACC_NCO_INC for the location of the NCO distribution, binaries,
 libraries, and include files, respectively.
 
 To use the NCO library, compile the source code with the option:
-	-I\${TACC_NCO_INC 
+	-I${TACC_NCO_INC}
 
 and add the following options to the link step: 
-	-L\${TACC_NCO_LIB -lnco
+	-L${TACC_NCO_LIB} -lnco
 
 Version %{version}
 
@@ -232,10 +297,12 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 set     ModulesVersion      "%{version}"
 EOF
 
-%files -n %{name}-%{comp_fam_ver}
-%defattr(-,root,root)
-%{INSTALL_DIR}
-%{MODULE_DIR}
+%files %{PACKAGE}
+  %defattr(-,root,install)
+  %{INSTALL_DIR}
+%files %{MODULEFILE}
+  %defattr(-,root,install)
+  %{MODULE_DIR}
 
 %post
 
@@ -244,5 +311,8 @@ EOF
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Thu Aug 13 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: update to 4.9.3, split into two rpms
+        for some reason the %prep is disabled
 * Thu Feb 28 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: rebuild with intel 18

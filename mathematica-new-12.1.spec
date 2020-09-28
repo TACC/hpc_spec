@@ -1,6 +1,6 @@
 #
-# Ian Wang
-# 2020-09-09
+# W. Cyrus Proctor
+# 2015-11-12
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -10,19 +10,25 @@
 # VERBOSE=1       -> Print detailed information at install time
 # RPM_DBPATH      -> Path To Non-Standard RPM Database Location
 #
+# Typical Command-Line Example:
+# ./build_rpm.sh Bar.spec
+# cd ../RPMS/x86_64
+# rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+# rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+# rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: PAPI/Perfctr Library - Local TACC Build
+Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name papi
-%define MODULE_VAR    PAPI
+%define pkg_base_name mathematica 
+%define MODULE_VAR    MATHEMATICA
 
 # Create some macros (spec file variables)
-%define major_version 6
-%define minor_version 0
-%define micro_version 0.1
+%define major_version 12
+%define minor_version 1
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{major_version}.%{minor_version}
+%define underscore_version %{major_version}_%{minor_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -31,7 +37,7 @@ Summary: PAPI/Perfctr Library - Local TACC Build
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
+%include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -42,11 +48,11 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
-License:   LGPL
-Group:     Development/Tools
-URL:       http://icl.cs.utk.edu/papi/
-Packager:  TACC - iwang@tacc.utexas.edu, cproctor@tacc.utexas.edu
+Release:   2%{?dist}
+License:   proprietary
+Group:     system library
+URL:       https://www.wolfram.com/mathematica
+Packager:  TACC - vtrueheart@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -59,24 +65,27 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
-This package provides the perfctr hardware counter and PAPI
-library support.  It must be built against a kernel with the
-appropriate perfctr patches.
+Wolfram Mathematica (usually termed Mathematica) is a modern technical
+computing system spanning most areas of technical computing - including neural
+networks, machine learning, image processing, geometry, data science,
+visualizations, and others.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
-This package provides the perfctr hardware counter and PAPI
-library support.  It must be built against a kernel with the
-appropriate perfctr patches.
+Wolfram Mathematica (usually termed Mathematica) is a modern technical
+computing system spanning most areas of technical computing - including neural
+networks, machine learning, image processing, geometry, data science,
+visualizations, and others.
+
 
 %description
-This package provides the perfctr hardware counter and PAPI
-library support.  It must be built against a kernel with the
-appropriate perfctr patches.
-
+Wolfram Mathematica (usually termed Mathematica) is a modern technical
+computing system spanning most areas of technical computing - including neural
+networks, machine learning, image processing, geometry, data science,
+visualizations, and others.
 
 #---------------------------------------
 %prep
@@ -100,8 +109,6 @@ appropriate perfctr patches.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n %{pkg_base_name}-%{pkg_version}
-
 
 #---------------------------------------
 %build
@@ -116,8 +123,6 @@ appropriate perfctr patches.
 %include system-load.inc
 
 # Insert necessary module commands
-# We purge because papi is considered a 'core' package and is built with
-# system gcc
 module purge
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
@@ -137,12 +142,11 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   ########### Do Not Remove #############
   #######################################
 
-  
-  cd src
-  export ARCH=x86_64
-  ./configure --prefix=%{INSTALL_DIR} --with-perf_events
-  make -j 28
-  make DESTDIR=$RPM_BUILD_ROOT install
+  #========================================
+  # Insert Build/Install Instructions Here
+  #========================================
+
+  # Nothing to do here 
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -162,65 +166,70 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
+
+
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_msg=[[
-The %{MODULE_VAR} module file defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC for
-the location of the %{name} distribution, libraries,
-and include files, respectively.
+Wolfram Mathematica (usually termed Mathematica) is a modern technical
+computing system spanning most areas of technical computing - including neural
+networks, machine learning, image processing, geometry, data science,
+visualizations, and others.
 
-To use the %{MODULE_VAR} library, compile the source code with the option:
--I\$TACC_%{MODULE_VAR}_INC
-add the following options to the link step:
--Wl,-rpath,\$TACC_%{MODULE_VAR}_LIB -L\$TACC_%{MODULE_VAR}_LIB -lpapi
+Please do not run mathematica on a login node.
 
-The -Wl,-rpath,\$TACC_%{MODULE_VAR}_LIB option is not required, however,
-if it is used, then this module will not have to be loaded
-to run the program during future login sessions.
+To run Mathematica interactively, use idev to get a compute node,
+then execute one of these commands:
 
-Version %{pkg_version}
+$ math          # command-line (text-based) interface
+$ mathematica   # graphical interface (requires X11 or equivalent)
+
+Documentation is available at wolfram.com/mathematica.
+
+The %{MODULE_VAR} module also defines the following environment variables:
+TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_BASE, and TACC_%{MODULE_VAR}_BIN 
+for the location of the %{MODULE_VAR} distribution, binaries, and tools respectively.
+The module also prepends TACC_%{MODULE_VAR}_BIN to PATH.
+
+Version %{version}
 ]]
 
---help(help_msg)
 help(help_msg)
 
-whatis("PAPI: Performance Application Programming Interface")
-whatis("Version: %{pkg_version}%{dbg}")
-whatis("Category: library, performance measurement")
-whatis("Keywords: Profiling, Library, Performance Measurement")
-whatis("Description: Interface to monitor performance counter hardware for quantifying application behavior")
-whatis("URL: http://icl.cs.utk.edu/papi/")
-
-
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
-
 -- Create environment variables.
-local papi_dir           = "%{INSTALL_DIR}"
+local mathematica_base = "/scratch/projects/tacc/Mathematica"
+local version          = "%{version}"
 
-family("papi")
-prepend_path(    "PATH",                pathJoin(papi_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(papi_dir, "lib"))
-prepend_path(    "MANPATH",             pathJoin(papi_dir, "share/man"))
-setenv( "TACC_%{MODULE_VAR}_DIR",                papi_dir)
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(papi_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(papi_dir, "bin"))
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(papi_dir, "include"))
+local mathematica_dir  = pathJoin( mathematica_base, version      )
+local mathematica_bin  = pathJoin( mathematica_dir, "Executables" )
+
+whatis( "Name: Mathematica" )
+whatis( "Version: "..version )
+whatis( "Category: mathematics" )
+whatis( "Keywords: Mathematics, Symbolic, Tools" )
+whatis( "Description: commercial technical computing system" )
+whatis( "URL: wolfram.com/mathematica" )
+
+setenv( "MATHEMATICA_BASE",     mathematica_base )
+setenv( "TACC_MATHEMATICA_DIR", mathematica_dir  )
+setenv( "TACC_MATHEMATICA_BIN", mathematica_bin  )
+
+prepend_path( "PATH",           mathematica_bin  )
+
 EOF
-  
+
+ 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
-## version file for %{BASENAME}%{version}
+## version file for %{pkg_base_name}%{version}
 ##
 
 set     ModulesVersion      "%{version}"
 EOF
   
   # Check the syntax of the generated lua modulefile
+  ### don't check the hidden one!
   %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------
@@ -274,4 +283,3 @@ export PACKAGE_PREUN=1
 %clean
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
-

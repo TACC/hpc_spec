@@ -3,7 +3,7 @@
 
 Summary:   Standard TACC Login scripts for our friendly Linux Clusters.
 Name:      tacc_login_scripts
-Version:   2.5
+Version:   2.12
 Release:   1%{?dist}
 License:   Proprietary
 Group:     System Environment/Base

@@ -1,6 +1,6 @@
 #
 # Si Liu
-# 2019-06-04
+# 2019-08-21
 #
 
 Summary: Boost spec file (www.boost.org)
@@ -11,7 +11,7 @@ Summary: Boost spec file (www.boost.org)
 
 # Create some macros (spec file variables)
 %define major_version 1
-%define minor_version 69
+%define minor_version 72
 %define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}
@@ -44,7 +44,7 @@ License:   GPL
 Group:     Utility
 URL:       http://www.boost.org
 Packager:  TACC - siliu@tacc.utexas.edu
-Source0:   boost_1_69_0.tar.gz
+Source0:   boost_1_72_0.tar.gz
 Source1:   icu4c-64_2-src.tgz
 
 # Turn off debug package mode
@@ -172,7 +172,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
  
   cd icu/source
   CXXFLAGS="%{TACC_OPT}" CFLAGS="%{TACC_OPT}" ./runConfigureICU  $ICU_MODE --prefix=%{PYTHON_INSTALL_DIR}
-  make -j 24
+  make -j 16
   make install
   rm -f ~/user-config.jam
 

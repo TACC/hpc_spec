@@ -21,8 +21,8 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name ooops
-%define MODULE_VAR    ooops
+%define pkg_base_name python_cacher
+%define MODULE_VAR    python_cacher
 
 # Create some macros (spec file variables)
 %define major_version 1
@@ -55,11 +55,11 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
+Release:   1%{?dist}
 License:   GPL
-URL:       https://github.com/TACC/ooops
+URL:       NULL
 Packager:  TACC - huang@tacc.utexas.edu
-Source:    ooops-1.0.tgz
+Source:    python_cacher-1.0.tgz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -67,32 +67,28 @@ Source:    ooops-1.0.tgz
 
 
 %package %{PACKAGE}
-Summary: ooops
+Summary: The python cacher RPM
 Group: Tools/Optimization
 %description package
-Optimal Overloaded IO Protection System (OOOPS) is an easy to use tool that helps HPC users optimize heavy IO requests.
+A library is designed to automatically cache user's python related files on local storage (/dev/shm or /tmp) during the first access. When access the same files later, the file in local storage will be used. This not only redirect the IO on $WORK to local storage and resolve the related MDS issue, it also make IO faster since local storage is utilized instead of accessing $WORK.
 
 %package %{MODULEFILE}
-Summary: The modulefile RPM
+Summary: The python cacher modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-Optimal Overloaded IO Protection System (OOOPS) is an easy to use tool that helps HPC users optimize heavy IO requests.
+A library is designed to automatically cache user's python related files on local storage (/dev/shm or /tmp) during the first access. When access the same files later, the file in local storage will be used. This not only redirect the IO on $WORK to local storage and resolve the related MDS issue, it also make IO faster since local storage is utilized instead of accessing $WORK.
 
 %description
-Optimal Overloaded IO Protection System (OOOPS) is an easy to use tool that helps HPC users optimize heavy IO requests.
+A library is designed to automatically cache user's python related files on local storage (/dev/shm or /tmp) during the first access. When access the same files later, the file in local storage will be used. This not only redirect the IO on $WORK to local storage and resolve the related MDS issue, it also make IO faster since local storage is utilized instead of accessing $WORK.
 
 #---------------------------------------
 %prep
 #---------------------------------------
 
-rm   -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
 #------------------------
 %if %{?BUILD_PACKAGE}
 #------------------------
   # Delete the package installation directory.
-  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -101,12 +97,11 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 %if %{?BUILD_MODULEFILE}
 #---------------------------
   #Delete the module installation directory.
-  rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n ooops-%{pkg_version}
+%setup -n python_cacher-%{pkg_version}
 
 
 #---------------------------------------
@@ -123,12 +118,12 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 # Insert necessary module commands
 module purge
 
+  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+  touch $RPM_BUILD_ROOT/%{INSTALL_DIR}/.tacc_install_canary
 
-  cp -p bin/set_io_param $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
   cp -r lib $RPM_BUILD_ROOT/%{INSTALL_DIR}/
-  cp -r conf $RPM_BUILD_ROOT/%{INSTALL_DIR}/
   chmod -Rf u+rwX,g+rwX,o=rX                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -138,9 +133,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 %if %{?BUILD_MODULEFILE}
 #---------------------------
 
+  rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-
-  mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 
   #######################################
   ##### Create TACC Canary Files ########
@@ -153,34 +147,34 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 cat >    $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 local help_message=[[
-Optimal Overloaded IO Protection System (OOOPS) is an easy to use tool that helps HPC users optimize heavy IO requests.
+A library is designed to automatically cache user python related files on local storage (/dev/shm or /tmp) during the first access. When access the same files later, the file in local storage will be used. This not only redirect the IO on $WORK to local storage and resolve the related MDS issue, it also make IO faster since local storage is utilized instead of accessing $WORK.
 
-It will also help system administrator prevent IO overload caused by improper IO request.
+export PYTHON_IO_LocalDir="/dev/shm"
+or
+export PYTHON_IO_LocalDir="/tmp"
+
+If PYTHON_IO_LocalDir is not set, "/dev/shm" is set as default.
+
+Please ONLY load this module in your production jobs or the test jobs for production runs. If you are installing or removing Python packages, you NEED to unload then reload this tool to avoid out of data cached data. 
 
 Lei Huang (huang@tacc.utexas.edu)
-Si Liu    (siliu@tacc.utexas.edu)
-
 ]]
 
 help(help_message,"\n")
 
-whatis("Name: OOOPS")
+whatis("Name: python_cacher")
 whatis("Version: 1.0")
 whatis("Category: Tools/Optimization ")
 whatis("Keywords: Tools, IO, Optimization")
-whatis("Description: Optimal Overloaded IO Protection System (OOOPS) us an easy to use tool ")
+whatis("Description: Tool for optimal Python IO")
 
 
 -- Create environment variables.
-local ooops_dir           = "%{INSTALL_DIR}"
-family("ooops")
+local python_cacher_dir           = "%{INSTALL_DIR}"
 
-prepend_path(    "PATH",                pathJoin(ooops_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(ooops_dir, "lib"))
-append_path(    "LD_PRELOAD",          pathJoin(ooops_dir, "lib/ooops.so") )
-
-setenv( "IO_LIMIT_CONFIG", "/opt/apps/ooops/1.0/conf/config_sp2.unlimited")
-setenv( "LIMIT_IO_DEBUG", "0")
+family("python_cacher")
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(python_cacher_dir, "lib"))
+append_path(    "LD_PRELOAD",          pathJoin(python_cacher_dir, "lib/myopen.so") )
 
 EOF
 

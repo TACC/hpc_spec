@@ -60,6 +60,13 @@
   %define is_gcc 1
   %define comp_module gcc/8.1.0
 %endif
+%if "%{is_gcc91}" == "1"
+  %define comp_fam gcc
+  %define comp_fam_ver gcc9_1
+  %define comp_fam_name GNU
+  %define is_gcc 1
+  %define comp_module gcc/9.1.0
+%endif
 %if "%{is_intel16}" == "1"
   %define comp_fam intel
   %define comp_fam_ver intel16
@@ -80,6 +87,13 @@
   %define comp_fam_name Intel
   %define is_intel 1
   %define comp_module intel/18.0.2
+%endif
+%if "%{is_intel19}" == "1"
+  %define comp_fam intel
+  %define comp_fam_ver intel19
+  %define comp_fam_name Intel
+  %define is_intel 1
+  %define comp_module intel/19.1.1
 %endif
 
 %if "%{comp_fam}" == "error"

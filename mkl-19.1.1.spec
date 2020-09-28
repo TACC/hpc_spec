@@ -1,6 +1,6 @@
 #
-# Ian Wang
-# 2020-09-09
+# Amit Ruhela
+# 2020-06-29
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -10,23 +10,29 @@
 # VERBOSE=1       -> Print detailed information at install time
 # RPM_DBPATH      -> Path To Non-Standard RPM Database Location
 #
+# Typical Command-Line Example:
+# ./build_rpm.sh Bar.spec
+# cd ../RPMS/x86_64
+# rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+# rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+# rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: PAPI/Perfctr Library - Local TACC Build
+Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name papi
-%define MODULE_VAR    PAPI
+%define pkg_base_name mkl
+%define MODULE_VAR    MKL
 
 # Create some macros (spec file variables)
-%define major_version 6
-%define minor_version 0
-%define micro_version 0.1
+%define major_version 19
+%define minor_version 1
+%define patch_version 1
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{major_version}.%{minor_version}.%{patch_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
+%include compiler-defines.inc
 #%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
@@ -43,10 +49,10 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1%{?dist}
-License:   LGPL
-Group:     Development/Tools
-URL:       http://icl.cs.utk.edu/papi/
-Packager:  TACC - iwang@tacc.utexas.edu, cproctor@tacc.utexas.edu
+License:   proprietary
+Group:     Compiler
+URL:       https://software.intel.com/en-us/intel-compilers
+Packager:  TACC - cproctor@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -59,24 +65,20 @@ Summary: The package RPM
 Group: Development/Tools
 %description package
 This is the long description for the package RPM...
-This package provides the perfctr hardware counter and PAPI
-library support.  It must be built against a kernel with the
-appropriate perfctr patches.
+This is specifically an rpm for the Intel MKL modulefile
+used on Stampede2 for GCC.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
-This package provides the perfctr hardware counter and PAPI
-library support.  It must be built against a kernel with the
-appropriate perfctr patches.
+This is specifically an rpm for the Intel MKL modulefile
+used on Stampede2 for GCC.
 
 %description
-This package provides the perfctr hardware counter and PAPI
-library support.  It must be built against a kernel with the
-appropriate perfctr patches.
-
+This is specifically an rpm for the Intel MKL modulefile
+used on Stampede2 for GCC.
 
 #---------------------------------------
 %prep
@@ -100,8 +102,6 @@ appropriate perfctr patches.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n %{pkg_base_name}-%{pkg_version}
-
 
 #---------------------------------------
 %build
@@ -116,8 +116,6 @@ appropriate perfctr patches.
 %include system-load.inc
 
 # Insert necessary module commands
-# We purge because papi is considered a 'core' package and is built with
-# system gcc
 module purge
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
@@ -137,13 +135,12 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   ########### Do Not Remove #############
   #######################################
 
+  #========================================
+  # Insert Build/Install Instructions Here
+  #========================================
+ 
+  # Nothing to do!
   
-  cd src
-  export ARCH=x86_64
-  ./configure --prefix=%{INSTALL_DIR} --with-perf_events
-  make -j 28
-  make DESTDIR=$RPM_BUILD_ROOT install
-
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -166,49 +163,61 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_msg=[[
-The %{MODULE_VAR} module file defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC for
-the location of the %{name} distribution, libraries,
-and include files, respectively.
+The Intel Math Kernel Library (Intel MKL) improves performance with math
+routines for software applications that solve large computational problems.
+Intel MKL provides BLAS and LAPACK linear algebra routines, fast Fourier
+transforms, vectorized math functions, random number generation functions, and
+other functionality.
 
-To use the %{MODULE_VAR} library, compile the source code with the option:
--I\$TACC_%{MODULE_VAR}_INC
-add the following options to the link step:
--Wl,-rpath,\$TACC_%{MODULE_VAR}_LIB -L\$TACC_%{MODULE_VAR}_LIB -lpapi
+The Intel MKL module enables the use of the MKL with the GNU GCC compilers by
+updating the $LD_LIBRARY_PATH, $INCLUDE, and $MANPATH environment variables to
+access the MKL libraries, include files, and available man pages, respectively.
 
-The -Wl,-rpath,\$TACC_%{MODULE_VAR}_LIB option is not required, however,
-if it is used, then this module will not have to be loaded
-to run the program during future login sessions.
+The following additional environment variables are also defined:
 
-Version %{pkg_version}
+$TACC_MKL_DIR           (path to Math Kernel Library root         )
+$TACC_MKL_LIB           (path to Math Kernel Library libs         )
+$TACC_MKL_INC           (path to Math Kernel Library includes     )
+$TACC_MKL_DOC           (path to Math Kernel Library documentation)
+
+To use the MKL with Intel compilers, please see the Intel module help
+by issuing a "module help intel".
+
+Also see the Intel MKL Link Line Advisor:
+https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor
+
+Version %{version}
 ]]
 
 --help(help_msg)
 help(help_msg)
 
-whatis("PAPI: Performance Application Programming Interface")
-whatis("Version: %{pkg_version}%{dbg}")
-whatis("Category: library, performance measurement")
-whatis("Keywords: Profiling, Library, Performance Measurement")
-whatis("Description: Interface to monitor performance counter hardware for quantifying application behavior")
-whatis("URL: http://icl.cs.utk.edu/papi/")
-
-
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
+whatis("Name: Intel MKL"                                                    )
+whatis("Version: %{version}"                                                )
+whatis("Category: Library, Runtime Support"                                 )
+whatis("Description: Intel Math Kernel Library"                             )
+whatis("URL: https://software.intel.com/en-us/intel-mkl"                    )
 
 -- Create environment variables.
-local papi_dir           = "%{INSTALL_DIR}"
+local base         = "/opt/intel"
+local full_xe      = "compilers_and_libraries_2020.1.217/linux"
+local installDir   = pathJoin(base,full_xe)
+local mklRoot      = pathJoin(installDir,"mkl")
 
-family("papi")
-prepend_path(    "PATH",                pathJoin(papi_dir, "bin"))
-prepend_path(    "LD_LIBRARY_PATH",     pathJoin(papi_dir, "lib"))
-prepend_path(    "MANPATH",             pathJoin(papi_dir, "share/man"))
-setenv( "TACC_%{MODULE_VAR}_DIR",                papi_dir)
-setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(papi_dir, "lib"))
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(papi_dir, "bin"))
-setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(papi_dir, "include"))
+setenv( "MKLROOT"      ,              mklRoot )
+setenv( "TACC_MKL_DIR" ,              mklRoot )
+setenv( "TACC_MKL_LIB" ,              pathJoin( mklRoot    , "lib/intel64_lin" ) )
+setenv( "TACC_MKL_INC" ,              pathJoin( mklRoot    , "include" ) )
+setenv( "TACC_MKL_DOC" ,              pathJoin( base       , "documentation_2020/en/mkl/ps2020" ) )
+
+prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( mklRoot    , "lib/intel64_lin" ) )
+
+prepend_path( "INCLUDE" ,             pathJoin( mklRoot    , "include" ) )
+
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2020/en/debugger/gdb-ia/man" ) )
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2020/en/debugger/ps2020" ) )
+prepend_path( "MANPATH" ,             pathJoin( base ,       "documentation_2020/en/man/common" ) )
+
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'

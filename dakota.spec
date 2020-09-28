@@ -24,7 +24,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 # Create some macros (spec file variables)
 %define major_version 6
-%define minor_version 8
+%define minor_version 11
 %define patch_version 0
 
 %define pkg_version %{major_version}.%{minor_version}.%{patch_version}
@@ -51,7 +51,7 @@ Release:   1
 License:   BSD
 Group:     System/Utils
 URL:       https://dakota.sandia.gov
-Packager:  TACC - cproctor@tacc.utexas.edu
+Packager:  TACC - rtevans@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -179,9 +179,9 @@ export dakota=`pwd`
 export dakota_install=%{INSTALL_DIR}
 ##################################################
 
-export dakota_major=6
-export dakota_minor=8
-export dakota_patch=0
+export dakota_major=%{major_version}
+export dakota_minor=%{minor_version}
+export dakota_patch=%{patch_version}
 export dakota_dlversion=${dakota_major}.${dakota_minor}
 export dakota_version=${dakota_major}.${dakota_minor}.${dakota_patch}
 

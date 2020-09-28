@@ -2,8 +2,8 @@
 
 Summary: XALT
 Name: xalt
-Version: 2.7.9
-Release: 1
+Version: 2.9.6
+Release: 1%{?dist}
 License: LGPLv2
 Group: System Environment/Base
 Source0:  xalt-%{version}.tar.bz2

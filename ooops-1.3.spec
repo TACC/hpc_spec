@@ -26,7 +26,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 # Create some macros (spec file variables)
 %define major_version 1
-%define minor_version 0
+%define minor_version 3
 %define micro_version 0
 
 #%define pkg_version %{major_version}.%{minor_version}
@@ -59,7 +59,7 @@ Release:   2%{?dist}
 License:   GPL
 URL:       https://github.com/TACC/ooops
 Packager:  TACC - huang@tacc.utexas.edu
-Source:    ooops-1.0.tgz
+Source:    ooops-1.3.tgz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -84,9 +84,6 @@ Optimal Overloaded IO Protection System (OOOPS) is an easy to use tool that help
 #---------------------------------------
 %prep
 #---------------------------------------
-
-rm   -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -123,12 +120,16 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 # Insert necessary module commands
 module purge
 
+  rm   -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+  touch $RPM_BUILD_ROOT/%{INSTALL_DIR}/.tacc_install_canary
 
-  cp -p bin/set_io_param $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
+  mkdir $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+  cp -r bin $RPM_BUILD_ROOT/%{INSTALL_DIR}/
   cp -r lib $RPM_BUILD_ROOT/%{INSTALL_DIR}/
   cp -r conf $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+  cp -r test $RPM_BUILD_ROOT/%{INSTALL_DIR}/
   chmod -Rf u+rwX,g+rwX,o=rX                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -138,9 +139,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 %if %{?BUILD_MODULEFILE}
 #---------------------------
 
+  rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-
-  mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 
   #######################################
   ##### Create TACC Canary Files ########
@@ -152,7 +152,7 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 
 cat >    $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
-local help_message=[[
+local help_msg=[[
 Optimal Overloaded IO Protection System (OOOPS) is an easy to use tool that helps HPC users optimize heavy IO requests.
 
 It will also help system administrator prevent IO overload caused by improper IO request.
@@ -160,12 +160,32 @@ It will also help system administrator prevent IO overload caused by improper IO
 Lei Huang (huang@tacc.utexas.edu)
 Si Liu    (siliu@tacc.utexas.edu)
 
+You can use command "set_io_param_batch" to adjust allowed maximum frequency of open/stat on all nodes of one running job.
+
+Usage: set_io_param_batch jobid idx_fs t_open freq_open t_stat freq_stat
+
+jobid     - The slurm job id
+idx_fs    - The index of file server. On Stampede2, 0 represents /scratch. 1 represents /work. 2 represents /home1.
+t_open    - The estimated time to finish open(). Unit is microsecond.
+freq_open - The allowed max frequency of open() (times per second)
+t_stat    - The estimated time to finish stat(). Unit is microsecond.
+freq_stat - The allowed max frequency of stat() (times per second)
+
+Example to turn off the throttling on WORK.
+set_io_param_batch 12345 1 1000000 1000000 1000000 1000000
+
+Example to slow down open/stat on WORK a lot.
+set_io_param_batch 12345 1 1000 200 1000 500
+# In this example, the number of open and stat can NOT be more frequent than 200 times and 500 times per second respectively.
+
+If OOOPS finds intensive IO in your job, it will print out warning messages and create open/stat call report.
 ]]
 
-help(help_message,"\n")
+--help(help_msg)
+help(help_msg)
 
 whatis("Name: OOOPS")
-whatis("Version: 1.0")
+whatis("Version: 1.3")
 whatis("Category: Tools/Optimization ")
 whatis("Keywords: Tools, IO, Optimization")
 whatis("Description: Optimal Overloaded IO Protection System (OOOPS) us an easy to use tool ")
@@ -179,8 +199,11 @@ prepend_path(    "PATH",                pathJoin(ooops_dir, "bin"))
 prepend_path(    "LD_LIBRARY_PATH",     pathJoin(ooops_dir, "lib"))
 append_path(    "LD_PRELOAD",          pathJoin(ooops_dir, "lib/ooops.so") )
 
-setenv( "IO_LIMIT_CONFIG", "/opt/apps/ooops/1.0/conf/config_sp2.unlimited")
-setenv( "LIMIT_IO_DEBUG", "0")
+setenv( "IO_LIMIT_CONFIG",              pathJoin(ooops_dir, "conf/config_sp2") )
+setenv( "TACC_OOOPS_BIN", pathJoin(ooops_dir, "bin"))
+setenv( "OOOPS_NCALL_REPORT_THRESHOLD", "60000")
+setenv( "OOOPS_NCALL_PS_REPORT_THRESHOLD", "2")
+setenv( "OOOPS_REPORT_T_INTERVAL", "30")
 
 EOF
 

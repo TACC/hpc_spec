@@ -149,7 +149,7 @@ if [ "${HAS_NETCDF}" = "ON" ] ; then
   module load parallel-netcdf
 fi
 
-export HAS_MUMPS=OFF
+export HAS_MUMPS=ON
 # https://github.com/trilinos/Trilinos/issues/6339
 if [ "${HAS_MUMPS}" = "ON" ] ; then
   module load mumps 
@@ -288,7 +288,7 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << EOF
 ## version file for Trilinos %version
 ##
 
-set     ModulesVersion      "${modulefilename}"
+set     ModulesVersion      "%{version}"
 EOF
 
 %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua 
@@ -316,6 +316,8 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Tue Apr 28 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- UNRELEASED : fix in .version file
 * Sun Nov 24 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 11: adding mumps, update to 12.18.1
 * Thu Nov 14 2019 eijkhout <eijkhout@tacc.utexas.edu>

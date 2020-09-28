@@ -6,8 +6,8 @@ Summary: Dealii install
 
 # Create some macros (spec file variables)
 %define major_version 9
-%define minor_version 1
-%define micro_version 1
+%define minor_version 2
+%define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -36,7 +36,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 5%{?dist}
+Release: 1%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tar.gz
@@ -220,7 +220,7 @@ export disabled=" \
 ## Make!
 ##
 
-make 2>&1 | tee ${LOGDIR}/dealii_compile.log
+make -j 8 2>&1 | tee ${LOGDIR}/dealii_compile.log
 make install
 ( make test || true )
 
@@ -305,17 +305,7 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
-* Wed Jul 22 2020 eijkhout <eijkhout@tacc.utexas.edu>
-- release 6: rebuild for new hdf5 default
-* Tue Dec 10 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 5: module version fix, using trilinos 12.18.1
-  disabled architecture optimizations becuase of internal compiler error
-* Sun Dec 01 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 4: upgrade to 9.1.1, adding GSL
-* Wed Nov 13 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: trying trilinos 12.14.1
-* Fri Aug 03 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: missing TACC_DEALII_INC,
-* Fri Jun 29 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 1: initial release of 9.0.0
+* Mon Sep 21 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial release of 9.2.0, based on release 6 of 9.1.1
+
 

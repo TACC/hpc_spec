@@ -1,7 +1,8 @@
-#
+# Si Liu
+# 2020-05-09
+
 # Ian Wang
 # 2018-11-05
-#
 
 Summary: OpenSees - Local TACC Build
 
@@ -11,7 +12,7 @@ Summary: OpenSees - Local TACC Build
 
 # Create some macros (spec file variables)
 %define major_version 3
-%define minor_version 0
+%define minor_version 2
 %define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
@@ -38,8 +39,8 @@ Release:   1%{?dist}
 License:   LGPL
 Group:     Applications/Geoscience
 URL:       http://opensees.berkeley.edu/
-Packager:  TACC - iwang@tacc.utexas.edu, cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{major_version}.%{minor_version}.%{micro_version}-2018.11.tar.gz
+Packager:  TACC - iwang@tacc.utexas.edu, siliu@tacc.utexas.edu
+Source:    %{pkg_base_name}-3.0.0-2018.11.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -108,9 +109,7 @@ systems subjected to earthquakes.
 %include system-load.inc
 
 # Insert necessary module commands
-module load intel/18.0.2
-module load petsc/3.10
-module list
+module purge
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -195,7 +194,7 @@ Note that the libOpenSees.a is the version that goes with OpenSeesMP.
 
 This version is built with the following modules enabled:
 
-intel/18.0.2 impi/18.0.2 petsc/3.10
+intel/18.0.2 impi/18.0.2
 
 Version %{pkg_version}
 ]]
@@ -209,7 +208,6 @@ whatis("Category: application, geoscience")
 whatis("Keywords: Earthquake, Simulation")
 whatis("Description: Software framework for developing applications to simulate the performance of structural and geotechnical systems subjected to earthquakes")
 whatis("URL: http://opensees.berkeley.edu/")
-prereq("petsc/3.10")
 
 
 %if "%{is_debug}" == "1"
@@ -217,7 +215,7 @@ setenv("TACC_%{MODULE_VAR}_DEBUG","1")
 %endif
 
 -- Create environment variables.
-local opensees_dir           = "/work/projects/wma_apps/stampede2/opensees/opensees-3.0.0"
+local opensees_dir           = "/work/projects/wma_apps/stampede2/opensees/opensees-3.2.0"
 
 family("opensees")
 prepend_path(    "PATH",                pathJoin(opensees_dir, "bin"))
