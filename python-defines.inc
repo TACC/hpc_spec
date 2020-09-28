@@ -22,21 +22,21 @@
 %if "%{is_python}" == "1"
   %if %{undefined pythonV}
     %define python_label 3_8
-    %define python_module_version 3.8.1
+    %define python_module_version 3.8.2
     %define python_major_version 3
     %define python_minor_version 8
+  %endif
+  %if "%{pythonV}" == "3_7"
+    %define python_label 3_7
+    %define python_module_version 3.7.0
+    %define python_major_version 3
+    %define python_minor_version 7
   %endif
   %if "%{pythonV}" == "3_6"
     %define python_label 3_6
     %define python_module_version 3.6.1
     %define python_major_version 3
     %define python_minor_version 6
-  %endif
-  %if "%{pythonV}" == "3_8"
-    %define python_label 3_8
-    %define python_module_version 3.8.2
-    %define python_major_version 3
-    %define python_minor_version 8
   %endif
   %if "%{pythonV}" == "2_7"
     %define python_label 2_7

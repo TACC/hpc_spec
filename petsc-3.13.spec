@@ -7,7 +7,7 @@ Summary: PETSc install
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 13
-%define micro_version 0
+%define micro_version 5
 %define versionpatch %{major_version}.%{minor_version}.%{micro_version}
 
 %define pkg_version %{major_version}.%{minor_version}
@@ -15,8 +15,9 @@ Summary: PETSc install
 ####
 #### configuration switches:
 ####
+%define adios 0
 %define p4p 1
-%define cuda 0
+%define cuda 1
 # cuda probably fixed in 3.13.1
 
 %include rpm-dir.inc
@@ -39,7 +40,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 2%{?dist}
+Release: 6%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -282,6 +283,14 @@ esac
 export versionextra="${versionextra}${clanguageversionextra}"
 
 #
+# Adios2
+#
+%if "%{adios}" == "1"
+  export ADIOS_STRING=adios2
+  export ADIOS_OPTIONS="--download-adios2=1"
+%endif
+
+#
 # Chaco
 #
 export CHACOSTRING=chaco
@@ -299,6 +308,13 @@ export PARMETISSTRING="parmetis"
 #
 export ELEMENTAL_OPTIONS="--with-elemental=1 --download-elemental --with-cxx-dialect=C++11 ${PARMETIS_OPTIONS}"
 export ELEMENTAL_STRING=elemental
+
+#
+# Fftw
+#
+module load fftw3
+export FFTW_OPTIONS="--with-fftw=1 --with-fftw-dir=${TACC_FFTW3_DIR}"
+export FFTW_STRING=fftw
 
 #
 # Hypre
@@ -380,9 +396,11 @@ esac
 ##
 ## define packages; some are real & complex, others real only.
 ##
-export complexpackages="${ELEMENTAL_STRING} mumps scalapack ${SPOOLES_STRING} ${SUITESPARSE_STRING} ${superlustring} ${ZOLTANSTRING} ${hdf5string}"
+export complexpackages="${ADIOS_STRING} ${ELEMENTAL_STRING} ${FFTW_STRING} mumps scalapack ${SPOOLES_STRING} ${SUITESPARSE_STRING} ${superlustring} ${ZOLTANSTRING} ${hdf5string}"
 export PETSC_COMPLEX_PACKAGES="\
+  ${ADIOS_OPTIONS} \
   ${ELEMENTAL_OPTIONS} \
+  ${FFTW_OPTIONS} \
   ${hdf5download} \
   ${MUMPS_OPTIONS}\
   ${SCALAPACK_OPTIONS} ${SPOOLES_OPTIONS} \
@@ -459,6 +477,8 @@ export MPI_OPTIONS="--with-mpi=1"
 #
 # Petsc4py
 #
+module list
+module use /opt/apps/intel19/impi19_0/modulefiles
 module load python3
 if [ %{p4p} -eq 1 ] ; then
   export petsc4py="--download-petsc4py=yes --with-python=1 --with-python-exec=python3"
@@ -690,10 +710,19 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Sun Sep 06 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 6: up to 3.13.5
+  disabled: adios
+  UNRELEASED
+* Fri Jul 10 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 5: adding adios, up to 3.13.3
+* Tue May 26 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 4: adding fftw, up to 3.13.2
+* Sun May 17 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: 3.13.1, enabling cuda again.
 * Fri Apr 24 2020 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: adding petsc4py
 * Thu Apr 02 2020 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release
     skipping cuda for now
     skipping petsc4py for now (3.13 has not been released yet)
-

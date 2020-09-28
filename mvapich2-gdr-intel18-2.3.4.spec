@@ -1,15 +1,12 @@
-Summary: Mvapich2-X new spec file 
+Summary: MVAPICH2-GDR new spec file
 
 # Give the package a base name
-%define pkg_base_name mvapich2-x
-%define MODULE_VAR    MVAPICH2-X
+%define pkg_base_name mvapich2-gdr
+%define MODULE_VAR    MVAPICH2_GDR
 
 # Create some macros (spec file variables)
-
-%define major_version 2
-%define minor_version 3
-
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version 2.3.4
+%define underscore_version 2_3_4
 
 ### Toggle On/Off ###
 %include rpm-dir.inc
@@ -33,7 +30,7 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 Release:   2%{?dist}
 License: BSD License
 Group:   Development/Libraries
-Packager: TACC - siliu@tacc.utexas.edu,aruhela@tacc.utexas.edu
+Packager: TACC - siliu@tacc.utexas.edu
 #Source: %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -45,34 +42,35 @@ Summary: OSU MPI-3 implementation
 Group: Development/Libraries
 
 %description package
-MVAPICH is an open-source and portable implementation of the Message-Passing
-Interface (MPI, www.mpi-forum.org).  MPI is a library for parallel programming,
-and is available on a wide range of parallel machines, from single laptops to
-massively parallel vector parallel processors.
-MVAPICH includes all of the routines in MPI 3.1.
-MVAPICH is developed at the Ohio State University. See whttp://mvapich.cse.ohio-state.edu/
+
+MVAPICH2-GDR 2.3.4 binary release is based on MVAPICH2 and incorporates designs that take advantage of the new GPUDirect RDMA technology, which enables direct P2P communication between NVIDIA GPUs and Mellanox InfiniBand adapters. MVAPICH2-GDR offers significant improvements in latency and bandwidth for GPU-buffer based intranode and internode MPI Communication involving small and medium message sizes.
+
+MVAPICH2-GDR provides an efficient support for Non-Blocking Collectives (NBC) from GPU buffers to achieve maximal overlap. It uses novel designs that combine GPUDirect RDMA and Core-Direct technologies. Further MVAPICH2-GDR also provides support for CUDA Managed memory features and optimizes large message collectives targeting Deep Learning frameworks.
+
+Note that this release is for GPU-Cluster with GPUDirect RDMA support, if your cluster does not have this support please use the default MVAPICH2 library. For more details please refer to http://mvapich.cse.ohio-state.edu/.
 
 %package %{MODULEFILE}
 Summary: OSU MPI-3 implementation
 Group: Development/Libraries
 
 %description modulefile
-Module RPM for Mvapich2-X
-MVAPICH is an open-source and portable implementation of the Message-Passing
-Interface (MPI, www.mpi-forum.org).  MPI is a library for parallel programming,
-and is available on a wide range of parallel machines, from single laptops to
-massively parallel vector parallel processors.
-MVAPICH includes all of the routines in MPI 3.1.
-MVAPICH is developed at the Ohio State University. See whttp://mvapich.cse.ohio-state.edu/
+
+Module RPM for Mvapich2-GDR
+
+MVAPICH2-GDR 2.3.4 binary release is based on MVAPICH2 and incorporates designs that take advantage of the new GPUDirect RDMA technology, which enables direct P2P communication between NVIDIA GPUs and Mellanox InfiniBand adapters. MVAPICH2-GDR offers significant improvements in latency and bandwidth for GPU-buffer based intranode and internode MPI Communication involving small and medium message sizes.
+
+MVAPICH2-GDR provides an efficient support for Non-Blocking Collectives (NBC) from GPU buffers to achieve maximal overlap. It uses novel designs that combine GPUDirect RDMA and Core-Direct technologies. Further MVAPICH2-GDR also provides support for CUDA Managed memory features and optimizes large message collectives targeting Deep Learning frameworks.
+
+Note that this release is for GPU-Cluster with GPUDirect RDMA support, if your cluster does not have this support please use the default MVAPICH2 library. For more details please refer to http://mvapich.cse.ohio-state.edu/.
 
 
 %description
-MVAPICH is an open-source and portable implementation of the Message-Passing
-Interface (MPI, www.mpi-forum.org).  MPI is a library for parallel programming,
-and is available on a wide range of parallel machines, from single laptops to
-massively parallel vector parallel processors.
-MVAPICH includes all of the routines in MPI 3.1.
-MVAPICH is developed at the Ohio State University. See whttp://mvapich.cse.ohio-state.edu/
+
+MVAPICH2-GDR 2.3.4 binary release is based on MVAPICH2 and incorporates designs that take advantage of the new GPUDirect RDMA technology, which enables direct P2P communication between NVIDIA GPUs and Mellanox InfiniBand adapters. MVAPICH2-GDR offers significant improvements in latency and bandwidth for GPU-buffer based intranode and internode MPI Communication involving small and medium message sizes.
+
+MVAPICH2-GDR provides an efficient support for Non-Blocking Collectives (NBC) from GPU buffers to achieve maximal overlap. It uses novel designs that combine GPUDirect RDMA and Core-Direct technologies. Further MVAPICH2-GDR also provides support for CUDA Managed memory features and optimizes large message collectives targeting Deep Learning frameworks.
+
+Note that this release is for GPU-Cluster with GPUDirect RDMA support, if your cluster does not have this support please use the default MVAPICH2 library. For more details please refer to http://mvapich.cse.ohio-state.edu/.
 
 #---------------------------------------
 %prep
@@ -83,6 +81,8 @@ MVAPICH is developed at the Ohio State University. See whttp://mvapich.cse.ohio-
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+#%setup -n  %{pkg_base_name}-%{pkg_version}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -106,6 +106,7 @@ MVAPICH is developed at the Ohio State University. See whttp://mvapich.cse.ohio-
 #---------------------------------------
 %install
 #---------------------------------------
+
 
 # Setup modules
 %include system-load.inc
@@ -133,7 +134,6 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
 
-
 #---------------------- -
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -153,15 +153,12 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-echo %{INSTALL_DIR}
+
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{pkg_version}.lua << 'EOF'
 local help_msg=[[
-
-Mvapich2-X 2.3
-
-This module loads the MVAPICH2 MPI environment built with Intel compilers. 
-By loading this module, the following commands will be automatically available 
+This module loads the MVAPICH2-GDR MPI environment built with GNU compilers.
+By loading this module, the following commands will be automatically available
 for compiling MPI applications:
 mpif77       (F77 source)
 mpif90       (F90 source)
@@ -182,28 +179,28 @@ whatis( "URL: http://mvapich.cse.ohio-state.edu/overview/mvapich2"     )
 
 local base_dir = "%{INSTALL_DIR}"
 
-
 setenv( "MPICH_HOME"             , base_dir                            )
-setenv( "MPI_ROOT"               , base_dir                            )
 setenv( "TACC_MPI_GETMODE"       , "mvapich2_ssh"                      )
 
-setenv("MV2_USE_RDMA_CM",         "0")
-setenv("MV2_USE_MCAST",           "1")
-setenv("MV2_USE_RDMA_CM_MCAST",   "1")
-setenv("MV2_HOMOGENEOUS_CLUSTER", "1")
+setenv( "MPI_ROOT"               , base_dir                            )
+setenv( "TACC_MV2_LIB"           , pathJoin( base_dir , "lib64" )      )
+setenv( "TACC_MV2_INC"           , pathJoin( base_dir , "include" )        )
 
-setenv("MV2_SMALL_MSG_DC_POOL",   "256")
-setenv("MV2_LARGE_MSG_DC_POOL",   "256")
-setenv("MV2_NUM_DC_TGT",           "1")
-setenv("MV2_HYBRID_ENABLE_THRESHOLD", "1000000")
+setenv("MV2_USE_GDRCOPY","1")
+setenv("MV2_USE_CUDA","1")
+setenv("MV2_USE_GDR","1")
+setenv("MV2_CPU_BINDING_POLICY","hybrid")
+setenv("MV2_HYBRID_BINDING_POLICY","spread")
+setenv("MV2_USE_RDMA_CM","0")
+setenv("MV2_GPUDIRECT_GDRCOPY_LIB" , "/usr/lib64/libgdrapi.so" )
+
+prereq("intel/18.0.5") 
 
 prepend_path( "PATH"             , pathJoin( base_dir , "bin"          ) )
 prepend_path( "MANPATH"          , pathJoin( base_dir , "share/man"    ) )
-prepend_path( "INFOPATH"         , pathJoin( base_dir , "share/doc"          ) )
 prepend_path( "LD_LIBRARY_PATH"  , pathJoin( base_dir , "lib64"          ) )
 prepend_path( "PKG_CONFIG_PATH"  , pathJoin( base_dir , "lib64/pkgconfig") )
-
-prepend_path( "MODULEPATH"       , "/opt/apps/intel19/impi19_0/modulefiles" )
+prepend_path( "MODULEPATH"       ,"/opt/apps/intel18/mvapich2-gdr2_3/modulefiles" )
 
 family("MPI")
 
@@ -247,6 +244,10 @@ EOF
   %defattr(-,root,install,)
   # RPM modulefile contains files within these directories
   %{MODULE_DIR}
+
+  #RPM This is a tricky setting by Si to avoid some Jerome problems.
+  #%exclude %dir /opt/apps/intel17/modulefiles/mvapich2
+  %exclude %dir %{MODULE_DIR}
 
 #--------------------------
 %endif # BUILD_MODULEFILE |

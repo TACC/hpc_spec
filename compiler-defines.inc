@@ -100,7 +100,8 @@
   %define comp_fam_ver intel19_1
   %define comp_fam_name Intel
   %define is_intel 1
-  %define comp_module intel/19.1.0
+  # VLE edit 19.1.0 -> 19.1.1
+  %define comp_module intel/19.1.1
 %endif
 %if "%{is_intel20}" == "1"
   %define comp_fam intel
@@ -109,6 +110,21 @@
   %define is_intel 1
   %define comp_module intel/20.0.0
 %endif
+%if "%{is_pgi19}" == "1"
+  %define comp_fam pgi
+  %define comp_fam_ver pgi19
+  %define comp_fam_name PGI
+  %define is_pgi 1
+  %define comp_module pgi/19.10.0
+%endif
+%if "%{is_pgi20}" == "1"
+  %define comp_fam pgi
+  %define comp_fam_ver pgi20
+  %define comp_fam_name PGI
+  %define is_pgi 1
+  %define comp_module pgi/20.7.0
+%endif
+
 
 %if "%{comp_fam}" == "error"
   %{error: You must define which compiler you are using!}
@@ -134,6 +150,12 @@
   %define TACC_OPT_CORE_AVX512 -xCORE-AVX512
   %define TACC_OPT_MIC_AVX512 -xMIC-AVX512
 %endif
+%if "%{comp_fam}" == "pgi"
+  %define TACC_OPT           -tp=px-64  -fast 
+  %define TACC_OPT_VEC       -tp=px-64  -fast -Mvect=simd  
+  %define TACC_OPT_NOVEC     -tp=px-64  -fast -Mvect=nosimd              
+%endif
+
 %{!?suf: %define suf default}
 %if "%{suf}" == "default"
   %define TACC_VEC_OPT %{TACC_OPT}

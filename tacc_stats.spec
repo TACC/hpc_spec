@@ -1,7 +1,7 @@
 Summary: Job-level Tracking and Analysis System
-Name: tacc_statsd
+Name: tacc_statsd_gpu
 Version: 2.3.4
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPL
 Vendor: Texas Advanced Computing Center
 Group: System Environment/Base
@@ -26,6 +26,7 @@ unit file.
 
 %build
 ./configure --bindir=%{_bindir} --sysconfdir=%{_sysconfdir} --enable-rabbitmq --enable-gpu
+make clean
 make
 
 %install
@@ -39,6 +40,8 @@ install -m 0664 taccstats.service %{buildroot}/%{_sysconfdir}/taccstats.service
 %post
 sed -i 's/localhost/%{server}/' %{_sysconfdir}/taccstats.service
 sed -i 's/default/%{queue}/' %{_sysconfdir}/taccstats.service
+sed -i 's/tacc_statsd/%{name}/' %{_sysconfdir}/taccstats.service
+
 systemctl daemon-reload
 systemctl enable taccstats
 #systemctl restart taccstats

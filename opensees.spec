@@ -1,24 +1,30 @@
-Summary: Mvapich2-X new spec file 
+#
+# Ian Wang
+# 2020-05-21
+#
+# PROGRAMMING_MODE should be changed to build all three different
+# versions of OpenSees.
+
+Summary: OpenSees - Local TACC Build
 
 # Give the package a base name
-%define pkg_base_name mvapich2-x
-%define MODULE_VAR    MVAPICH2-X
+%define pkg_base_name opensees
+%define MODULE_VAR    OPENSEES
 
 # Create some macros (spec file variables)
+%define major_version 3
+%define minor_version 2
+%define micro_version 0
 
-%define major_version 2
-%define minor_version 3
-
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
-%include rpm-dir.inc
+%include rpm-dir.inc                  
 %include compiler-defines.inc
-#%include mpi-defines.inc
+%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-#%include name-defines.inc
 %include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
@@ -30,49 +36,45 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
-License: BSD License
-Group:   Development/Libraries
-Packager: TACC - siliu@tacc.utexas.edu,aruhela@tacc.utexas.edu
-#Source: %{pkg_base_name}-%{pkg_version}.tar.gz
+Release:   1%{?dist}
+License:   LGPL
+Group:     Applications/Geoscience
+URL:       http://opensees.berkeley.edu/
+Packager:  TACC - iwang@tacc.utexas.edu
+Source:    %{pkg_base_name}-%{major_version}.%{minor_version}.%{micro_version}.tar.gz
+Source1:    tcl8.6.10-src.tar.gz
+Source2:    MUMPS_5.2.1.tar.gz
+Patch:     %{pkg_base_name}-%{major_version}.%{minor_version}.%{micro_version}.patch
+Patch2:     MUMPS_5.2.1.patch
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
 
-%package %{PACKAGE}
-Summary: OSU MPI-3 implementation
-Group: Development/Libraries
 
+%package %{PACKAGE}
+Summary: The package RPM
+Group: Applications/Geoscience
 %description package
-MVAPICH is an open-source and portable implementation of the Message-Passing
-Interface (MPI, www.mpi-forum.org).  MPI is a library for parallel programming,
-and is available on a wide range of parallel machines, from single laptops to
-massively parallel vector parallel processors.
-MVAPICH includes all of the routines in MPI 3.1.
-MVAPICH is developed at the Ohio State University. See whttp://mvapich.cse.ohio-state.edu/
+This is the long description for the package RPM...
+This package is a software framework for developing applications 
+to simulate the performance of structural and geotechnical 
+systems subjected to earthquakes. 
 
 %package %{MODULEFILE}
-Summary: OSU MPI-3 implementation
-Group: Development/Libraries
-
+Summary: The modulefile RPM
+Group: Lmod/Modulefiles
 %description modulefile
-Module RPM for Mvapich2-X
-MVAPICH is an open-source and portable implementation of the Message-Passing
-Interface (MPI, www.mpi-forum.org).  MPI is a library for parallel programming,
-and is available on a wide range of parallel machines, from single laptops to
-massively parallel vector parallel processors.
-MVAPICH includes all of the routines in MPI 3.1.
-MVAPICH is developed at the Ohio State University. See whttp://mvapich.cse.ohio-state.edu/
-
+This is the long description for the modulefile RPM...
+This package is a software framework for developing applications 
+to simulate the performance of structural and geotechnical 
+systems subjected to earthquakes. 
 
 %description
-MVAPICH is an open-source and portable implementation of the Message-Passing
-Interface (MPI, www.mpi-forum.org).  MPI is a library for parallel programming,
-and is available on a wide range of parallel machines, from single laptops to
-massively parallel vector parallel processors.
-MVAPICH includes all of the routines in MPI 3.1.
-MVAPICH is developed at the Ohio State University. See whttp://mvapich.cse.ohio-state.edu/
+This package is a software framework for developing applications 
+to simulate the performance of structural and geotechnical 
+systems subjected to earthquakes. 
+
 
 #---------------------------------------
 %prep
@@ -83,7 +85,6 @@ MVAPICH is developed at the Ohio State University. See whttp://mvapich.cse.ohio-
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -97,6 +98,11 @@ MVAPICH is developed at the Ohio State University. See whttp://mvapich.cse.ohio-
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
+%setup -c -n %{pkg_base_name}-%{pkg_version}
+%setup -D -T -n %{pkg_base_name}-%{pkg_version} -a 1
+%setup -D -T -n %{pkg_base_name}-%{pkg_version} -a 2
+%patch -p1
+%patch2 -p1
 
 #---------------------------------------
 %build
@@ -109,8 +115,8 @@ MVAPICH is developed at the Ohio State University. See whttp://mvapich.cse.ohio-
 
 # Setup modules
 %include system-load.inc
-module purge
-%include compiler-load.inc
+
+# Insert necessary module commands
 module list
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
@@ -121,6 +127,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -129,15 +136,46 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   ########### Do Not Remove #############
   #######################################
 
-  #========================================
-  # Insert Build/Install Instructions Here
-  #========================================
+  export OPENSEES_TMP_BUILD_HOME=`pwd`
+  mkdir bin
+  mkdir lib
 
+  cd tcl8.6.10/unix
+  ./configure --prefix=%{INSTALL_DIR} --enable-shared=no 
+  make -j 28
+  make install
 
-#---------------------- -
+  cp -r %{INSTALL_DIR}/*  $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+
+  cd ../../MUMPS_5.2.1
+  cp Make.inc/Makefile.inc.generic Makefile.inc
+  make -j 28 mumps_lib
+
+  cd ..
+  mv OpenSees-%{major_version}.%{minor_version}.%{micro_version} OpenSees
+  cd OpenSees
+
+  cp MAKES/Makefile.def.STAMPEDE2 ./Makefile.def
+  sed -i "s+TCL_LIB_AS_PLACEHODER+%{INSTALL_DIR}/lib/libtcl8.6.a+g" ./Makefile.def
+  unset VERBOSE
+  PROGRAMMING_MODE=PARALLEL make -j 28
+
+  echo "OpenSeesSP is built. Proceed to the next..."
+
+  make wipe
+  PROGRAMMING_MODE=SEQUENTIAL make -j 28
+
+  echo "OpenSees is built. Proceed to the next..."
+
+  make wipe
+  PROGRAMMING_MODE=PARALLEL_INTERPRETERS make -j 28
+
+  cp -r ../bin $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+  cp -r ../lib $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+
+#-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
-
 
 
 #---------------------------
@@ -145,7 +183,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-
+  
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -153,63 +191,50 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-echo %{INSTALL_DIR}
+  
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{pkg_version}.lua << 'EOF'
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_msg=[[
+The %{MODULE_VAR} module file defines the following environment variables:
+TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_BIN for
+the location of the %{name} distribution, libraries, and excutables, 
+respectively. It also appends the path to the executables
+to the PATH environment variable.
 
-Mvapich2-X 2.3
+The excutables of %{MODULE_VAR} include:
 
-This module loads the MVAPICH2 MPI environment built with Intel compilers. 
-By loading this module, the following commands will be automatically available 
-for compiling MPI applications:
-mpif77       (F77 source)
-mpif90       (F90 source)
-mpicc        (C   source)
-mpiCC/mpicxx (C++ source)
+OpenSees	Sequential version
+OpenSeesSP	Parallel version in master-worker mode
+OpenSeesMP	Parallel version for parameter studies
 
-Version %{version}
+Version %{pkg_version}
 ]]
 
+--help(help_msg)
 help(help_msg)
 
-whatis( "Name: %{pkg_base_name}"                                       )
-whatis( "Version: %{version}"                                          )
-whatis( "Category: library, runtime support"                           )
-whatis( "Keywords: System, Library"                                    )
-whatis( "Description:  MPI-3.1 implementation"                         )
-whatis( "URL: http://mvapich.cse.ohio-state.edu/overview/mvapich2"     )
-
-local base_dir = "%{INSTALL_DIR}"
+whatis("OpenSees: Open System for Earthquake Engineering Simulation")
+whatis("Version: %{pkg_version}%{dbg}")
+whatis("Category: application, geoscience")
+whatis("Keywords: Earthquake, Simulation")
+whatis("Description: Software framework for developing applications to simulate the performance of structural and geotechnical systems subjected to earthquakes")
+whatis("URL: http://opensees.berkeley.edu/")
 
 
-setenv( "MPICH_HOME"             , base_dir                            )
-setenv( "MPI_ROOT"               , base_dir                            )
-setenv( "TACC_MPI_GETMODE"       , "mvapich2_ssh"                      )
+%if "%{is_debug}" == "1"
+setenv("TACC_%{MODULE_VAR}_DEBUG","1")
+%endif
 
-setenv("MV2_USE_RDMA_CM",         "0")
-setenv("MV2_USE_MCAST",           "1")
-setenv("MV2_USE_RDMA_CM_MCAST",   "1")
-setenv("MV2_HOMOGENEOUS_CLUSTER", "1")
+-- Create environment variables.
+local opensees_dir           = "%{INSTALL_DIR}"
 
-setenv("MV2_SMALL_MSG_DC_POOL",   "256")
-setenv("MV2_LARGE_MSG_DC_POOL",   "256")
-setenv("MV2_NUM_DC_TGT",           "1")
-setenv("MV2_HYBRID_ENABLE_THRESHOLD", "1000000")
-
-prepend_path( "PATH"             , pathJoin( base_dir , "bin"          ) )
-prepend_path( "MANPATH"          , pathJoin( base_dir , "share/man"    ) )
-prepend_path( "INFOPATH"         , pathJoin( base_dir , "share/doc"          ) )
-prepend_path( "LD_LIBRARY_PATH"  , pathJoin( base_dir , "lib64"          ) )
-prepend_path( "PKG_CONFIG_PATH"  , pathJoin( base_dir , "lib64/pkgconfig") )
-
-prepend_path( "MODULEPATH"       , "/opt/apps/intel19/impi19_0/modulefiles" )
-
-family("MPI")
-
+family("opensees")
+prepend_path(    "PATH",                pathJoin(opensees_dir, "bin"))
+setenv( "TACC_%{MODULE_VAR}_DIR",                opensees_dir)
+setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(opensees_dir, "lib"))
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(opensees_dir, "bin"))
 EOF
-
-
+  
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -218,7 +243,7 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 
 set     ModulesVersion      "%{version}"
 EOF
-
+  
   # Check the syntax of the generated lua modulefile
   %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
@@ -241,7 +266,7 @@ EOF
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile
+%files modulefile 
 #---------------------------
 
   %defattr(-,root,install,)
@@ -273,3 +298,4 @@ export PACKAGE_PREUN=1
 %clean
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
+

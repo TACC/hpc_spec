@@ -1,13 +1,15 @@
 
-# rpmbuild -bb --clean --define 'is_intel19 1' --define 'is_impi 1' --define 'mpiV 19_5' remora-1.8.3.spec 2>&1 | tee remora-1.8.3_i19_m_r4.log
+# rpmbuild -bb --clean --define 'is_intel19 1' --define 'is_impi 1' --define 'mpiV 19_5' remora-1.8.3.spec 2>&1 | tee remora-1.8.3_i19_m_r5.log
+
+# rpmbuild -bb --clean --define 'is_intel18 1' --define 'is_impi 1' --define 'mpiV 18_5' remora-1.8.3.spec 2>&1 | tee remora-1.8.3_i18_m_r4.log
 # rpmbuild -bb --clean --define 'is_intel18 1' --define 'is_impi 1' --define 'mpiV 18_5' remora-1.8.3.spec 2>&1 | tee remora-1.8.3_i18_m_r4.log
 
 # rpmbuild -bb --clean --define 'is_intel19 1' --define 'is_mvapich2 1' --define 'mpiV 2_3' remora-1.8.3.spec 2>&1 | tee remora-1.8.3_i19_mv2_r3.log
 # rpmbuild -bb --clean --define 'is_intel18 1' --define 'is_mvapich2 1' --define 'mpiV 2_3' remora-1.8.3.spec 2>&1 | tee remora-1.8.3_i18_mv2_r3.log
 
 # r=/admin/build/admin/rpms/frontera/RPMS/x86_64
-# rpm -hiv --nodeps $r/tacc-remora-intel19-impi19_0-package-1.8.3-4.el7.x86_64.rpm
-# rpm -hiv --nodeps $r/tacc-remora-intel19-impi19_0-modulefile-1.8.3-4.el7.x86_64.rpm
+# rpm -hiv --nodeps $r/
+# rpm -hiv --nodeps $r/
 
 #
 # Si Liu (siliu@tacc.utexas.edu)
@@ -72,7 +74,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4%{?dist}
+Release:   5%{?dist}
 License:   MIT
 Group:     Profiling/Tools
 URL:       https://github.com/TACC/remora

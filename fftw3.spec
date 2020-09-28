@@ -1,3 +1,8 @@
+#
+# Victor Eijkhout
+# took this over in July 2020
+#
+
 # Antia Lamas-Linares
 # The following versions are built:
 # 
@@ -67,11 +72,12 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GPL
 Group:     System Environment/Base
 URL:       http://www.fftw.org
-Packager:  TACC - cproctor@tacc.utexas.edu
+Packager:  eijkhout@tacc.utexas.edu
+# used to be cyrus
 Source:    fftw-%{pkg_version}.tar.gz
 
 
@@ -397,4 +403,8 @@ export PACKAGE_PREUN=1
 %clean
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
+
+%changelog
+* Mon Jul 13 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: rebuild with new maintainer, latest intel 19
 

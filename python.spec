@@ -4,7 +4,7 @@ Summary:    Python is a high-level general-purpose programming language.
 
 Name:       tacc-python%{python_major_version}
 Version:    %{python_module_version}
-Release:    1%{?dist}
+Release:    3%{?dist}
 License:    GPLv2
 Vendor:     Python Software Foundation
 Group:      Applications
@@ -31,11 +31,21 @@ Packager:   TACC - rtevans@tacc.utexas.edu
 
 %define INSTALL_DIR %{APPS}/%{comp_fam_ver}/python%{python_major_version}/%{version}
 %define MODULE_DIR %{APPS}/%{comp_fam_ver}/%{MODULES}/python%{python_major_version}
+
+#%define INSTALL_DIR_H5PY %{APPS}/%{comp_fam_ver}/hdf5_1_10/python%{python_major_version}/%{version}
+#%define HDF5_MODULE_PATH %{APPS}/%{comp_fam_ver}/hdf5_1_10/%{MODULES}
+#%define MODULE_DIR_H5PY %{HDF5_MODULE_PATH}/python%{python_major_version}
+
 %define PACKAGE_NAME %{name}-%{comp_fam_ver}
 
 %if %{defined mpiV}
     %define INSTALL_DIR_MPI %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/python%{python_major_version}/%{version}
     %define MODULE_DIR_MPI %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/%{MODULES}/python%{python_major_version}
+
+    #%define INSTALL_DIR_PH5PY %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/phdf5_1_10/python%{python_major_version}/%{version}
+    #%define PHDF5_MODULE_PATH %{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/phdf5_1_10/%{MODULES}
+    #%define MODULE_DIR_PH5PY %{PHDF5_MODULE_PATH}/python%{python_major_version}
+
     %define PACKAGE_NAME tacc-mpi4py-%{comp_fam_ver}-%{mpi_fam_ver}-python%{python_major_version}
 %endif
 
@@ -118,10 +128,10 @@ if [ ! -f "%{INSTALL_DIR}/bin/python%{python_major_version}" ]; then
     ls
 
     %if "%{comp_fam_name}" == "Intel"
-    ./configure --prefix=%{INSTALL_DIR} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc -lssp' CXXFLAGS="-std=c++11" CFLAGS="-Wformat -Wformat-security -D_FORTIFY_SOURCE=2 -fstack-protector -fwrapv -fpic -O3" LDFLAGS="-Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth --without-gcc --with-libm=-limf --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip --enable-unicode=ucs4    
+    ./configure --prefix=%{INSTALL_DIR} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc -lssp' CXXFLAGS="-std=c++11" CFLAGS="-Wformat -Wformat-security -D_FORTIFY_SOURCE=2 -fstack-protector -fwrapv -fpic -O3" LDFLAGS="-Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --without-gcc --with-libm=-limf --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip --enable-unicode=ucs4    
     %endif
     %if "%{comp_fam_name}" == "GNU"
-    ./configure --prefix=%{INSTALL_DIR} CC=gcc CXX=g++ LD=ld AR=ar LIBS='-lpthread' CFLAGS="-Wp,-D_FORTIFY_SOURCE=2 -fexceptions --param=ssp-buffer-size=4 -grecord-gcc-switches -fwrapv -fpic -O2" LDFLAGS="-fpic -Xlinker -export-dynamic" --with-system-ffi --enable-shared --with-pth --with-threads --with-ensurepip --with-computed-gotos --with-lto --enable-unicode=ucs4
+    ./configure --prefix=%{INSTALL_DIR} CC=gcc CXX=g++ LD=ld AR=ar LIBS='-lpthread' CFLAGS="-Wp,-D_FORTIFY_SOURCE=2 -fexceptions --param=ssp-buffer-size=4 -grecord-gcc-switches -fwrapv -fpic -O2 -fno-semantic-interposition" LDFLAGS="-fpic -Xlinker -export-dynamic" --with-system-ffi --enable-shared --with-ensurepip --with-computed-gotos --enable-optimizations --with-lto --enable-unicode=ucs4
     %endif
 
     make -j 24
@@ -155,6 +165,7 @@ ${PIP} install --no-binary :all: nose
 
 ${PIP} install --no-binary :all: pytest
 %{INSTALL_DIR}/bin/python%{python_major_version} -c 'import pytest'
+
 
 ${PIP} install --no-binary :all: virtualenv
 ${PIP} install --no-binary :all: virtualenvwrapper
@@ -375,12 +386,11 @@ ${PIP} install --no-binary :all: PyYAML
 %{INSTALL_DIR}/bin/python%{python_major_version} -c 'import yaml'
 
 #${PIP} install --no-binary :all: scikit_learn
-module spider hdf5
+
 if module load hdf5; then
-    HDF5_DIR=$TACC_HDF5_DIR ${PIP} install --no-binary :all: h5py
-    ${PIP} install --no-binary :all: tables 
+    HDF5_DIR=$TACC_HDF5_DIR ${PIP} install --no-binary :all: h5py --prefix=%{INSTALL_DIR_HDF5} --ignore-installed h5py
+    ${PIP} install --no-binary :all: tables --prefix=%{INSTALL_DIR_HDF5}
 fi
-exit 1
 
 #############################################################
 # mpi4py: use INSTALL_DIR_MPI
@@ -394,9 +404,9 @@ exit 1
   module load %{mpi_module}   
   ${PIP} install --no-binary :all: --prefix=%{INSTALL_DIR_MPI} mpi4py
 
-  if module load phdf5; then
-      export PYTHONPATH=%{INSTALL_DIR_MPI}/lib/python%{python_major_version}.%{python_minor_version}/site-packages
-      CC="mpicc" HDF5_MPI="ON" HDF5_DIR=$TACC_HDF5_DIR ${PIP} install --no-binary=h5py --no-deps --prefix=%{INSTALL_DIR_MPI} --ignore-installed h5py
+  #if module load phdf5; then
+  #    export PYTHONPATH=%{INSTALL_DIR_MPI}/lib/python%{python_major_version}.%{python_minor_version}/site-packages
+  #    CC="mpicc" HDF5_MPI="ON" HDF5_DIR=$TACC_HDF5_DIR ${PIP} install --no-binary=h5py --no-deps --prefix=%{INSTALL_DIR_MPI} --ignore-installed h5py
       #${PIP} install tables
   fi
 %endif
@@ -485,6 +495,8 @@ setenv("TACC_PYTHON_LIB", python_lib)
 setenv("TACC_PYTHON_MAN", python_man)
 setenv("TACC_PYTHON_VER", "%{python_major_version}.%{python_minor_version}")
 
+setenv("MPLBACKEND", "agg")
+
 prepend_path("PATH", python_bin)
 prepend_path("MANPATH", python_man)
 prepend_path("LD_LIBRARY_PATH", python_lib)
@@ -509,6 +521,36 @@ set ModulesVersion "%version"
 EOF
 
 %endif
+
+
+#----------------------------------------------------------
+# Create the module file for the serial h5py installation 
+#----------------------------------------------------------
+
+rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR_H5PY}
+mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR_H5PY}
+mkdir -p $RPM_BUILD_ROOT/%{APPS}/%{comp_fam_ver}/hdf5_1_10/python%{python_label}/modulefiles
+
+%if %{defined mpiV}
+
+cat >    $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}/%{version}.lua << 'EOF'
+inherit()
+whatis("Version-notes: Compiler:%{comp_fam_ver}. MPI:%{mpi_fam_ver}")
+prepend_path("PYTHONPATH", "%{INSTALL_DIR_MPI}/lib/python%{python_major_version}.%{python_minor_version}/site-packages")
+prepend_path("MODULEPATH", "%{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/python%{python_label}/modulefiles")
+EOF
+
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}/.version.%{version} << 'EOF'
+#%Module1.0####################################################################
+##
+## Version file for Python %{python_major_version} MPI version %{version}
+##
+set ModulesVersion "%version"
+EOF
+
+%endif
+
+
 
 #----------------------------------------------------------
 # Create the module file for the mpi4py installation 

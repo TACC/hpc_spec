@@ -26,3 +26,4 @@ slepc
 *.1log
 rstudio
 x
+gsl_test

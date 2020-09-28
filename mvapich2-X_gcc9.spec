@@ -7,7 +7,7 @@ Summary: Mvapich2-X new spec file
 # Create some macros (spec file variables)
 
 %define major_version 2
-%define minor_version 3rc3
+%define minor_version 3
 
 %define pkg_version %{major_version}.%{minor_version}
 
@@ -30,7 +30,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License: BSD License
 Group:   Development/Libraries
 Packager: TACC - siliu@tacc.utexas.edu,aruhela@tacc.utexas.edu
@@ -158,7 +158,7 @@ echo %{INSTALL_DIR}
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{pkg_version}.lua << 'EOF'
 local help_msg=[[
 
-Mvapich2-X 2.3rc3
+Mvapich2-X 2.3
 
 This module loads the MVAPICH2 MPI environment built with Intel compilers. 
 By loading this module, the following commands will be automatically available 
@@ -187,16 +187,15 @@ setenv( "MPICH_HOME"             , base_dir                            )
 setenv( "MPI_ROOT"               , base_dir                            )
 setenv( "TACC_MPI_GETMODE"       , "mvapich2_ssh"                      )
 
-setenv( "MV2_HOMOGENEOUS_CLUSTER", "1"                                 )
-setenv( "MV2_HYBRID_ENABLE_THRESHOLD", "10000000"                      )
+setenv("MV2_USE_RDMA_CM",         "0")
+setenv("MV2_USE_MCAST",           "1")
+setenv("MV2_USE_RDMA_CM_MCAST",   "1")
+setenv("MV2_HOMOGENEOUS_CLUSTER", "1")
 
-setenv( "MV2_USE_RDMA_CM"        , "0"                                 )
-setenv( "MV2_USE_MCAST"          , "1"                                 )
-
---setenv( "MV2_USE_RDMA_CM_MCAST"  , "1"                               )
---setenv( "MV2_CPU_BINDING_POLICY" , "hybrid"                          )
---setenv( "MV2_HYBRID_BINDING_POLICY", "spread"                        )
---setenv( "MV2_USE_DC"             , "0"                               )
+setenv("MV2_SMALL_MSG_DC_POOL",   "256")
+setenv("MV2_LARGE_MSG_DC_POOL",   "256")
+setenv("MV2_NUM_DC_TGT",           "1")
+setenv("MV2_HYBRID_ENABLE_THRESHOLD", "1000000")
 
 prepend_path( "PATH"             , pathJoin( base_dir , "bin"          ) )
 prepend_path( "MANPATH"          , pathJoin( base_dir , "share/man"    ) )

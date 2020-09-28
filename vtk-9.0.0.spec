@@ -46,7 +46,7 @@ Summary:  vtk 9.0.0 local binary install
 # VTK depends on the compiler not so sure about mpi. 
 %include rpm-dir.inc
 %include compiler-defines.inc
-%include mpi-defines.inc
+#%include mpi-defines.inc
 %include name-defines.inc
 
 ############ Do Not Change #############
@@ -64,7 +64,8 @@ Packager:  TACC - semeraro@tacc.utexas.edu
 %define debug_package %{nil}
 %define dbg           %{nil}
 
-%define VTK_SRC vtk.%{version}.%{comp_fam_ver}.%{mpi_fam_ver}.%{release}.tar.gz
+#%define VTK_SRC vtk.%{version}.%{comp_fam_ver}.%{mpi_fam_ver}.%{release}.tar.gz
+%define VTK_SRC vtk.%{version}.%{comp_fam_ver}.%{release}.tar.gz
 
 %package %{PACKAGE}
 Summary: The package RPM
@@ -120,6 +121,7 @@ The Visualization Toolkit (VTK) is a software library used for the construction 
 # Setup modules
 %include system-load.inc
 module purge
+%include compiler-load.inc
 
 # Insert further module commands
 
@@ -193,7 +195,6 @@ local vtk_dir ="%{INSTALL_DIR}"
 family("vtk")
 
 --conflict vtk
-prereq("qt5")
 
 prepend_path("PATH",pathJoin(vtk_dir,"bin"))
 prepend_path("LD_LIBRARY_PATH",pathJoin(vtk_dir,"lib64"))

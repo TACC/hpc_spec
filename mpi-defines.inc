@@ -58,19 +58,24 @@
     %define mpi_label 19_0
     %define mpi_module_version 19.0.5
   %endif
+  # VLE added 20200906
+  %if "%{mpiV}" == "19_7"
+    %define mpi_label 19_0
+    %define mpi_module_version 19.0.7
+  %endif
   %define mpi_fam     impi
   %define mpi_fam_ver impi%{mpi_label}
   %define mpi_module  %{mpi_fam}/%{mpi_module_version}
 %endif
 
-%if "%{is_mvapich2}" == "1"
+%if "%{is_mvapich2-x}" == "1"
   %if %{undefined mpiV}
     %define mpi_label 2_3
-    %define mpi_module_version 2.3.1
+    %define mpi_module_version 2.3
   %endif
   %if "%{mpiV}" == "2_3"
     %define mpi_label 2_3
-    %define mpi_module_version 2.3.1
+    %define mpi_module_version 2.3
   %endif
   # Victor added this
   %if "%{mpiV}" == "2_x"

@@ -2,8 +2,8 @@
 
 Summary: XALT
 Name: xalt
-Version: 2.7.28
-Release: 2
+Version: 2.9.7
+Release: 1%{?dist}
 License: LGPLv2
 Group: System Environment/Base
 Source0:  xalt-%{version}.tar.bz2
@@ -97,7 +97,11 @@ prepend_path("LD_PRELOAD",                "%{GENERIC_IDIR}/lib64/libxalt_init.so
 setenv (     "%{MODULE_VAR}_DIR",         "%{GENERIC_IDIR}/")
 setenv (     "%{MODULE_VAR}_BIN",         "%{GENERIC_IDIR}/bin")
 setenv (     "XALT_EXECUTABLE_TRACKING",  "yes")
-setenv (     "XALT_SCALAR_SAMPLING",      "yes")
+setenv (     "XALT_SAMPLING",             "yes")
+
+--prepend_path("PYTHONPATH",                "%{GENERIC_IDIR}/site_package")
+--prepend_path("SINGULARITY_BINDPATH",      "%{GENERIC_IDIR}/bin")
+--setenv(      "SINGULARITYENV_LD_PRELOAD", "%{GENERIC_IDIR}/lib64/libxalt_init.so")
 EOF
 
 #--------------

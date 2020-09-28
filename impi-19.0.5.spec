@@ -51,7 +51,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
+Release:   3%{?dist}
 License:   proprietary
 Group:     MPI
 URL:       https://software.intel.com/en-us/intel-mpi-library
@@ -254,7 +254,6 @@ family(       "MPI"                                                             
 
 if (os.getenv("TACC_SYSTEM") == "frontera") then
   family( "libfabric" )
-  depends_on( "ucx" )
   setenv( "FI_PROVIDER"        , "mlx" )
   setenv( "FI_PROVIDER_PATH"   , pathJoin( base_dir , "intel64/libfabric/lib/prov" ) )
   setenv( "I_MPI_STARTUP_MODE" , "pmi_shm_netmod" )

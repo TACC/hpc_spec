@@ -1,7 +1,7 @@
 #
 # Amit Ruhela
-# 2020-03-20 Add name-defines-noreloc.inc
-# 2020-03-20 Need to investigate relocation -- use /opt/apps for now
+# 2020-09-03 Add name-defines-noreloc.inc
+# 2020-09-03 Need to investigate relocation -- use /opt/apps for now
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -14,11 +14,11 @@
 # Typical Command-Line Example:
 # ./build_rpm.sh Bar.spec
 # cd ../RPMS/x86_64
-# rpm -qilp tacc-pgi-package-19.10.0-1.el7.x86_64.rpm
-# rpm -qilp tacc-pgi-modulefile-19.10.0-1.el7.x86_64.rpm
-# rpm –hiv --relocate /tmprpm=/opt/apps tacc-pgi-package-19.10.0-1.el7.x86_64.rpm
-# rpm –hiv --relocate /tmpmod=/opt/apps tacc-pgi-modulefile-19.10.0-1.el7.x86_64.rpm
-# rpm -e tacc-pgi-package-19.10.0-1.el7.x86_64.rpm tacc-pgi-modulefile-19.10.0-1.el7.x86_64.rpm
+# rpm -qilp tacc-pgi-package-20.7.0-1.el7.x86_64.rpm
+# rpm -qilp tacc-pgi-modulefile-20.7.0-1.el7.x86_64.rpm
+# rpm –hiv --relocate /tmprpm=/opt/apps tacc-pgi-package-20.7.0-1.el7.x86_64.rpm
+# rpm –hiv --relocate /tmpmod=/opt/apps tacc-pgi-modulefile-20.7.0-1.el7.x86_64.rpm
+# rpm -e tacc-pgi-package-20.7.0-1.el7.x86_64.rpm tacc-pgi-modulefile-20.7.0-1.el7.x86_64.rpm
 
 Summary: A Nice little non-relocatable skeleton spec file example.
 
@@ -27,11 +27,11 @@ Summary: A Nice little non-relocatable skeleton spec file example.
 %define MODULE_VAR    PGI
 
 # Create some macros (spec file variables)
-%define major_version 19
-%define minor_version 10
+%define major_version 20
+%define minor_version 7
 %define micro_version 0
 
-%define year 2019
+%define year 2020
 %define pgversion %{major_version}.%{minor_version}
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
@@ -51,8 +51,8 @@ Summary: A Nice little non-relocatable skeleton spec file example.
 
 #%define MODULE_PREFIX /opt/apps
 
-%define lib_dir linux86-64-llvm/%{major_version}.%{minor_version}
-%{echo: INSTALL_DIR = %{INSTALL_DIR} }
+%define lib_dir Linux_x86_64/%{major_version}.%{minor_version}
+
 
 ########################################
 ############ Do Not Remove #############
@@ -64,7 +64,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
+Release:   1%{?dist}
 License:   Community
 Group:     Development/Tools
 URL:       https://www.pgroup.com/products/community.htm
@@ -113,6 +113,8 @@ for easy argument passing and procedure invocation between Fortran, C, and C++.
 #--------------------------------------- '
 %prep
 #---------------------------------------
+echo "RPM_BUILD_ROOT=$RPM_BUILD_ROOT"
+#outpt is RPM_BUILD_ROOT=/root/rpmbuild/BUILDROOT/tacc-pgi-20.7.0-1.el7.x86_64
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -185,8 +187,6 @@ export pgi_patch=%{micro_version}
 
 export pgi_version=${pgi_major}.${pgi_minor}.${pgi_patch}
 
-#export ncores=56
-
 cd ${pgi}
 
 printf "\n\n************************************************************\n"
@@ -196,32 +196,33 @@ printf "************************************************************\n\n"
 #wget https://www.pgroup.com/support/download_community.php?file=pgi-community-linux-x64
 
 #cp /admin/build/admin/rpms/frontera/amit/pgilinux-2019-1910-x86-64.tar.gz pgi-${pgi_version}.tar.gz
-#tar xfz pgi-${pgi_version}.tar.gz
-cd /admin/build/admin/rpms/frontera/amit
+#tar xpfz pgi-${pgi_version}.tar.gz
+set -x
+cd /admin/build/admin/rpms/frontera/amit/nvhpc20.7/nvhpc_2020_207_Linux_x86_64_cuda_11.0
 
-export PGI_SILENT=true
-export PGI_ACCEPT_EULA=accept
-export PGI_INSTALL_TYPE=single
-export PGI_INSTALL_DIR=%{INSTALL_DIR}
-export PGI_INSTALL_NVIDIA=false
-export PGI_INSTALL_MPI=false
-export PGI_MPI_GPU_SUPPORT=true
+export NVHPC_SILENT=true 
+export NVHPC_INSTALL_DIR=%{INSTALL_DIR} 
+export NVHPC_INSTALL_TYPE=single 
+export NVHPC_DEFAULT_CUDA=11.0
+
 ./install
 
-cd  %{INSTALL_DIR}/linux86-64
-unlink %{pgversion}
-ln -sf ../linux86-64-llvm/%{pgversion} %{pgversion}
-rm -rf %{year}
+cd  %{INSTALL_DIR}
+rm -rf modulefiles
 
-cd %{INSTALL_DIR}/linux86-64-llvm
-rm -rf %{year}
-unlink flexlm
-cp -rf ../linux86-64/flexlm .
+cd %{INSTALL_DIR}/%{lib_dir}
+rm -rf ../%{year}
+rm -rf REDIST
+rm -rf profilers
+rm -rf math_libs
+echo -e "\nThe directory contents are:"
+ls
 
-cd %{INSTALL_DIR}/linux86-64-nollvm
-rm -rf %{year}
-unlink flexlm
-cp -rf ../linux86-64/flexlm .
+cd %{INSTALL_DIR}/%{lib_dir}/comm_libs
+#unlink mpi 
+#unlink nccl 
+#unlink nvshmem 
+#rm -rf openmpi
 
 cd  %{INSTALL_DIR}/..
 
@@ -231,7 +232,7 @@ fi
 
 cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
 umount %{INSTALL_DIR}/
-
+set +x
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -243,7 +244,7 @@ umount %{INSTALL_DIR}/
 #---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -255,13 +256,13 @@ umount %{INSTALL_DIR}/
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_message = [[
-The PGI Compiler Collection %{pkg_version} includes PGI C, C++, Fortran, OpenMP, 
-and OpenACC. PGI C and C++ optimize ANSI C11 and GNU-compatible C++17 compilers. 
-Both compilers implement OpenMP 4.5 pragma-based parallel programming for 
-multicore CPUs, and OpenACC 2.6 pragma-based parallel programming for CPUs and 
-NVIDIA GPUs. PGI Fortran supports the industry standard ISO_C_BINDING, which 
-allows for easy argument passing and procedure invocation between Fortran, C, 
-and C++. 
+The PGI Compiler Collection %{pkg_version} includes PGI C, C++, Fortran, OpenMP,
+and OpenACC. PGI C and C++ optimize ANSI C11 and GNU-compatible C++17 compilers.
+Both compilers implement OpenMP 4.5 pragma-based parallel programming for
+multicore CPUs, and OpenACC 2.6 pragma-based parallel programming for CPUs and
+NVIDIA GPUs. PGI Fortran supports the industry standard ISO_C_BINDING, which
+allows for easy argument passing and procedure invocation between Fortran, C,
+and C++.
 
 
 This module loads PGI Compiler variables.
@@ -298,24 +299,33 @@ whatis("Keywords: System, compiler")
 whatis("URL: https://www.pgroup.com")
 
 -- Create environment variables
-local pgi_dir = "/opt/apps/%{INSTALL_SUFFIX}/%{lib_dir}"
-prepend_path( "PATH"                     , pathJoin(pgi_dir,"bin"                 ))
-prepend_path( "LD_LIBRARY_PATH"          , pathJoin(pgi_dir,"lib"                 ))
-prepend_path( "MANPATH"                  , pathJoin(pgi_dir,"man"                 ))
-prepend_path( "LM_LICENSE_FILE"          , pathJoin(pgi_dir,"../../license.dat"   ))
+local nvcompdir = "/opt/apps/%{INSTALL_SUFFIX}/%{lib_dir}/compilers"
+local nvprofdir = "/opt/apps/%{INSTALL_SUFFIX}/%{lib_dir}/profilers"
+local nvmathdir = "/opt/apps/%{INSTALL_SUFFIX}/%{lib_dir}/math_libs"
+local nvcommdir = "/opt/apps/%{INSTALL_SUFFIX}/%{lib_dir}/comm_libs"
 
-prepend_path( "INCLUDE"                  , pathJoin(pgi_dir,"include"                         ))
-prepend_path( "INCLUDE"                  , pathJoin(pgi_dir,"include_acc"                     ))
-prepend_path( "INCLUDE"                  , pathJoin(pgi_dir,"include_omp"                     ))
-prepend_path( "INCLUDE"                  , pathJoin(pgi_dir,"include-gcc70"                   ))
-prepend_path( "MODULEPATH"               , "%{MODULE_PREFIX}/pgi%{major_version}/modulefiles" )
+prepend_path( "PATH"                     , pathJoin(nvcompdir,"bin"                 ))
+prepend_path( "PATH"                     , pathJoin(nvprofdir,"bin"                 ))
 
-setenv(       "PGI"                      , pgi_dir                      )
-setenv(       "%{MODULE_VAR}_LIB"        , pathJoin(pgi_dir,"lib"       ))
-setenv(       "TACC_%{MODULE_VAR}_DIR"   , pgi_dir                      )
-setenv(       "TACC_%{MODULE_VAR}_BIN"   , pathJoin(pgi_dir,"bin"       ))
-setenv(       "TACC_%{MODULE_VAR}_LIB"   , pathJoin(pgi_dir,"lib"       ))
-setenv(       "TACC_%{MODULE_VAR}_INC"   , pathJoin(pgi_dir,"include"   ))
+prepend_path( "LD_LIBRARY_PATH"          , pathJoin(nvcompdir,"lib"                 ))
+prepend_path( "LD_LIBRARY_PATH"          , pathJoin(nvmathdir,"lib"                 ))
+
+prepend_path( "MANPATH"                  , pathJoin(nvcompdir,"man"                 ))
+
+prepend_path( "CPATH"                    , pathJoin(nvcompdir,"include"                         ))
+prepend_path( "CPATH"                    , pathJoin(nvmathdir,"include"                         ))
+prepend_path( "CPATH"                    , pathJoin(nvcompdir,"include_acc"                     ))
+prepend_path( "CPATH"                    , pathJoin(nvcompdir,"include_omp"                     ))
+prepend_path( "CPATH"                    , pathJoin(nvcompdir,"include-gcc70"                   ))
+prepend_path( "MODULEPATH"               , "%{MODULE_PREFIX}/pgi%{major_version}/modulefiles"   )
+
+setenv(       "PGI"                      , nvcompdir                      )
+setenv(       "%{MODULE_VAR}_LIB"        , pathJoin(nvcompdir,"lib"       ))
+
+setenv(       "TACC_%{MODULE_VAR}_DIR"   , nvcompdir                      )
+setenv(       "TACC_%{MODULE_VAR}_BIN"   , pathJoin(nvcompdir,"bin"       ))
+setenv(       "TACC_%{MODULE_VAR}_LIB"   , pathJoin(nvcompdir,"lib"       ))
+setenv(       "TACC_%{MODULE_VAR}_INC"   , pathJoin(nvcompdir,"include"   ))
 
 if (os.getenv("TACC_SYSTEM") == "frontera") then
   setenv( "TACC_VEC_FLAGS" ,      "-i8 -m64 -mcmodel=medium -Mdalign -Mllalign -O2 -fastsse -Mipa=fast  -Mvect=simd:256" )
@@ -398,4 +408,5 @@ export PACKAGE_PREUN=1
 %clean
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
+
 

@@ -1,6 +1,7 @@
 #
 # W. Cyrus Proctor
-# 2016-02-06
+# Antonio Gomez
+# 2015-08-25
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -17,43 +18,49 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: A Nice little relocatable skeleton spec file example.
+Summary: A Nice little relocatable skeleton spec file.
 
 # Give the package a base name
-%define pkg_base_name TACC
-%define MODULE_VAR    TACC
+%define pkg_base_name python_cacher
+%define MODULE_VAR    python_cacher
 
 # Create some macros (spec file variables)
 %define major_version 1
-%define minor_version 1
+%define minor_version 2
+%define micro_version 0
 
+#%define pkg_version %{major_version}.%{minor_version}
 %define pkg_version %{major_version}.%{minor_version}
-
 ### Toggle On/Off ###
-%include rpm-dir.inc                  
+%include rpm-dir.inc
+
 #%include compiler-defines.inc
 #%include mpi-defines.inc
+
+#%include name-defines-noreloc.inc
+
 ########################################
 ### Construct name based on includes ###
 ########################################
+#%include name-defines.inc
 %include name-defines-noreloc.inc
+
 ########################################
 ############ Do Not Remove #############
 ########################################
 
 ############ Do Not Change #############
-#Name:      %{pkg_name}
-# 2016-02-06 Hacked name to keep TACC
-Name:      tacc-base_modules
+Name:      %{pkg_name}
 Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   9%{?dist}
+Release:   1%{?dist}
 License:   GPL
-Group:     Module Magic
-Packager:  TACC - cproctor@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+URL:       NULL
+Packager:  TACC - huang@tacc.utexas.edu
+Source:    python_cacher-1.2.tgz
+#Source1:   tcl8.5.9-linux-x86_64-threaded.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -61,21 +68,19 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Development/Tools
+Summary: The python cacher RPM
+Group: Tools/Optimization
 %description package
-This is the long description for the package RPM...
-Welcome to the TACC Module way!
+A library is designed to automatically cache user's python related files on local storage (/dev/shm or /tmp) during the first access. When access the same files later, the file in local storage will be used. This not only redirect the IO on $WORK to local storage and resolve the related MDS issue, it also make IO faster since local storage is utilized instead of accessing $WORK.
 
 %package %{MODULEFILE}
-Summary: The modulefile RPM
+Summary: The python cacher modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...
-Welcome to the TACC Module way!
+A library is designed to automatically cache user's python related files on local storage (/dev/shm or /tmp) during the first access. When access the same files later, the file in local storage will be used. This not only redirect the IO on $WORK to local storage and resolve the related MDS issue, it also make IO faster since local storage is utilized instead of accessing $WORK.
 
 %description
-Welcome to the TACC Module way!
+A library is designed to automatically cache user's python related files on local storage (/dev/shm or /tmp) during the first access. When access the same files later, the file in local storage will be used. This not only redirect the IO on $WORK to local storage and resolve the related MDS issue, it also make IO faster since local storage is utilized instead of accessing $WORK.
 
 #---------------------------------------
 %prep
@@ -84,8 +89,6 @@ Welcome to the TACC Module way!
 #------------------------
 %if %{?BUILD_PACKAGE}
 #------------------------
-  # Delete the package installation directory.
-  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -94,26 +97,30 @@ Welcome to the TACC Module way!
 %if %{?BUILD_MODULEFILE}
 #---------------------------
   #Delete the module installation directory.
-  rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
+
+%setup -n python_cacher-%{pkg_version}
 
 
 #---------------------------------------
 %build
 #---------------------------------------
 
-
 #---------------------------------------
 %install
 #---------------------------------------
 
 # Setup modules
-# Nothing to do!
+%include system-load.inc
+module purge
+#%include compiler-load.inc
+#%include mpi-load.inc
+
 
 # Insert necessary module commands
-# None to have!
+#module purge
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -122,8 +129,9 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 %if %{?BUILD_PACKAGE}
 #------------------------
 
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
+  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -135,9 +143,17 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-  # Nothing to see here!
 
-#-----------------------  
+  # Create some dummy directories and files for fun
+
+  cp -r lib $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+  chmod -Rf u+rwX,g+rwX,o=rX                                  $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+
+  # Copy everything from tarball over to the installation directory
+#  cp * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+#-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
 
@@ -146,9 +162,11 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 %if %{?BUILD_MODULEFILE}
 #---------------------------
 
-%define MODULE_DIR %{MODULE_PREFIX}/modulefiles
-  mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-  
+  rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
+mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
+
+#  mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -156,43 +174,54 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
+
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/TACC.lua << 'EOF'
-local helpMsg = [[
-The %{MODULE_VAR} modulefile defines the default paths and environment
-variables needed to use the local software and utilities
-available, placing them after the vendor-supplied
-paths in PATH and MANPATH.
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
+local help_msg=[[
+A library is designed to automatically cache user python related files on local storage (/dev/shm or /tmp) during the first access. When access the same files later, the file in local storage will be used. This not only redirect the IO on $WORK to local storage and resolve the related MDS issue, it also make IO faster since local storage is utilized instead of accessing $WORK.
+
+export PYTHON_IO_LocalDir="/dev/shm"
+or
+export PYTHON_IO_LocalDir="/tmp"
+
+If PYTHON_IO_LocalDir is not set, "/dev/shm" is set as default. 
+
+Please ONLY load this module in your production jobs or the test jobs for production runs. If you are installing or removing Python packages, you NEED to unload then reload this tool to avoid out of date cached data.
+
+Lei Huang (huang@tacc.utexas.edu)
 ]]
 
-help(helpMsg)
+--help(help_msg)
+help(help_msg)
 
+whatis("Name: python_cacher")
+whatis("Version: 1.0")
+whatis("Category: Tools/Optimization ")
+whatis("Keywords: Tools, IO, Optimization")
+whatis("Description: Tool for optimal Python IO")
 
-if (os.getenv("USER") ~= "root") then
-  append_path("PATH",  ".")
-end
+-- Create environment variables.
+local python_cacher_dir           = "%{INSTALL_DIR}"
 
-load("intel")
-load("impi")
-load("git")
-load("autotools")
-load("python3")
-load("cmake")
-load("pmix")
-load("hwloc/1.11.12")
-try_load("xalt")
-
-prepend_path("MANPATH","/usr/local/man:/usr/share/man:/usr/X11R6/man:/usr/kerberos/man:/usr/man")
-
--- Environment change - assume single threaded to fix silly MKL
-if (mode() == "load" and os.getenv("OMP_NUM_THREADS") == nil) then
-  setenv("OMP_NUM_THREADS","1")
-end
-
---prepend_path{ "PATH", "/opt/apps/tacc/bin", priority=10 }
+family("python_cacher")
+prepend_path( "LD_LIBRARY_PATH",        pathJoin(python_cacher_dir, "lib"))
+append_path( "LD_PRELOAD",             pathJoin(python_cacher_dir, "lib/myopen.so") )
+setenv( "PYTHON_IO_CACHE_NONEXISTING_FILE", "1")
+setenv( "PYTHON_IO_CACHE_CWD", "1")
 
 EOF
+
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
+#%Module3.1.1#################################################
+##
+## version file for %{BASENAME}%{version}
+##
+
+set     ModulesVersion      "%{version}"
+EOF
+
+  # Check the syntax of the generated lua modulefile
+  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
@@ -213,7 +242,7 @@ EOF
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile 
+%files modulefile
 #---------------------------
 
   %defattr(-,root,install,)
