@@ -9,6 +9,15 @@ Group: System Environment/Base
 Source0:  xalt-%{version}.tar.bz2
 Packager: mclay@tacc.utexas.edu
 
+#------------------------------------------------
+# Set this obscure variable so that the rpm program
+# will byte-compile python3 code correctly.
+#------------------------------------------------
+%global _python_bytecompile_errors_terminate_build 0
+
+#------------------------------------------------
+# BASIC DEFINITIONS
+#------------------------------------------------
 %define debug_package %{nil}
 %include rpm-dir.inc
 
