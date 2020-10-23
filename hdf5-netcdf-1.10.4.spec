@@ -300,7 +300,7 @@ for ARCH in "${archA[@]}"; do
 
   export LD_LIBRARY_PATH="$INSTALL_DIR:$LD_LIBRARY_PATH:$INSTALL_DIR"
 
-  ./configure --prefix=$INSTALL_DIR --enable-build-mode=production --with-szlib=$INSTALL_DIR --enable-fortran --enable-fortran2003 --enable-shared $CONF_OPTS $DEBUG_FLAGS
+  ./configure --prefix=$INSTALL_DIR --enable-build-mode=production --with-szlib=$INSTALL_DIR --enable-fortran --enable-fortran2003 --enable-shared --with-default-api-version=v18 $CONF_OPTS $DEBUG_FLAGS
 
   make V=1 -j 4
 
