@@ -1,22 +1,5 @@
-# Antia Lamas-Linares
-# The following versions are built:
-# 
-# 2018-08-14
-# Building for intel18
-# New version of FFTW3 (3.3.8) available
-# ---
-# 2017-11-08
-# Building for phase 2 of Stampede2 deployment - SKX
-# Now using the standard TACC_VEC_OPT flags
-# ---
-# 2017-07-10 
-# User ticket TUP:38819 pointed out incorrect files in libtool files
-# It appears this will not work as a relocatable
-# ---
-# 2017-05-17
-# Modified for Stampede 2 deployment and avx512
-# This version is patch 2 with the missing fortran hearders
-# ---
+# Victor Eijkhout
+# (taking over from Antia Lamas-Linares)
 
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -67,11 +50,12 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GPL
 Group:     System Environment/Base
 URL:       http://www.fftw.org
-Packager:  TACC - alamas@tacc.utexas.edu
+Packager:  eijkhout@tacc.utexas.edu
+## Packager:  TACC - alamas@tacc.utexas.edu
 Source:    fftw-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -393,3 +377,26 @@ export PACKAGE_PREUN=1
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
 
+# The following versions are built:
+# 
+# 2018-08-14
+# Building for intel18
+# New version of FFTW3 (3.3.8) available
+# ---
+# 2017-11-08
+# Building for phase 2 of Stampede2 deployment - SKX
+# Now using the standard TACC_VEC_OPT flags
+# ---
+# 2017-07-10 
+# User ticket TUP:38819 pointed out incorrect files in libtool files
+# It appears this will not work as a relocatable
+# ---
+# 2017-05-17
+# Modified for Stampede 2 deployment and avx512
+# This version is patch 2 with the missing fortran hearders
+# ---
+
+%changelog
+
+* Tue Sep 29 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: recompile for intel/19.1.1

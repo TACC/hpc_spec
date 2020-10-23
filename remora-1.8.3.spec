@@ -1,4 +1,14 @@
+# rpmbuild -bb --clean --define 'is_intel19 1' --define 'is_impi 1' --define 'mpiV 19_7' remora-1.8.3.spec 2>&1 | tee remora-1.8.3_i19_m_r6.log
+# rpmbuild -bb --clean --define 'is_intel18 1' --define 'is_impi 1' --define 'mpiV 18_2' remora-1.8.3.spec 2>&1 | tee remora-1.8.3_i18_m_r6.log
+
+
+# r=/admin/build/admin/rpms/frontera/RPMS/x86_64
+# rpm -hiv --nodeps $r/tacc-remora-intel18-impi18_0-package-1.8.3-6.el7.x86_64.rpm
+# rpm -hiv --nodeps $r/tacc-remora-intel18-impi18_0-modulefile-1.8.3-6.el7.x86_64.rpm
+
+#
 # Si Liu (siliu@tacc.utexas.edu)
+# Kent Milfeld (milfeld@tacc.utexas.edu)
 # Carlos Rosales-Fernandez (carlos@tacc.utexas.edu)
 # Antonio Gomez (agomez@tacc.utexas.edu)
 
@@ -40,8 +50,8 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
-#%include mpi-defines.inc
+%include compiler-defines.inc
+%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
@@ -59,7 +69,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   6%{?dist}
 License:   MIT
 Group:     Profiling/Tools
 URL:       https://github.com/TACC/remora
@@ -100,7 +110,15 @@ REMORA provides an easy to use profiler that collects several different statisti
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
+  # %{pkg_base_name}-%{pkg_version}.tar.gz  is empty
+  # get latest version from git
+
 %setup -n %{pkg_base_name}-%{pkg_version}
+  cd ..
+  ls -la %{pkg_base_name}-%{pkg_version}
+  rm -rf %{pkg_base_name}-%{pkg_version}
+  git clone https://github.com/tacc/remora.git
+  mv remora %{pkg_base_name}-%{pkg_version}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -128,12 +146,17 @@ REMORA provides an easy to use profiler that collects several different statisti
 
 # Setup modules
 %include system-load.inc
-module purge
-module load intel impi python TACC
+
+#module purge
+#module load TACC
+#module load intel/18.0.5 impi/18.0.5
+#module load intel/18.0.5 mvapich2
+#module load intel/19.0.4 mvapich2
+
 # Load Compiler
-#%include compiler-load.inc
+%include compiler-load.inc
 # Load MPI Library
-#%include mpi-load.inc
+%include mpi-load.inc
 
 # Insert further module commands
 
@@ -163,18 +186,19 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
  mkdir -p             %{INSTALL_DIR}
  mount -t tmpfs tmpfs %{INSTALL_DIR}
 
-export CFLAGS="%{TACC_OPT}"
-export LDFLAGS="%{TACC_OPT}"
+#export CFLAGS="%{TACC_OPT}"
+#export LDFLAGS="%{TACC_OPT}"
 
 ## sed -i 's/icc/#icc/g' ./install.sh
 #sed -i 's/pip/#pip/g' ./install.sh
+
 REMORA_INSTALL_PREFIX=%{INSTALL_DIR} ./install.sh
 
 sed -i '/dvs,IO/d'                  %{INSTALL_DIR}/bin/config/modules
 sed -i '/gpu,MEMORY/d'              %{INSTALL_DIR}/bin/config/modules
 sed -i '/power,POWER/d'             %{INSTALL_DIR}/bin/config/modules
 sed -i '/temperature,TEMPERATURE/d' %{INSTALL_DIR}/bin/config/modules
-sed -i '/network,NETWORK/d' %{INSTALL_DIR}/bin/config/modules
+sed -i '/network,NETWORK/d'         %{INSTALL_DIR}/bin/config/modules
 
 #module load python
 #pip install blockdiag --target=%{INSTALL_DIR}/python
@@ -239,20 +263,28 @@ REMORA will create a set of folders with a number of files that contain
 the values for the parameters previously introduced.
 
 REMORA will also create a set of HTML files with the results plotted for
-an easier analysis. There's a summary HTML file in the main results folder
-that contains links to the different results. Transfer the results to your
-own machine to visualize them.
+an easier analysis. There is an HTML index file (remora_summary.html) in 
+the main results folder that contains links to the different results. 
+Tar up the directory and transfer it to your own machine to visualize 
+the google plots of the data. Just open the html index page in your 
+browser by double clicking the index.
 
 The following environment variables control the behaviour of the tool:
 
   - REMORA_PERIOD  - How often memory usage is checked. Default
-                     is 10 seconds.
+                     is 10 seconds. (integer, 1=lowest value)
   - REMORA_VERBOSE - Verbose mode will save all information to
                      a file. Default is 0 (off).
-  - REMORA_MODE    - FULL for all stats, BASIC for memory and cpu only.
-                     Default if FULL.
-  - REMORA_TMPDIR  - Directory for intermediate files. Default is the
-                     remora output directory.
+  - REMORA_MODE    - FULL for all stats (default),
+                     BASIC for memory and cpu only.
+  - REMORA_CUDA    - Set to 0 to turn off gpu data collection on 
+                     nodes that have GPUs.
+  - REMORA_TMPDIR  - Directory for intermediate files. Default
+                     is the remora output directory.
+
+Execute:     remora --help
+
+to see these environmental control variables.
 
 The remora module also defines the following environment variables:
 REMORA_DIR, REMORA_LIB, REMORA_INC and REMORA_BIN for the location
@@ -260,7 +292,10 @@ of the REMORA distribution, libraries, include files, and tools respectively.
 
 To generate a summary report after a crash use:
 
-remora_post_crash <JOBID>
+   remora_post_crash <JOBID>
+
+Documentation:
+https://github.com/TACC/remora/blob/master/docs/remora_user_guide.pdf
 ]]
 
 help(help_message,"\n")
@@ -278,14 +313,14 @@ local remora_dir           = "%{INSTALL_DIR}"
 family("remora")
 prepend_path(    "PATH",                pathJoin(remora_dir, "bin"))
 prepend_path(    "LD_LIBRARY_PATH",     pathJoin(remora_dir, "lib"))
-prepend_path(    "PYTHONPATH",      pathJoin(remora_dir, "/python"))
+
 setenv( "TACC_REMORA_DIR",       remora_dir)
 setenv( "TACC_REMORA_INC",       pathJoin(remora_dir, "include"))
 setenv( "TACC_REMORA_LIB",       pathJoin(remora_dir, "lib"))
-setenv( "REMORA_BIN",       pathJoin(remora_dir, "bin"))
+setenv( "REMORA_BIN",            pathJoin(remora_dir, "bin"))
 setenv( "REMORA_PERIOD",    "10")
-setenv( "REMORA_MODE",  "FULL")
-setenv( "REMORA_VERBOSE",   "0")
+setenv( "REMORA_MODE",    "FULL")
+setenv( "REMORA_VERBOSE",    "0")
 
 EOF
 
@@ -354,4 +389,3 @@ export PACKAGE_PREUN=1
 %clean
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
-
