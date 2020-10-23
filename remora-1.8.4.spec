@@ -1,15 +1,13 @@
 
-# rpmbuild -bb --clean --define 'is_intel19 1' --define 'is_impi 1' --define 'mpiV 19_7' remora-1.8.3.spec 2>&1 | tee remora-1.8.3_i19_m_r6.log
-# rpmbuild -bb --clean --define 'is_intel18 1' --define 'is_impi 1' --define 'mpiV 18_5' remora-1.8.3.spec 2>&1 | tee remora-1.8.3_i18_m_r6.log
+# rpmbuild -bb --clean --define 'is_intel19 1' --define 'is_impi 1' --define 'mpiV 19_7' remora-1.8.4.spec 2>&1 | tee remora-1.8.4_i19_r1.log
+# rpmbuild -bb --clean --define 'is_intel18 1' --define 'is_impi 1' --define 'mpiV 18_5' remora-1.8.4.spec 2>&1 | tee remora-1.8.4_i18_r1.log
 
-# rpmbuild -bb --clean --define 'is_intel18 1' --define 'is_impi 1' --define 'mpiV 18_5' remora-1.8.3.spec 2>&1 | tee remora-1.8.3_i18_m_r4.log
-
-# rpmbuild -bb --clean --define 'is_intel19 1' --define 'is_mvapich2 1' --define 'mpiV 2_3' remora-1.8.3.spec 2>&1 | tee remora-1.8.3_i19_mv2_r3.log
-# rpmbuild -bb --clean --define 'is_intel18 1' --define 'is_mvapich2 1' --define 'mpiV 2_3' remora-1.8.3.spec 2>&1 | tee remora-1.8.3_i18_mv2_r3.log
+# rpmbuild -bb --clean --define 'is_intel19 1' --define 'is_mvapich2 1' --define 'mpiV 2_3' remora-1.8.4.spec 2>&1 | tee remora-1.8.4_i19_mv2_r1.log
+# rpmbuild -bb --clean --define 'is_intel18 1' --define 'is_mvapich2 1' --define 'mpiV 2_3' remora-1.8.4.spec 2>&1 | tee remora-1.8.4_i18_mv2_r1.log
 
 # r=/admin/build/admin/rpms/frontera/RPMS/x86_64
-# rpm -hiv --nodeps $r/tacc-remora-intel19-impi19_0-package-1.8.3-6.el7.x86_64.rpm
-# rpm -hiv --nodeps $r/tacc-remora-intel19-impi19_0-modulefile-1.8.3-6.el7.x86_64.rpm
+# rpm -hiv --nodeps $r/tacc-remora-intel19-impi19_0-package-1.8.4-6.el7.x86_64.rpm
+# rpm -hiv --nodeps $r/tacc-remora-intel19-impi19_0-modulefile-1.8.4-6.el7.x86_64.rpm
 
 #
 # Si Liu (siliu@tacc.utexas.edu)
@@ -17,6 +15,10 @@
 # Carlos Rosales-Fernandez (carlos@tacc.utexas.edu)
 # Antonio Gomez (agomez@tacc.utexas.edu)
 
+# 2020-10-19  version 1.8.4
+#   Bug Fixes, Coeff of Variation reported for MPI.
+#   Default reporting for gpu ndoes, REMORA_CUDA=0 turns off
+#   Cleaned up some title in plots
 # 2019-04-25
 #   Bug Fixes, version 1.8.3
 #   Remove gpu, temperature, power, and others that don't work at TACC 
@@ -49,7 +51,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 # Create some macros (spec file variables)
 %define major_version 1
 %define minor_version 8
-%define micro_version 3
+%define micro_version 4
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -74,7 +76,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   6%{?dist}
+Release:   1%{?dist}
 License:   MIT
 Group:     Profiling/Tools
 URL:       https://github.com/TACC/remora
@@ -286,12 +288,13 @@ The following environment variables control the behaviour of the tool:
                      nodes that have GPUs.
   - REMORA_TMPDIR  - Directory for intermediate files. Default
                      is the remora output directory.
+  - REMORA_PLOT_RESULTS - Set to 0 to turn of plot generation.
 
     remora --help  - to see these environmental control variables
 
-The remora module also defines the following environment variables:
-REMORA_DIR, REMORA_LIB, REMORA_INC and REMORA_BIN for the location
-of the REMORA distribution, libraries, include files, and tools respectively.
+The remora module also defines the REMORA_BIN environment variables,
+and TACC_REMORA_DIR/LIB/INC/DOC the location of the REMORA distribution, 
+libraries, include files, and documents respectively.
 
 To generate a summary report after a crash use:
 
@@ -304,7 +307,7 @@ https://github.com/TACC/remora/blob/master/docs/remora_user_guide.pdf
 help(help_message,"\n")
 
 whatis("Name: Remora")
-whatis("Version: 1.8.3")
+whatis("Version: 1.8.4")
 whatis("Category: Profiling/Tools ")
 whatis("Keywords: Tools, Profiling, Resources")
 whatis("Description: REsource MOnitoring for Remote Applications")
@@ -320,6 +323,7 @@ prepend_path(    "LD_LIBRARY_PATH",     pathJoin(remora_dir, "lib"))
 setenv( "TACC_REMORA_DIR",       remora_dir)
 setenv( "TACC_REMORA_INC",       pathJoin(remora_dir, "include"))
 setenv( "TACC_REMORA_LIB",       pathJoin(remora_dir, "lib"))
+setenv( "TACC_REMORA_DOC",       pathJoin(remora_dir, "docs"))
 setenv( "REMORA_BIN",            pathJoin(remora_dir, "bin"))
 setenv( "REMORA_PERIOD",    "10")
 setenv( "REMORA_MODE",    "FULL")

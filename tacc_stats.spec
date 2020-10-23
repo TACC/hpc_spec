@@ -1,7 +1,8 @@
 Summary: Job-level Tracking and Analysis System
-Name: tacc_statsd_gpu
+#Name: tacc_statsd_gpu
+Name: tacc_statsd
 Version: 2.3.4
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: GPL
 Vendor: Texas Advanced Computing Center
 Group: System Environment/Base
@@ -25,7 +26,8 @@ unit file.
 %setup -n tacc_stats-%{version}
 
 %build
-./configure --bindir=%{_bindir} --sysconfdir=%{_sysconfdir} --enable-rabbitmq --enable-gpu
+#./configure --bindir=%{_bindir} --sysconfdir=%{_sysconfdir} --enable-rabbitmq --enable-gpu
+./configure --bindir=%{_bindir} --sysconfdir=%{_sysconfdir} --enable-rabbitmq
 make clean
 make
 

@@ -1,6 +1,6 @@
-# VASP Hang Liu
-# 2020-03
-# Modified for KNL deployment.
+# Amit Ruhela
+# 2020-10-18
+# new spec file for intel 20 update 1, there's something different here tho
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -20,27 +20,27 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name vasp
-%define MODULE_VAR    VASP
+%define pkg_base_name vtune 
+%define MODULE_VAR    VTUNE
 
 # Create some macros (spec file variables)
-%define major_version 6
+%define major_version 19
 %define minor_version 1
-%define micro_version 2
+%define micro_version 1
+
+%define lib_version 2020.1.0.607630 
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define underscore_version %{major_version}_%{minor_version}
 
 ### Toggle On/Off ###
-%include rpm-dir.inc
-%include compiler-defines.inc
-%include mpi-defines.inc
+%include rpm-dir.inc                  
+#%include compiler-defines.inc
+#%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
-#%include name-defines-noreloc.inc
-#%include name-defines-hidden.inc
-#%include name-defines-hidden-noreloc.inc
+%include name-defines-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -51,12 +51,12 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
-License:   VASP
-Group:     Applications/Chemistry
-URL:       https://www.vasp.at/
-Packager:  TACC - hliu@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}_all_TACC_fat.tar.gz
+Release:   1%{?dist}
+License:   proprietary
+Group:     PROFILER
+URL:       https://software.intel.com/en-us/intel-vtune-amplifier-xe
+Packager:  TACC - jgarcia@tacc.utexas.edu
+Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -64,18 +64,25 @@ Source:    %{pkg_base_name}-%{pkg_version}_all_TACC_fat.tar.gz
 
 
 %package %{PACKAGE}
-Summary: The Vienna Ab initio Simulation Package (VASP)
-Group: Applications/Chemistry
+Summary: The package RPM
+Group: Development/Tools
 %description package
-The Vienna Ab initio Simulation Package (VASP)
+This is the long description for the package RPM...
+This is specifically an rpm for the Intel vtune modulefile
+used on Frontera.
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-The Vienna Ab initio Simulation Package (VASP)
+This is the long description for the modulefile RPM...
+This is specifically an rpm for the Intel vtune modulefile
+used on Frontera.
+
 %description
-The Vienna Ab initio Simulation Package (VASP)
+This is specifically an rpm for the Intel vtune modulefile
+used on Frontera.
+
 #---------------------------------------
 %prep
 #---------------------------------------
@@ -85,8 +92,6 @@ The Vienna Ab initio Simulation Package (VASP)
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-%setup -n %{pkg_base_name}-%{pkg_version}_all_TACC_fat
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -101,7 +106,6 @@ The Vienna Ab initio Simulation Package (VASP)
 #--------------------------
 
 
-
 #---------------------------------------
 %build
 #---------------------------------------
@@ -113,15 +117,9 @@ The Vienna Ab initio Simulation Package (VASP)
 
 # Setup modules
 %include system-load.inc
+
+# Insert necessary module commands
 module purge
-# Load Compiler
-%include compiler-load.inc
-# Load MPI Library
-%include mpi-load.inc
-
-module load cuda/10.1
-
-# Insert further module commands
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -131,7 +129,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
+  
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -144,64 +142,8 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
 
-cd wannier90-2.1.0/
-make lib
-
-cd ../libbeef
-./configure CC=icc --prefix=$PWD
-make
-make install
-
-cd ../vasp.6.1.2
-make veryclean
-make std
-make gam
-make ncl
-
-cd ../vasp.6.1.2.gpu
-make veryclean
-make gpu
-make gpu_ncl
-
-cd ../vasp.6.1.2.vtst
-make veryclean
-make std
-make gam
-make ncl
-cd ./bin
-mv vasp_std vasp_std_vtst
-mv vasp_gam vasp_gam_vtst
-mv vasp_ncl vasp_ncl_vtst
-
-cd ../../
-
-mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-rm   -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}/*
-mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-
-cd vasp.6.1.2/bin/
-cp vasp_std $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
-cp vasp_gam $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
-cp vasp_ncl $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
-
-cd ../../vasp.6.1.2.gpu/bin
-cp vasp_gpu $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
-cp vasp_gpu_ncl $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
-
-cd ../../vasp.6.1.2.vtst/bin
-cp vasp_std_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
-cp vasp_gam_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
-cp vasp_ncl_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
-
-cd ../../libbeef/bin
-cp bee $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
-cd ../../
-cp -r vtstscripts-964 $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
-
-cp ./VASP612_Intel1704/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
-
-
-#-----------------------
+  
+#-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
 
@@ -211,7 +153,7 @@ cp ./VASP612_Intel1704/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
 #---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-
+  
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -222,79 +164,79 @@ cp ./VASP612_Intel1704/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
 
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_message=[[
-The TACC VASP module appends the path to the vasp executables
-to the PATH environment variable.  Also TACC_VASP_DIR, and
-TACC_VASP_BIN are set to VASP home and bin directories.
+local vtune_dir   = "/opt/intel/vtune_profiler_%{lib_version}"
 
-Users have to show their licenses and be confirmed by
-VASP team that they are registered users under that licenses
-Scan a copy of the license with the license number and send to hliu@tacc.utexas.edu
+whatis( "Name: vtune" )
+whatis( "Version: %{version}" )
+whatis( "Category: performance analysis" )
+whatis( "Keywords: System, Utility, Tools" )
+whatis( "Description: Intel VTune Amplifier" )
+whatis( "URL: https://software.intel.com/en-us/intel-vtune-amplifier-xe" )
 
-The VASP executables are
+prepend_path(     "PATH", pathJoin( vtune_dir, "bin64"   )   )
 
-MPI+OMP:
-vasp_std: compiled with pre processing flag: -DNGZhalf
-vasp_gam: compiled with pre processing flag: -DNGZhalf -DwNGZhalf
-vasp_ncl: compiled without above pre processing flags
-vasp_std_vtst: vasp_std with VTST
-vasp_gam_vtst: vasp_gam with VTST
-vasp_ncl_vtst: vasp_ncl with VTST
+setenv( "TACC_VTUNE_DIR", vtune_dir                          )
+setenv( "TACC_VTUNE_BIN", pathJoin( vtune_dir, "bin64"   )   )
+setenv( "TACC_VTUNE_LIB", pathJoin( vtune_dir, "lib64"   )   )
+setenv( "TACC_VTUNE_INC", pathJoin( vtune_dir, "include" )   )
 
-Above compilations have optional libraries link: -DVASP2WANNIER90v2 -Dlibbeef
+help(
+[[
 
+VTune is Intel's signature performance profiling tool.
 
-MPI+GPU
-vasp_gpu: GPU version of vasp_std
-vasp_gpu_ncl: GPU version of vasp_ncl
+For detailed info, consult the extensive documentation in
+$TACC_VTUNE_DIR/documentation or online at
+software.intel.com/en-us/intel-vtune-amplifier-xe.
 
-vtstscripts-964/: utility scripts of VTST
+COLLECTION
+**********
 
-bee: BEEF analysis code
+First, compile with "-g".
 
-This the VASP.6.1.2 release.
+To collect data on an executable named main.exe,
+using a collection named "hotspots", execute the following
+command on a compute node:
+
+   vtune -collect hotspots -- main.exe
+
+Note the "--" followed by a space.
+
+This will generate a directory with a name like 'r000hs' or 'r000ah'
+("hs" means "hotspots";  "ah" means "advanced-hotspots").
+It will also print a brief summary report to stdout.
+
+You can reduce the sampling rate to use less memory,
+reduce collection time,  and generate smaller database files.
+To reduce the sampling rate to 15ms (default is 1-4ms):
+
+   vtune -collect hotspots -knob sampling-interval=15 -- main.exe
+
+ANALYSIS AND REPORTING
+**********************
+
+Assuming a collection directory named "r000hs".
+From a login or compute node with X11:
+
+   vtune r000hs
+
+There are also text-based command-line analysis and report utilities.
+
+ENVIRONMENT VARIABLES
+*********************
+
+This modulefile defines TACC_VTUNE_DIR, TACC_VTUNE_BIN, TACC_VTUNE_LIB,
+and TACC_VTUNE_INC in the usual way.  It also preprends VTune's bin64
+directory to $PATH.
+
+To see the exact effect of loading the module, execute "module show vtune".
 
 Version %{version}
 ]]
-
-
-whatis("Version: %{pkg_version}")
-whatis("Category: application, chemistry")
-whatis("Keywords: Chemistry, Density Functional Theory, Molecular Dynamics")
-whatis("URL:https://www.vasp.at/")
-whatis("Description: Vienna Ab-Initio Simulation Package")
-help(help_message,"\n")
-
-
-local group = "G-822359"
-found = userInGroup(group)
-
-
-local err_message = [[
-You do not have access to VASP.6.1.2!
-
-
-Users have to show their licenses and be confirmed by the
-VASP team that they are registered users under that license.
-Scan a copy of the license with the license number and send to hliu@tacc.utexas.edu
-]]
-
-
-if (found) then
-local vasp_dir="%{INSTALL_DIR}"
-
-prepend_path(    "PATH",                pathJoin(vasp_dir, "bin"))
-prepend_path(    "LD_PRELOAD",          "/home1/apps/tacc-patches/getcwd-patch.so")
-setenv( "TACC_%{MODULE_VAR}_DIR",                vasp_dir)
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(vasp_dir, "bin"))
-
-
-else
-  LmodError(err_message,"\n")
-end
+)
 
 EOF
-
+ 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -303,10 +245,11 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 
 set     ModulesVersion      "%{version}"
 EOF
-  # Check the syntax of the generated lua modulefile only if a visible module
-  %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-  %endif
+  
+  # Check the syntax of the generated lua modulefile
+  ### don't check the hidden one!
+  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -317,8 +260,7 @@ EOF
 %files package
 #------------------------
 
-#  %defattr(-,root,install,)
-%defattr(750,root,G-822359)
+  %defattr(-,root,install,)
   # RPM package contains files within these directories
   %{INSTALL_DIR}
 
@@ -327,7 +269,7 @@ EOF
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile
+%files modulefile 
 #---------------------------
 
   %defattr(-,root,install,)
@@ -337,6 +279,7 @@ EOF
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
+
 
 ########################################
 ## Fix Modulefile During Post Install ##
@@ -358,4 +301,5 @@ export PACKAGE_PREUN=1
 %clean
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
+
 

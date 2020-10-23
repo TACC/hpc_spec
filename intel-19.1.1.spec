@@ -51,7 +51,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   proprietary
 Group:     Compiler
 URL:       https://software.intel.com/en-us/intel-compilers
@@ -265,7 +265,7 @@ setenv( "IPPROOT" ,                   ippRoot )
 prepend_path( "LIBRARY_PATH" ,        pathJoin( installDir , "compiler/lib/intel64_lin"            ) )
 prepend_path( "LIBRARY_PATH" ,        pathJoin( installDir , "ipp/lib/intel64"                     ) )
 prepend_path( "LIBRARY_PATH" ,        pathJoin( installDir , "mkl/lib/intel64_lin"                 ) )
-prepend_path( "LIBRARY_PATH" ,        pathJoin( installDir , "tbb/lib/intel64/gcc4.7"              ) )
+prepend_path( "LIBRARY_PATH" ,        pathJoin( installDir , "tbb/lib/intel64/gcc4.8"              ) )
 prepend_path( "LIBRARY_PATH" ,        pathJoin( installDir , "daal/lib/intel64_lin"                ) )
 prepend_path( "LIBRARY_PATH" ,        pathJoin( base       , "debugger_%{year}/libipt/intel64/lib" ) )
 
@@ -273,7 +273,7 @@ prepend_path( "LIBRARY_PATH" ,        pathJoin( base       , "debugger_%{year}/l
 -- /opt/intel/compilers_and_libraries_2020.1.217/linux/ipp/lib/intel64
 -- /opt/intel/compilers_and_libraries_2020.1.217/linux/compiler/lib/intel64_lin
 -- /opt/intel/compilers_and_libraries_2020.1.217/linux/mkl/lib/intel64_lin
--- /opt/intel/compilers_and_libraries_2020.1.217/linux/tbb/lib/intel64/gcc4.7
+-- /opt/intel/compilers_and_libraries_2020.1.217/linux/tbb/lib/intel64/gcc4.8
 -- /opt/intel/compilers_and_libraries_2020.1.217/linux/daal/lib/intel64_lin
 -- /opt/intel/compilers_and_libraries_2020.1.217/linux/daal/../tbb/lib/intel64_lin/gcc4.4
 
@@ -283,7 +283,7 @@ prepend_path( "LD_LIBRARY_PATH" ,     pathJoin( gcc_base , "lib64" ) )
 prepend_path( "LD_LIBRARY_PATH" ,        pathJoin( installDir , "compiler/lib/intel64_lin"            ) )
 prepend_path( "LD_LIBRARY_PATH" ,        pathJoin( installDir , "ipp/lib/intel64"                     ) )
 prepend_path( "LD_LIBRARY_PATH" ,        pathJoin( installDir , "mkl/lib/intel64_lin"                 ) )
-prepend_path( "LD_LIBRARY_PATH" ,        pathJoin( installDir , "tbb/lib/intel64_lin/gcc4.7"          ) )
+prepend_path( "LD_LIBRARY_PATH" ,        pathJoin( installDir , "tbb/lib/intel64_lin/gcc4.8"          ) )
 prepend_path( "LD_LIBRARY_PATH" ,        pathJoin( installDir , "daal/lib/intel64_lin"                ) )
 prepend_path( "LD_LIBRARY_PATH" ,        pathJoin( base       , "debugger_%{year}/libipt/intel64/lib" ) )
 
@@ -293,7 +293,7 @@ prepend_path( "LD_LIBRARY_PATH" ,        pathJoin( base       , "debugger_%{year
 -- /opt/intel/compilers_and_libraries_2020.1.217/linux/compiler/lib/intel64_lin
 -- /opt/intel/compilers_and_libraries_2020.1.217/linux/ipp/lib/intel64
 -- /opt/intel/compilers_and_libraries_2020.1.217/linux/mkl/lib/intel64_lin
--- /opt/intel/compilers_and_libraries_2020.1.217/linux/tbb/lib/intel64/gcc4.7
+-- /opt/intel/compilers_and_libraries_2020.1.217/linux/tbb/lib/intel64/gcc4.8
 -- /opt/intel/compilers_and_libraries_2020.1.217/linux/daal/lib/intel64_lin
 -- /opt/intel/debugger_2020/libipt/intel64/lib
 

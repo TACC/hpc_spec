@@ -97,7 +97,8 @@
 %endif
 %if "%{is_intel191}" == "1"
   %define comp_fam intel
-  %define comp_fam_ver intel19_1
+  # VLE this had "intel19_1"
+  %define comp_fam_ver intel19
   %define comp_fam_name Intel
   %define is_intel 1
   # VLE edit 19.1.0 -> 19.1.1

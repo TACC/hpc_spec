@@ -43,7 +43,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   GPL
 Group:     System Environment/Base
 URL:       http://ipm-hpc.sourceforge.net
@@ -166,6 +166,7 @@ make -j 20
 make DESTDIR=$RPM_BUILD_ROOT install
 cd ..
 cp -rf ploticus242/prefabs $RPM_BUILD_ROOT/%{INSTALL_DIR}/.
+cp -rf ploticus242/bin/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
 rm -rf ploticus242
 rm -rf ploticus242_linuxbin64.tar.gz
 
@@ -215,6 +216,11 @@ module load ipm
 export LD_PRELOAD=\$TACC_IPM_LIB/libipm.so
 export IPM_KEYFILE=\$TACC_IPM_DIR/etc/ipm_key_mpi
 ibrun ./a.out
+
+-- Plot Graphs ----
+usage: ipm_parse [-full|-html|-i|-t] [-x] [-debug]  file [files]
+e.g.
+ipm_parse -full -html  <filename>.xml
 
 
 Important Note:
