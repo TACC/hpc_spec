@@ -2,8 +2,8 @@
 ## rpmbuild -bb --clean --define 'is_intel18 1' --define 'is_impi 1' --define 'mpiV 18_2' tau-2.29.1_18.spec 2>&1 | tee tau-2.29.1_intel18_r1_a.log
 #
 #                    r=/admin/build/admin/rpms/stampede2/RPMS/x86_64
-# rpm -hiv --nodeps $r/
-# rpm -hiv --nodeps $r/
+# rpm -hiv --nodeps $r/tacc-tau-intel18-impi18_0-package-2.29.1-1.el7.x86_64.rpm
+# rpm -hiv --nodeps $r/tacc-tau-intel18-impi18_0-modulefile-2.29.1-1.el7.x86_64.rpm
 
 
 
@@ -77,8 +77,10 @@ URL:       http://www.cs.uoregon.edu/research/tau/
   %define PAPI_component_avail     %{PAPI_dir}/bin/papi_component_avail
   %define TAU_metrics   GET_TIME_OF_DAY:PAPI_TOT_CYC:PAPI_L2_LDM
   
-  %define TAU_makefile Makefile.tau-intelmpi-icpc-papi-ompt-mpi-pdt-openmp
-  %define TAU_makefile_omp Makefile.tau-intelomp-icpc-papi-ompt-pdt-openmp
+ #%define TAU_makefile Makefile.tau-intelmpi-icpc-papi-ompt-mpi-pdt-openmp
+ #%define TAU_makefile Makefile.tau-intelmpi-icpc-papi-mpi-pdt-openmp
+ #%define TAU_makefile Makefile.tau-icpc-papi-ompt-v5-mpi-pdt-openmp
+  %define TAU_makefile Makefile.tau-icpc-papi-mpi-pdt-openmp
   
 #                                               Configure Options
   %define  PREFIX     "-prefix=%{INSTALL_DIR}"
@@ -148,18 +150,19 @@ cat >patch.config <<'EOF'
 +		#mpiflibargs=`$mpif90_exe -show | cut -d' ' -f2- | sed -e 's@ @#@g' -e 's@-qthreaded@@g'`
 +		mpiinc="-I/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/include"
 +
-+		mpilibargs="-L/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib/release_mt#-L/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib#-Xlinker#--enable-new-dtags#-Xlinker#-rpath#-Xlinker#/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib/release_mt#-Xlinker#-rpath#-Xlinker#/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib#-Xlinker#-rpath#-Xlinker#/opt/intel/mpi-rt/2017.0.0/intel64/lib/release_mt#-Xlinker#-rpath#-Xlinker#/opt/intel/mpi-rt/2017.0.0/intel64/lib#-lmpicxx#-lmpifort#-lmpi#-lmpigi#-ldl#-lrt#-lpthread"
++		mpilibargs="-L/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib/release_mt#-L/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib#-Xlinker#--enable-new-dtags#-Xlinker#-rpath#-Xlinker#/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib/release_mt#-Xlinker#-rpath#-Xlinker#/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib#-lmpicxx#-lmpifort#-lmpi#-lmpigi#-ldl#-lrt#-lpthread"
 +
 +
-+		mpiflibargs="-L/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib/release_mt#-L/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib#-Xlinker#--enable-new-dtags#-Xlinker#-rpath#-Xlinker#/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib/release_mt#-Xlinker#-rpath#-Xlinker#/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib#-Xlinker#-rpath#-Xlinker#/opt/intel/mpi-rt/2017.0.0/intel64/lib/release_mt#-Xlinker#-rpath#-Xlinker#/opt/intel/mpi-rt/2017.0.0/intel64/lib#-lmpifort#-lmpi#-lmpigi#-ldl#-lrt#-lpthread"
++		mpiflibargs="-L/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib/release_mt#-L/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib#-Xlinker#--enable-new-dtags#-Xlinker#-rpath#-Xlinker#/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib/release_mt#-Xlinker#-rpath#-Xlinker#/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib#-lmpifort#-lmpi#-lmpigi#-ldl#-lrt#-lpthread"
  
  		mpilibargs="-L$tautoplevel/$machine/lib#-lTauMpi\$(TAU_CONFIG)#$mpilibargs"
  		mpiflibargs="-L$tautoplevel/$machine/lib#-lTauMpi\$(TAU_CONFIG)#$mpiflibargs"
 EOF
      patch configure patch.config
 
-#    -ompt=download removed -- freezing on startup
-     ./configure -tag=intelmpi %{PREFIX}               \
+#    -ompt=download removed -- freezing on startup doesn't work for 18.0.2 compiler
+#     not using -tag=intelmpi
+     ./configure  %{PREFIX}                            \
                  -c++=mpicxx -cc=mpicc -fortran=mpif90 \
                  -openmp -mpi                          \
                  %{PDT} %{PAPI}                        \
@@ -199,9 +202,9 @@ cat >    $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 
 local help_message = [[
 The tau module defines the following standard environment variables:
-TACC_TAU_DIR and TAU, TACC_TAU_BIN, TACC_TAU_LIB, and TACC_TAU_DOC 
-TACC_TAU_EXM, TACC_TAU_TOL for the location of the TAU distribution, 
-binaries, libraries, documents, examples and tools, respectively.  
+TACC_TAU_DIR|BIN|LIB|INC|DOC|MAN|EXM|TOL for the location of the TAU distribution,
+binaries, include files, libraries, documents and man pages, examples and tools, 
+respectively.
 
 It also defines defaults: 
    TAU_PROFILE=1, 
@@ -211,14 +214,15 @@ It also defines defaults:
 TAU_MAKEFILE sets the tools (pdt), compilers (intel) and parallel 
 paradigm (serial, or mpi and/or openmp) to be used in the instrumentation.
 
-For TAU %{pkg_version} it is only necessary to load the tau/%{pkg_version} 
-module to get a usable TAU environment. The static papi/%{PAPI_version} 
-library is included in TAU library, hence it is not necessary to load 
-papi/%{PAPI_version}.  Similarly for pdtoolkit/%{PDT_version}.
-For advanced usage situations the user may need to load up 
-papi/%{PAPI_version} and/or pdtoolkit/%{PDT_version} for library and 
-command access.  For normal usage use the defaults: just load up tau, 
-recompile, and run.  
+
+For TAU %{pkg_version} it is only necessary to load the tau/%{pkg_version}
+module to get a usable TAU environment. The papi/%{PAPI_version}
+library is automatically loaded/unloaded when TAU is loaded/unloaded.
+papi/%{PAPI_version}.  Access to the tools in  pdtoolkit/%{PDT_version}
+does not require the module to be loaded.  When working directly with the 
+pdtoolkit, users may need to load up pdtoolkit/%{PDT_version} for library 
+and command access.  For normal usage use the defaults: just load up tau,
+recompile, and run.
 
 See the User Guide and Reference pdf files in the $TACC_TAU_DOC directory.  
 
@@ -245,43 +249,51 @@ and the components are:
     Intel Compilers (icpc)
     MPI             (mpi)    also has intelmpi tag name
     OMP             (openmp)
-    OpenMP Tool     (ompt)   openmp events
+    OpenMP Tool     (ompt)   openmp events (requires intel 19 compiler)
     PAPI            (papi)   now included by default
     PDtoolkit       (pdt)    now included by default
 
-The default TAU Makefile is set for MPI and hybrid applications.
-It has the intelmpi tag in its name.
-For pure OpenMP applications use a Makefile with the 
-intelomp tag (and no mpi component).
+The default TAU Makefile works for pure MPI, pure OpenMP,
+and hybrid applications.  For pure OpenMP or serial applications set
 
-The default TAU Makefile has been set in the TAU_MAKEFILE variable,
-(it is for MPI codes, with|without OpenMP):
+    export TAU_SET_NODE=0   #bash shell
+
+Otherwise you will get a warning to set the variable, and no data.
+
+The default TAU Makefile has been set in the TAU_MAKEFILE variable:
+(it is for codes with|without MPI and/or with|without OpenMP):
 
     $TACC_TAU_LIB/%{TAU_makefile}
 
-For pure OpenMP code, set TAU_MAKEFILE as show here:
-
-    export TAU_MAKEFILE=$TACC_TAU_LIB/%{TAU_makefile_omp}
-
-(All TAU Makefiles are stored in the $TACC_TAU_LIB directory.)
+For advanced users there may be other TAU Makefiles which 
+support advanced features.  Most users have no need for thes
 
 To compile your code with TAU, use one of the TAU compiler wrappers:
 
-   tau_f90.sh
-   tau_cc.sh
-   tau_cxx.sh
+    tau_f90.sh
+    tau_cc.sh
+    tau_cxx.sh
 
 for constructing an instrumented code (instead of mpif90, mpicc, etc.).
 
-E.g.  tau_f90.sh mpihello.f90, tau_cc.sh mpihello.c, etc.
+   tau_f90.sh mpihello.f90   tau_cc.sh mpihello.c  tau_cxx.sh mpihello.cpp
 
 These may also be used in makefiles, using macro definitions:
 
-E.g.  F90=tau_f90.sh, CC=tau_cc.sh, Cxx=tau_cxx.sh.
+   F90=tau_f90.sh, CC=tau_cc.sh, Cxx=tau_cxx.sh.
 
 -- To enable callpath information collection set TAU_CALLPATH to 1.
 -- To enable trace collection set the environmental variable TAU_TRACE to 1.
 
+Execution:
+After instrumentation, run MPI code as usual.  However for serial or pure
+OpenMP codes, set the TAU_SET_NODE to 0:
+
+        ibrun my_pure_mpi_or_hybrid_app
+
+        export TAU_SET_NODE=0
+        ./my_pure_OpenMP_or_serial_app
+     
 Version %{pkg_version}
 
 ]]
@@ -306,6 +318,8 @@ local             tau_dir        =  "%{INSTALL_DIR}"
 local             tau_bin        =  "%{INSTALL_DIR}/x86_64/bin"
 local             tau_lib        =  "%{INSTALL_DIR}/x86_64/lib"
 
+depends_on("papi/6.0.0.1")
+
 prepend_path(    "PATH"           , tau_bin                 )
 prepend_path(    "LD_LIBRARY_PATH", tau_lib                 )
 prepend_path(    "MANPATH"        , pathJoin(tau_dir,"man") )
@@ -315,6 +329,7 @@ setenv(           "TACC_TAU_BIN",            tau_bin        )
 setenv(           "TACC_TAU_LIB",            tau_lib        )
 setenv(           "TACC_TAU_INC",   pathJoin(tau_dir,"include"))
 setenv(           "TACC_TAU_DOC",   pathJoin(tau_dir,"docs"))
+setenv(           "TACC_TAU_MAN",   pathJoin(tau_dir,"man"))
 setenv(           "TACC_TAU_EXM",   pathJoin(tau_dir,"examples"))
 setenv(           "TACC_TAU_TOL",   pathJoin(tau_dir,"tools"))
 setenv(                "TAU",                tau_lib        )
@@ -322,6 +337,7 @@ setenv(           "TAU_MAKEFILE", pathJoin(tau_lib,"%{TAU_makefile}") )
 setenv("PAPI_PERFMON_EVENT_FILE",   "%{PAPI_events}"        )
 setenv(            "TAU_METRICS",   "%{TAU_metrics}"        )
 setenv(            "TAU_PROFILE",            "1"            )
+setenv(            "LIBGL_ALWAYS_INDIRECT",  "1"            )
 
 -- setenv(              "TAU_TRACE",            "0"            )
 -- setenv(           "TAU_CALLPATH",            "0"            )
@@ -347,7 +363,7 @@ EOF
 %if %{?BUILD_PACKAGE}
 %files package
    #defattr(-,root,install)
-   %defattr(755,root,install)
+   %defattr(755,root,install,755)
    %{INSTALL_DIR}
 %endif #BUILD_PACKAGE |
 

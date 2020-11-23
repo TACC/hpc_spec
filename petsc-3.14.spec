@@ -7,7 +7,7 @@ Summary: PETSc install
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 14
-%define micro_version 0
+%define micro_version 1
 %define versionpatch %{major_version}.%{minor_version}.%{micro_version}
 
 %define pkg_version %{major_version}.%{minor_version}
@@ -34,7 +34,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -536,7 +536,6 @@ else
   export I_MPI_FABRICS=shm:tmi
   RPM_BUILD_ROOT=tmpfs PETSC_DIR=`pwd` ./configure \
     ${PETSC_CONFIGURE_OPTIONS} ${PETSC4PY_OPTIONS} \
-    --with-packages-search-path=[${EXTERNAL_PACKAGES_DIR}] \
     --with-packages-build-dir=${PACKAGES_BUILD_DIR} \
     ${MPI_OPTIONS} ${clanguage} ${scalar} ${dynamicshared} ${precision} ${packages} \
     --with-debugging=${usedebug} \
@@ -546,6 +545,7 @@ else
 fi
 
 export noops="\
+    --with-packages-search-path=[${EXTERNAL_PACKAGES_DIR}] \
     ` if [ ! -z ${EXTRALIBS} ] ; then echo --LIBS="${EXTRALIBS}" ; fi ` \
     --with-packages-download-dir=${PACKAGE_DOWNLOAD_DIR} \
     "
@@ -723,5 +723,7 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 rm -rf $RPM_BUILD_ROOT
 %changelog
 # remember to notify OpenSees: Ian Wang
+* Mon Nov 23 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: remove cached packages
 * Wed Sep 30 2020 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

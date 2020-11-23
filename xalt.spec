@@ -2,7 +2,7 @@
 
 Summary: XALT
 Name: xalt
-Version: 2.9.6
+Version: 2.10.1
 Release: 1%{?dist}
 License: LGPLv2
 Group: System Environment/Base
@@ -83,6 +83,7 @@ prepend_path("COMPILER_PATH",             "%{GENERIC_IDIR}/bin")
 prepend_path("LD_PRELOAD",                "%{GENERIC_IDIR}/lib64/libxalt_init.so")
 setenv (     "%{MODULE_VAR}_DIR",         "%{GENERIC_IDIR}/")
 setenv (     "%{MODULE_VAR}_BIN",         "%{GENERIC_IDIR}/bin")
+
 setenv (     "XALT_EXECUTABLE_TRACKING",  "yes")
 setenv (     "XALT_SAMPLING",             "yes")
 EOF

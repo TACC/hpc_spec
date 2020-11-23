@@ -182,7 +182,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   ./bootstrap.sh --prefix=%{PYTHON_INSTALL_DIR} ${CONFIGURE_FLAGS}
 
-  ./b2 -j 24 --prefix=%{PYTHON_INSTALL_DIR} $EXTRA cxxflags="%{TACC_OPT}" cflags="%{TACC_OPT}" linkflags="%{TACC_OPT}" install
+  ./b2 -j 24 --prefix=%{PYTHON_INSTALL_DIR} $EXTRA cxxflags="%{TACC_OPT}" cflags="%{TACC_OPT}" linkflags="%{TACC_OPT}" install 
   
   mkdir -p              $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}
   cp -r %{PYTHON_INSTALL_DIR}/ $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}/..
