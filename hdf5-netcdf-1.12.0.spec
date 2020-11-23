@@ -8,7 +8,7 @@ Summary: HDF5 Library
 #
 #
 #  netcdf-c-4.7.4.tar.gz  netcdf-cxx4-4.3.1.tar.gz  netcdf-fortran-4.5.2.tar.gz  
-%define hdf5_pkg_version   1.10.4
+%define hdf5_pkg_version   1.12.0
 %define ncdf_pkg_version   4.7.4
 %define ncdf_cxx_version   4.2
 %define ncdf_cxx4_version  4.3.1
@@ -198,6 +198,7 @@ CC_serial=$CC
 %endif
 
 
+FC=xlf90_r
 %if "%{mpi_fam}" != "none"
    CC=mpicc
    CXX=mpicxx
@@ -292,7 +293,6 @@ for ARCH in "${archA[@]}"; do
 
   export FFLAGS="$FFLAGS -O3      "
   export FCLAGS="$FCLAGS -O3 -fPIC"
-  export CFLAGS="$CFLAGS -O3 -fPIC"
   export CXXFLAGS="$CXXFLAGS -O3 -fPIC"
   if [ -n "$ZLIB_LIB" ]; then
     export LDFLAGS="$LDFLAGS -Wl,-rpath,$ZLIB_LIB -L$ZLIB_LIB"

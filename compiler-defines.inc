@@ -102,6 +102,27 @@
   %define is_intel 1
   %define comp_module intel/18.0.2
 %endif
+%if "%{is_pgi19}" == "1"
+  %define comp_fam pgi
+  %define comp_fam_ver pgi19
+  %define comp_fam_name PGI
+  %define is_pgi 1
+  %define comp_module pgi/19.10.0
+%endif
+%if "%{is_pgi20}" == "1"
+  %define comp_fam pgi
+  %define comp_fam_ver pgi20
+  %define comp_fam_name PGI
+  %define is_pgi 1
+  %define comp_module pgi/20.7.0
+%endif
+
+
+%if "%{comp_fam}" == "pgi"
+  %define TACC_OPT           -tp=pwr9  -fast 
+  %define TACC_OPT_VEC       -tp=pwr9  -fast -Mvect=simd  
+  %define TACC_OPT_NOVEC     -tp=pwr9  -fast -Mvect=nosimd              
+%endif
 
 %if "%{comp_fam}" == "error"
   %{error: You must define which compiler you are using!}

@@ -21,12 +21,12 @@
 
 %if "%{is_spectrum}" == "1"
   %if %{undefined mpiV}
-    %define mpi_label 10_2
-    %define mpi_module_version 10.2.0.0
+    %define mpi_label 10_3
+    %define mpi_module_version 10.3.0
   %endif
-  %if "%{mpiV}" == "10_2"
-    %define mpi_label 10_2
-    %define mpi_module_version 10.2.0.0
+  %if "%{mpiV}" == "10_3"
+    %define mpi_label 10_3
+    %define mpi_module_version 10.3.0
   %endif
   %define mpi_fam     spectrum_mpi
   %define mpi_fam_ver spectrum_mpi%{mpi_label}
@@ -68,9 +68,9 @@
   %endif
   %if "%{mpiV}" == "2_3"
     %define mpi_label 2_3
-    %define mpi_module_version 2.3
-    %define mpi_fam mvapich2
-    %define mpi_fam_ver mvapich2-%{mpi_label}
+    %define mpi_module_version 2.3.4
+    %define mpi_fam mvapich2-gdr
+    %define mpi_fam_ver mvapich2-gdr%{mpi_label}
   %endif
   %define mpi_module  %{mpi_fam}/%{mpi_module_version}
 %endif

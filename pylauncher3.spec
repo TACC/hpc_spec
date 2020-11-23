@@ -1,27 +1,48 @@
 #
-# Antonio Gomez-Iglesias
-# 2017-05-15
+# pylauncher3.spec
+# Victor Eijkhout
 #
+# based on
+#
+# Bar.spec
+# W. Cyrus Proctor
+# Antonio Gomez
+# 2015-08-25
+#
+# Important Build-Time Environment Variables (see name-defines.inc)
+# NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
+# NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
+#
+# Important Install-Time Environment Variables (see post-defines.inc)
+# VERBOSE=1       -> Print detailed information at install time
+# RPM_DBPATH      -> Path To Non-Standard RPM Database Location
+#
+# Typical Command-Line Example:
+# ./build_rpm.sh Bar.spec
+# cd ../RPMS/x86_64
+# rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+# rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+# rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: Boost spec file (www.boost.org)
+Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name boost
-%define MODULE_VAR    BOOST
+%define pkg_base_name pylauncher
+%define MODULE_VAR    PYLAUNCHER
 
 # Create some macros (spec file variables)
-%define major_version 1
-%define minor_version 64
-%define micro_version 0
+%define major_version 3
+%define minor_version 1
 
 %define pkg_version %{major_version}.%{minor_version}
-
-%define mpi_fam none
+%define pylauncherversion %{major_version}.%{minor_version}
 
 ### Toggle On/Off ###
-%include rpm-dir.inc
-%include compiler-defines.inc
+%include rpm-dir.inc                  
+#%include compiler-defines.inc
 #%include mpi-defines.inc
+#%include python-defines.inc
+
 ########################################
 ### Construct name based on includes ###
 ########################################
@@ -37,44 +58,38 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
-License:   GPL
-Group:     Utility
-URL:       http://www.boost.org
-Packager:  TACC - cproctor@tacc.utexas.edu
-Source0:   boost_1_64_0.tar.gz
-Source1:   icu4c-62_1-src.tgz
+Release:   1
+Group:     Development/Tools
+License: GPL
+Url: https://github.com/TACC/pylauncher
+Group: TACC
+Packager: eijkhout@tacc.utexas.edu 
+Source:    %{pkg_base_name}-%{pkg_version}.tgz
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
 
+# Turn off the brp-python-bytecompile script
+%global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
+
 
 %package %{PACKAGE}
-Summary: Boost RPM
-Group: Development/System Environment
+Summary: The package RPM
+Group: Development/Tools
 %description package
-Boost provides free peer-reviewed portable C++ source libraries.
+This is the long description for the package RPM...
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-Module RPM for Boost
+This is the long description for the modulefile RPM...
 
 %description
-
-Boost emphasizes libraries that work well with the C++ Standard
-Library. Boost libraries are intended to be widely useful, and usable
-across a broad spectrum of applications. The Boost license encourages
-both commercial and non-commercial use.
-
-Boost aims to establish "existing practice" and provide reference
-implementations so that Boost libraries are suitable for eventual
-standardization. Ten Boost libraries are already included in the C++
-Standards Committee Library Technical Report (TR1) as a step toward
-becoming part of a future C++ Standard. More Boost libraries are
-proposed for the upcoming TR2.
+The longer-winded description of the package that will 
+end in up inside the rpm and is queryable if installed via:
+rpm -qi <rpm-name>
 
 
 #---------------------------------------
@@ -87,8 +102,7 @@ proposed for the upcoming TR2.
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%setup -n boost_%{major_version}_%{minor_version}_%{micro_version}  %{name}-%{version}
-%setup -n boost_%{major_version}_%{minor_version}_%{micro_version}  -T -D -a 1
+%setup -n %{pkg_base_name}-%{pkg_version}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -104,6 +118,7 @@ proposed for the upcoming TR2.
 #--------------------------
 
 
+
 #---------------------------------------
 %build
 #---------------------------------------
@@ -115,11 +130,15 @@ proposed for the upcoming TR2.
 
 # Setup modules
 %include system-load.inc
-%include compiler-defines.inc
-#%include mpi-defines.inc
 module purge
-%include compiler-load.inc
-#module load intel
+# Load Compiler
+#%include compiler-load.inc
+# Load MPI Library
+#%include mpi-load.inc
+# Load Python
+#%include python-load.inc
+
+# Insert further module commands
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -129,9 +148,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  mkdir -p %{INSTALL_DIR}
-  mount -t tmpfs tmpfs %{INSTALL_DIR}
-
+  
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -143,63 +160,21 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-
-  ICU_MODE=Linux
-  %if "%{comp_fam}" == "intel"
-        export CONFIGURE_FLAGS=--with-toolset=intel-linux
-        ICU_MODE=Linux/ICC
-  %endif
-
-
-  %if "%{mpi_fam}" != "none"
-        CXX=mpicxx
-  %endif
-
-  %if "%{comp_fam}" == "gcc"
-        export CONFIGURE_FLAGS=--with-toolset=gcc
-  %endif
-
-  WD=`pwd`
-
-  cd icu/source
-  #CXXFLAGS="%{TACC_OPT}" CFLAGS="%{TACC_OPT}" ./runConfigureICU  $ICU_MODE --prefix=%{INSTALL_DIR}
-  ./runConfigureICU  $ICU_MODE --prefix=%{INSTALL_DIR}
-  make -j 28
-  make install
-  rm -f ~/user-config.jam
-
-  cd $WD
-  EXTRA="-sICU_PATH=%{INSTALL_DIR} -sCPLUS_INCLUDE_PATH=/usr/include/python2.7/"
-  CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all --without-libraries=mpi"
-
-  ./bootstrap.sh --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
-
-  #./b2 -j 28 --prefix=%{INSTALL_DIR} $EXTRA cxxflags="%{TACC_OPT}" cflags="%{TACC_OPT}" linkflags="%{TACC_OPT}" install
-  ./b2 -j 28 --prefix=%{INSTALL_DIR} $EXTRA install
   
-  mkdir -p              $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  cp -r %{INSTALL_DIR}/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-
-
-  rm -f ~/tools/build/v2/user-config.jam
-
-  if [ ! -d $RPM_BUILD_ROOT/%{INSTALL_DIR} ]; then
-        mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  fi
-
-  cp -r %{INSTALL_DIR} $RPM_BUILD_ROOT/%{INSTALL_DIR}/..
-  umount %{INSTALL_DIR}
-
-#---------------------- -
+  # Copy everything from tarball over to the installation directory
+  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  
+#-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
+
 
 #---------------------------
 %if %{?BUILD_MODULEFILE}
 #---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-
+  
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -207,51 +182,53 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #######################################
   ########### Do Not Remove #############
   #######################################
-
+  
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
-help([[
-The boost module file defines the following environment variables:"
-BOOST_ROOT, TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, and TACC_%{MODULE_VAR}_INC for"
-the location of the boost distribution."
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
+local help_msg=[[
+The %{MODULE_VAR} module defines the following environment variables:
+TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_DOC, 
+for the location of the %{MODULE_VAR} distribution, and documentation
+respectively.
 
-boost-mpi is not currently supported.
+Usage:
+  import pylauncher3
+and use one of the launcher classes. See the examples 
+directory for inspiration. Preferably used with python3.
+]]
 
-Version %{version}"
-]])
+--help(help_msg)
+help(help_msg)
 
-whatis("Name: boost")
-whatis("Version: %{version}")
-whatis("Category: %{group}")
-whatis("Keywords: System, Library, C++")
-whatis("URL: http://www.boost.org")
-whatis("Description: Boost provides free peer-reviewed portable C++ source libraries.")
+whatis("Name: %{pkg_base_name}")
+whatis("Version: %{pkg_version}%{dbg}")
+%if "%{is_debug}" == "1"
+setenv("TACC_%{MODULE_VAR}_DEBUG","1")
+%endif
 
+-- Create environment variables.
+local launcher_dir           = "%{INSTALL_DIR}"
 
-setenv("TACC_%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
-setenv("TACC_%{MODULE_VAR}_LIB","%{INSTALL_DIR}/lib")
-setenv("TACC_%{MODULE_VAR}_INC","%{INSTALL_DIR}/include")
-setenv("TACC_%{MODULE_VAR}_BIN","%{INSTALL_DIR}/bin")
-setenv("BOOST_ROOT","%{INSTALL_DIR}")
+prepend_path(    "PYTHONPATH",     launcher_dir )
+setenv( "TACC_%{MODULE_VAR}_DIR",                launcher_dir)
+setenv( "TACC_%{MODULE_VAR}_DOC",       pathJoin(launcher_dir, "docs"))
 
--- Add boost to the LD_LIBRARY_PATH
-prepend_path("LD_LIBRARY_PATH","%{INSTALL_DIR}/lib")
-prepend_path("PATH", "%{INSTALL_DIR}/bin")
-
+depends_on("python3")
 EOF
-
+  
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
-## version file for %{MODULE_VAR}%{version}
+## version file for %{BASENAME}%{version}
 ##
 
 set     ModulesVersion      "%{version}"
 EOF
-
-  # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-
+  
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %endif
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -271,7 +248,7 @@ EOF
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile
+%files modulefile 
 #---------------------------
 
   %defattr(-,root,install,)
@@ -281,7 +258,6 @@ EOF
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
 
 ########################################
 ## Fix Modulefile During Post Install ##
@@ -303,3 +279,7 @@ export PACKAGE_PREUN=1
 %clean
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
+
+%changelog
+* Tue Jun 02 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial longhorn build

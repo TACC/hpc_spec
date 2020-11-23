@@ -48,8 +48,8 @@ fi
 
 %if "%{comp_fam}" == "pgi"
   export CC=pgcc
-  export CXX=pgCC
-  export FC=pgf90
+  export CXX=pgc++
+  export FC=pgfortran
   export F77=pgf77
   export F90=pgf90
 %endif

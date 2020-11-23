@@ -3,5 +3,5 @@
 
 # System-level defines
 %define system linux
-%define PLATFORM discovery
+%define PLATFORM longhorn
 
