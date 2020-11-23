@@ -16,7 +16,7 @@ Summary: PETSc install
 #### configuration switches:
 ####
 %define adios 0
-%define p4p 0
+%define p4p 1
 %define cuda 1
 
 %include rpm-dir.inc
@@ -477,7 +477,7 @@ export MPI_OPTIONS="--with-mpi=1"
 # Petsc4py
 #
 module list
-module use /opt/apps/intel19/impi19_0/modulefiles
+##module use /opt/apps/intel19/impi19_0/modulefiles
 module load python3
 if [ %{p4p} -eq 1 ] ; then
   export petsc4py="--download-petsc4py=yes --with-python=1 --with-python-exec=python3"
@@ -709,5 +709,7 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Thu Oct 29 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: p4p enabled
 * Thu Oct 01 2020 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

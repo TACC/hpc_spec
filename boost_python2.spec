@@ -11,7 +11,7 @@ Summary: Boost spec file (www.boost.org)
 
 # Create some macros (spec file variables)
 %define major_version 1
-%define minor_version 69
+%define minor_version 72
 %define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}
@@ -44,8 +44,9 @@ License:   GPL
 Group:     Utility
 URL:       http://www.boost.org
 Packager:  TACC - siliu@tacc.utexas.edu
-Source0:   boost_1_69_0.tar.gz
-Source1:   icu4c-64_2-src.tgz
+Source0:   boost_1_72_0.tar.gz
+Source1:   icu4c-59_1-src.tgz   
+#Si: icu4c 64 is not working with Intel19!
 
 # Turn off debug package mode
 %define debug_package %{nil}
