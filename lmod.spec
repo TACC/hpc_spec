@@ -136,6 +136,12 @@ sed -e "s|@PKG@|%{GENERIC_IDIR}|g"     \
 %{MODULE_SETTARG}
 %{ZSH_SITE_FUNC}/_ml
 %{ZSH_SITE_FUNC}/_module
+%{ZSH_SITE_FUNC}/clearLmod
+%{ZSH_SITE_FUNC}/clearMT
+%{ZSH_SITE_FUNC}/ml
+%{ZSH_SITE_FUNC}/module
+%{ZSH_SITE_FUNC}/settarg
+
 
 %post -n %{pkg_name}
 
