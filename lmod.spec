@@ -68,6 +68,12 @@ if [ "$SYSHOST" = "ls5" ]; then
    EXTRA="--with-tmodPathRule=yes"
 fi
 
+if [ "$SYSHOST" = "longhorn" ]; then
+   cat > cacheDescript.txt << EOF
+/home/moduleData/cacheDir:/home/moduleData/spider_cache_timestamp.txt
+EOF
+fi
+
 # Lmod needs lua but should not require that a working module
 # system be in place to install lmod.  So we search for lua
 # the old fashion way
