@@ -2,7 +2,7 @@
 
 Summary: XALT
 Name: xalt
-Version: 2.10.1
+Version: 2.10.2
 Release: 1
 License: LGPLv2
 Group: System Environment/Base
@@ -47,6 +47,7 @@ if [ -f "$BASH_ENV" ]; then
   module purge
   clearMT
   export MODULEPATH=/opt/apps/xsede/modulefiles:/opt/apps/modulefiles:/opt/modulefiles
+  module load cuda
 fi
 
 
@@ -68,7 +69,8 @@ fi
 
 if [[ $SYSHOST = "longhorn" ]]; then
   TRANSMISSION=file
-  CONF_OPTS="--with-xaltFilePrefix=/scratch/projects/XALT --with-etcDir=/home/moduleData/"
+  MAKE_OPTS="EXTRA_FLAGS=-I$TACC_CUDA_INC"
+  CONF_OPTS="--with-xaltFilePrefix=/scratch/projects/XALT --with-etcDir=/home/moduleData/--with-trackGPU=nvml CPPFLAGS=-I$TACC_CUDA_INC"
   ETC_DIR=/home/moduleData
 fi
 
@@ -82,7 +84,7 @@ CXX=/usr/bin/g++ CC=/usr/bin/gcc ./configure CXX=/usr/bin/g++ CC=/usr/bin/gcc --
 
 touch Makefile.in
 touch makefile
-make CXX=/usr/bin/g++ CC=/usr/bin/gcc DESTDIR=$RPM_BUILD_ROOT install Inst_TACC
+make CXX=/usr/bin/g++ CC=/usr/bin/gcc DESTDIR=$RPM_BUILD_ROOT $MAKE_OPTS install Inst_TACC
 rm -f $RPM_BUILD_ROOT/%{INSTALL_DIR}/sbin/xalt_db.conf
 rm $RPM_BUILD_ROOT/%{INSTALL_DIR}/../%{name}
 
@@ -114,7 +116,14 @@ prepend_path("LD_PRELOAD",                "%{GENERIC_IDIR}/lib64/libxalt_init.so
 setenv (     "%{MODULE_VAR}_DIR",         "%{GENERIC_IDIR}/")
 setenv (     "%{MODULE_VAR}_BIN",         "%{GENERIC_IDIR}/bin")
 setenv (     "XALT_EXECUTABLE_TRACKING",  "yes")
-setenv (     "XALT_SCALAR_SAMPLING",      "yes")
+setenv (     "XALT_SAMPLING",             "yes")
+
+-- Uncomment these two lines to use XALT inside Singularity containers
+-- setenv("SINGULARITYENV_LD_PRELOAD", pathJoin(base,"$LIB/libxalt_init.so"))
+-- prepend_path("SINGULARITY_BINDPATH", base)
+
+-- Uncomment this line to have XALT track python packages.
+-- prepend_path("PYTHONPATH",           "%{GENERIC_IDIR}/site_packages")
 EOF
 
 #--------------
