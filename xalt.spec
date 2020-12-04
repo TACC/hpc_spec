@@ -77,7 +77,6 @@ fi
 if [[ $SYSHOST = "frontera" ]]; then
   MAKE_OPTS="EXTRA_FLAGS=-I$TACC_CUDA_INC"
   CONF_OPTS="--with-trackGPU=nvml CPPFLAGS=-I$TACC_CUDA_INC"
-  ETC_DIR=/tmp/moduleData
 fi
 
 CXX=/usr/bin/g++ CC=/usr/bin/gcc ./configure CXX=/usr/bin/g++ CC=/usr/bin/gcc --prefix=%{APPS} --with-syshostConfig=$SYSHOST_CONF \
