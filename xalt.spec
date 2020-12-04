@@ -2,7 +2,7 @@
 
 Summary: XALT
 Name: xalt
-Version: 2.9.7
+Version: 2.10.2
 Release: 1%{?dist}
 License: LGPLv2
 Group: System Environment/Base
@@ -18,7 +18,6 @@ Packager: mclay@tacc.utexas.edu
 #------------------------------------------------
 # BASIC DEFINITIONS
 #------------------------------------------------
-
 %define debug_package %{nil}
 %include rpm-dir.inc
 
@@ -48,6 +47,7 @@ if [ -f "$BASH_ENV" ]; then
   module purge
   clearMT
   export MODULEPATH=/opt/apps/xsede/modulefiles:/opt/apps/modulefiles:/opt/modulefiles
+  module load cuda
 fi
 
 
@@ -67,15 +67,26 @@ if [[ $SYSHOST = "ls5" ]]; then
   ETC_DIR=/home1/moduleData
 fi
 
+if [[ $SYSHOST = "longhorn" ]]; then
+  TRANSMISSION=file
+  MAKE_OPTS="EXTRA_FLAGS=-I$TACC_CUDA_INC"
+  CONF_OPTS="--with-xaltFilePrefix=/scratch/projects/XALT --with-trackGPU=nvml CPPFLAGS=-I$TACC_CUDA_INC"
+  ETC_DIR=/home/moduleData
+fi
+
 if [[ $SYSHOST = "frontera" ]]; then
-  CONF_OPTS="--with-trackGPU=yes"
+  MAKE_OPTS="EXTRA_FLAGS=-I$TACC_CUDA_INC"
+  CONF_OPTS="--with-trackGPU=nvml CPPFLAGS=-I$TACC_CUDA_INC"
+  ETC_DIR=/tmp/moduleData
 fi
 
 CXX=/usr/bin/g++ CC=/usr/bin/gcc ./configure CXX=/usr/bin/g++ CC=/usr/bin/gcc --prefix=%{APPS} --with-syshostConfig=$SYSHOST_CONF \
    --with-config=Config/TACC_config.py --with-transmission=$TRANSMISSION --with-MySQL=no                                          \
    --with-etcDir=$ETC_DIR $CONF_OPTS
 
-make CXX=/usr/bin/g++ CC=/usr/bin/gcc DESTDIR=$RPM_BUILD_ROOT install Inst_TACC
+touch Makefile.in
+touch makefile
+make CXX=/usr/bin/g++ CC=/usr/bin/gcc DESTDIR=$RPM_BUILD_ROOT $MAKE_OPTS install Inst_TACC
 rm -f $RPM_BUILD_ROOT/%{INSTALL_DIR}/sbin/xalt_db.conf
 rm $RPM_BUILD_ROOT/%{INSTALL_DIR}/../%{name}
 
@@ -109,9 +120,12 @@ setenv (     "%{MODULE_VAR}_BIN",         "%{GENERIC_IDIR}/bin")
 setenv (     "XALT_EXECUTABLE_TRACKING",  "yes")
 setenv (     "XALT_SAMPLING",             "yes")
 
---prepend_path("PYTHONPATH",                "%{GENERIC_IDIR}/site_package")
---prepend_path("SINGULARITY_BINDPATH",      "%{GENERIC_IDIR}/bin")
---setenv(      "SINGULARITYENV_LD_PRELOAD", "%{GENERIC_IDIR}/lib64/libxalt_init.so")
+-- Uncomment these two lines to use XALT inside Singularity containers
+-- setenv("SINGULARITYENV_LD_PRELOAD", pathJoin(base,"$LIB/libxalt_init.so"))
+-- prepend_path("SINGULARITY_BINDPATH", base)
+
+-- Uncomment this line to have XALT track python packages.
+-- prepend_path("PYTHONPATH",           "%{GENERIC_IDIR}/site_packages")
 EOF
 
 #--------------
