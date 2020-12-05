@@ -19,8 +19,8 @@
 
 # Create some macros (spec file variables)
 %define major_version 2
-%define minor_version 29
-%define micro_version 1
+%define minor_version 30
+%define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -76,12 +76,14 @@ URL:       http://www.cs.uoregon.edu/research/tau/
   %define PAPI_events              %{PAPI_dir}/share/papi/papi_events.csv
   %define PAPI_avail               %{PAPI_dir}/bin/papi_avail
   %define PAPI_component_avail     %{PAPI_dir}/bin/papi_component_avail
-  %define TAU_metrics   GET_TIME_OF_DAY:PAPI_TOT_CYC:PAPI_L2_LDM
+ #%define TAU_metrics   GET_TIME_OF_DAY:PAPI_TOT_CYC:PAPI_L2_LDM
   
  #%define TAU_makefile Makefile.tau-intelmpi-icpc-papi-ompt-mpi-pdt-openmp
  #%define TAU_makefile Makefile.tau-intelmpi-icpc-papi-mpi-pdt-openmp
  #%define TAU_makefile Makefile.tau-icpc-papi-ompt-v5-mpi-pdt-openmp
-  %define TAU_makefile Makefile.tau-icpc-papi-mpi-pdt-openmp
+ #%define TAU_makefile Makefile.tau-icpc-papi-mpi-pdt-openmp
+ #%define TAU_makefile Makefile.tau-icpc-ompt-v5-mpi-openmp
+  %define TAU_makefile Makefile.tau-icpc-papi-ompt-v5-mpi-pdt-openmp
   
 #                                               Configure Options
   %define  PREFIX     "-prefix=%{INSTALL_DIR}"
@@ -136,46 +138,18 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
      module load papi/%{PAPI_version}
      module load cmake
 
-cat >patch.config <<'EOF'
---- configure	2020-07-16 18:10:20.000000000 -0500
-+++ config.new	2020-09-29 07:53:22.000000000 -0500
-@@ -4461,9 +4461,15 @@
- 		fortran_compiler=`$mpif90_exe -show | awk '{ print $1;}' `
-             fi
-             if [ "x$mpilibrary" = "xno" -a "x$scorep" = "xno" ]; then
--		mpiinc=`$mpicxx_exe -show | cut -d' ' -f2- | sed -e 's@ @#@g'`
--		mpilibargs=`$mpicxx_exe -show | cut -d' ' -f2- | sed -e 's@ @#@g'`
--		mpiflibargs=`$mpif90_exe -show | cut -d' ' -f2- | sed -e 's@ @#@g' -e 's@-qthreaded@@g'`
-+		#mpiinc=`$mpicxx_exe -show | cut -d' ' -f2- | sed -e 's@ @#@g'`
-+		#mpilibargs=`$mpicxx_exe -show | cut -d' ' -f2- | sed -e 's@ @#@g'`
-+		#mpiflibargs=`$mpif90_exe -show | cut -d' ' -f2- | sed -e 's@ @#@g' -e 's@-qthreaded@@g'`
-+		mpiinc="-I/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/include"
-+
-+		mpilibargs="-L/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib/release_mt#-L/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib#-Xlinker#--enable-new-dtags#-Xlinker#-rpath#-Xlinker#/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib/release_mt#-Xlinker#-rpath#-Xlinker#/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib#-lmpicxx#-lmpifort#-lmpi#-lmpigi#-ldl#-lrt#-lpthread"
-+
-+
-+		mpiflibargs="-L/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib/release_mt#-L/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib#-Xlinker#--enable-new-dtags#-Xlinker#-rpath#-Xlinker#/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib/release_mt#-Xlinker#-rpath#-Xlinker#/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib#-lmpifort#-lmpi#-lmpigi#-ldl#-lrt#-lpthread"
- 
- 		mpilibargs="-L$tautoplevel/$machine/lib#-lTauMpi\$(TAU_CONFIG)#$mpilibargs"
- 		mpiflibargs="-L$tautoplevel/$machine/lib#-lTauMpi\$(TAU_CONFIG)#$mpiflibargs"
-EOF
-     patch configure patch.config
-
-#    -ompt=download removed -- freezing on startup doesn't work for 18.0.2 compiler
-#     not using -tag=intelmpi
-     ./configure  %{PREFIX}                            \
+     ./configure  %{PREFIX}                            \ 
                  -c++=mpicxx -cc=mpicc -fortran=mpif90 \
-                 -openmp -mpi                          \
-                 %{PDT} %{PAPI}                        \
-                 -bfd=download -iowrapper -unwind=download
+                 -ompt -mpi                            \
+                 %{PDT} %{PAPI}                        \ 
+                 -bfd=download -unwind=download -dwarf=download -iowrapper
+#./configure     
+#                -c++=mpiicpc -cc=mpiicc -fortran=mpiifort 
+#                -ompt -mpi 
+#                -papi=$TACC_PAPI_DIR
+#                -bfd=download -unwind=download -dwarf=download -iowrapper 
      make clean install -j 10
 
-#    ./configure -tag=intelomp %{PREFIX}               \
-#                -c++=icpc   -cc=icc   -fortran=ifort  \
-#                -openmp                               \
-#                %{PDT} %{PAPI} -ompt=download \
-#                -bfd=download -iowrapper -unwind=download
-#    make clean install -j 10
 
   %endif  #BUILD_PACKAGE |
 
