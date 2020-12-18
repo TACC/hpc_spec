@@ -15,6 +15,8 @@
 #              ./build_rpm.sh --xl=161 spectrum-mpi-10.3.0-pgi.spec
 # NO_PACKAGE=1 ./build_rpm.sh --pgi=19 spectrum-mpi-10.3.0-pgi.spec
 # NO_PACKAGE=1 ./build_rpm.sh --gcc=91 spectrum-mpi-10.3.0-pgi.spec
+# NO_PACKAGE=1 ./build_rpm.sh --pgi=19 spectrum-mpi-10.3.0-modified.spec
+# NO_PACKAGE=1 ./build_rpm.sh --pgi=20 spectrum-mpi-10.3.0-modified.spec
 # cd ../RPMS/x86_64
 # Only env variables needs to be set here
 # rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm - Not required
@@ -53,7 +55,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   3
 License:   BSD
 Group:     MPI
 URL:       https://www.ibm.com/products/spectrum-mpi
@@ -207,7 +209,7 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 # PGI module
 %if "%{comp_fam_name}" == "PGI"
 %define myCC  pgcc
-%define myCXX pg++
+%define myCXX pgc++
 %define myFC  pgfortran
 
 %endif               
