@@ -12,7 +12,7 @@ Summary: HDF5 Library
 %define ncdf_pkg_version   4.7.4
 %define ncdf_cxx_version   4.2
 %define ncdf_cxx4_version  4.3.1
-%define ncdf_ftn_version   4.4.4
+%define ncdf_ftn_version   4.5.3
 %define szip_version 2.1.1
 
 %define dbg %{nil}
