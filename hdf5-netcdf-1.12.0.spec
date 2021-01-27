@@ -27,7 +27,7 @@ Summary: HDF5 Library
 
 Name: hdf5-netcdf
 Version: %{hdf5_version}
-Release: 2%{?dist}
+Release: 1%{?dist}
 License: see included Copyright
 Vendor: NCSA
 Group: Development/Libraries
