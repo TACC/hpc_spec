@@ -39,7 +39,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   3%{?dist}
 License:   GPL
 Group:     Utility
 URL:       http://www.boost.org
@@ -189,7 +189,9 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   ./bootstrap.sh --with-python=/opt/apps/intel19/python3/3.7.0/bin/python3.7  --with-python-version=3.7 --with-python-root=/opt/apps/intel19/python3/3.7.0 --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
 
-  echo "using mpi : /opt/intel/compilers_and_libraries_2019.4.243/linux/mpi/intel64/bin/mpicxx ;" >> project-config.jam
+### Extra Si tricks here! 01/01/2021
+### echo "using mpi : /opt/intel/compilers_and_libraries_2019.4.243/linux/mpi/intel64/bin/mpicxx ;" >> project-config.jam
+    echo "using mpi : /opt/intel/compilers_and_libraries_2020.1.217/linux/mpi/intel64/bin/mpicxx ;" >> project-config.jam
 
   ./b2 -j 24 include="/opt/apps/intel19/python3/3.7.0/include/python3.7m" --prefix=%{PYTHON_INSTALL_DIR} $EXTRA cxxflags="%{TACC_OPT}" cflags="%{TACC_OPT}" linkflags="%{TACC_OPT}" install
   

@@ -63,6 +63,11 @@
     %define mpi_label 19_0
     %define mpi_module_version 19.0.7
   %endif
+  # VLE added 20210115
+  %if "%{mpiV}" == "19_9"
+    %define mpi_label 19_0
+    %define mpi_module_version 19.0.9
+  %endif
   %define mpi_fam     impi
   %define mpi_fam_ver impi%{mpi_label}
   %define mpi_module  %{mpi_fam}/%{mpi_module_version}

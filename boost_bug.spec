@@ -6,22 +6,22 @@
 Summary: Boost spec file (www.boost.org)
 
 # Give the package a base name
-%define pkg_base_name boost-mpi
-%define MODULE_VAR    BOOST_MPI
+%define pkg_base_name boost
+%define MODULE_VAR    BOOST
 
 # Create some macros (spec file variables)
 %define major_version 1
-%define minor_version 72
+%define minor_version 75
 %define micro_version 0
 
 %define pkg_version %{major_version}.%{minor_version}
 
-%define mpi_fam intel
+%define mpi_fam none
 
 ### Toggle On/Off ###
 %include rpm-dir.inc
 %include compiler-defines.inc
-%include mpi-defines.inc
+#%include mpi-defines.inc
 %include python-defines.inc
 %define  unified_directories 1
 ########################################
@@ -39,12 +39,12 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   3%{?dist}
+Release:   1%{?dist}
 License:   GPL
 Group:     Utility
 URL:       http://www.boost.org
 Packager:  TACC - siliu@tacc.utexas.edu
-Source0:   boost_1_72_0.tar.gz
+Source0:   boost_1_75_0.tar.gz
 Source1:   icu4c-59_1-src.tgz
 
 # Turn off debug package mode
@@ -122,7 +122,7 @@ module purge
 # Load Compiler
 %include compiler-load.inc
 # Load MPI Library
-%include mpi-load.inc
+#%include mpi-load.inc
 # Load Python Library
 %include python-load.inc
 
@@ -172,27 +172,24 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
  
   cd icu/source
   CXXFLAGS="%{TACC_OPT}" CFLAGS="%{TACC_OPT}" ./runConfigureICU  $ICU_MODE --prefix=%{PYTHON_INSTALL_DIR}
+
   make -j 24
   make install
   rm -f ~/user-config.jam
 
   cd $WD
   EXTRA="-sICU_PATH=%{PYTHON_INSTALL_DIR}"
-  CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all"
+  CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all --without-libraries=mpi"
 
-  CC=mpicxx
-  CXX=mpicxx
+  export CPPFLAGS=" -DBOOST_ASIO_USE_TS_EXECUTOR_AS_DEFAULT"
 
-  ./bootstrap.sh --prefix=%{PYTHON_INSTALL_DIR} ${CONFIGURE_FLAGS}
- 
-### Extra Si tricks here! 01/01/2021
-### echo "using mpi : /opt/intel/compilers_and_libraries_2019.4.243/linux/mpi/intel64/bin/mpicxx ;" >> project-config.jam
-    echo "using mpi : /opt/intel/compilers_and_libraries_2020.1.217/linux/mpi/intel64/bin/mpicxx ;" >> project-config.jam
- 
-  ./b2 -j 24 --prefix=%{PYTHON_INSTALL_DIR} $EXTRA cxxflags="%{TACC_OPT}" cflags="%{TACC_OPT}" linkflags="%{TACC_OPT}" install
-  
+  echo "using python : 3.7 : /opt/apps/intel19/python3/3.7.0/bin/python3.7 : /opt/apps/intel19/python3/3.7.0/include/python3.7m :  /opt/apps/intel19/python3/3.7.0/lib ;" >> tools/build/example/user-config.jam
+  echo "using python : 3.7 : /opt/apps/intel19/python3/3.7.0/bin/python3.7 : /opt/apps/intel19/python3/3.7.0/include/python3.7m :  /opt/apps/intel19/python3/3.7.0/lib ;" >> user-config.jam
+  ./bootstrap.sh --with-python=/opt/apps/intel19/python3/3.7.0/bin/python3.7  --with-python-version=3.7 --with-python-root=/opt/apps/intel19/python3/3.7.0 --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
+  ./b2 -j 24  include="/opt/apps/intel19/python3/3.7.0/include/python3.7m" --prefix=%{PYTHON_INSTALL_DIR} $EXTRA cxxflags="%{TACC_OPT}" cflags="%{TACC_OPT}" linkflags="%{TACC_OPT}" install
   mkdir -p              $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}
   cp -r %{PYTHON_INSTALL_DIR}/ $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}/..
+
 
   rm -f ~/tools/build/v2/user-config.jam
 
@@ -210,7 +207,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #---------------------------
 %if %{?BUILD_MODULEFILE}
 #---------------------------
- 
+
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
   mkdir -p $RPM_BUILD_ROOT/%{PYTHON_MODULE_DIR}
 
@@ -299,7 +296,7 @@ EOF
   %defattr(-,root,install,)
   # RPM modulefile contains files within these directories
   %{MODULE_DIR}
-  
+
   %if %{?WITH_PYTHON}
     %if %{undefined unified_directories}
       %{PYTHON_MODULE_DIR}

@@ -4,7 +4,7 @@ Summary:    Python is a high-level general-purpose programming language.
 
 Name:       tacc-python%{python_major_version}
 Version:    %{python_module_version}
-Release:    3%{?dist}
+Release:    1%{?dist}
 License:    GPLv2
 Vendor:     Python Software Foundation
 Group:      Applications
@@ -76,17 +76,16 @@ export PIP=%{INSTALL_DIR}/bin/pip%{python_major_version}
 ############################################################
 # System Specific Libraries
 ############################################################
-ml qt5
-export QT5_DIR=${TACC_QT5_DIR}
-export QT5_LIB=${TACC_QT5_LIB}
-export QT5_INC=${TACC_QT5_INC} 
-export QT5_BIN=${TACC_QT5_BIN}
+#ml qt5
+#export QT5_DIR=${TACC_QT5_DIR}
+#export QT5_LIB=${TACC_QT5_LIB}
+#export QT5_INC=${TACC_QT5_INC} 
+#export QT5_BIN=${TACC_QT5_BIN}
 
 %if "%{comp_fam_name}" == "Intel"
     export MKL_INC=${TACC_MKL_INC}
     export MKL_LIB=${TACC_MKL_LIB}
     export OMP_LIB=${ICC_LIB}
-    
 %endif
 %if "%{comp_fam_name}" == "GNU"
     ml intel
@@ -105,9 +104,7 @@ export QT5_BIN=${TACC_QT5_BIN}
     export LD_LIBRARY_PATH=${MKL_LIB}:${OMP_LIB}:${LD_LIBRARY_PATH}
 %endif
 
-
-
-
+echo $PATH
 ############################################################
 # Build core python here
 ############################################################
@@ -128,7 +125,7 @@ if [ ! -f "%{INSTALL_DIR}/bin/python%{python_major_version}" ]; then
     ls
 
     %if "%{comp_fam_name}" == "Intel"
-    ./configure --prefix=%{INSTALL_DIR} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc -lssp' CXXFLAGS="-std=c++11" CFLAGS="-Wformat -Wformat-security -D_FORTIFY_SOURCE=2 -fstack-protector -fwrapv -fpic -O3" LDFLAGS="-Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --without-gcc --with-libm=-limf --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip --enable-unicode=ucs4    
+    ./configure --prefix=%{INSTALL_DIR} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc -lssp' CXXFLAGS="-std=c++11" CFLAGS="-Wformat -Wformat-security -D_FORTIFY_SOURCE=2 -fstack-protector -fwrapv -fpic -O3" LDFLAGS="-Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-libm=-limf --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip --enable-unicode=ucs4    
     %endif
     %if "%{comp_fam_name}" == "GNU"
     ./configure --prefix=%{INSTALL_DIR} CC=gcc CXX=g++ LD=ld AR=ar LIBS='-lpthread' CFLAGS="-Wp,-D_FORTIFY_SOURCE=2 -fexceptions --param=ssp-buffer-size=4 -grecord-gcc-switches -fwrapv -fpic -O2 -fno-semantic-interposition" LDFLAGS="-fpic -Xlinker -export-dynamic" --with-system-ffi --enable-shared --with-ensurepip --with-computed-gotos --enable-optimizations --with-lto --enable-unicode=ucs4
@@ -201,6 +198,10 @@ ${PIP} install --no-binary :all: cffi
 ${PIP} install pynacl
 %{INSTALL_DIR}/bin/python%{python_major_version} -c 'import nacl'
 
+#${PIP} install --no-binary :all: cryptography
+${PIP} install cryptography
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import cryptography'
+
 ${PIP} install --no-binary :all: paramiko
 %{INSTALL_DIR}/bin/python%{python_major_version} -c 'import paramiko'
 
@@ -219,13 +220,13 @@ CFLAGS="-O2 -fPIC" ${PIP} install --no-binary :all: Cython
 ### Numpy
 if ! $(%{INSTALL_DIR}/bin/python%{python_major_version} -c "import numpy"); then
     cd %{_topdir}/SOURCES	
-    if [ ! -f "%{_topdir}/SOURCES/numpy-1.18.1.tar.gz" ]; then	
-	wget https://github.com/numpy/numpy/releases/download/v1.18.1/numpy-1.18.1.tar.gz
+    if [ ! -f "%{_topdir}/SOURCES/numpy-1.19.5.tar.gz" ]; then	
+	wget https://github.com/numpy/numpy/releases/download/v1.19.5/numpy-1.19.5.tar.gz
     fi	   
     
-    rm -rf %{_topdir}/SOURCES/numpy-1.18.1 	   
-    tar -xzvf %{_topdir}/SOURCES/numpy-1.18.1.tar.gz -C %{_topdir}/SOURCES	
-    cd %{_topdir}/SOURCES/numpy-1.18.1
+    rm -rf %{_topdir}/SOURCES/numpy-1.19.5 	   
+    tar -xzvf %{_topdir}/SOURCES/numpy-1.19.5.tar.gz -C %{_topdir}/SOURCES	
+    cd %{_topdir}/SOURCES/numpy-1.19.5
 
     echo "[mkl]
 library_dirs = ${MKL_LIB}:${OMP_LIB}
@@ -265,13 +266,13 @@ else:
 ### Scipy
 if ! $(%{INSTALL_DIR}/bin/python%{python_major_version} -c "import scipy"); then
     cd %{_topdir}/SOURCES	
-    if [ ! -f "%{_topdir}/SOURCES/scipy-1.2.3.tar.gz" ]; then	
-	wget -O scipy-1.2.3.tar.gz https://github.com/scipy/scipy/releases/download/v1.2.3/scipy-1.2.3.tar.gz
+    if [ ! -f "%{_topdir}/SOURCES/scipy-1.6.0.tar.gz" ]; then	
+	wget -O scipy-1.6.0.tar.gz https://github.com/scipy/scipy/releases/download/v1.6.0/scipy-1.6.0.tar.gz
     fi	   
 
-    rm -rf %{_topdir}/SOURCES/scipy-1.2.3
-    tar -xzvf scipy-1.2.3.tar.gz -C %{_topdir}/SOURCES	 
-    cd %{_topdir}/SOURCES/scipy-1.2.3
+    rm -rf %{_topdir}/SOURCES/scipy-1.6.0
+    tar -xzvf scipy-1.6.0.tar.gz -C %{_topdir}/SOURCES	 
+    cd %{_topdir}/SOURCES/scipy-1.6.0
 
     %if "%{comp_fam_name}" == "Intel"
     %{INSTALL_DIR}/bin/python%{python_major_version} setup.py config --compiler=intelem --fcompiler=intelem build_clib --compiler=intelem --fcompiler=intelem build_ext --compiler=intelem --fcompiler=intelem install
@@ -308,7 +309,8 @@ ${PIP} install --no-binary :all: PyGObject
 
 
 ${PIP} install --no-binary :all: PyQt5-sip
-${PIP} install --no-binary :all: PyQT5
+#${PIP} install --no-binary :all: PyQT5
+${PIP} install PyQT5
 %{INSTALL_DIR}/bin/python%{python_major_version} -c 'import PyQt5'
 
 # Start and stop a virtual frame buffer so $DISPLAY is set and will work
@@ -342,6 +344,9 @@ ${PIP} install --no-binary :all: numexpr
 
 ${PIP} install --no-binary :all: rpyc	
 %{INSTALL_DIR}/bin/python%{python_major_version} -c 'import rpyc'
+
+${PIP} install jupyterlab-widgets	
+%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import jupyterlab_widgets'
 
 ${PIP} install --no-binary :all: jupyter	
 %{INSTALL_DIR}/bin/python%{python_major_version} -c 'import jupyter'

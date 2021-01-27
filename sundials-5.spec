@@ -1,6 +1,10 @@
-# Quantum Espresso 6.6.SPEC
-# 10/2017
+# Sundials installation
+# (there is a sundials in petsc but that is horribly old;
+#  the API has changed considerably)
 #
+# Victor Eijkhout
+
+
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
 # NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
@@ -16,34 +20,30 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: Quantum Espresso
+Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name qe
-%define MODULE_VAR    QE
+%define pkg_base_name sundials
+%define MODULE_VAR    SUNDIALS
 
 # Create some macros (spec file variables)
-%define major_version 6
-%define minor_version 6
-#%define micro_version  
+%define major_version 5
+%define minor_version 5
+%define micro_version 0
 
-#%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-
 %include compiler-defines.inc
 %include mpi-defines.inc
-
-#%include name-defines-noreloc.inc
-
 ########################################
 ### Construct name based on includes ###
 ########################################
-%include name-defines.inc
-
-
+#%include name-defines.inc
+%include name-defines-noreloc.inc
+#%include name-defines-hidden.inc
+#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -54,15 +54,13 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
+Release:   1%{?dist}
 License:   GPL
-Group:     Applications/Chemistry
-URL:       http://www.quantum-espresso.org
-Packager:  TACC - hliu@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}-TACC.tar.gz
-#Source0:   %{pkg_base_name}-%{pkg_version}.tar.bz2
-#Source1:   libint-1.1.5.tar.gz
-#Source2:   libxc-2.0.1.tar.gz
+Group:     System Environment/Base
+URL:       https://computing.llnl.gov/projects/sundials
+Packager:  eijkhout@tacc.utexas.edu
+## Packager:  TACC - alamas@tacc.utexas.edu
+Source:    sundials-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -70,24 +68,18 @@ Source:    %{pkg_base_name}-%{pkg_version}-TACC.tar.gz
 
 
 %package %{PACKAGE}
-Summary: Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale.
-Group: Applications/Chemistry
+Summary: The package RPM
+Group: Development/Tools
 %description package
-Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
-It is based on density-functional theory, plane waves, and pseudopotentials.
+This is the long description for the package RPM...
+
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
-It is based on density-functional theory, plane waves, and pseudopotentials.
-%description
-Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
-It is based on density-functional theory, plane waves, and pseudopotentials.
+This is the long description for the modulefile RPM...
 
-# install package at /home1/apps, install module file at /opt/apps 
-%define HOME1 /home1/apps
-%define INSTALL_DIR %{HOME1}/%{comp_fam_ver}/%{mpi_fam_ver}/%{pkg_base_name}/%{pkg_version}
+%description
 
 #---------------------------------------
 %prep
@@ -98,6 +90,9 @@ It is based on density-functional theory, plane waves, and pseudopotentials.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+%setup -n sundials-%{pkg_version}
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -111,47 +106,11 @@ It is based on density-functional theory, plane waves, and pseudopotentials.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n %{pkg_base_name}-%{pkg_version}-TACC
+
 
 #---------------------------------------
 %build
 #---------------------------------------
-%include compiler-load.inc
-%include mpi-load.inc
-
-export VERSION=6.6
-
-# get source
-wget --no-check-certificate https://elpa.mpcdf.mpg.de/html/Releases/2020.05.001/elpa-2020.05.001.tar.gz
-tar xvf elpa-2020.05.001.tar.gz
-cd elpa-2020.05.001
-wget --no-check-certificate https://github.com/hfp/xconfigure/raw/master/configure-get.sh
-chmod +x configure-get.sh
-./configure-get.sh elpa
-#sed -i 's/-xCORE-AVX512/-xCORE-AVX2 -axCORE-AVX512,MIC-AVX512/g' configure-elpa-skx-omp.sh
-
-#make clean
-./configure-elpa-skx-omp.sh
-make -j ; make install
-
-cd ..
-
-wget https://gitlab.com/QEF/q-e/-/archive/qe-6.6/q-e-qe-6.6.tar.bz2
-tar xvf q-e-qe-6.6.tar.bz2
-cd q-e-qe-6.6
-wget --no-check-certificate https://github.com/hfp/xconfigure/raw/master/configure-get.sh
-chmod +x configure-get.sh
-./configure-get.sh qe
-#sed -i 's/-xCORE-AVX512/-xCORE-AVX2 -axCORE-AVX512,MIC-AVX512/g' configure-qe-skx-omp.sh
-#sed -i 's/-xCORE-AVX512/-xCORE-AVX2 -axCORE-AVX512,MIC-AVX512/g' make.inc
-./configure-qe-skx-omp.sh
-sed -i 's/libbeef.a/libbeef.a $(LAPACK_LIBS)/g' make.inc
-
-make all
-
-# Remove non active symbolic links in packages
-#rm S3DE/iotk/iotk
-#rm -rf Doc
 
 
 #---------------------------------------
@@ -160,9 +119,13 @@ make all
 
 # Setup modules
 %include system-load.inc
+# Load Compiler
+%include compiler-load.inc
+# Load MPI Library
+%include mpi-load.inc
 
-# Insert necessary module commands
-module purge
+# Insert further module commands
+module load cmake
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -184,13 +147,40 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-  
-  # Create some dummy directories and files for fun
-#  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-#  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
 
-cp -r ./q-e-qe-6.6/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/
-chmod -Rf u+rwX,g+rwX,o=rX  $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+##
+## make install dir as tmpfs
+##
+mkdir -p %{INSTALL_DIR}
+mount -t tmpfs tmpfs %{INSTALL_DIR}
+
+##
+## make build directory and go there
+##
+sourcedir=`pwd`
+builddir=/tmp/sundial-build
+rm -rf ${builddir}
+mkdir -p ${builddir}
+pushd ${builddir}
+
+cmake -VV \
+  -D CMAKE_INSTALL_PREFIX:PATH=%{INSTALL_DIR} \
+  ${sourcedir}
+make -j 12
+make install
+  
+##
+## back out of builddir
+##
+popd
+
+##
+## copy installation to rpm install dir
+## and lose the tmpfs
+##
+cp -r %{INSTALL_DIR}/* ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
+umount %{INSTALL_DIR}
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -213,51 +203,38 @@ chmod -Rf u+rwX,g+rwX,o=rX  $RPM_BUILD_ROOT/%{INSTALL_DIR}
   
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
-
-
-To run codes in quantum espresso, e.g. pw.x, include the following lines in
-your job script, using the appropriate input file name:
-module load qe/6.6
-ibrun pw.x -input input.scf
-
-IMPORTANT NOTES:
-
-1. Run your jobs on $SCRATCH rather than $WORK. The $SCRATCH file system is better able to handle these kinds of loads.
-
-2. Especially when running pw.x, set the keyword disk_io to low or none in input so that wavefunction
-will not be written to file at each scf iteration step, but stored in memory.
-
-3. When running ph.x, set the  reduced_io to .true. and run it and redirect its IO to $SCRATCH.
-Do not run multiple ph.x jobs at given time.
+local help_message=[[
+The SUNDIALS modulefile defines the following environment variables:
+TACC_SUNDIALS_DIR, TACC_SUNDIALS_LIB, and TACC_SUNDIALS_INC
+for the location of the SUNDIALS %{version} distribution,
+libraries, and include files, respectively.
 
 Version %{version}
 ]]
 
---help(help_msg)
-help(help_msg)
+help(help_message,"\n")
 
-whatis("Name: Quantum Espresso")
-whatis("Version: %{pkg_version}%{dbg}")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
-whatis "Category: application, chemistry"
-whatis "Keywords: Chemistry, Density Functional Theory, Plane Wave, Peudo potentials"
-whatis "URL: http://www.quantum-espresso.org"
-whatis "Description: Integrated suite of computer codes for electronic structure calculations and material modeling at the nanoscale."
+whatis("Name: Sundials")
+whatis("Version: %{version}")
+whatis("Category: library, mathematics")
+whatis("Keywords: Library, Mathematics, ODEs, Parallel")
+whatis("URL: https://computing.llnl.gov/projects/sundials")
+whatis("Description: Numerical library, ordinary differential equations")
 
--- Create environment variables.
-local qe_dir="%{INSTALL_DIR}"
+local sundials_dir="%{INSTALL_DIR}"
 
-prepend_path(    "PATH",                pathJoin(qe_dir, "bin"))
+setenv("TACC_SUNDIALS_DIR",sundials_dir)
+setenv("TACC_SUNDIALS_LIB",pathJoin(sundials_dir,"lib64"))
+setenv("TACC_SUNDIALS_INC",pathJoin(sundials_dir,"include"))
 
-setenv( "TACC_%{MODULE_VAR}_DIR",                qe_dir)
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(qe_dir, "bin"))
-setenv("TACC_%{MODULE_VAR}_PSEUDO",pathJoin(qe_dir,"pseudo"))
+--
+-- Append paths
+--
+append_path("LD_LIBRARY_PATH",pathJoin(sundials_dir,"lib"))
+append_path("PATH",pathJoin(sundials_dir,"bin"))
 
 EOF
-  
+
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -267,9 +244,10 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 set     ModulesVersion      "%{version}"
 EOF
   
-  # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %endif
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -300,7 +278,6 @@ EOF
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-
 ########################################
 ## Fix Modulefile During Post Install ##
 ########################################
@@ -321,4 +298,9 @@ export PACKAGE_PREUN=1
 %clean
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
+
+%changelog
+
+* Tue Jan 19 2021 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial release of 5.5.0
 

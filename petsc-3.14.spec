@@ -200,6 +200,7 @@ fi
 ##
 ## Compiler flags
 ##
+# we have our own avx flags, so --with-avx512-kernels not needed
 export XOPTFLAGS="%{TACC_OPT} -O2 -g"
 case "${ext}" in 
   ( *complex* )
@@ -504,7 +505,6 @@ case "${ext}" in
 ( *rtx* )
     module load cuda
     export CUDA_OPTIONS="--with-cuda=yes --with-cudac=nvcc --with-cuda-include=${TACC_CUDA_DIR}/targets/x86_64-linux/include/ --with-cuda-lib=[${TACC_CUDA_DIR}/targets/x86_64-linux/lib/libcufft.so,libcusparse.so,libcusolver.so,libcublas.so,libcuda.so,libcudart.so] --download-cusp=yes CUDAFLAGS=-arch=sm_70 "
-    # CUDAOPTFLAGS="-O2 -g"
     export precision=--with-precision=single ;
     export packageslisting= ;
     export packages= ;;

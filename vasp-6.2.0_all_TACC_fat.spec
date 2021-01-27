@@ -1,5 +1,6 @@
-# Quantum Espresso 6.6.SPEC
-# 10/2017
+# VASP Hang Liu
+# 2020-03
+# Modified for KNL deployment.
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -16,34 +17,30 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: Quantum Espresso
+Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name qe
-%define MODULE_VAR    QE
+%define pkg_base_name vasp
+%define MODULE_VAR    VASP
 
 # Create some macros (spec file variables)
 %define major_version 6
-%define minor_version 6
-#%define micro_version  
+%define minor_version 2
+%define micro_version 0
 
-#%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
-%include rpm-dir.inc                  
-
+%include rpm-dir.inc
 %include compiler-defines.inc
 %include mpi-defines.inc
-
-#%include name-defines-noreloc.inc
-
 ########################################
 ### Construct name based on includes ###
 ########################################
 %include name-defines.inc
-
-
+#%include name-defines-noreloc.inc
+#%include name-defines-hidden.inc
+#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -54,15 +51,12 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1
-License:   GPL
+Release:   1%{?dist}
+License:   VASP
 Group:     Applications/Chemistry
-URL:       http://www.quantum-espresso.org
+URL:       https://www.vasp.at/
 Packager:  TACC - hliu@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}-TACC.tar.gz
-#Source0:   %{pkg_base_name}-%{pkg_version}.tar.bz2
-#Source1:   libint-1.1.5.tar.gz
-#Source2:   libxc-2.0.1.tar.gz
+Source:    %{pkg_base_name}-%{pkg_version}_all_TACC_fat.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -70,25 +64,18 @@ Source:    %{pkg_base_name}-%{pkg_version}-TACC.tar.gz
 
 
 %package %{PACKAGE}
-Summary: Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale.
+Summary: The Vienna Ab initio Simulation Package (VASP)
 Group: Applications/Chemistry
 %description package
-Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
-It is based on density-functional theory, plane waves, and pseudopotentials.
+The Vienna Ab initio Simulation Package (VASP)
+
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group: Lmod/Modulefiles
 %description modulefile
-Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
-It is based on density-functional theory, plane waves, and pseudopotentials.
+The Vienna Ab initio Simulation Package (VASP)
 %description
-Quantum Espresso is an integrated suite of Open-Source computer codes for electronic-structure calculations and materials modeling at the nanoscale. 
-It is based on density-functional theory, plane waves, and pseudopotentials.
-
-# install package at /home1/apps, install module file at /opt/apps 
-%define HOME1 /home1/apps
-%define INSTALL_DIR %{HOME1}/%{comp_fam_ver}/%{mpi_fam_ver}/%{pkg_base_name}/%{pkg_version}
-
+The Vienna Ab initio Simulation Package (VASP)
 #---------------------------------------
 %prep
 #---------------------------------------
@@ -98,6 +85,8 @@ It is based on density-functional theory, plane waves, and pseudopotentials.
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+%setup -n %{pkg_base_name}-%{pkg_version}_all_TACC_fat
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -111,47 +100,11 @@ It is based on density-functional theory, plane waves, and pseudopotentials.
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-%setup -n %{pkg_base_name}-%{pkg_version}-TACC
+
 
 #---------------------------------------
 %build
 #---------------------------------------
-%include compiler-load.inc
-%include mpi-load.inc
-
-export VERSION=6.6
-
-# get source
-wget --no-check-certificate https://elpa.mpcdf.mpg.de/html/Releases/2020.05.001/elpa-2020.05.001.tar.gz
-tar xvf elpa-2020.05.001.tar.gz
-cd elpa-2020.05.001
-wget --no-check-certificate https://github.com/hfp/xconfigure/raw/master/configure-get.sh
-chmod +x configure-get.sh
-./configure-get.sh elpa
-#sed -i 's/-xCORE-AVX512/-xCORE-AVX2 -axCORE-AVX512,MIC-AVX512/g' configure-elpa-skx-omp.sh
-
-#make clean
-./configure-elpa-skx-omp.sh
-make -j ; make install
-
-cd ..
-
-wget https://gitlab.com/QEF/q-e/-/archive/qe-6.6/q-e-qe-6.6.tar.bz2
-tar xvf q-e-qe-6.6.tar.bz2
-cd q-e-qe-6.6
-wget --no-check-certificate https://github.com/hfp/xconfigure/raw/master/configure-get.sh
-chmod +x configure-get.sh
-./configure-get.sh qe
-#sed -i 's/-xCORE-AVX512/-xCORE-AVX2 -axCORE-AVX512,MIC-AVX512/g' configure-qe-skx-omp.sh
-#sed -i 's/-xCORE-AVX512/-xCORE-AVX2 -axCORE-AVX512,MIC-AVX512/g' make.inc
-./configure-qe-skx-omp.sh
-sed -i 's/libbeef.a/libbeef.a $(LAPACK_LIBS)/g' make.inc
-
-make all
-
-# Remove non active symbolic links in packages
-#rm S3DE/iotk/iotk
-#rm -rf Doc
 
 
 #---------------------------------------
@@ -160,9 +113,15 @@ make all
 
 # Setup modules
 %include system-load.inc
-
-# Insert necessary module commands
 module purge
+# Load Compiler
+%include compiler-load.inc
+# Load MPI Library
+%include mpi-load.inc
+
+module load cuda/10.1
+
+# Insert further module commands
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -172,7 +131,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -184,15 +143,56 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-  
-  # Create some dummy directories and files for fun
-#  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-#  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
 
-cp -r ./q-e-qe-6.6/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/
-chmod -Rf u+rwX,g+rwX,o=rX  $RPM_BUILD_ROOT/%{INSTALL_DIR}
+cd wannier90-3.1.0/
+make lib
 
-#-----------------------  
+cd ../libbeef
+./configure CC=icc --prefix=$PWD
+make
+make install
+
+cd ../vasp.6.2.0
+make veryclean
+make std
+make gam
+make ncl
+
+
+cd ../vasp.6.2.0.vtst
+make veryclean
+make std
+make gam
+make ncl
+cd ./bin
+mv vasp_std vasp_std_vtst
+mv vasp_gam vasp_gam_vtst
+mv vasp_ncl vasp_ncl_vtst
+
+cd ../../
+
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+rm   -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}/*
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+
+cd vasp.6.2.0/bin/
+cp vasp_std $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_gam $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_ncl $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+
+cd ../../vasp.6.2.0.vtst/bin
+cp vasp_std_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_gam_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cp vasp_ncl_vtst $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+
+cd ../../libbeef/bin
+cp bee $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+cd ../../
+cp -r vtstscripts-967 $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/.
+
+
+
+#-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
 
@@ -202,7 +202,7 @@ chmod -Rf u+rwX,g+rwX,o=rX  $RPM_BUILD_ROOT/%{INSTALL_DIR}
 #---------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -210,54 +210,78 @@ chmod -Rf u+rwX,g+rwX,o=rX  $RPM_BUILD_ROOT/%{INSTALL_DIR}
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
+
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
+local help_message=[[
+The TACC VASP module appends the path to the vasp executables
+to the PATH environment variable.  Also TACC_VASP_DIR, and
+TACC_VASP_BIN are set to VASP home and bin directories.
+
+Users have to show their licenses and be confirmed by
+VASP team that they are registered users under that licenses
+Scan a copy of the license with the license number and send to hliu@tacc.utexas.edu
+
+The VASP executables are
+
+MPI+OMP:
+vasp_std: compiled with pre processing flag: -DNGZhalf
+vasp_gam: compiled with pre processing flag: -DNGZhalf -DwNGZhalf
+vasp_ncl: compiled without above pre processing flags
+vasp_std_vtst: vasp_std with VTST
+vasp_gam_vtst: vasp_gam with VTST
+vasp_ncl_vtst: vasp_ncl with VTST
+
+Above compilations have optional libraries link: -DVASP2WANNIER90v2 -Dlibbeef
 
 
-To run codes in quantum espresso, e.g. pw.x, include the following lines in
-your job script, using the appropriate input file name:
-module load qe/6.6
-ibrun pw.x -input input.scf
+vtstscripts-967/: utility scripts of VTST
 
-IMPORTANT NOTES:
+bee: BEEF analysis code
 
-1. Run your jobs on $SCRATCH rather than $WORK. The $SCRATCH file system is better able to handle these kinds of loads.
-
-2. Especially when running pw.x, set the keyword disk_io to low or none in input so that wavefunction
-will not be written to file at each scf iteration step, but stored in memory.
-
-3. When running ph.x, set the  reduced_io to .true. and run it and redirect its IO to $SCRATCH.
-Do not run multiple ph.x jobs at given time.
+This the VASP.6.2.0 release.
 
 Version %{version}
 ]]
 
---help(help_msg)
-help(help_msg)
 
-whatis("Name: Quantum Espresso")
-whatis("Version: %{pkg_version}%{dbg}")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
-whatis "Category: application, chemistry"
-whatis "Keywords: Chemistry, Density Functional Theory, Plane Wave, Peudo potentials"
-whatis "URL: http://www.quantum-espresso.org"
-whatis "Description: Integrated suite of computer codes for electronic structure calculations and material modeling at the nanoscale."
+whatis("Version: %{pkg_version}")
+whatis("Category: application, chemistry")
+whatis("Keywords: Chemistry, Density Functional Theory, Molecular Dynamics")
+whatis("URL:https://www.vasp.at/")
+whatis("Description: Vienna Ab-Initio Simulation Package")
+help(help_message,"\n")
 
--- Create environment variables.
-local qe_dir="%{INSTALL_DIR}"
 
-prepend_path(    "PATH",                pathJoin(qe_dir, "bin"))
+local group = "G-822359"
+found = userInGroup(group)
 
-setenv( "TACC_%{MODULE_VAR}_DIR",                qe_dir)
-setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(qe_dir, "bin"))
-setenv("TACC_%{MODULE_VAR}_PSEUDO",pathJoin(qe_dir,"pseudo"))
+
+local err_message = [[
+You do not have access to VASP.6.2.0!
+
+
+Users have to show their licenses and be confirmed by the
+VASP team that they are registered users under that license.
+Scan a copy of the license with the license number and send to hliu@tacc.utexas.edu
+]]
+
+
+if (found) then
+local vasp_dir="%{INSTALL_DIR}"
+
+prepend_path(    "PATH",                pathJoin(vasp_dir, "bin"))
+prepend_path(    "LD_PRELOAD",          "/home1/apps/tacc-patches/getcwd-patch.so")
+setenv( "TACC_%{MODULE_VAR}_DIR",                vasp_dir)
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(vasp_dir, "bin"))
+
+
+else
+  LmodError(err_message,"\n")
+end
 
 EOF
-  
+
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -266,10 +290,10 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 
 set     ModulesVersion      "%{version}"
 EOF
-  
-  # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
-
+  # Check the syntax of the generated lua modulefile only if a visible module
+  %if %{?VISIBLE}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %endif
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -280,7 +304,8 @@ EOF
 %files package
 #------------------------
 
-  %defattr(-,root,install,)
+#  %defattr(-,root,install,)
+%defattr(750,root,G-822359)
   # RPM package contains files within these directories
   %{INSTALL_DIR}
 
@@ -289,7 +314,7 @@ EOF
 #-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
-%files modulefile 
+%files modulefile
 #---------------------------
 
   %defattr(-,root,install,)
@@ -299,7 +324,6 @@ EOF
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
 
 ########################################
 ## Fix Modulefile During Post Install ##

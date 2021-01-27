@@ -1,3 +1,5 @@
+*.spec_old
+*.spec.old
 *.log
 *.swp
 *~
