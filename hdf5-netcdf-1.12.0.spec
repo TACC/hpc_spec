@@ -300,7 +300,7 @@ for ARCH in "${archA[@]}"; do
 
   export LD_LIBRARY_PATH="$INSTALL_DIR:$LD_LIBRARY_PATH:$INSTALL_DIR"
 
-  ./configure --prefix=$INSTALL_DIR --enable-build-mode=production --with-szlib=$INSTALL_DIR --enable-fortran --enable-fortran2003 --enable-shared --with-default-api-version=v18 $CONF_OPTS $DEBUG_FLAGS
+  ./configure --prefix=$INSTALL_DIR --enable-build-mode=production --with-szlib=$INSTALL_DIR --enable-fortran --enable-fortran2003 --enable-shared $CONF_OPTS $DEBUG_FLAGS # --with-default-api-version=v110 
 
   make V=1 -j 4
 
@@ -338,6 +338,9 @@ and add the following options to the link step:
 The -Wl,-rpath,\$TACC_HDF5_LIB option is not required, however,
 if it is used, then this module will not have to be loaded
 to run the program during future login sessions.
+
+See https://portal.hdfgroup.org/display/HDF5/Migrating+from+HDF5+1.10+to+HDF5+1.12
+on how to migrating from HDF5 1.10 to HDF5 1.12 for details on upgrading an application.
 
 ]]
 
