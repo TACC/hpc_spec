@@ -1,13 +1,13 @@
 #
 # Si Liu
-# 2020-08-20
+# 2021-01-21
 #
 
 Summary: Boost spec file (www.boost.org)
 
 # Give the package a base name
-%define pkg_base_name boost
-%define MODULE_VAR    BOOST
+%define pkg_base_name boost-mpi
+%define MODULE_VAR    BOOST_MPI
 
 # Create some macros (spec file variables)
 %define major_version 1
@@ -16,12 +16,12 @@ Summary: Boost spec file (www.boost.org)
 
 %define pkg_version %{major_version}.%{minor_version}
 
-%define mpi_fam none
+%define mpi_fam intel
 
 ### Toggle On/Off ###
 %include rpm-dir.inc
 %include compiler-defines.inc
-#%include mpi-defines.inc
+%include mpi-defines.inc
 %include python-defines.inc
 %define  unified_directories 1
 ########################################
@@ -45,10 +45,7 @@ Group:     Utility
 URL:       http://www.boost.org
 Packager:  TACC - siliu@tacc.utexas.edu
 Source0:   boost_1_72_0.tar.gz
-Source1:   icu4c-59_2-src.tgz
-
-# Si Liu:
-# back to an older version of icu4c to work with intel/19.1.1
+Source1:   icu4c-59_1-src.tgz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -125,7 +122,7 @@ module purge
 # Load Compiler
 %include compiler-load.inc
 # Load MPI Library
-#%include mpi-load.inc
+%include mpi-load.inc
 # Load Python Library
 %include python-load.inc
 
@@ -171,26 +168,33 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
   WD=`pwd`
   
-  TACC_OPT="-std=c++17 xCORE-AVX2 -axCORE-AVX512,MIC-AVX512"
+  TACC_OPT="-xCORE-AVX2 -axCORE-AVX512,MIC-AVX512"
  
   cd icu/source
-  CXXFLAGS="%{TACC_OPT}" CFLAGS="%{TACC_OPT}" ./runConfigureICU  $ICU_MODE --prefix=%{PYTHON_INSTALL_DIR} 
+  CXXFLAGS="%{TACC_OPT}" CFLAGS="%{TACC_OPT}" ./runConfigureICU  $ICU_MODE --prefix=%{PYTHON_INSTALL_DIR}
   make -j 24
   make install
   rm -f ~/user-config.jam
 
   cd $WD
   EXTRA="-sICU_PATH=%{PYTHON_INSTALL_DIR}"
-  CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all --without-libraries=mpi"
+  CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-libraries=all"
 
-  echo "using python : 3.7 : /opt/apps/intel18/python3/3.7.0/bin/python3.7 : /opt/apps/intel18/python3/3.7.0/include/python3.7m :  /opt/apps/intel18/python3/3.7.0/lib ;" >> tools/build/example/user-config.jam
-  echo "using python : 3.7 : /opt/apps/intel18/python3/3.7.0/bin/python3.7 : /opt/apps/intel18/python3/3.7.0/include/python3.7m :  /opt/apps/intel18/python3/3.7.0/lib ;" >> user-config.jam
-  ./bootstrap.sh --with-python=/opt/apps/intel18/python3/3.7.0/bin/python3.7  --with-python-version=3.7 --with-python-root=/opt/apps/intel18/python3/3.7.0 --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
-  ./b2 -j 24  include="/opt/apps/intel18/python3/3.7.0/include/python3.7m" --prefix=%{PYTHON_INSTALL_DIR} $EXTRA cxxflags="%{TACC_OPT}" cflags="%{TACC_OPT}" linkflags="%{TACC_OPT}" install
 
+  CC=mpicxx
+  CXX=mpicxx
+
+  echo "using python : 3.7 : /opt/apps/intel19/python3/3.7.0/bin/python3.7 : /opt/apps/intel19/python3/3.7.0/include/python3.7m :  /opt/apps/intel19/python3/3.7.0/lib ;" >> tools/build/example/user-config.jam
+  echo "using python : 3.7 : /opt/apps/intel19/python3/3.7.0/bin/python3.7 : /opt/apps/intel19/python3/3.7.0/include/python3.7m :  /opt/apps/intel19/python3/3.7.0/lib ;" >> user-config.jam
+
+  ./bootstrap.sh --with-python=/opt/apps/intel19/python3/3.7.0/bin/python3.7  --with-python-version=3.7 --with-python-root=/opt/apps/intel19/python3/3.7.0 --prefix=%{INSTALL_DIR} ${CONFIGURE_FLAGS}
+
+  echo "using mpi : /opt/intel/compilers_and_libraries_2020.1.217/linux/mpi/intel64/bin/mpicxx ;" >> project-config.jam
+
+  ./b2 -j 24 include="/opt/apps/intel19/python3/3.7.0/include/python3.7m" --prefix=%{PYTHON_INSTALL_DIR} $EXTRA cxxflags="%{TACC_OPT}" cflags="%{TACC_OPT}" linkflags="%{TACC_OPT}" install
+  
   mkdir -p              $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}
   cp -r %{PYTHON_INSTALL_DIR}/ $RPM_BUILD_ROOT/%{PYTHON_INSTALL_DIR}/..
-
 
   rm -f ~/tools/build/v2/user-config.jam
 
@@ -253,6 +257,7 @@ prepend_path("LD_LIBRARY_PATH","%{PYTHON_INSTALL_DIR}/lib")
 prepend_path("PATH", "%{PYTHON_INSTALL_DIR}/bin")
 
 EOF
+
 
 cat > $RPM_BUILD_ROOT/%{PYTHON_MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################

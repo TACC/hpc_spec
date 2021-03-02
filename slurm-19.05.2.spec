@@ -19,7 +19,7 @@ URL:		https://slurm.schedmd.com/
 %endif
 
 Source:		%{slurm_source_dir}.tar.bz2
-#Patch100: slurm-%{version}-%{rel}.patch
+Patch100: slurm-%{version}-%{rel}.patch
 
 # build options		.rpmmacros options	change to default action
 # ====================  ====================	========================
@@ -296,7 +296,7 @@ notifies slurm about failed nodes.
 %prep
 # when the rel number is one, the tarball filename does not include it
 %setup -n %{slurm_source_dir}
-#%patch100 -p1
+%patch100 -p1
 
 %build
 %configure \

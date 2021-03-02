@@ -307,5 +307,3 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 * Mon Sep 21 2020 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release of 9.2.0, based on release 6 of 9.1.1
-
-

@@ -1,14 +1,10 @@
+# Sundials installation
+# (there is a sundials in petsc but that is horribly old;
+#  the API has changed considerably)
 #
-# pylauncher3.spec
 # Victor Eijkhout
-#
-# based on
-#
-# Bar.spec
-# W. Cyrus Proctor
-# Antonio Gomez
-# 2015-08-25
-#
+
+
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
 # NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
@@ -27,22 +23,20 @@
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name pylauncher
-%define MODULE_VAR    PYLAUNCHER
+%define pkg_base_name sundials
+%define MODULE_VAR    SUNDIALS
 
 # Create some macros (spec file variables)
-%define major_version 3
-%define minor_version 4
+%define major_version 5
+%define minor_version 5
+%define micro_version 0
 
-%define pkg_version %{major_version}.%{minor_version}
-%define pylauncherversion %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
-#%include compiler-defines.inc
-#%include mpi-defines.inc
-#%include python-defines.inc
-
+%include compiler-defines.inc
+%include mpi-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
@@ -60,20 +54,17 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4
-Group:     Development/Tools
-License: GPL
-Url: https://github.com/TACC/pylauncher
-Group: TACC
-Packager: eijkhout@tacc.utexas.edu 
-Source:    %{pkg_base_name}-%{pkg_version}.tgz
+Release:   1%{?dist}
+License:   GPL
+Group:     System Environment/Base
+URL:       https://computing.llnl.gov/projects/sundials
+Packager:  eijkhout@tacc.utexas.edu
+## Packager:  TACC - alamas@tacc.utexas.edu
+Source:    sundials-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
-
-# Turn off the brp-python-bytecompile script
-%global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
 
 
 %package %{PACKAGE}
@@ -89,10 +80,6 @@ Group: Lmod/Modulefiles
 This is the long description for the modulefile RPM...
 
 %description
-The longer-winded description of the package that will 
-end in up inside the rpm and is queryable if installed via:
-rpm -qi <rpm-name>
-
 
 #---------------------------------------
 %prep
@@ -104,7 +91,7 @@ rpm -qi <rpm-name>
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%setup -n %{pkg_base_name}-%{pkg_version}
+%setup -n sundials-%{pkg_version}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -132,15 +119,13 @@ rpm -qi <rpm-name>
 
 # Setup modules
 %include system-load.inc
-module purge
 # Load Compiler
-#%include compiler-load.inc
+%include compiler-load.inc
 # Load MPI Library
-#%include mpi-load.inc
-# Load Python
-#%include python-load.inc
+%include mpi-load.inc
 
 # Insert further module commands
+module load cmake
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -162,10 +147,41 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
+
+
+##
+## make install dir as tmpfs
+##
+mkdir -p %{INSTALL_DIR}
+mount -t tmpfs tmpfs %{INSTALL_DIR}
+
+##
+## make build directory and go there
+##
+sourcedir=`pwd`
+builddir=/tmp/sundial-build
+rm -rf ${builddir}
+mkdir -p ${builddir}
+pushd ${builddir}
+
+cmake -VV \
+  -D CMAKE_INSTALL_PREFIX:PATH=%{INSTALL_DIR} \
+  ${sourcedir}
+make -j 12
+make install
   
-  # Copy everything from tarball over to the installation directory
-  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
+##
+## back out of builddir
+##
+popd
+
+##
+## copy installation to rpm install dir
+## and lose the tmpfs
+##
+cp -r %{INSTALL_DIR}/* ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
+umount %{INSTALL_DIR}
+
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -187,37 +203,38 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_msg=[[
-The %{MODULE_VAR} module defines the following environment variables:
-TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_DOC, 
-for the location of the %{MODULE_VAR} distribution, and documentation
-respectively.
+local help_message=[[
+The SUNDIALS modulefile defines the following environment variables:
+TACC_SUNDIALS_DIR, TACC_SUNDIALS_LIB, and TACC_SUNDIALS_INC
+for the location of the SUNDIALS %{version} distribution,
+libraries, and include files, respectively.
 
-Usage:
-  import pylauncher3
-and use one of the launcher classes. See the examples 
-directory for inspiration. Preferably used with python3.
+Version %{version}
 ]]
 
---help(help_msg)
-help(help_msg)
+help(help_message,"\n")
 
-whatis("Name: %{pkg_base_name}")
-whatis("Version: %{pkg_version}%{dbg}")
-%if "%{is_debug}" == "1"
-setenv("TACC_%{MODULE_VAR}_DEBUG","1")
-%endif
+whatis("Name: Sundials")
+whatis("Version: %{version}")
+whatis("Category: library, mathematics")
+whatis("Keywords: Library, Mathematics, ODEs, Parallel")
+whatis("URL: https://computing.llnl.gov/projects/sundials")
+whatis("Description: Numerical library, ordinary differential equations")
 
--- Create environment variables.
-local launcher_dir           = "%{INSTALL_DIR}"
+local sundials_dir="%{INSTALL_DIR}"
 
-prepend_path(    "PYTHONPATH",     launcher_dir )
-setenv( "TACC_%{MODULE_VAR}_DIR",                launcher_dir)
-setenv( "TACC_%{MODULE_VAR}_DOC",       pathJoin(launcher_dir, "docs"))
+setenv("TACC_SUNDIALS_DIR",sundials_dir)
+setenv("TACC_SUNDIALS_LIB",pathJoin(sundials_dir,"lib64"))
+setenv("TACC_SUNDIALS_INC",pathJoin(sundials_dir,"include"))
 
-depends_on("python3")
+--
+-- Append paths
+--
+append_path("LD_LIBRARY_PATH",pathJoin(sundials_dir,"lib"))
+append_path("PATH",pathJoin(sundials_dir,"bin"))
+
 EOF
-  
+
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -283,11 +300,7 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Fri Feb 12 2021 eijkhout <eijkhout@tacc.utexas.edu>
-- release 4: version number up to 3.4, many small improvements
-* Mon Sep 09 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: fixed MPI mode, now sorted under compiler-python
-* Mon Feb 25 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: removing old launcher script
-* Sun Oct 07 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 1: initial build
+
+* Wed Dec 02 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial release of 5.5.0
+

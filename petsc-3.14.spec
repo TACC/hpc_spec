@@ -7,7 +7,7 @@ Summary: PETSc install
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 14
-%define micro_version 1
+%define micro_version 2
 %define versionpatch %{major_version}.%{minor_version}.%{micro_version}
 
 %define pkg_version %{major_version}.%{minor_version}
@@ -16,7 +16,11 @@ Summary: PETSc install
 %include compiler-defines.inc
 %include mpi-defines.inc
 
+%define nodearch skylake
+
 %define p4p 1
+# python 2 for intel 3 for gcc
+%define pyversion 2
 
 ########################################
 ### Construct name based on includes ###
@@ -34,7 +38,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 2%{?dist}
+Release: 4%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -49,10 +53,7 @@ Source0: %{pkg_base_name}-%{versionpatch}.tar.gz
 %package %{PACKAGE}
 Summary: Petsc local binary install
 Group: System Environment/Base
-%package %{PACKAGE}-xx
-Summary: Petsc local binary install
-Group: System Environment/Base
-%package %{PACKAGE}-sources
+%package %{PACKAGE}-debug
 Summary: Petsc local binary install
 Group: System Environment/Base
 %package %{MODULEFILE}
@@ -63,10 +64,7 @@ Group: System Environment/Base
 %description %{PACKAGE}
 PETSC is the Portable Extendible Toolkit for Scientific Computing.
 It contains solvers and tools mostly for PDE solving.
-%description %{PACKAGE}-xx
-PETSC is the Portable Extendible Toolkit for Scientific Computing.
-It contains solvers and tools mostly for PDE solving.
-%description %{PACKAGE}-sources
+%description %{PACKAGE}-debug
 PETSC is the Portable Extendible Toolkit for Scientific Computing.
 It contains solvers and tools mostly for PDE solving.
 %description %{MODULEFILE}
@@ -88,14 +86,12 @@ It contains solvers and tools mostly for PDE solving.
 #---------------------------------------
 
 # note the %{p4p} macro!
-export USE_PETSC4PY=1
 export USE_HDF5=1
 export USE_FFTW3=1
 export USE_HYPRE=1
 export USE_ZOLTAN=1
 
 %if "%{comp_fam}" == "gcc"
-#export USE_PETSC4PY=0
 export USE_HDF5=0
 export USE_FFTW3=0
 %endif
@@ -131,11 +127,12 @@ sed -i -e '/if not flag in/s/\[/["-fstack-protector",/' \
 
 module load cmake
 %if "%{p4p}" == "1"
-  module load python3
+  module load python%{pyversion}
 %endif
 %if "%{comp_fam}" == "gcc"
   module load mkl
 %endif
+find $MKLROOT -name \*spblas\*
 export BLAS_LAPACK_LOAD=--with-blas-lapack-dir=${MKLROOT}
 
 ##
@@ -167,7 +164,7 @@ export MPI_EXTRA_OPTIONS="--with-mpiexec=mpirun_rsh"
 
 export PETSC_CONFIGURE_OPTIONS="\
   --with-x=0 -with-pic \
-  --with-make-np=8 \
+  --with-make-np=12 \
   "
 mkdir -p %{INSTALL_DIR}/externalpackages
 mkdir -p %{MODULE_DIR}
@@ -196,9 +193,9 @@ echo "configure install for ${ext}"
 export versionextra=
 
 if [ -z "${ext}" ] ; then
-  export architecture=skylake
+  export architecture=%{nodearch}
 else
-  export architecture=skylake-${ext}
+  export architecture=%{nodearch}-${ext}
 fi
 
 ##
@@ -321,6 +318,12 @@ if [ "${USE_HDF5}" -eq 1 ] ; then
 fi
 
 
+##
+## HPDDM
+##
+export hpddmdownload="--download-hpddm --download-slepc"
+export hpddmstring="hpddm slepc"
+
 #
 # Hypre
 #
@@ -343,9 +346,9 @@ export SCALAPACK_OPTIONS="--with-scalapack=1 --download-scalapack --with-blacs=1
 #
 # petsc4py
 #
-if [ "${USE_PETSC4PY}" = 1 ] ; then
-  export PETSC4PY_OPTIONS="--download-petsc4py=1 --with-python-exec=`which python3`"
-fi
+%if "%{p4p}" == "1"
+  export PETSC4PY_OPTIONS="--download-petsc4py=1 --with-python-exec=`which python%{pyversion}`"
+%endif
 
 #
 # Spai
@@ -409,11 +412,12 @@ esac
 ##
 ## define packages; some are real & complex, others real only.
 ##
-export complexpackages="${ELEMENTAL_STRING} ${FFTW_STRING} mumps scalapack ${SPOOLES_STRING} ${SUITESPARSE_STRING} ${superlustring} ${ZOLTANSTRING} ${hdf5string}"
+export complexpackages="${ELEMENTAL_STRING} ${FFTW_STRING} ${hdf5string} ${hpddmstring} mumps scalapack ${SPOOLES_STRING} ${SUITESPARSE_STRING} ${superlustring} ${ZOLTANSTRING}"
 export PETSC_COMPLEX_PACKAGES="\
   ${ELEMENTAL_OPTIONS} \
   ${FFTW_OPTIONS} \
   ${hdf5download} \
+  ${hpddmdownload} \
   ${MUMPS_OPTIONS}\
   ${SCALAPACK_OPTIONS} ${SPOOLES_OPTIONS} \
   ${SUITESPARSE_OPTIONS} ${SUPERLU_OPTIONS} \
@@ -671,7 +675,7 @@ done
 
 cp -r config include lib makefile src \
     $RPM_BUILD_ROOT/%{INSTALL_DIR}
-cp -r skylake* \
+cp -r %{nodearch}* \
     $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 popd
@@ -681,49 +685,41 @@ echo "Directory to package up: $RPM_BUILD_ROOT/%{INSTALL_DIR}"
 echo "listing:"
 ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%files %{PACKAGE}-sources
+%files %{MODULEFILE}
+  %defattr(-,root,install,)
+  %{MODULE_DIR}
+
+%files %{PACKAGE}-debug
   %defattr(-,root,install,)
   %{INSTALL_DIR}/config
   %{INSTALL_DIR}/include
   %{INSTALL_DIR}/lib
   %{INSTALL_DIR}/makefile
   %{INSTALL_DIR}/src 
-
-%files %{MODULEFILE}
-  %defattr(-,root,install,)
-  %{MODULE_DIR}
+  %{INSTALL_DIR}/%{nodearch}-debug
+  %{INSTALL_DIR}/%{nodearch}-i64debug
+  %{INSTALL_DIR}/%{nodearch}-unidebug
+  %{INSTALL_DIR}/%{nodearch}-complexdebug
+  %{INSTALL_DIR}/%{nodearch}-complexi64debug
 
 %files %{PACKAGE}
   %defattr(-,root,install,)
-  %{INSTALL_DIR}/skylake
-  %{INSTALL_DIR}/skylake-single
-  %{INSTALL_DIR}/skylake-i64
-  %{INSTALL_DIR}/skylake-debug
-  %{INSTALL_DIR}/skylake-i64debug
-  %{INSTALL_DIR}/skylake-uni
-  %{INSTALL_DIR}/skylake-unidebug
-  %{INSTALL_DIR}/skylake-nohdf5
-  %{INSTALL_DIR}/skylake-hyprefei
-  %{INSTALL_DIR}/skylake-complex
-  %{INSTALL_DIR}/skylake-complexi64
-  %{INSTALL_DIR}/skylake-complexdebug
-  %{INSTALL_DIR}/skylake-complexi64debug
-
-# %files %{PACKAGE}-xx
-#   %defattr(-,root,install,)
-  # # and debug variants
-  # %{INSTALL_DIR}/skylake-cxx
-  # %{INSTALL_DIR}/skylake-cxxi64
-  # %{INSTALL_DIR}/skylake-cxxdebug
-  # %{INSTALL_DIR}/skylake-cxxi64debug
-#  %{INSTALL_DIR}/skylake-cxxcomplex
-#  %{INSTALL_DIR}/skylake-cxxcomplexdebug
+  %{INSTALL_DIR}/%{nodearch}
+  %{INSTALL_DIR}/%{nodearch}-single
+  %{INSTALL_DIR}/%{nodearch}-i64
+  %{INSTALL_DIR}/%{nodearch}-uni
+  %{INSTALL_DIR}/%{nodearch}-nohdf5
+  %{INSTALL_DIR}/%{nodearch}-hyprefei
+  %{INSTALL_DIR}/%{nodearch}-complex
+  %{INSTALL_DIR}/%{nodearch}-complexi64
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
 # remember to notify OpenSees: Ian Wang
-* Mon Nov 23 2020 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: remove cached packages
+* Wed Jan 20 2021 eijkhout <eijkhout@tacc.utexas.edu>
+- release 4: adding a source rpm
+- release 3: remove cached packages, point update to 3.14.2
+             adding hpddm+slepc
 * Wed Sep 30 2020 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release
