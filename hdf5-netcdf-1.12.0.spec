@@ -497,7 +497,7 @@ for ARCH in "${archA[@]}"; do
   mkdir tacc_${ARCH}
   cd tacc_${ARCH}
 
-  ../configure --prefix=$INSTALL_DIR --disable-dap --enable-shared --enable-netcdf-4 
+  ../configure --prefix=$INSTALL_DIR --enable-dap --enable-shared --enable-netcdf-4 
   make -j 3
   make install
   make distclean
