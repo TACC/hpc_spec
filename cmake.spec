@@ -25,8 +25,8 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 # Create some macros (spec file variables)
 %define major_version 3
-%define minor_version 16
-%define micro_version 1
+%define minor_version 20
+%define micro_version 2
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
