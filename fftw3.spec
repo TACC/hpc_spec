@@ -50,7 +50,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
+Release:   3%{?dist}
 License:   GPL
 Group:     System Environment/Base
 URL:       http://www.fftw.org
@@ -398,5 +398,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 
+* Sun Mar 21 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: linking in libmpi
 * Tue Sep 29 2020 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: recompile for intel/19.1.1

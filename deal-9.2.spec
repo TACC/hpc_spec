@@ -11,7 +11,9 @@ Summary: Dealii install
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
-%define dealiipetscversion 3.11
+%define dealiipetscversion 3.14
+%define explicit_slepc 0
+%define use_trilinos 0
 %define dealiitrilinosversion 12.18.1
 %define dealiihdf5version 1.10.4
 # git20180209
@@ -36,7 +38,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tar.gz
@@ -120,11 +122,17 @@ module avail boost
 for m in boost cmake \
     gsl \
     metis p4est \
-    petsc/%{dealiipetscversion} slepc/%{dealiipetscversion} \
-    trilinos/%{dealiitrilinosversion} \
     ; do
   module --ignore_cache load $m ; 
 done
+
+
+%if "%{use_trilinos}" == "1"
+  trilinos/%{dealiitrilinosversion}
+  export USE_TRILINOS=ON
+%else
+  export USE_TRILINOS=OFF
+%endif
 
 %if "%{comp_fam}" == "intel"
   module load mumps netcdf phdf5/%{dealiihdf5version}
@@ -135,6 +143,28 @@ done
 %else
   export MKLFLAG="-mkl"
 %endif
+
+rm -rf /tmp/deal-logs
+mkdir /tmp/deal-logs
+
+for scalar in real complex ; do
+
+if [ "$scalar" = "complex" ] ; then
+  module load petsc/%{dealiipetscversion}-complex 
+  %if "%{explicit_slepc}" == "1"
+    module load slepc/%{dealiipetscversion}-complex
+  %endif
+  petsc_select="-DDEAL_II_WITH_PETSC_COMPLEX=ON -DDEAL_II_WITH_SLEPC_COMPLEX=OFF"
+  install_prefix=%{INSTALL_DIR}/complex
+else
+  module load petsc/%{dealiipetscversion} 
+  %if "%{explicit_slepc}" == "1"
+    module load slepc/%{dealiipetscversion}
+  %endif
+  petsc_select="-DDEAL_II_WITH_PETSC=ON -DDEAL_II_WITH_SLEPC=OFF"
+  install_prefix=%{INSTALL_DIR}/real
+fi
+
 
 ##
 ## start of configure install
@@ -167,8 +197,11 @@ export BASIC_FLAGS="-g -I${TBBROOT}/include"
 
 ## https://www.dealii.org/developer/users/cmake.html
 
+module list
+env | grep -i petsc
+
   cmake -VV \
-    -DCMAKE_INSTALL_PREFIX=%{INSTALL_DIR} \
+    -DCMAKE_INSTALL_PREFIX=${install_prefix} \
     \
     -DDEAL_II_WITH_CXX11=ON \
     -DDEAL_II_WITH_CXX14=ON \
@@ -192,11 +225,11 @@ export BASIC_FLAGS="-g -I${TBBROOT}/include"
         -DMETIS_DIR=${TACC_METIS_DIR} \
         -DSLEPC_DIR=${TACC_SLEPC_DIR} \
     " ; fi ` \
-    -DDEAL_II_WITH_PETSC=ON -DDEAL_II_WITH_SLEPC=ON \
+    ${petsc_select} \
         -DPETSC_DIR=${PETSC_DIR} -DPETSC_ARCH=${PETSC_ARCH} \
     -DDEAL_II_WITH_P4EST=ON \
         -DP4EST_DIR=${P4ESTDIR} \
-    -DDEAL_II_WITH_TRILINOS=ON \
+    -DDEAL_II_WITH_TRILINOS=${USE_TRILINOS} \
         -DTRILINOS_DIR=${TACC_TRILINOS_DIR} \
     ${DEALDIR}/dealii-${DEALVERSION} \
     \
@@ -205,38 +238,38 @@ export BASIC_FLAGS="-g -I${TBBROOT}/include"
 
 ##
 ## abort if cmake fails
-if [ $? -ne 0 ] ; then exit 1 ; fi
+## if [ $? -ne 0 ] ; then exit 1 ; fi
 ##
 ##
 
-##
-## options set aside
-##
-export disabled=" \
-        -DPETSC_INCLUDE_DIR_COMMON=${PETSC_DIR} \
-    -DNETCDF_DIR=${TACC_NETCDF_DIR} \
-    "
+cp /tmp/dealii-build/CMakeFiles/CMakeOutput.log /tmp/deal-logs/CMakeOutput-${scalar}.log
+cp /tmp/dealii-build/CMakeFiles/CMakeError.log /tmp/deal-logs/CMakeError-${scalar}.log
+
+/bin/true \
+    -D MPI_LIBRARIES="/opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib/libmpicxx.so /opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib/libmpifort.so /opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib/debug_mt/libmpi.so /opt/intel/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib/libmpigi.a /lib64/libdl.so /lib64/librt.so /lib64/libpthread.so" \
+    false
+
 ##
 ## Make!
 ##
 
-make -j 8 2>&1 | tee ${LOGDIR}/dealii_compile.log
+make -j 12 2>&1 | tee ${LOGDIR}/dealii_compile.log
 make install
 ( make test || true )
 
 popd # back out of INSTALL_DIR
 
-mkdir -p %{INSTALL_DIR}/examples
-cp -r examples/step* %{INSTALL_DIR}/examples
+mkdir -p ${install_prefix}/examples
+cp -r examples/step* ${install_prefix}/examples
 
 ##
 ## start of module file section
 ##
 
 #
-# currently we have only one variant
+# real and complex variant
 #
-export modulefilename=%{version}
+export modulefilename=%{version}-${scalar}
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua << EOF
 help( [[
@@ -283,11 +316,13 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
 set     ModulesVersion      "${modulefilename}"
 EOF
 
-%{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua 
+%{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua 
 
 ##
 ## end of configure install section
 ##
+
+done ## end of real/complex loop
 
 module unload python
 cp -r %{INSTALL_DIR}/* ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
@@ -305,5 +340,7 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Tue Mar 30 2021 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: using real & complex
 * Mon Sep 21 2020 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release of 9.2.0, based on release 6 of 9.1.1

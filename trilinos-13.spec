@@ -5,9 +5,9 @@ Summary: Trilinos install
 %define MODULE_VAR    TRILINOS
 
 # Create some macros (spec file variables)
-%define major_version 12
-%define minor_version 18
-%define micro_version 1
+%define major_version 13
+%define minor_version 0
+%define micro_version branch
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
@@ -36,7 +36,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 12%{?dist}
+Release: 1%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tar.gz
@@ -216,13 +216,13 @@ export VERSION=%{version}
 #   export PYTHON_LIB_SO=${TACC_PYTHON2_LIB}/libpython%{python_major_version}.%{python_minor_version}.so
 # %endif
 
-%include %{SPEC_DIR}/victor_scripts/trilinos.cmake
+%include %{SPEC_DIR}/victor_scripts/trilinos.cmake-%{major_version}
 echo ${trilinos_extra_libs}
 
 ####
 #### Compilation
 ####
-make -j 8             # Trilinos can compile in parallel
+make -j 12             # Trilinos can compile in parallel
 # make -j 4 tests           # (takes forever...)
 #make runtests-serial # (requires queue submission)
 #make runtests-mpi    # (requires queue submission)
@@ -328,29 +328,5 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
-* Tue Apr 28 2020 eijkhout <eijkhout@tacc.utexas.edu>
-- release 12 ABANDONED because trilinos 13 is out : fix in .version file, trying python again
-* Sun Nov 24 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 11: adding mumps, update to 12.18.1
-* Thu Nov 14 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 10: without python
-* Mon Sep 16 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 9: making python handling more portable
-* Sun Jun 09 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 8: fix URLs, architecture, lib directory
-* Tue May 28 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 7: upgrade to 12.14.1
-  for now without python, superluseq
-* Mon Apr 23 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 6: upgrade to 12.12.1 NEVER RELEASED?
-* Wed Jan 17 2018 eijkhout <eijkhout@tacc.utexas.edu>
-- release 5: giving up on SuperLU for now, fixed module help
-* Wed Aug 16 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 4: adding FEI
-* Mon Jul 31 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: disable STK for gcc
-* Fri Jun 30 2017 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: fix broken stuff that trips up dealII
-             also enabling python for gcc
-* Fri May 12 2017 eijkhout <eijkhout@tacc.utexas.edu>
+* Thu Apr 15 2021 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

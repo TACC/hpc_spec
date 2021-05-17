@@ -35,3 +35,6 @@ rosetta_spec.tar
 Rstats/
 checkpath.sh
 tmp
+*.tar.gz
+*.tgz
+*.sh

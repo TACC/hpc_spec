@@ -7,7 +7,7 @@ Summary: PETSc install
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 14
-%define micro_version 2
+%define micro_version 6
 %define versionpatch %{major_version}.%{minor_version}.%{micro_version}
 
 %define pkg_version %{major_version}.%{minor_version}
@@ -38,7 +38,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -132,7 +132,7 @@ module load cmake
 %if "%{comp_fam}" == "gcc"
   module load mkl
 %endif
-find $MKLROOT -name \*spblas\*
+#find $MKLROOT -name \*spblas\*
 export BLAS_LAPACK_LOAD=--with-blas-lapack-dir=${MKLROOT}
 
 ##
@@ -321,8 +321,8 @@ fi
 ##
 ## HPDDM
 ##
-export hpddmdownload="--download-hpddm --download-slepc"
-export hpddmstring="hpddm slepc"
+# export hpddmdownload="--download-hpddm --download-slepc"
+# export hpddmstring="hpddm slepc"
 
 #
 # Hypre
@@ -488,6 +488,12 @@ export MPI_OPTIONS="--with-mpi=1"
   export PETSC_MPICH_HOME="${MPICH_HOME}"
   export MPI_OPTIONS="${MPI_OPTIONS} --with-mpi-dir=${MPICH_HOME}"
 %endif
+
+%if "%{is_impi}" == "1"
+  export I_MPI_LIBRARY_KIND=release_mt
+  export I_MPI_LINK=opt_mt
+%endif
+
 echo "Finding mpi in ${MPICH_HOME}"
 
 case "${ext}" in
@@ -717,6 +723,8 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 rm -rf $RPM_BUILD_ROOT
 %changelog
 # remember to notify OpenSees: Ian Wang
+* Thu Apr 22 2021 eijkhout <eijkhout@tacc.utexas.edu>
+- release 5: setting library kind, point update
 * Wed Jan 20 2021 eijkhout <eijkhout@tacc.utexas.edu>
 - release 4: adding a source rpm
 - release 3: remove cached packages, point update to 3.14.2

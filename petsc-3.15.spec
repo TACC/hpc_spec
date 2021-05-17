@@ -6,7 +6,7 @@ Summary: PETSc install
 
 # Create some macros (spec file variables)
 %define major_version 3
-%define minor_version 14
+%define minor_version 15
 %define micro_version 0
 %define versionpatch %{major_version}.%{minor_version}.%{micro_version}
 
@@ -34,7 +34,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 1%{?dist}
+Release: 3%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -49,10 +49,7 @@ Source0: %{pkg_base_name}-%{versionpatch}.tar.gz
 %package %{PACKAGE}
 Summary: Petsc local binary install
 Group: System Environment/Base
-%package %{PACKAGE}-xx
-Summary: Petsc local binary install
-Group: System Environment/Base
-%package %{PACKAGE}-sources
+%package %{PACKAGE}-debug
 Summary: Petsc local binary install
 Group: System Environment/Base
 %package %{MODULEFILE}
@@ -63,10 +60,7 @@ Group: System Environment/Base
 %description %{PACKAGE}
 PETSC is the Portable Extendible Toolkit for Scientific Computing.
 It contains solvers and tools mostly for PDE solving.
-%description %{PACKAGE}-xx
-PETSC is the Portable Extendible Toolkit for Scientific Computing.
-It contains solvers and tools mostly for PDE solving.
-%description %{PACKAGE}-sources
+%description %{PACKAGE}-debug
 PETSC is the Portable Extendible Toolkit for Scientific Computing.
 It contains solvers and tools mostly for PDE solving.
 %description %{MODULEFILE}
@@ -321,6 +315,12 @@ if [ "${USE_HDF5}" -eq 1 ] ; then
 fi
 
 
+##
+## HPDDM
+##
+export hpddmdownload="--download-hpddm --download-slepc"
+export hpddmstring="hpddm slepc"
+
 #
 # Hypre
 #
@@ -346,6 +346,12 @@ export SCALAPACK_OPTIONS="--with-scalapack=1 --download-scalapack --with-blacs=1
 if [ "${USE_PETSC4PY}" = 1 ] ; then
   export PETSC4PY_OPTIONS="--download-petsc4py=1 --with-python-exec=`which python3`"
 fi
+
+#
+# SLEPCc
+#
+export SLEPC_OPTIONS="--with-slepc=1 --download-slepc=1 --download-slepc-commit=bc612b8954dff673c924b3687ba87f3936ff792e"
+export SLEPC_STRING=slepc
 
 #
 # Spai
@@ -409,13 +415,13 @@ esac
 ##
 ## define packages; some are real & complex, others real only.
 ##
-export complexpackages="${ELEMENTAL_STRING} ${FFTW_STRING} mumps scalapack ${SPOOLES_STRING} ${SUITESPARSE_STRING} ${superlustring} ${ZOLTANSTRING} ${hdf5string}"
+export complexpackages="${ELEMENTAL_STRING} ${FFTW_STRING} ${hdf5string} ${hpddmstring} mumps scalapack ${SPOOLES_STRING} ${SLEPC_STRING} ${SUITESPARSE_STRING} ${superlustring} ${ZOLTANSTRING} ${hdf5string}"
 export PETSC_COMPLEX_PACKAGES="\
   ${ELEMENTAL_OPTIONS} \
   ${FFTW_OPTIONS} \
   ${hdf5download} \
   ${MUMPS_OPTIONS}\
-  ${SCALAPACK_OPTIONS} ${SPOOLES_OPTIONS} \
+  ${SCALAPACK_OPTIONS} ${SPOOLES_OPTIONS} ${SLEPC_OPTIONS} \
   ${SUITESPARSE_OPTIONS} ${SUPERLU_OPTIONS} \
   ${ZOLTAN_OPTIONS} \
   "
@@ -474,7 +480,6 @@ ls -l ${MPICC}
 
 export MPI_OPTIONS="--with-mpi=1"
 # compilers are found by giving the "--with-mpi-dir"
-# --with-cc=${MPICC} --with-cxx=${MPICXX} --with-fc=${MPIF90}"
 %if "%{is_impi}" == "1"
   # why do we define this?
   export PETSC_MPICH_HOME="${MPICH_HOME}/intel64"
@@ -484,6 +489,12 @@ export MPI_OPTIONS="--with-mpi=1"
   export PETSC_MPICH_HOME="${MPICH_HOME}"
   export MPI_OPTIONS="${MPI_OPTIONS} --with-mpi-dir=${MPICH_HOME}"
 %endif
+
+%if "%{is_impi}" == "1"
+  export I_MPI_LIBRARY_KIND=release_mt
+  export I_MPI_LINK=opt_mt
+%endif
+
 echo "Finding mpi in ${MPICH_HOME}"
 
 case "${ext}" in
@@ -681,47 +692,40 @@ echo "Directory to package up: $RPM_BUILD_ROOT/%{INSTALL_DIR}"
 echo "listing:"
 ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%files %{PACKAGE}-sources
+%files %{MODULEFILE}
+  %defattr(-,root,install,)
+  %{MODULE_DIR}
+
+%files %{PACKAGE}-debug
   %defattr(-,root,install,)
   %{INSTALL_DIR}/config
   %{INSTALL_DIR}/include
   %{INSTALL_DIR}/lib
   %{INSTALL_DIR}/makefile
   %{INSTALL_DIR}/src 
-
-%files %{MODULEFILE}
-  %defattr(-,root,install,)
-  %{MODULE_DIR}
+  %{INSTALL_DIR}/skylake-debug
+  %{INSTALL_DIR}/skylake-i64debug
+  %{INSTALL_DIR}/skylake-unidebug
+  %{INSTALL_DIR}/skylake-complexdebug
+  %{INSTALL_DIR}/skylake-complexi64debug
 
 %files %{PACKAGE}
   %defattr(-,root,install,)
   %{INSTALL_DIR}/skylake
   %{INSTALL_DIR}/skylake-single
   %{INSTALL_DIR}/skylake-i64
-  %{INSTALL_DIR}/skylake-debug
-  %{INSTALL_DIR}/skylake-i64debug
   %{INSTALL_DIR}/skylake-uni
-  %{INSTALL_DIR}/skylake-unidebug
   %{INSTALL_DIR}/skylake-nohdf5
   %{INSTALL_DIR}/skylake-hyprefei
   %{INSTALL_DIR}/skylake-complex
   %{INSTALL_DIR}/skylake-complexi64
-  %{INSTALL_DIR}/skylake-complexdebug
-  %{INSTALL_DIR}/skylake-complexi64debug
-
-# %files %{PACKAGE}-xx
-#   %defattr(-,root,install,)
-  # # and debug variants
-  # %{INSTALL_DIR}/skylake-cxx
-  # %{INSTALL_DIR}/skylake-cxxi64
-  # %{INSTALL_DIR}/skylake-cxxdebug
-  # %{INSTALL_DIR}/skylake-cxxi64debug
-#  %{INSTALL_DIR}/skylake-cxxcomplex
-#  %{INSTALL_DIR}/skylake-cxxcomplexdebug
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
-# remember to notify OpenSees: Ian Wang
-* Wed Sep 30 2020 eijkhout <eijkhout@tacc.utexas.edu>
+* Tue May 11 2021 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: adding hpddm
+* Fri Apr 16 2021 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: setting I_MPI_LIBRARY_KIND
+* Thu Apr 01 2021 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release
