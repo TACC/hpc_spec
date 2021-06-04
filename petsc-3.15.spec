@@ -7,7 +7,8 @@ Summary: PETSc install
 # Create some macros (spec file variables)
 %define major_version 3
 %define minor_version 15
-%define micro_version 0
+%define micro_version 1
+# NOTE: 3.15.1 is actually a git checkout pre-3.15.1
 %define versionpatch %{major_version}.%{minor_version}.%{micro_version}
 
 %define pkg_version %{major_version}.%{minor_version}
@@ -17,6 +18,8 @@ Summary: PETSc install
 %include mpi-defines.inc
 
 %define p4p 1
+%define use_mumps 1
+%define use_hpddm 1
 
 ########################################
 ### Construct name based on includes ###
@@ -131,6 +134,7 @@ module load cmake
   module load mkl
 %endif
 export BLAS_LAPACK_LOAD=--with-blas-lapack-dir=${MKLROOT}
+# --with-blaslapack-include=${MKLROOT}/include"
 
 ##
 ## ML
@@ -279,16 +283,16 @@ export ELEMENTAL_STRING=elemental
 #
 # Fftw
 #
-if [ "${USE_FFTW3}" = "1" ] ; then
+#if [ "${USE_FFTW3}" = "1" ] ; then
   module load fftw3
   export FFTW_OPTIONS="--with-fftw=1 --with-fftw-dir=${TACC_FFTW3_DIR}"
   export FFTW_STRING=fftw
-fi
+#fi
 
-if [ "%{comp_fam}" = "gcc" ] ; then
-  export FFTW_OPTIONS="--download-fftw=1"
-  export FFTW_STRING=fftw
-fi
+# if [ "%{comp_fam}" = "gcc" ] ; then
+#   export FFTW_OPTIONS="--download-fftw=1"
+#   export FFTW_STRING=fftw
+# fi
 
 ##
 ## hdf5
@@ -318,8 +322,10 @@ fi
 ##
 ## HPDDM
 ##
-export hpddmdownload="--download-hpddm --download-slepc"
-export hpddmstring="hpddm slepc"
+%if "%{use_hpddm}" == "1"
+  export hpddmdownload="--download-hpddm --download-slepc"
+  export hpddmstring="hpddm slepc"
+%endif
 
 #
 # Hypre
@@ -337,8 +343,10 @@ fi
 #
 # Mumps & Superlu depend on parmetis which depends on metis
 #
-export MUMPS_OPTIONS="--with-mumps=1 --download-mumps ${PARMETIS_OPTIONS}"
-export SCALAPACK_OPTIONS="--with-scalapack=1 --download-scalapack --with-blacs=1 --download-blacs"
+%if "%{use_mumps}" == "1"
+  export MUMPS_OPTIONS="--with-mumps=1 --download-mumps ${PARMETIS_OPTIONS}"
+  export SCALAPACK_OPTIONS="--with-scalapack=1 --download-scalapack --with-blacs=1 --download-blacs"
+%endif
 
 #
 # petsc4py
@@ -350,7 +358,8 @@ fi
 #
 # SLEPCc
 #
-export SLEPC_OPTIONS="--with-slepc=1 --download-slepc=1 --download-slepc-commit=bc612b8954dff673c924b3687ba87f3936ff792e"
+export SLEPC_OPTIONS="--with-slepc=1 --download-slepc=1"
+# --download-slepc-commit=bc612b8954dff673c924b3687ba87f3936ff792e"
 export SLEPC_STRING=slepc
 
 #
@@ -420,6 +429,7 @@ export PETSC_COMPLEX_PACKAGES="\
   ${ELEMENTAL_OPTIONS} \
   ${FFTW_OPTIONS} \
   ${hdf5download} \
+  ${hpddmdownload} \
   ${MUMPS_OPTIONS}\
   ${SCALAPACK_OPTIONS} ${SPOOLES_OPTIONS} ${SLEPC_OPTIONS} \
   ${SUITESPARSE_OPTIONS} ${SUPERLU_OPTIONS} \
@@ -724,7 +734,8 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 rm -rf $RPM_BUILD_ROOT
 %changelog
 * Tue May 11 2021 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: adding hpddm
+- release 3: adding hpddm, using TACC fftw3 instead of download
+    up to 3.15.1 from repository
 * Fri Apr 16 2021 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: setting I_MPI_LIBRARY_KIND
 * Thu Apr 01 2021 eijkhout <eijkhout@tacc.utexas.edu>

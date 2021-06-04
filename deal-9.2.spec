@@ -13,7 +13,7 @@ Summary: Dealii install
 
 %define dealiipetscversion 3.14
 %define explicit_slepc 0
-%define use_trilinos 0
+%define use_trilinos 1
 %define dealiitrilinosversion 12.18.1
 %define dealiihdf5version 1.10.4
 # git20180209
@@ -38,7 +38,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tar.gz
@@ -128,7 +128,7 @@ done
 
 
 %if "%{use_trilinos}" == "1"
-  trilinos/%{dealiitrilinosversion}
+  module load trilinos/%{dealiitrilinosversion}
   export USE_TRILINOS=ON
 %else
   export USE_TRILINOS=OFF
@@ -143,6 +143,16 @@ done
 %else
   export MKLFLAG="-mkl"
 %endif
+
+export LAPACK_SPECIFICATION="-DDEAL_II_WITH_LAPACK=ON -D LAPACK_LIBRARIES=\
+${MKLROOT}/lib/intel64_lin/libmkl_intel_lp64.so\
+\;\
+${MKLROOT}/lib/intel64_lin/libmkl_core.so\
+\;\
+${MKLROOT}/lib/intel64_lin/libmkl_intel_thread.so\
+\;\
+${MKLROOT}/../compiler/lib/intel64_lin/libiomp5.so\
+"
 
 rm -rf /tmp/deal-logs
 mkdir /tmp/deal-logs
@@ -209,6 +219,7 @@ env | grep -i petsc
     -DDEAL_II_CXX_FLAGS_RELEASE="${BASIC_FLAGS} -O2" \
     \
     -DDEAL_II_WITH_MPI=ON \
+    ${LAPACK_SPECIFICATION} \
     -DMPICH_IGNORE_CXX_SEEK=ON \
     -DDEAL_II_COMPONENT_MESH_CONVERTER=ON \
     \
@@ -340,6 +351,8 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Wed May 26 2021 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: explicit lapack specification for aspect
 * Tue Mar 30 2021 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: using real & complex
 * Mon Sep 21 2020 eijkhout <eijkhout@tacc.utexas.edu>

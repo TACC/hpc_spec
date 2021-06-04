@@ -11,9 +11,13 @@ Summary: Trilinos install
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
+# need petsc because mumps comes with Scotch/Scalapack/Metis/Parmetis baggage
+%define has_mumps 0
+%define mumps_version 5.3
 %define petscversion 3.14
-%define has_python 1
-%define has_mumps 1
+
+# python broken, fixed in 13
+%define has_python 0
 
 %include rpm-dir.inc
 %include compiler-defines.inc
@@ -125,7 +129,8 @@ mount -t tmpfs tmpfs %{INSTALL_DIR}
 ##cp -r * %{INSTALL_DIR}
 ##pushd %{INSTALL_DIR}
 
-module load cmake boost swig petsc/%{petscversion}
+module load cmake boost swig
+module load petsc/%{petscversion}
 ## VLE stopgap!
 export BOOST_ROOT=${TACC_BOOST_DIR}
 
@@ -159,16 +164,14 @@ if [ "${HAS_NETCDF}" = "ON" ] ; then
 fi
 
 %if "%{has_mumps}" == "1"
-  module load mumps 
+  module load mumps/%{mumps_version} metis
   export HAS_MUMPS=ON
 # https://github.com/trilinos/Trilinos/issues/6339
   export MUMPSLIBS="\
     dmumps mumps_common \
-    ptscotch ptscotcherr ptscotcherrexit ptscotchparmetis pord \
-    petsc \
+    ptscotch ptscotcherr ptscotcherrexit ptscotchparmetis scotch pord scalapack metis \
     mkl_scalapack_lp64 mkl_intel_lp64 mkl_intel_thread mkl_core iomp5 mkl_blacs_intelmpi_lp64 pthread ifcore\
     "
-#  export MUMPSLIBNAMES=dmumps\;mumps_common\;pord\;mkl_scalapack_lp64\;mkl_intel_lp64\;mkl_intel_thread\;mkl_core\;iomp5\;mkl_blacs_intelmpi_lp64\;pthread\;ifcore
   export MUMPSLIBNAMES=`for m in ${MUMPSLIBS} ; do echo $m ; done | awk '{ms=ms ";" $1 } END { print "ifcore" ms }' `
   echo ${MUMPSLIBNAMES}
   export PARMETISLIBS=${TACC_PARMETIS_LIB}/libptscotchparmetis.a\;${TACC_PARMETIS_LIB}/libparmetis.so
@@ -210,19 +213,14 @@ export TRILINOS_LOCATION=%{_topdir}/BUILD/
 
 export SOURCEVERSION=%{version}
 export VERSION=%{version}
-# %if "%{python_major_version}" == "3"
-#   export PYTHON_LIB_SO=${TACC_PYTHON3_LIB}/libpython%{python_major_version}.%{python_minor_version}m.so
-# %else
-#   export PYTHON_LIB_SO=${TACC_PYTHON2_LIB}/libpython%{python_major_version}.%{python_minor_version}.so
-# %endif
 
-%include %{SPEC_DIR}/victor_scripts/trilinos.cmake
+%include %{SPEC_DIR}/victor_scripts/trilinos.cmake-%{major_version}
 echo ${trilinos_extra_libs}
 
 ####
 #### Compilation
 ####
-make -j 8             # Trilinos can compile in parallel
+make -j 12             # Trilinos can compile in parallel
 # make -j 4 tests           # (takes forever...)
 #make runtests-serial # (requires queue submission)
 #make runtests-mpi    # (requires queue submission)
@@ -329,7 +327,9 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 rm -rf $RPM_BUILD_ROOT
 %changelog
 * Tue Apr 28 2020 eijkhout <eijkhout@tacc.utexas.edu>
-- release 12 ABANDONED because trilinos 13 is out : fix in .version file, trying python again
+- release 12 python abandoned, fixed in trilinos 13
+      upping mumps to 5.3, which is from petsc 3.14, trying python again, petsc upped to 3.14
+      fix in .version file
 * Sun Nov 24 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 11: adding mumps, update to 12.18.1
 * Thu Nov 14 2019 eijkhout <eijkhout@tacc.utexas.edu>

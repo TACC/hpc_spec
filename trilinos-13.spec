@@ -13,6 +13,12 @@ Summary: Trilinos install
 
 %define petscversion 3.14
 %define has_python 1
+%define python_major_version 2
+%define python_version_lib 2.7
+%define python_version_load 2.7.16
+# % define python_major_version 3
+# % define python_version_lib 3.7
+# % define python_version_load 3.7.0
 %define has_mumps 1
 
 %include rpm-dir.inc
@@ -126,6 +132,8 @@ mount -t tmpfs tmpfs %{INSTALL_DIR}
 ##pushd %{INSTALL_DIR}
 
 module load cmake boost swig petsc/%{petscversion}
+module load python%{python_major_version}/%{python_version_load}
+
 ## VLE stopgap!
 export BOOST_ROOT=${TACC_BOOST_DIR}
 
@@ -210,11 +218,14 @@ export TRILINOS_LOCATION=%{_topdir}/BUILD/
 
 export SOURCEVERSION=%{version}
 export VERSION=%{version}
-# %if "%{python_major_version}" == "3"
-#   export PYTHON_LIB_SO=${TACC_PYTHON3_LIB}/libpython%{python_major_version}.%{python_minor_version}m.so
-# %else
-#   export PYTHON_LIB_SO=${TACC_PYTHON2_LIB}/libpython%{python_major_version}.%{python_minor_version}.so
-# %endif
+
+export TACC_PYTHON_DIR=${TACC_PYTHON%{python_major_version}_DIR}
+export TACC_PYTHON_INC=${TACC_PYTHON%{python_major_version}_INC}
+export TACC_PYTHON_LIB=${TACC_PYTHON%{python_major_version}_LIB}
+
+module list
+echo "python path: ${TACC_PYTHON_PATH}"
+echo "python dir=${TACC_PYTHON_DIR} lib=${TACC_PYTHON_LIB} inc=${TACC_PYTHON_INC}"
 
 %include %{SPEC_DIR}/victor_scripts/trilinos.cmake-%{major_version}
 echo ${trilinos_extra_libs}
@@ -237,23 +248,6 @@ make -j 12             # Trilinos can compile in parallel
 ####
 
 make install
-
-## TACC_FAMILY_PYTHON_VERSION is 2.7.16 and such
-
-####
-#### this is hard to get to work.
-#### let's build without python for a while
-####
-# ( cd %{INSTALL_DIR} && \
-#   find . -name \*.cmake \
-#          -exec sed -i -e '/STKDoc_testsConfig.cmake/d' \
-#                       -e '/COMPILER_FLAGS/s/mkl/mkl -L\${TACC_PYTHON_LIB} -lpython${TACC_PYTHON_VER}/' \
-#                       -e '/EXTRA_LD_FLAGS/s?""?"\${TACC_PYTHON_LIB}/libpython${TACC_PYTHON_VER}.so"?' \
-#                       -e '/SET.*TPL_LIBRARIES/s?""?"\${TACC_PYTHON_LIB}/libpython${TACC_PYTHON_VER}.so"?' \
-#                       -e '/SET.*TPL_LIBRARIES/s?so"?so;\${TACC_PYTHON_LIB}/libpython${TACC_PYTHON_VER}.so"?' \
-#                    {} \; \
-#          -print \
-# )
 
 ## SET(Zoltan_TPL_LIBRARIES "")
 
@@ -303,13 +297,18 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << EOF
 set     ModulesVersion      "%{version}"
 EOF
 
+%if "%{has_python}" == "1"
+cat >> $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
+prepend_path("PYTHONPATH",pathJoin(trilinos_dir,"lib","python%{python_version_lib}","site-packages") )
+depends_on("python%{python_major_version}")
+EOF
+%endif
+
 %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua 
 
 ##
 ## end of configure install section
 ##
-
-#module unload python ### VLE why?
 
 cp -r %{INSTALL_DIR}/* ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
 ls %{INSTALL_DIR}

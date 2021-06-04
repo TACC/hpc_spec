@@ -4,7 +4,7 @@
 Summary:   Udunits is a utility for netcdf
 Name:      udunits
 Version:   2.2.25
-Release:   2%{?dist}
+Release:   3%{?dist}
 License:   GPL
 Group:     applications/io
 Source:    udunits-%{version}.tar.gz
@@ -21,6 +21,10 @@ Packager:  TACC - cazes@tacc.utexas.edu
 
 %define INSTALL_DIR %{APPS}/%{comp_fam_ver}/%{name}/%{version}
 %define MODULE_DIR  %{APPS}/%{comp_fam_ver}/%{MODULES}/%{name}
+
+%define debug_package %{nil}
+## %global _missing_build_ids_terminate_build 0
+%global _python_bytecompile_errors_terminate_build 0
 
 %package -n %{name}-%{comp_fam_ver}
 Summary: Udunits is utility for NetCDF
@@ -70,7 +74,7 @@ libraries, and include files, respectively.
 UDUNITS 4.1.1 uses the hdf5 libraries to support the UDUNITS 4 file format 
 in addition to the classic UDUNITS file format. 
 
-To use the UDUNITS library, compile the source code with the option:
+To use the UDUNITS library in code of your own, compile your source code with the option:
 
 	-I${TACC_UDUNITS_INC} 
 
@@ -93,7 +97,7 @@ whatis("Description: I/O library which stores and retrieves data in self-describ
 whatis("URL: http://www.unidata.ucar.edu/software/udunits/")
 
 -- Prerequisites
-prereq("hdf5")
+depends_on("hdf5")
 
 --Prepend paths
 prepend_path("LD_LIBRARY_PATH","%{INSTALL_DIR}/lib")
@@ -130,6 +134,8 @@ EOF
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Fri Jun 04 2021 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: module help improved
 * Thu Feb 28 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: NOT SUBMITTED BECAUSE NOT NEEDED rebuild for changed hdf5
 * Mon Apr 27 2015 cazes <cazes@tacc.utexas.edu>
