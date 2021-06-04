@@ -2,7 +2,7 @@
 
 Summary: XALT
 Name: xalt
-Version: 2.10.2
+Version: 2.10.13
 Release: 1%{?dist}
 License: LGPLv2
 Group: System Environment/Base
