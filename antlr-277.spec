@@ -1,21 +1,19 @@
 #
-# Spec file for NCO
-# NetCdf Operator
-# See http://nco.sourceforge.net/
-# ANTLR https://www.antlr.org/download.html
+# Spec file for ANTLR
+# needed for NCO
 #
 # Victor Eijkhout, 2021
 
 # Give the package a base name
-%define pkg_base_name nco
-%define MODULE_VAR    NCO
+%define pkg_base_name antlr
+%define MODULE_VAR    ANTLR
 
-%define major_version 4
-%define minor_version 9
+# note : NCO needs exactly this version, even though a much newer exists.
+%define major_version 2
+%define minor_version 7
 %define micro_version 7
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
-%define antlr_version 4.9
 
 %include rpm-dir.inc                  
 %include compiler-defines.inc
@@ -33,8 +31,8 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 Summary: NetCDF operators
 Release: 1%{?dist}
 License: GPL 3
-Source: nco-%{version}.tar.gz
-URL:  http://nco.sourceforge.net/
+Source: antlr-%{version}.tar.gz
+URL:  http://antlr.sourceforge.net/
 Packager: TACC - eijkhout@tacc.utexas.edu
 
 # Turn off debug package mode
@@ -43,38 +41,18 @@ Packager: TACC - eijkhout@tacc.utexas.edu
 %global _python_bytecompile_errors_terminate_build 0
 
 %package %{PACKAGE}
-Summary: NetCDF operators
+Summary: for NetCDF operators
 Group: applications/io
 
 %package %{MODULEFILE}
-Summary: NetCDF operators
-Group: applications/io
+Summary: Modules for Antlr
 
-%description
-%description %{PACKAGE}
-The operators take netCDF files as input, then perform a set of
-operations (e.g., deriving new data, averaging, hyperslabbing, or
-metadata manipulation) and produce a netCDF file as output. The
-operators are primarily designed to aid manipulation and analysis of
-gridded scientific data. The single command style of NCO allows users
-to manipulate and analyze files interactively and with simple scripts,
-avoiding the overhead (and some of the power) of a higher level
-programming environment. The NCO User Guide illustrates their use
-with examples from the field of climate modeling and analysis.
-* ncap2 netCDF Arithmetic Processor
-* ncatted netCDF Attribute Editor
-* ncbo netCDF Binary Operator (includes ncadd, ncsubtract, ncmultiply, ncdivide)
-* ncea netCDF Ensemble Averager
-* ncecat netCDF Ensemble Concatenator
-* ncflint netCDF File Interpolator
-* ncks netCDF Kitchen Sink
-* ncpdq netCDF Permute Dimensions Quickly, Pack Data Quietly
-* ncra netCDF Record Averager
-* ncrcat netCDF Record Concatenator
-* ncrename netCDF Renamer
-* ncwa netCDF Weighted Averager
-
-%description %{MODULEFILE}
+%description 
+Stuff for NCO
+%description package
+Stuff for NCO
+%description modulefile
+Stuff for NCO
 
 #---------------------------------------
 %prep
@@ -86,6 +64,7 @@ with examples from the field of climate modeling and analysis.
   # Delete the package installation directory.
   rm -rf ${RPM_BUILD_ROOT}/%{INSTALL_DIR}
 
+# The first call to setup untars the first source.
 %setup -n %{pkg_base_name}-%{pkg_version}
 
 #-----------------------
@@ -116,38 +95,37 @@ module purge
 # Load Compiler
 %include compiler-load.inc
 
-module load cmake antlr netcdf udunits
-
 #------------------------
 %if %{?BUILD_PACKAGE}
 #------------------------
 
-# Create temporary directory for the install.  We need this to
-# trick rpm into thinking stuff is installed in its final location!
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
 mkdir -p %{INSTALL_DIR}
 rm -rf   %{INSTALL_DIR}/*
 mount -t tmpfs tmpfs %{INSTALL_DIR}
 
-#
-# no copying or pushd because we build here, 
-# but install in %{INSTALL_DIR}
-#
-ANTLR_ROOT=${TACC_ANTLR_DIR} \
-NETCDF_ROOT=${TACC_NETCDF_DIR} \
-UDUNITS2_PATH=${TACC_UDUNITS_DIR} \
+cp -r * %{INSTALL_DIR}
+pushd   %{INSTALL_DIR}
+
+export ANTLR_PATH=%INSTALL_DIR
+
 ./configure \
-    -v \
-    --prefix=%{INSTALL_DIR} \
-    --enable-shared --with-pic \
-    --enable-netcdf4 \
-    --enable-udunits2
+-v \
+--prefix=${ANTLR_PATH} \
+--enable-shared \
+--with-pic \
+--enable-netcdf-4 
+make 
+make install 
 
-make && make install
 
-mkdir -p ${RPM_BUILD_ROOT}/%{INSTALL_DIR}
-cp -r %{INSTALL_DIR}/* ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
+# Copy from tmpfs to RPM_BUILD_ROOT so that everything is in the right
+# place for the rest of the RPM.  Then, unmount the tmpfs.
+cp -r %{INSTALL_DIR}/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/
 
-umount %{INSTALL_DIR}/
+popd 
+umount %{INSTALL_DIR}
 
   #######################################
   ##### Create TACC Canary Files ########
@@ -177,23 +155,23 @@ umount %{INSTALL_DIR}/
   #######################################
   
 
-#Module for nco
+#Module for antlr
 rm -rf  $RPM_BUILD_ROOT/%MODULE_DIR
 mkdir -p $RPM_BUILD_ROOT/%MODULE_DIR
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
---  modulefile for NCO
+--  modulefile for ANTLR
 
 local help_message = [[
 The %{name} module file defines the following environment variables:
-TACC_NCO_DIR, TACC_NCO_BIN, TACC_NCO_LIB, and 
-TACC_NCO_INC for the location of the NCO distribution, binaries,
+TACC_ANTLR_DIR, TACC_ANTLR_BIN, TACC_ANTLR_LIB, and 
+TACC_ANTLR_INC for the location of the ANTLR distribution, binaries,
 libraries, and include files, respectively.
 
-To use the NCO library, compile the source code with the option:
-	-I\${TACC_NCO_INC 
+To use the ANTLR library, compile the source code with the option:
+	-I\${TACC_ANTLR_INC 
 
 and add the following options to the link step: 
-	-L\${TACC_NCO_LIB -lnco
+	-L\${TACC_ANTLR_LIB -lantlr
 
 Version %{version}
 
@@ -201,26 +179,24 @@ Version %{version}
 
 help(help_message,"\n")
 
-whatis("Version: 4.6.9")
+whatis("Version: 2.7.7")
 whatis("Category: utility, runtime support")
 whatis("Description: Programs for manipulating and analyzing NetCDF files")
-whatis("URL: http://nco.sourceforge.net")
+whatis("URL: http://antlr.sourceforge.net")
 
-setenv("TACC_NCO_DIR","%{INSTALL_DIR}")
-setenv("TACC_NCO_BIN","%{INSTALL_DIR}/bin")
-setenv("TACC_NCO_INC","%{INSTALL_DIR}/include")
-setenv("TACC_NCO_LIB","%{INSTALL_DIR}/lib")
-setenv("TACC_NCO_MAN","%{INSTALL_DIR}/share/man")
+setenv("TACC_ANTLR_DIR","%{INSTALL_DIR}")
+setenv("TACC_ANTLR_BIN","%{INSTALL_DIR}/bin")
+setenv("TACC_ANTLR_INC","%{INSTALL_DIR}/include")
+setenv("TACC_ANTLR_LIB","%{INSTALL_DIR}/lib")
+setenv("TACC_ANTLR_MAN","%{INSTALL_DIR}/share/man")
 prepend_path("PATH","%{INSTALL_DIR}/bin")
 prepend_path("LD_LIBRARY_PATH","%{INSTALL_DIR}/lib")
-prepend_path("MANPATH","%{INSTALL_DIR}/share/man")
---prereq("gsl", "hdf5", "netcdf")
 
 EOF
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 ##
-## version file for nco
+## version file for antlr
 ##
  
 set     ModulesVersion      "%{version}"
@@ -241,7 +217,6 @@ EOF
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
-
 #---------------------------
 %if %{?BUILD_MODULEFILE}
 %files modulefile
@@ -262,6 +237,6 @@ EOF
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Mon Jan 04 2021 eijkhout <eijkhout@tacc.utexas.edu>
+* Mon Mar 15 2021 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: first release
 

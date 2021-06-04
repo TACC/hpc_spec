@@ -52,7 +52,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
+Release:   4%{?dist}
 License:   proprietary
 Group:     MPI
 URL:       https://software.intel.com/en-us/intel-mpi-library
@@ -257,12 +257,15 @@ if (os.getenv("TACC_SYSTEM") == "frontera") then
   setenv( "FI_PROVIDER"        , "mlx" )
   setenv( "FI_PROVIDER_PATH"   , pathJoin( base_dir , "intel64/libfabric/lib/prov" ) )
   setenv( "I_MPI_STARTUP_MODE" , "pmi_shm_netmod" )
-  setenv( "UCX_TLS" , "knem,dc_x" )
+  setenv( "UCX_TLS" , "knem,dc_x,rc" )
   setenv( "UCX_RC_MLX5_RETRY_COUNT" , "40" )
   setenv( "UCX_UD_MLX5_TIMEOUT" , "600000000.00us" )
   setenv( "UCX_RC_MLX5_TIMEOUT" ,   "1200000.00us" )
   setenv( "UCX_DC_MLX5_TIMEOUT" ,   "1200000.00us" )
   setenv( "UCX_DC_MLX5_RETRY_COUNT" , "40" )
+  setenv( "I_MPI_EXTRA_FILESYSTEM" , "enable" )
+  setenv( "I_MPI_EXTRA_FILESYSTEM_FORCE" , "lustre" )
+
 end
 
 

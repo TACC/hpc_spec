@@ -27,7 +27,7 @@ Summary: HDF5 Library
 
 Name: hdf5-netcdf
 Version: %{hdf5_version}
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: see included Copyright
 Vendor: NCSA
 Group: Development/Libraries
@@ -304,7 +304,9 @@ for ARCH in "${archA[@]}"; do
 
   make V=1 -j 4
 
+  make check
   make install
+  make check-install
   make distclean
 
   mkdir -p              $RPM_BUILD_ROOT/$INSTALL_DIR

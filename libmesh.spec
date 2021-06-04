@@ -6,11 +6,15 @@ Summary: Libmesh install
 
 # Create some macros (spec file variables)
 %define major_version 1
-%define minor_version 4
+%define minor_version 6
 %define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
-%define petscversion 3.11
+%define use_petsc 1
+%define petscversion 3.14
+%define use_trilinos 0
+%define trilinosversion 12.18.1
+%define python_version 3
 
 %include rpm-dir.inc
 %include compiler-defines.inc
@@ -90,7 +94,14 @@ mount -t tmpfs tmpfs %{INSTALL_DIR}
 
 export COPTFLAGS="-g %{TACC_OPT} -O2"
 
-module load boost python2 petsc/%{petscversion}
+module load boost python%{python_version}
+%if "%{use_petsc}" == "1"
+module load petsc/%{petscversion}
+%endif
+%if "%{use_trilinos}" == "1"
+module load trilinos/%{trilinosversion}
+export TRILINOS_CONFIGURE_STRING=--with-trilinos=${TACC_TRILINOS_DIR:?NO_TRILINOS_DIR}
+%endif
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -109,20 +120,79 @@ export LIBMESH_BUILD=${LIBMESH_HOME}/build-${LIBMESH_VERSION}
 export LIBMESH_INSTALLATION=%{INSTALL_DIR}
 export LIBMESH_BIN=${LIBMESH_INSTALLATION}/bin
 
+%if "%{comp_fam}" == "intel"
+# ./include/libmesh/fe_abstract.h(443): error: more than one operator "+" matches these operands:
+#             built-in operator "arithmetic + arithmetic"
+#             function "operator+(const PetscInt={int} &, const PetscComplex &)"
+#             operand types are: const libMesh::OrderWrapper + const unsigned int
+#     Order get_order()  const { return static_cast<Order>(fe_type.order + _p_level); }
+sed -i src/fe/fe.C \
+    -e 's/this->fe_type.order +/static_cast<unsigned int>(this->fe_type.order) +/'
+sed -i src/fe/fe_base.C \
+    -e 's/(fe_type.order +/(static_cast<unsigned int>(fe_type.order) +/' \
+    -e 's/(temp_fe_type.order +/(static_cast<unsigned int>(temp_fe_type.order) +/'
+
+for f in include/fe/fe_abstract.h \
+         src/systems/system_projection.C \
+         include/systems/generic_projector.h \
+         src/error_estimation/patch_recovery_error_estimator.C \
+         src/error_estimation/weighted_patch_recovery_error_estimator.C ; do 
+  sed -i $f \
+    -e 's/fe_type.order +/static_cast<unsigned int>(fe_type.order) +/'
+done
+sed -i src/base/dof_map.C \
+    -e 's/- base_fe_type.order/- static_cast<unsigned int>(base_fe_type.order)/' \
+    -e 's/+ base_fe_type.order/+ static_cast<unsigned int>(base_fe_type.order)/'
+for f in src/fe/fe_hierarchic_shape_1D.C src/fe/fe_bernstein_shape_1D.C \
+        src/fe/fe_lagrange_shape_1D.C src/fe/fe_lagrange_shape_2D.C src/fe/fe_lagrange_shape_3D.C \
+        src/fe/fe_monomial_shape_1D.C src/fe/fe_monomial_shape_2D.C src/fe/fe_monomial_shape_3D.C \
+	; do
+  sed -i $f \
+    -e 's/(fet.order +/(static_cast<unsigned int>(fet.order) +/'
+done
+sed -i src/fe/fe_interface.C \
+    -e 's/(fe_t.order +/(static_cast<unsigned int>(fe_t.order) +/'
+sed -i src/fe/fe_interface.C \
+    -e 's/(p_refined_fe_t.order +/(static_cast<unsigned int>(p_refined_fe_t.order) +/'
+for f in src/fe/fe_szabab_shape_1D.C \
+         src/fe/fe_subdivision_2D.C \
+         ; do \
+    sed -i $f \
+      -e 's/(fet.order +/(static_cast<unsigned int>(fet.order) +/' \
+      -e 's/(fet.order+/(static_cast<unsigned int>(fet.order) +/'
+done
+%endif
+
 rm -rf /tmp/libmesh-build
 mkdir -p /tmp/libmesh-build
 pushd /tmp/libmesh-build
 
-export PYLIB=${TACC_PYTHON_LIB}/libpython2.7.so
+if [ "$TACC_FAMILY_PYTHON" = "python2" ] ; then
+  export PYLIB=${TACC_PYTHON_LIB}/libpython${TACC_PYTHON_VER:=2.7}.so
+else
+  export TACC_PYTHON_LIB=$TACC_PYTHON_LIB
+  export PYLIB=${TACC_PYTHON_LIB}/libpython${TACC_PYTHON_VER:=3.7}m.so
+fi
+if [ ! -f $PYLIB ] ; then
+  echo "Could find pylib=$PYLIB" 
+  exit 1
+fi
+export LIBS=${PYLIB}
+export libmesh_LDFLAGS=$PYLIB
+#"${TACC_PYTHON_LIB:?NO_PYTHON_LIB}/libpython${TACC_PYTHON_VER}.so"
 
-export LIBS=${PYLIB} ; \
-export libmesh_LDFLAGS="${TACC_PYTHON_LIB}/libpython2.7.so"
+CXX=mpicxx \
+CC=mpicc \
 ${LIBMESH_DIR}/configure --prefix=${LIBMESH_INSTALLATION} \
-    --with-trilinos=${TACC_TRILINOS_DIR} \
+    ${TRILINOS_CONFIGURE_STRING} \
     --with-boost=${TACC_BOOST_DIR} \
+    --enable-parmesh --disable-metaphysicl \
+    --enable-fortran --enable-dirichlet --enable-nodeconstraint \
     2>&1 | tee ${softdir}/configure.log
 
-make 2>&1 | tee ${softdir}/make.log
+###./configure --enable-mpi --enable-fortran --enable-exceptions --enable-amr --enable-vsmoother --enable-periodic  --enable-parmesh --enable-ghosted --enable-pfem  --enable-ifem   --enable-examples  --enable-petsc   --enable-trilinos --enable-slepc --enable-boost --enable-laspack --enable-bzip2 --enable-tecio --enable-tecplot --enable-parmetis --enable-tetgen --enable-triangle --enable-vtk --enable-eigen --enable-glpk --enable-netcdf --enable-exodus --enable-nemesis --enable-fparser --with-cxx=g++ --with-fc=gfortran --with-cc=gcc MPI_INCLUDES_PATH=${PETSC_DIR}/${PETSC_ARCH}/include MPI_LIBS_PATH=${PETSC_DIR}/${PETSC_ARCH}/lib
+
+make -j 8 2>&1 | tee ${softdir}/make.log
 
 # small sanity check
 make check -C examples SUBDIRS=introduction/introduction_ex1 || /bin/true
@@ -222,5 +292,5 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
-* Tue Jun 04 2019 eijkhout <eijkhout@tacc.utexas.edu>
+* Tue Mar 09 2021 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

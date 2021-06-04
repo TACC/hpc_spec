@@ -22,13 +22,13 @@
 %if "%{is_python}" == "1"
   %if %{undefined pythonV}
     %define python_label 3_9
-    %define python_module_version 3.9.1
+    %define python_module_version 3.9.2
     %define python_major_version 3
     %define python_minor_version 9
   %endif
   %if "%{pythonV}" == "3_9"
     %define python_label 3_9
-    %define python_module_version 3.9.1
+    %define python_module_version 3.9.2
     %define python_major_version 3
     %define python_minor_version 9
   %endif

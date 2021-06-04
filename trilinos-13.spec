@@ -5,15 +5,25 @@ Summary: Trilinos install
 %define MODULE_VAR    TRILINOS
 
 # Create some macros (spec file variables)
-%define major_version 12
-%define minor_version 18
+%define major_version 13
+%define minor_version 0
 %define micro_version 1
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
-%define HAS_MUMPS 1
+# need petsc because mumps comes with Scotch/Scalapack/Metis/Parmetis baggage
+%define has_mumps 0
+%define mumps_version 5.3
+%define petscversion 3.14
+
+# python broken, fixed in 13
+%define has_python 1
 # python version needs forcing for boost
-%define python_version 3.8.2
+# gcc: 
+##define python_version 3.8.2
+# intel:
+%define python_version 3.9.2
+%define python_version_version 3.9
 
 %include rpm-dir.inc
 %include compiler-defines.inc
@@ -35,7 +45,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 5%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tar.gz
@@ -110,11 +120,18 @@ varies with each package.
 %include compiler-load.inc
 %include mpi-load.inc
 
-export PYTHON_MAJOR_VER=3
-module load cmake python${PYTHON_MAJOR_VER}/%{python_version} swig 
+module load cmake swig 
 module load boost
 ## VLE stopgap!
 export BOOST_ROOT=${TACC_BOOST_DIR}
+
+%if "%{has_python}" == "1"
+  module load python3/%{python_version}
+  export HAS_PYTHON=ON
+  export PYTHON_LOAD_FLAG=${TACC_PYTHON_LIB}/libpython%{python_version_version}.so
+%else
+  export HAS_PYTHON=OFF
+%endif
 
 #
 # Set Up Installation Directory and tmp file system
@@ -139,7 +156,6 @@ mount -t tmpfs tmpfs %{INSTALL_DIR}
 export COPTFLAGS="-g %{TACC_OPT} -O2"
   export HAS_HDF5=ON
   export HAS_NETCDF=ON
-  export HAS_PYTHON=OFF
   export HAS_MUELU=ON
   export HAS_STK=ON
   export HAS_SUPERLU=OFF
@@ -152,23 +168,20 @@ if [ "${HAS_HDF5}" = "ON" ] ; then
 fi
 
 # https://github.com/trilinos/Trilinos/issues/6339
-if [ %{HAS_MUMPS} -eq 1 ] ; then
-  module load mumps parmetis_petsc
+%if "%{has_mumps}" == "1"
+
+  module load mumps/%{mumps_version} parmetis_petsc
   export MUMPSLIBS="-L${TACC_MUMPS_LIB} -ldmumps -lmumps_common -lpord -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lmkl_blacs_intelmpi_lp64 -lpthread -\lifcore"
   export MUMPSLIBNAMES=dmumps\;mumps_common\;pord\;mkl_scalapack_lp64\;mkl_intel_lp64\;mkl_intel_thread\;mkl_core\;iomp5\;mkl_blacs_intelmpi_lp64\;pthread\;ifcore
   export PARMETISLIBS=${TACC_PARMETIS_LIB}/libptscotchparmetis.a\;${TACC_PARMETIS_LIB}/libparmetis.so
   export MKLLIBS=${MKLLIBS}\;libmkl_scalapack_lp64\;libmkl_blacs_intelmpi_lp64
-else
+%else
   export MUMPSLIBS=NO_MUMPS_LOADED
   export PARMETISLIBS=NO_PARMETIS_LOADED
-fi
+%endif
 
 if [ "${HAS_NETCDF}" = "ON" ] ; then
   module load parallel-netcdf
-fi
-if [ "${HAS_PYTHON}" = "ON" ] ; then
-  module load python%{python_major_version}
-  export PYTHON_LOAD_FLAG=${TACC_PYTHON_LIB}/libpython%{python_major_version}.%{python_minor_version}.so
 fi
 
 if [ "${HAS_SUPERLU}" = "ON" ] ; then
@@ -198,14 +211,13 @@ export TRILINOS_LOCATION=%{_topdir}/BUILD/
 export SOURCEVERSION=%{version}
 export VERSION=%{version}
 export PREFIXLOCATION=%{INSTALL_DIR}
-source %{SPEC_DIR}/victor_scripts/trilinos.cmake
-#echo ${trilinos_extra_libs}
+source %{SPEC_DIR}/victor_scripts/trilinos-%{major_version}.cmake
 
 ####
 #### Compilation
 ####
 echo "about to make"
-make -j 8             # Trilinos can compile in parallel
+make -j 12             # Trilinos can compile in parallel
 # make -j 4 tests           # (takes forever...)
 #make runtests-serial # (requires queue submission)
 #make runtests-mpi    # (requires queue submission)
@@ -313,14 +325,7 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
-* Wed May 06 2020 eijkhout <eijkhout@tacc.utexas.edu>
-- release 5: post-install fix for ShyLU
-* Sat Apr 25 2020 eijkhout <eijkhout@tacc.utexas.edu>
-- release 4: up to 12.18.1 
-    including mumps
-* Fri Sep 06 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3 : update explicit libpython
-* Mon Jun 10 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: fix missing lib directory
-* Thu Jun 06 2019 eijkhout <eijkhout@tacc.utexas.edu>
+* Fri Jun 04 2021 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: using 13.0.1, activating python
+* Fri May 28 2021 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

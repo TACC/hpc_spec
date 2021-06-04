@@ -13,11 +13,16 @@ Summary: Dealii install
 
 %define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
-%define DEAL_USE_PETSC 1
+%define use_petsc 1
 ## petsc 3.11 has been compiled with impi: release instead of release_mt
-%define dealiipetscversion 3.11
+%define dealiipetscversion 3.15
+## as of petsc 3.15 slepc is rolled into petsc
+%define explicit_slepc 0
+%define python_version 3
+# for gcc explicit python
+%define python_module 3.8.2
 
-%define DEAL_USE_TRILINOS 1
+%define use_trilinos 1
 %define dealiitrilinosversion 12.18.1
 
 %include rpm-dir.inc
@@ -40,7 +45,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tar.gz
@@ -119,13 +124,7 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 mkdir -p %{INSTALL_DIR}
 mount -t tmpfs tmpfs %{INSTALL_DIR}
 
-%if "%{comp_fam}" == "intel"
-  # ultimately we want python3 everywhere
-  module load python2 ## only for boost! should not have to.
-%else
-  # all of a sudden we can load boost without python?
-  module load python3 ## only for boost! should not have to.
-%endif
+module load python%{python_version}/%{python_module}
 
 module list
 for m in boost cmake \
@@ -136,8 +135,8 @@ for m in boost cmake \
 done
 module list
 
-#export BASIC_FLAGS="-g %{TACC_OPT}"
-export BASIC_FLAGS="-g -march=native"
+export BASIC_FLAGS="-g %{TACC_OPT}"
+#export BASIC_FLAGS="-g -march=native"
 
 ####
 #### MPI handling
@@ -181,24 +180,64 @@ module load metis
 %else
   export MKLFLAG="-mkl"
 %endif
-export LAPACK_SPECIFICATION="-D LAPACK_LIBRARIES=\
+
+export LAPACK_SPECIFICATION="-DDEAL_II_WITH_LAPACK=ON -D LAPACK_LIBRARIES=\
 ${MKLROOT}/lib/intel64_lin/libmkl_intel_lp64.so\
 \;\
 ${MKLROOT}/lib/intel64_lin/libmkl_core.so\
+\;\
+${MKLROOT}/lib/intel64_lin/libmkl_intel_thread.so\
+\;\
+${MKLROOT}/../compiler/lib/intel64_lin/libiomp5.so\
 "
+## from the developers:
+## LAPACK_LIBRARIES=
+## /opt/intel/compilers_and_libraries_2020.1.217/linux/mkl/lib/intel64_lin/libmkl_intel_lp64.so;
+## /opt/intel/compilers_and_libraries_2020.1.217/linux/mkl/lib/intel64_lin/libmkl_intel_thread.so;
+## /opt/intel/compilers_and_libraries_2020.1.217/linux/mkl/lib/intel64_lin/libmkl_core.so;
+## /opt/intel/compilers_and_libraries_2020.1.217/linux/compiler/lib/intel64_lin/libiomp5.so;
+## -lm;-ldl'
+
+rm -rf /tmp/deal-logs
+mkdir /tmp/deal-logs
+
+for scalar in real complex ; do
 
 ####
 #### PETSc
 ####
-%if "%{DEAL_USE_PETSC}" == "1"
+%if "%{use_petsc}" == "1"
+
   export CMAKE_USE_PETSC="ON"
-  module load petsc/%{dealiipetscversion} slepc/%{dealiipetscversion}
-  echo "Installing deal with Petsc: ${PETSC_DIR}/${PETSC_ARCH}"
-%else
+if [ "$scalar" = "complex" ] ; then
+
+  module load petsc/%{dealiipetscversion}-complex
+  %if "%{explicit_slepc}" == "1"
+    module load slepc/%{dealiipetscversion}-complex
+  %else
+    export TACC_SLEPC_DIR=${TACC_PETSC_DIR}
+  %endif
+  petsc_select="-DDEAL_II_WITH_PETSC_COMPLEX=ON -DDEAL_II_WITH_SLEPC_COMPLEX=OFF"
+  install_prefix=%{INSTALL_DIR}/complex
+
+else # if scalar real
+
+  module load petsc/%{dealiipetscversion}
+  %if "%{explicit_slepc}" == "1"
+    module load slepc/%{dealiipetscversion}
+  %else
+    export TACC_SLEPC_DIR=${TACC_PETSC_DIR}
+  %endif
+  petsc_select="-DDEAL_II_WITH_PETSC=ON -DDEAL_II_WITH_SLEPC=OFF"
+  install_prefix=%{INSTALL_DIR}/real
+
+fi
+
+%else # if not use_petsc
   export CMAKE_USE_PETSC="OFF"
   export PETSC_DIR="/dev/null"
   export PETSC_ARCH="foobar"
-%endif
+%endif # end use_petsc
 
 ##
 ## TBBROOT
@@ -210,6 +249,7 @@ ${MKLROOT}/lib/intel64_lin/libmkl_core.so\
   fi
   export TBBROOT=${TACC_INTEL_DIR}/tbb
 %endif
+
 if [ ! -d "${TBBROOT}" ] ; then
   echo "Trouble setting TBBROOT"
   exit 1
@@ -220,7 +260,7 @@ export BASIC_FLAGS="${BASIC_FLAGS} -I${TBBROOT}/include"
 #### Trilinos
 #### (p4est gets loaded higher up)
 ####
-%if "%{DEAL_USE_TRILINOS}" == "1"
+%if "%{use_trilinos}" == "1"
   export CMAKE_USE_TRILINOS="ON"
   module load trilinos/%{dealiitrilinosversion}
   find ${TACC_TRILINOS_DIR} -name \*.cmake -exec grep python {} \;
@@ -262,8 +302,13 @@ rm -f CMakeCache.txt
 
 ( set | grep pthreads ) || /bin/true
 
+%if "%{is_impi}" == "1"
+  export I_MPI_LIBRARY_KIND=release_mt
+  export I_MPI_LINK=opt_mt
+%endif
+
   cmake -VV \
-    -DCMAKE_INSTALL_PREFIX=%{INSTALL_DIR} \
+    -DCMAKE_INSTALL_PREFIX=%{INSTALL_DIR}/${scalar} \
     \
     -DDEAL_II_WITH_CXX11=ON \
     -DDEAL_II_WITH_CXX17=OFF \
@@ -326,18 +371,22 @@ export disabled=" \
 
 make -j 12 2>&1 | tee ${LOGDIR}/dealii_compile.log
 make install
-( make test || true )
+## ( make test || true )
 
 popd # back out of INSTALL_DIR
 
-mkdir -p %{INSTALL_DIR}/examples
-cp -r examples/step* %{INSTALL_DIR}/examples
+## this does not work for complex
+# mkdir -p %{INSTALL_DIR}/examples
+# cp -r examples/step* %{INSTALL_DIR}/examples
+echo "examples:"
+ls %{INSTALL_DIR}/${scalar}/examples
+
 
 ##
 ## start of module file section
 ##
 
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}-$scalar.lua << EOF
 help( [[
 The dealii module defines the following environment variables:
 TACC_DEALII_DIR, TACC_DEALII_BIN, and
@@ -356,23 +405,22 @@ whatis( "Category: library, mathematics" )
 whatis( "URL: http://www-unix.mcs.anl.gov/dealii/dealii-as/" )
 whatis( "Description: Portable Extendible Toolkit for Scientific Computing, Numerical library for sparse linear algebra" )
 
-local             dealii_arch =    "${architecture}"
-local             dealii_dir =     "%{INSTALL_DIR}/"
+local             dealii_dir =     "%{INSTALL_DIR}/${scalar}"
 
-prepend_path("PATH",            pathJoin(dealii_dir,dealii_arch,"bin") )
-prepend_path("LD_LIBRARY_PATH", pathJoin(dealii_dir,dealii_arch,"lib") )
+prepend_path("PATH",            pathJoin(dealii_dir,"bin") )
+prepend_path("LD_LIBRARY_PATH", pathJoin(dealii_dir,"lib") )
 
-setenv("DEALII_ARCH",            dealii_arch)
 setenv("DEALII_DIR",             dealii_dir)
 setenv("TACC_DEALII_DIR",        dealii_dir)
-setenv("TACC_DEALII_BIN",        pathJoin(dealii_dir,dealii_arch,"bin") )
-setenv("TACC_DEALII_INC",        pathJoin(dealii_dir,dealii_arch,"include") )
-setenv("TACC_DEALII_LIB",        pathJoin(dealii_dir,dealii_arch,"lib") )
+setenv("TACC_DEALII_BIN",        pathJoin(dealii_dir,"bin") )
+setenv("TACC_DEALII_INC",        pathJoin(dealii_dir,"include") )
+setenv("TACC_DEALII_LIB",        pathJoin(dealii_dir,"lib") )
 
-depends_on( "boost-mpi" )
+depends_on( "python%{python_version}" )
 EOF
+# depends_on( "boost" )
 
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << EOF
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version}-$scalar << EOF
 #%Module1.0#################################################
 ##
 ## version file for Dealii %version
@@ -381,11 +429,12 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << EOF
 set     ModulesVersion      "${modulefilename}"
 EOF
 
-%{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua 
+%{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}-$scalar.lua 
 
 ##
 ## end of configure install section
 ##
+done # end of real complex loop
 
 cp -r %{INSTALL_DIR}/* ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
 
@@ -403,6 +452,8 @@ umount %{INSTALL_DIR} # tmpfs # $INSTALL_DIR
 rm -rf $RPM_BUILD_ROOT
 %changelog
 # release 4: adding boost-mpi dependency
+* Thu Apr 08 2021 eijkhout <eijkhout@tacc.utexas.edu>
+- release 5: better lapack specification
 * Wed Aug 19 2020 eijkhout <eijkhout@tacc.utexas.edu>
 - release 4: update to 9.2.0
 * Fri May 01 2020 eijkhout <eijkhout@tacc.utexas.edu>

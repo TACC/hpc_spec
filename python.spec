@@ -125,7 +125,7 @@ if [ ! -f "%{INSTALL_DIR}/bin/python%{python_major_version}" ]; then
     ls
 
     %if "%{comp_fam_name}" == "Intel"
-    ./configure --prefix=%{INSTALL_DIR} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc -lssp' CXXFLAGS="-std=c++11" CFLAGS="-Wformat -Wformat-security -D_FORTIFY_SOURCE=2 -fstack-protector -fwrapv -fpic -O3" LDFLAGS="-Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-libm=-limf --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip --enable-unicode=ucs4    
+    ./configure --prefix=%{INSTALL_DIR} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc -lssp' CXXFLAGS="-std=c++11" CFLAGS="-Wformat -Wformat-security -D_FORTIFY_SOURCE=2 -fstack-protector -fwrapv -fpic -O3 -std=c11" LDFLAGS="-Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --enable-shared --with-libm=-limf --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip --enable-unicode=ucs4    
     %endif
     %if "%{comp_fam_name}" == "GNU"
     ./configure --prefix=%{INSTALL_DIR} CC=gcc CXX=g++ LD=ld AR=ar LIBS='-lpthread' CFLAGS="-Wp,-D_FORTIFY_SOURCE=2 -fexceptions --param=ssp-buffer-size=4 -grecord-gcc-switches -fwrapv -fpic -O2 -fno-semantic-interposition" LDFLAGS="-fpic -Xlinker -export-dynamic" --with-system-ffi --enable-shared --with-ensurepip --with-computed-gotos --enable-optimizations --with-lto --enable-unicode=ucs4
@@ -220,13 +220,13 @@ CFLAGS="-O2 -fPIC" ${PIP} install --no-binary :all: Cython
 ### Numpy
 if ! $(%{INSTALL_DIR}/bin/python%{python_major_version} -c "import numpy"); then
     cd %{_topdir}/SOURCES	
-    if [ ! -f "%{_topdir}/SOURCES/numpy-1.19.5.tar.gz" ]; then	
-	wget https://github.com/numpy/numpy/releases/download/v1.19.5/numpy-1.19.5.tar.gz
+    if [ ! -f "%{_topdir}/SOURCES/numpy-1.20.1.tar.gz" ]; then	
+	wget https://github.com/numpy/numpy/releases/download/v1.20.1/numpy-1.20.1.tar.gz
     fi	   
     
-    rm -rf %{_topdir}/SOURCES/numpy-1.19.5 	   
-    tar -xzvf %{_topdir}/SOURCES/numpy-1.19.5.tar.gz -C %{_topdir}/SOURCES	
-    cd %{_topdir}/SOURCES/numpy-1.19.5
+    rm -rf %{_topdir}/SOURCES/numpy-1.20.1 	   
+    tar -xzvf %{_topdir}/SOURCES/numpy-1.20.1.tar.gz -C %{_topdir}/SOURCES	
+    cd %{_topdir}/SOURCES/numpy-1.20.1
 
     echo "[mkl]
 library_dirs = ${MKL_LIB}:${OMP_LIB}
@@ -266,13 +266,13 @@ else:
 ### Scipy
 if ! $(%{INSTALL_DIR}/bin/python%{python_major_version} -c "import scipy"); then
     cd %{_topdir}/SOURCES	
-    if [ ! -f "%{_topdir}/SOURCES/scipy-1.6.0.tar.gz" ]; then	
-	wget -O scipy-1.6.0.tar.gz https://github.com/scipy/scipy/releases/download/v1.6.0/scipy-1.6.0.tar.gz
+    if [ ! -f "%{_topdir}/SOURCES/scipy-1.6.1.tar.gz" ]; then	
+	wget -O scipy-1.6.1.tar.gz https://github.com/scipy/scipy/releases/download/v1.6.1/scipy-1.6.1.tar.gz
     fi	   
 
-    rm -rf %{_topdir}/SOURCES/scipy-1.6.0
-    tar -xzvf scipy-1.6.0.tar.gz -C %{_topdir}/SOURCES	 
-    cd %{_topdir}/SOURCES/scipy-1.6.0
+    rm -rf %{_topdir}/SOURCES/scipy-1.6.1
+    tar -xzvf scipy-1.6.1.tar.gz -C %{_topdir}/SOURCES	 
+    cd %{_topdir}/SOURCES/scipy-1.6.1
 
     %if "%{comp_fam_name}" == "Intel"
     %{INSTALL_DIR}/bin/python%{python_major_version} setup.py config --compiler=intelem --fcompiler=intelem build_clib --compiler=intelem --fcompiler=intelem build_ext --compiler=intelem --fcompiler=intelem install
@@ -332,6 +332,8 @@ ${PIP} install --no-binary :all: matplotlib
 
 killall Xvfb
 
+#CFLAGS="-O0" ${PIP} install --no-binary :all: yt
+#%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import yt'
 
 CFLAGS="-O2 -fPIC" ${PIP} install --no-binary :all: pandas
 %{INSTALL_DIR}/bin/python%{python_major_version} -c 'import pandas'
@@ -370,12 +372,10 @@ ${PIP} install --no-binary :all: psycopg2
      ${PIP} install --no-binary :all: mercurial
 %endif
 
-CFLAGS="-O0" ${PIP} install --no-binary :all: yt
-%{INSTALL_DIR}/bin/python%{python_major_version} -c 'import yt'
 
 # This allows you to import mkl
-wget "https://github.com/IntelPython/mkl-service/archive/v2.3.0.tar.gz"
-mv v2.3.0.tar.gz /tmp
+#wget "https://github.com/IntelPython/mkl-service/archive/v2.3.0.tar.gz"
+#mv v2.3.0.tar.gz /tmp
 cd /tmp
 tar xfvz /tmp/v2.3.0.tar.gz 
 ${PIP} install /tmp/mkl-service-2.3.0
@@ -393,8 +393,10 @@ ${PIP} install --no-binary :all: PyYAML
 #${PIP} install --no-binary :all: scikit_learn
 
 if module load hdf5; then
-    HDF5_DIR=$TACC_HDF5_DIR ${PIP} install --no-binary :all: h5py --prefix=%{INSTALL_DIR_HDF5} --ignore-installed h5py
-    ${PIP} install --no-binary :all: tables --prefix=%{INSTALL_DIR_HDF5}
+    #HDF5_DIR=$TACC_HDF5_DIR ${PIP} install --no-binary :all: h5py --prefix=%{INSTALL_DIR_HDF5} --ignore-installed h5py
+    #${PIP} install --no-binary :all: tables --prefix=%{INSTALL_DIR_HDF5}
+    ${PIP} install h5py
+    ${PIP} install tables
 fi
 
 #############################################################
@@ -409,10 +411,10 @@ fi
   module load %{mpi_module}   
   ${PIP} install --no-binary :all: --prefix=%{INSTALL_DIR_MPI} mpi4py
 
-  #if module load phdf5; then
-  #    export PYTHONPATH=%{INSTALL_DIR_MPI}/lib/python%{python_major_version}.%{python_minor_version}/site-packages
-  #    CC="mpicc" HDF5_MPI="ON" HDF5_DIR=$TACC_HDF5_DIR ${PIP} install --no-binary=h5py --no-deps --prefix=%{INSTALL_DIR_MPI} --ignore-installed h5py
-      #${PIP} install tables
+  
+  if module load phdf5/1.10.4; then
+      export PYTHONPATH=%{INSTALL_DIR_MPI}/lib/python%{python_major_version}.%{python_minor_version}/site-packages
+      CC="mpicc" HDF5_MPI="ON" HDF5_DIR=$TACC_HDF5_DIR ${PIP} install --no-binary=h5py --no-deps --prefix=%{INSTALL_DIR_MPI} --ignore-installed h5py
   fi
 %endif
 
@@ -532,28 +534,28 @@ EOF
 # Create the module file for the serial h5py installation 
 #----------------------------------------------------------
 
-rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR_H5PY}
-mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR_H5PY}
-mkdir -p $RPM_BUILD_ROOT/%{APPS}/%{comp_fam_ver}/hdf5_1_10/python%{python_label}/modulefiles
+#rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR_H5PY}
+#mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR_H5PY}
+#mkdir -p $RPM_BUILD_ROOT/%{APPS}/%{comp_fam_ver}/hdf5_1_10/python%{python_label}/modulefiles
 
-%if %{defined mpiV}
+#%if %{defined mpiV}
 
-cat >    $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}/%{version}.lua << 'EOF'
-inherit()
-whatis("Version-notes: Compiler:%{comp_fam_ver}. MPI:%{mpi_fam_ver}")
-prepend_path("PYTHONPATH", "%{INSTALL_DIR_MPI}/lib/python%{python_major_version}.%{python_minor_version}/site-packages")
-prepend_path("MODULEPATH", "%{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/python%{python_label}/modulefiles")
-EOF
+#cat >    $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}/%{version}.lua << 'EOF'
+#inherit()
+#whatis("Version-notes: Compiler:%{comp_fam_ver}. MPI:%{mpi_fam_ver}")
+#prepend_path("PYTHONPATH", "%{INSTALL_DIR_MPI}/lib/python%{python_major_version}.%{python_minor_version}/site-packages")
+#prepend_path("MODULEPATH", "%{APPS}/%{comp_fam_ver}/%{mpi_fam_ver}/python%{python_label}/modulefiles")
+#EOF
 
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}/.version.%{version} << 'EOF'
-#%Module1.0####################################################################
+#cat > $RPM_BUILD_ROOT/%{MODULE_DIR_MPI}/.version.%{version} << 'EOF'
+##%Module1.0####################################################################
 ##
 ## Version file for Python %{python_major_version} MPI version %{version}
 ##
-set ModulesVersion "%version"
-EOF
+#set ModulesVersion "%version"
+#EOF
 
-%endif
+#%endif
 
 
 

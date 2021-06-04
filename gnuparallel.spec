@@ -327,9 +327,8 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Mon Aug 26 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 5: UNRELEASED
-  corrected module help
+* Wed Mar 03 2021 eijkhout <eijkhout@tacc.utexas.edu>
+- release 5: corrected module help, script dir in PATH
 * Mon Jul 29 2019 eijkhout <eijkhout@tacc.utexas.edu>
 - release 4: abandoned use of /tmp. stupid
 * Tue Jul 23 2019 eijkhout <eijkhout@tacc.utexas.edu>

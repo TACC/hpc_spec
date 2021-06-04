@@ -1,16 +1,6 @@
 #
-# Spec file for SWIG:
-# interface generator utility 
-# which is always too old for trilinos
-#
-# Victor Eijkhout, 2017
-# based on:
-#
-# Bar.spec, 
-# W. Cyrus Proctor
-# Antonio Gomez
-# 2015-08-25
-#
+# test spec file for viz style build. Doesnt actually do 
+# anything but test the values of he macros in the include files. 
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
 # NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
@@ -26,32 +16,32 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary:    Set of tools for manipulating geographic and Cartesian data sets
+Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name swig
-%define MODULE_VAR    SWIG
+%define pkg_base_name viz
+%define MODULE_VAR    VIZ
 
 # Create some macros (spec file variables)
-%define major_version 4
-%define minor_version 0
-%define micro_version 0
+%define major_version 1
+%define minor_version 1
+%define micro_version 1
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{major_version}.%{minor_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
 %include compiler-defines.inc
-#%include mpi-defines.inc
-%include python-defines.inc
-%define  unified_directories 1
+%include mpi-defines.inc
+#%include python-defines.inc
 ########################################
 ### Construct name based on includes ###
 ########################################
-#%include name-defines.inc
-%include name-defines-noreloc-home1.inc
-
-
+%include name-defines.inc
+#%include name-defines-noreloc.inc
+#%include name-defines-noreloc-python.inc
+#%include name-defines-hidden.inc
+#%include name-defines-hidden-noreloc.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -63,41 +53,33 @@ BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1%{?dist}
-License:   GNU
+License:   GPL
 Group:     Development/Tools
-Vendor:     SOEST - hawaii
-Group:      Libraries/maps
-Source:	    swig-%{version}.tar.gz
-URL:	    http://swig.soest.hawaii.edu/ 
-Packager:   eijkhout@tacc.utexas.edu
+URL:       http://www.gnu.org/software/bar
+Packager:  TACC - agomez@tacc.utexas.edu, cproctor@tacc.utexas.edu
+Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
-%global _python_bytecompile_errors_terminate_build 0
+
 
 %package %{PACKAGE}
-Summary: SWIG install
-Group: System Environment/Base
+Summary: The package RPM
+Group: Development/Tools
 %description package
 This is the long description for the package RPM...
 
 %package %{MODULEFILE}
-Summary: SWIG install
-Group: System Environment/Base
+Summary: The modulefile RPM
+Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
 
 %description
-SWIG is a software development tool that connects programs written in C and C++
-with a variety of high-level programming languages. SWIG is primarily used with
-common scripting languages such as Perl, Python, Tcl/Tk, and Ruby, however the
-list of supported languages also includes non-scripting languages such as Java,
-OCAML and C#. Also several interpreted and compiled Scheme implementations
-(Guile, MzScheme, Chicken) are supported. SWIG is most commonly used to create
-high-level interpreted or compiled programming environments, user interfaces,
-and as a tool for testing and prototyping C/C++ software. SWIG can also export
-its parse tree in the form of XML and Lisp s-expressions. 
+The longer-winded description of the package that will 
+end in up inside the rpm and is queryable if installed via:
+rpm -qi <rpm-name>
 
 
 #---------------------------------------
@@ -110,7 +92,7 @@ its parse tree in the form of XML and Lisp s-expressions.
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%setup -n %{pkg_base_name}-%{pkg_version}
+#%setup -n %{pkg_base_name}-%{pkg_version}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -138,12 +120,18 @@ its parse tree in the form of XML and Lisp s-expressions.
 
 # Setup modules
 %include system-load.inc
+module purge
 # Load Compiler
-%include compiler-load.inc
+#%include compiler-load.inc
 # Load MPI Library
 #%include mpi-load.inc
 # Load Python Library
-%include python-load.inc
+#%include python-load.inc
+
+# Insert further module commands
+
+echo "Building the package?:    %{BUILD_PACKAGE}"
+echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
 #------------------------
 %if %{?BUILD_PACKAGE}
@@ -163,20 +151,20 @@ its parse tree in the form of XML and Lisp s-expressions.
   # Insert Build/Install Instructions Here
   #========================================
   
-#
-# Use mount temp trick
-#
-mkdir -p             %{INSTALL_DIR}
-mount -t tmpfs tmpfs %{INSTALL_DIR}
-
-./configure --prefix=%{INSTALL_DIR} \
- && make \
- && make install
-
-cp -r %{INSTALL_DIR}/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/
-
-umount %{INSTALL_DIR}
-
+  # Create some dummy directories and files for fun
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
+  
+  echo "TACC_OPT %{TACC_OPT}"
+  echo "MODULE_DIR %{MODULE_DIR}"
+  echo "PYTHON_MODULE_DIR %{PYTHON_MODULE_DIR}"
+  echo "INSTALL_DIR %{INSTALL_DIR}"
+  echo "PYTHON_INSTALL_DIR %{PYTHON_INSTALL_DIR}"
+  
+  # Copy everything from tarball over to the installation directory
+  cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -195,45 +183,56 @@ umount %{INSTALL_DIR}
   #######################################
   ########### Do Not Remove #############
   #######################################
-  
-# Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
-help( [[
-Simplified Wrapper and Interface Generator
-This module loads swig.
-The command directory is added to PATH.
-The include directory is added to INCLUDE.
-The lib     directory is added to LD_LIBRARY_PATH.
+
+# Modulefile Help Message
+HELP_MSG=$(cat << EOM
+This is the help message.
+
+The %{MODULE_VAR} module defines the following environment variables:
+TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_LIB, TACC_%{MODULE_VAR}_INC and
+TACC_%{MODULE_VAR}_BIN for the location of the %{MODULE_VAR} distribution, libraries,
+include files, and tools respectively.
 
 Version %{version}
-]] )
+EOM
+)
 
-whatis( "Simplified Wrapper and Interface Generator" )
-whatis( "Version: %{version}" )
-whatis( "Category: Development/Tools" )
-whatis( "Description: SWIG is a software development tool that connects programs written in C and C++ with a variety of high-level programming languages." )
-whatis( "URL: http://www.swig.org" )
+# Write out the modulefile associated with the application
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << EOF
+help([[${HELP_MSG}]])
 
-local swig_dir = "%{INSTALL_DIR}"
+whatis("Name: %{pkg_base_name}")
+whatis("Version: %{pkg_version}%{dbg}")
+%if "%{is_debug}" == "1"
+setenv("TACC_%{MODULE_VAR}_DEBUG","1")
+%endif
 
-prepend_path( "PATH", pathJoin( swig_dir,"bin" ) )
-setenv("TACC_SWIG_DIR", swig_dir )
-setenv("TACC_SWIG_BIN", pathJoin(swig_dir,"bin" ) )
+-- Create environment variables.
+local bar_dir           = "%{INSTALL_DIR}"
+
+family("bar")
+prepend_path(    "PATH",                pathJoin(bar_dir, "bin"))
+prepend_path(    "LD_LIBRARY_PATH",     pathJoin(bar_dir, "lib"))
+prepend_path(    "MODULEPATH",         "%{MODULE_PREFIX}/%{pkg_base_name}%{major_version}_%{minor_version}/modulefiles")
+setenv( "TACC_%{MODULE_VAR}_DIR",                bar_dir)
+setenv( "TACC_%{MODULE_VAR}_INC",       pathJoin(bar_dir, "include"))
+setenv( "TACC_%{MODULE_VAR}_LIB",       pathJoin(bar_dir, "lib"))
+setenv( "TACC_%{MODULE_VAR}_BIN",       pathJoin(bar_dir, "bin"))
 EOF
 
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module1.0####################################################################
+  
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << EOF
+#%Module3.1.1#################################################
 ##
-## Version file for %{name} version %{version}
+## version file for %{pkg_base_name}%{version}
 ##
-set ModulesVersion "%version"
+set     ModulesVersion      "%{version}"
 EOF
-
+  
   # Check the syntax of the generated lua modulefile only if a visible module
   %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
   %endif
-
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -248,6 +247,7 @@ EOF
   # RPM package contains files within these directories
   %{INSTALL_DIR}
 
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -260,31 +260,29 @@ EOF
   # RPM modulefile contains files within these directories
   %{MODULE_DIR}
 
+
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-# ########################################
-# ## Fix Modulefile During Post Install ##
-# ########################################
-# %post %{PACKAGE}
-# export PACKAGE_POST=1
-# %include post-defines.inc
-# %post %{MODULEFILE}
-# export MODULEFILE_POST=1
-# %include post-defines.inc
-# %preun %{PACKAGE}
-# export PACKAGE_PREUN=1
-# %include post-defines.inc
-# ########################################
-# ############ Do Not Remove #############
-# ########################################
+########################################
+## Fix Modulefile During Post Install ##
+########################################
+%post %{PACKAGE}
+export PACKAGE_POST=1
+%include post-defines.inc
+%post %{MODULEFILE}
+export MODULEFILE_POST=1
+%include post-defines.inc
+%preun %{PACKAGE}
+export PACKAGE_PREUN=1
+%include post-defines.inc
+########################################
+############ Do Not Remove #############
+########################################
 
 #---------------------------------------
 %clean
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
 
-%changelog
-* Mon Jun 03 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 1: initial release

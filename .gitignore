@@ -33,4 +33,5 @@ error
 pv-5.8.1.out
 pv-osmesa-5.8.1.out
 remora-1.8.3.spec7
+*.log.save
 xx

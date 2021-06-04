@@ -51,7 +51,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
+Release:   3%{?dist}
 License:   proprietary
 Group:     Compiler
 URL:       https://software.intel.com/en-us/intel-compilers
@@ -355,16 +355,8 @@ setenv( "TACC_INTEL_DIR" ,      installDir                                      
 setenv( "TACC_INTEL_BIN" ,      pathJoin(installDir , "bin/intel64"              ) )
 setenv( "TACC_INTEL_LIB" ,      pathJoin(installDir , "compiler/lib/intel64"     ) )
 setenv( "TACC_INTEL_INC" ,      pathJoin(installDir , "compiler/include/intel64" ) )
+setenv( "TACC_VEC_FLAGS" ,      "-xCORE-AVX2 -axCORE-AVX512" )
 
-if (os.getenv("TACC_SYSTEM") == "frontera") then
-  setenv( "TACC_VEC_FLAGS" ,      "-xCORE-AVX2 -axCORE-AVX512,MIC-AVX512" )
-elseif (os.getenv("TACC_SYSTEM") == "stampede2") then
-  setenv( "TACC_VEC_FLAGS" ,      "-xCORE-AVX2 -axCORE-AVX512,MIC-AVX512" )
-elseif (os.getenv("TACC_SYSTEM") == "ls5") then
-  setenv( "TACC_VEC_FLAGS" ,      "-xCORE-AVX-I -axCORE-AVX2" )
-else
-  setenv( "TACC_VEC_FLAGS" ,      "-xCORE-AVX2" )
-end
 
 prepend_path( "MODULEPATH" , "/opt/apps/intel19/modulefiles" )
 

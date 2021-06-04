@@ -14,7 +14,7 @@ Summary: Parmetis, piggybacking on the PETSc install
 %define micro_version 3
 
 %define pkg_version %{major_version}.%{minor_version}
-%define petscversion 3.12
+%define petscversion 3.15
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -35,7 +35,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   1%{?dist}
+Release:   2%{?dist}
 License:   BSD-like
 Group:     Development/Numerical-Libraries
 URL:       http://glaros.dtc.umn.edu/gkhome/metis/parmetis/overview
@@ -227,5 +227,7 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Fri May 14 2021 eijkhout <eijkhout@tacc.utexas.edu>
+- release 2: update for petsc 3.15
 * Sat Apr 25 2020 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release

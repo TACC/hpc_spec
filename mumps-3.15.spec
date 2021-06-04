@@ -1,10 +1,13 @@
-# Sundials installation
-# (there is a sundials in petsc but that is horribly old;
-#  the API has changed considerably)
+# MUMPS specfile
+# Victor Eijkhout 2018
+# version 3.15 corresponds to the petsc version
+# we inherit from
 #
-# Victor Eijkhout
-
-
+# based on Bar.spec
+# W. Cyrus Proctor
+# Antonio Gomez
+# 2015-08-25
+#
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
 # NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
@@ -20,18 +23,20 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: A Nice little relocatable skeleton spec file example.
+Summary: Mumps, piggybacking on the PETSc install
 
 # Give the package a base name
-%define pkg_base_name sundials
-%define MODULE_VAR    SUNDIALS
+%define pkg_base_name mumps
+%define MODULE_VAR    MUMPS
 
 # Create some macros (spec file variables)
 %define major_version 5
-%define minor_version 5
-%define micro_version 0
+%define minor_version 3
+%define micro_version 5
 
-%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{major_version}.%{minor_version}
+%define petscversion 3.15
+###%define NO_PACKAGE 0
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -41,9 +46,10 @@ Summary: A Nice little relocatable skeleton spec file example.
 ### Construct name based on includes ###
 ########################################
 #%include name-defines.inc
-%include name-defines-noreloc.inc
+%include name-defines-noreloc-home1.inc
 #%include name-defines-hidden.inc
 #%include name-defines-hidden-noreloc.inc
+
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -54,13 +60,12 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2%{?dist}
-License:   GPL
-Group:     System Environment/Base
-URL:       https://computing.llnl.gov/projects/sundials
-Packager:  eijkhout@tacc.utexas.edu
-## Packager:  TACC - alamas@tacc.utexas.edu
-Source:    sundials-%{pkg_version}.tar.gz
+Release:   1%{?dist}
+License:   BSD-like
+Group:     Development/Numerical-Libraries
+URL:       http://graal.ens-lyon.fr/MUMPS/
+Packager:  TACC - eijkhout@tacc.utexas.edu
+#Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -74,28 +79,17 @@ Group: Development/Tools
 This is the long description for the package RPM...
 
 %package %{MODULEFILE}
-Summary: The modulefile RPM
-Group: Lmod/Modulefiles
+Summary: Mumps local binary install
+Group: System Environment/Base
 %description modulefile
 This is the long description for the modulefile RPM...
 
 %description
+Mumps is a solver library for distributed sparse linear system.
 
 #---------------------------------------
 %prep
 #---------------------------------------
-
-#------------------------
-%if %{?BUILD_PACKAGE}
-#------------------------
-  # Delete the package installation directory.
-  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-%setup -n sundials-%{pkg_version}
-
-#-----------------------
-%endif # BUILD_PACKAGE |
-#-----------------------
 
 #---------------------------
 %if %{?BUILD_MODULEFILE}
@@ -105,8 +99,6 @@ This is the long description for the modulefile RPM...
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
-
 
 #---------------------------------------
 %build
@@ -119,73 +111,13 @@ This is the long description for the modulefile RPM...
 
 # Setup modules
 %include system-load.inc
-# Load Compiler
-%include compiler-load.inc
-# Load MPI Library
-%include mpi-load.inc
+module purge
 
-# Insert further module commands
-module load cmake
+%include compiler-load.inc
+%include mpi-load.inc
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
-
-#------------------------
-%if %{?BUILD_PACKAGE}
-#------------------------
-
-  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
-  #######################################
-  ##### Create TACC Canary Files ########
-  #######################################
-  touch $RPM_BUILD_ROOT/%{INSTALL_DIR}/.tacc_install_canary
-  #######################################
-  ########### Do Not Remove #############
-  #######################################
-
-  #========================================
-  # Insert Build/Install Instructions Here
-  #========================================
-
-
-##
-## make install dir as tmpfs
-##
-mkdir -p %{INSTALL_DIR}
-mount -t tmpfs tmpfs %{INSTALL_DIR}
-
-##
-## make build directory and go there
-##
-sourcedir=`pwd`
-builddir=/tmp/sundial-build
-rm -rf ${builddir}
-mkdir -p ${builddir}
-pushd ${builddir}
-
-cmake -VV \
-  -D CMAKE_INSTALL_PREFIX:PATH=%{INSTALL_DIR} \
-  ${sourcedir}
-make -j 12
-make install
-  
-##
-## back out of builddir
-##
-popd
-
-##
-## copy installation to rpm install dir
-## and lose the tmpfs
-##
-cp -r %{INSTALL_DIR}/* ${RPM_BUILD_ROOT}/%{INSTALL_DIR}/
-umount %{INSTALL_DIR}
-
-#-----------------------  
-%endif # BUILD_PACKAGE |
-#-----------------------
-
 
 #---------------------------
 %if %{?BUILD_MODULEFILE}
@@ -201,69 +133,91 @@ umount %{INSTALL_DIR}
   ########### Do Not Remove #############
   #######################################
   
-# Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
-local help_message=[[
-The SUNDIALS modulefile defines the following environment variables:
-TACC_SUNDIALS_DIR, TACC_SUNDIALS_LIB, and TACC_SUNDIALS_INC
-for the location of the SUNDIALS %{version} distribution,
-libraries, and include files, respectively.
+##
+## configure install loop
+##
+## not for i64
+export dynamic="debug complex complexdebug"
+
+for ext in \
+  "" \
+  ${dynamic} \
+  ; do
+
+echo "module file for ${ext}"
+
+module unload petsc
+if [ -z "${ext}" ] ; then
+  export architecture=skylake
+  module load petsc/%{petscversion}
+else
+  export architecture=skylake-${ext}
+  module load petsc/%{petscversion}-${ext}
+fi
+
+
+##
+## modulefile part of the configure install loop
+##
+if [ -z "${ext}" ] ; then
+  export modulefilename=%{version}
+else
+  export modulefilename=%{version}-${ext}
+fi
+
+echo 
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua << EOF
+help( [[
+The Mumps module defines the following environment variables:
+TACC_MUMPS_INC and TACC_MUMPS_LIB for the location
+of the Mumps include files and libraries.
 
 Version %{version}
-]]
+]] )
 
-help(help_message,"\n")
+whatis( "Name: Mumps" )
+whatis( "Version: %{version}" )
+whatis( "Category: library, mathematics" )
+whatis( "URL: http://graal.ens-lyon.fr/MUMPS/" )
+whatis( "Description: Numerical library for sparse solvers" )
 
-whatis("Name: Sundials")
-whatis("Version: %{version}")
-whatis("Category: library, mathematics")
-whatis("Keywords: Library, Mathematics, ODEs, Parallel")
-whatis("URL: https://computing.llnl.gov/projects/sundials")
-whatis("Description: Numerical library, ordinary differential equations")
+local             mumps_arch =    "${architecture}"
+local             mumps_dir  =     "${TACC_PETSC_DIR}"
+local             mumps_inc  = pathJoin(mumps_dir,mumps_arch,"include")
+local             mumps_lib  = pathJoin(mumps_dir,mumps_arch,"lib")
 
-local sundials_dir="%{INSTALL_DIR}"
+prepend_path("LD_LIBRARY_PATH", mumps_lib)
 
-setenv("TACC_SUNDIALS_DIR",sundials_dir)
-setenv("TACC_SUNDIALS_LIB",pathJoin(sundials_dir,"lib64"))
-setenv("TACC_SUNDIALS_INC",pathJoin(sundials_dir,"include"))
-
---
--- Append paths
---
-append_path("LD_LIBRARY_PATH",pathJoin(sundials_dir,"lib"))
-
+setenv("TACC_MUMPS_INC",        mumps_inc )
+setenv("TACC_MUMPS_LIB",        mumps_lib)
 EOF
 
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module3.1.1#################################################
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
+#%Module1.0#################################################
 ##
-## version file for %{BASENAME}%{version}
+## version file for Mumps %version
 ##
 
-set     ModulesVersion      "%{version}"
+set     ModulesVersion      "${modulefilename}"
 EOF
-  
+
+## %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua 
+
   # Check the syntax of the generated lua modulefile only if a visible module
   %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/${modulefilename}.lua
   %endif
+
+##
+## end of module file loop
+##
+done
+
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
 
-#------------------------
-%if %{?BUILD_PACKAGE}
-%files package
-#------------------------
-
-  %defattr(-,root,install,)
-  # RPM package contains files within these directories
-  %{INSTALL_DIR}
-
-#-----------------------
-%endif # BUILD_PACKAGE |
-#-----------------------
 #---------------------------
 %if %{?BUILD_MODULEFILE}
 %files modulefile 
@@ -299,8 +253,5 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Tue Feb 09 2021 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: path fix
-* Tue Jan 19 2021 eijkhout <eijkhout@tacc.utexas.edu>
-- release 1: initial release of 5.5.0
-
+* Fri May 14 2021 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial release

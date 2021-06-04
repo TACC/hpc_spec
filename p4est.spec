@@ -134,9 +134,9 @@ help( [[
 The P4EST modulefile defines the following environment variables:
 TACC_P4EST_DIR, TACC_P4EST_LIB, and TACC_P4EST_INC 
 for the location of the P4EST %{version} distribution, 
-libraries, and include files, respectively.\n
+libraries, and include files, respectively.
 
-Version %{p4estversion}
+Version %{pkg_version}
 ]] )
 
 whatis( "Name: P4est 'p4-est of octrees'" )

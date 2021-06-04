@@ -9,20 +9,8 @@
 # Antonio Gomez
 # 2015-08-25
 #
-# Important Build-Time Environment Variables (see name-defines.inc)
-# NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
-# NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
+# ./build_rpm.sh -l pylauncher3.spec
 #
-# Important Install-Time Environment Variables (see post-defines.inc)
-# VERBOSE=1       -> Print detailed information at install time
-# RPM_DBPATH      -> Path To Non-Standard RPM Database Location
-#
-# Typical Command-Line Example:
-# ./build_rpm.sh Bar.spec
-# cd ../RPMS/x86_64
-# rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
-# rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
-# rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
 Summary: A Nice little relocatable skeleton spec file example.
 
@@ -32,7 +20,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 # Create some macros (spec file variables)
 %define major_version 3
-%define minor_version 0
+%define minor_version 4
 
 %define pkg_version %{major_version}.%{minor_version}
 %define pylauncherversion %{major_version}.%{minor_version}
@@ -58,7 +46,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   2
+Release:   3
 Group:     Development/Tools
 License: GPL
 Url: https://github.com/TACC/pylauncher
@@ -279,6 +267,8 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Fri Feb 05 2021 eijkhout <eijkhout@tacc.utexas.edu>
+- release 3: update to 3.4
 * Thu Jan 09 2020 eijkhout <eijkhout@tacc.utexas.edu>
 - release 2: adding frontera
 * Thu Oct 03 2019 eijkhout <eijkhout@tacc.utexas.edu>
