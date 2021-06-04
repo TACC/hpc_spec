@@ -1,8 +1,5 @@
 #
-# pylauncher-3.0.spec
-#
-# SUPERSEDED BY pylauncher-3.spec
-#
+# pylauncher-3.spec
 # Victor Eijkhout
 # 2018 10 31
 #
@@ -28,8 +25,6 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-%exit
-
 Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
@@ -38,7 +33,7 @@ Summary: A Nice little relocatable skeleton spec file example.
 
 # Create some macros (spec file variables)
 %define major_version 3
-%define minor_version 0
+%define minor_version 4
 
 %define pkg_version %{major_version}.%{minor_version}
 %define pylauncherversion %{major_version}.%{minor_version}
@@ -64,7 +59,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   4
+Release:   5
 Group:     Development/Tools
 License: GPL
 Url: https://bitbucket.org/VictorEijkhout/pylauncher

@@ -4,7 +4,7 @@ Summary:    Python is a high-level general-purpose programming language.
 
 Name:       tacc-python%{python_major_version}
 Version:    %{python_module_version}
-Release:    4%{?dist}
+Release:    1%{?dist}
 License:    GPLv2
 Vendor:     Python Software Foundation
 Group:      Applications
@@ -100,7 +100,7 @@ if [ ! -f "%{INSTALL_DIR}/bin/python%{python_major_version}" ]; then
     ls
 
     %if "%{comp_fam_name}" == "Intel"
-    ./configure --prefix=%{INSTALL_DIR} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc -lssp' CXXFLAGS="-std=c++11" CFLAGS="-Wformat -Wformat-security -D_FORTIFY_SOURCE=2 -fstack-protector -fwrapv -fpic -O3" LDFLAGS="-Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --with-cxx-main=icpc --enable-shared --with-pth --without-gcc --with-libm=-limf --with-threads --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip --enable-unicode=ucs4    
+    ./configure --prefix=%{INSTALL_DIR} CC=icc CXX=icpc LD=xild AR=xiar LIBS='-lpthread -limf -lirc -lssp' CXXFLAGS="-std=c++11" CFLAGS="-Wformat -Wformat-security -D_FORTIFY_SOURCE=2 -fstack-protector -fwrapv -fpic -O3" LDFLAGS="-Xlinker -export-dynamic" CPPFLAGS="" CPP="icc -E" --with-system-ffi --enable-shared --with-libm=-limf --with-lto --enable-optimizations --with-computed-gotos --with-ensurepip --enable-unicode=ucs4    
     %endif
     %if "%{comp_fam_name}" == "GNU"
     #./configure --prefix=%{INSTALL_DIR} CC=gcc CXX=g++  LD=ld   AR=ar   LIBS='-lpthread' CFLAGS="-Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -fwrapv -fpic -O2" LDFLAGS="-fpic -Xlinker -export-dynamic" --with-system-ffi --enable-shared --with-pth --with-threads --with-ensurepip --with-computed-gotos --with-lto --enable-unicode=ucs4
@@ -139,6 +139,7 @@ ${PIP} install readline
 ${PIP} install pybind11
 ${PIP} install --upgrade pip
 ${PIP} install --upgrade setuptools
+${PIP} install Cython
 #############################################################
 # scipy stack: use INSTALL_DIR . 
 # We need to know which pip modules are compiler specific.  
@@ -148,13 +149,13 @@ ${PIP} install --upgrade setuptools
 ### Numpy
 if ! $(%{INSTALL_DIR}/bin/python%{python_major_version} -c "import numpy"); then
     cd %{_topdir}/SOURCES	
-    if [ ! -f "%{_topdir}/SOURCES/numpy-1.18.1.tar.gz" ]; then	
-	wget https://github.com/numpy/numpy/releases/download/v1.18.1/numpy-1.18.1.tar.gz
+    if [ ! -f "%{_topdir}/SOURCES/numpy-1.20.1.tar.gz" ]; then	
+	wget https://github.com/numpy/numpy/releases/download/v1.20.1/numpy-1.20.1.tar.gz
     fi	   
     
-    rm -rf %{_topdir}/SOURCES/numpy-1.18.1 	   
-    tar -xzvf %{_topdir}/SOURCES/numpy-1.18.1.tar.gz -C %{_topdir}/SOURCES	
-    cd %{_topdir}/SOURCES/numpy-1.18.1
+    rm -rf %{_topdir}/SOURCES/numpy-1.20.1 	   
+    tar -xzvf %{_topdir}/SOURCES/numpy-1.20.1.tar.gz -C %{_topdir}/SOURCES	
+    cd %{_topdir}/SOURCES/numpy-1.20.1
 
     echo "[mkl]
 library_dirs = ${MKL_LIB}:${OMP_LIB}
@@ -178,13 +179,13 @@ fi
 ### Scipy
 if ! $(%{INSTALL_DIR}/bin/python%{python_major_version} -c "import scipy"); then
     cd %{_topdir}/SOURCES	
-    if [ ! -f "%{_topdir}/SOURCES/scipy-1.2.3.tar.gz" ]; then	
-	wget -O scipy-1.2.3.tar.gz https://github.com/scipy/scipy/releases/download/v1.2.3/scipy-1.2.3.tar.gz
+    if [ ! -f "%{_topdir}/SOURCES/scipy-1.5.1.tar.gz" ]; then	
+	wget -O scipy-1.5.1.tar.gz https://github.com/scipy/scipy/releases/download/v1.5.1/scipy-1.5.1.tar.gz
     fi	   
 
-    rm -rf %{_topdir}/SOURCES/scipy-1.2.3
-    tar -xzvf scipy-1.2.3.tar.gz -C %{_topdir}/SOURCES	 
-    cd %{_topdir}/SOURCES/scipy-1.2.3
+    rm -rf %{_topdir}/SOURCES/scipy-1.5.1
+    tar -xzvf scipy-1.5.1.tar.gz -C %{_topdir}/SOURCES	 
+    cd %{_topdir}/SOURCES/scipy-1.5.1
 
     %if "%{comp_fam_name}" == "Intel"
     %{INSTALL_DIR}/bin/python%{python_major_version} setup.py config --compiler=intelem --fcompiler=intelem build_clib --compiler=intelem --fcompiler=intelem build_ext --compiler=intelem --fcompiler=intelem install

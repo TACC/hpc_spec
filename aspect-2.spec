@@ -3,21 +3,22 @@
 # split software into two rpm
 #
 
-Summary: Dealii install
+Summary: Aspect install
 
 # Give the package a base name
-%define pkg_base_name dealii
-%define MODULE_VAR    DEALII
+%define pkg_base_name aspect
+%define MODULE_VAR    ASPECT
 
 # Create some macros (spec file variables)
-%define major_version 9
-%define minor_version 2
+%define major_version 2
+%define minor_version 0
 %define micro_version 0
 
-%define dealiipetscversion 3.11
-%define dealiitrilinosversion git20181012
+%define aspectdealversion 9.2.0
+%define aspectpetscversion 3.11
+%define aspecttrilinosversion git20181012
 
-%define pkg_version      %{major_version}.%{minor_version}.%{micro_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 %define pkg_full_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
@@ -40,11 +41,11 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 3%{?dist}
+Release: 1%{?dist}
 License: GPLv2
 Group: Development/Numerical-Libraries
 Source: %{pkg_base_name}-%{pkg_version}.tar.gz
-URL: http://www.dealii.org/
+URL: http://www.aspect.org/
 Vendor: TAMU
 Packager: TACC -- eijkhout@tacc.utexas.edu
 
@@ -53,13 +54,13 @@ Packager: TACC -- eijkhout@tacc.utexas.edu
 %global _python_bytecompile_errors_terminate_build 0
 
 %package %{PACKAGE}
-Summary: Dealii is an open source finite element package
+Summary: Aspect is an open source finite element package
 Group: Development/Numerical-Libraries
 %package %{PACKAGE}-sources
-Summary: Dealii is an open source finite element package
+Summary: Aspect is an open source finite element package
 Group: Development/Numerical-Libraries
 %package %{MODULEFILE}
-Summary: Dealii is an open source finite element package
+Summary: Aspect is an open source finite element package
 Group: Development/Numerical-Libraries
 
 %description
@@ -152,8 +153,9 @@ export modulefilename=%{pkg_version}
 module list
 for m in boost cmake \
     parallel-netcdf phdf5 \
-    petsc/%{dealiipetscversion} slepc/%{dealiipetscversion} \
-    p4est/2.2 trilinos/%{dealiitrilinosversion} \
+    dealii/%{aspectdealversion} \
+    #petsc/%{aspectpetscversion} slepc/%{aspectpetscversion} \
+    #p4est/2.2 trilinos/%{aspecttrilinosversion} \
     ; do
   module --ignore_cache load $m ;
 done
@@ -218,12 +220,12 @@ echo "Installing deal with Petsc: ${PETSC_DIR}/${PETSC_ARCH}"
         -DP4EST_DIR=${P4ESTDIR} \
     -DDEAL_II_WITH_TRILINOS=ON \
         -DTRILINOS_DIR=${TACC_TRILINOS_DIR} \
-    ${DEALDIR}/dealii-${DEALVERSION} \
+    ${DEALDIR}/aspect-${DEALVERSION} \
     \
-    %{_topdir}/BUILD/dealii-%{version} \
-    2>&1 | tee ${LOGDIR}/dealii_cmake.log
+    %{_topdir}/BUILD/aspect-%{version} \
+    2>&1 | tee ${LOGDIR}/aspect_cmake.log
 
-make -j 8 2>&1 | tee ${LOGDIR}/dealii_compile.log
+make -j 8 2>&1 | tee ${LOGDIR}/aspect_compile.log
 
 make install
 ### fails with gcc because it uses mpiexec:
@@ -258,35 +260,34 @@ cp -r examples/step* %{INSTALL_DIR}/examples
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
 help( [[
-The dealii module defines the following environment variables:
-TACC_DEALII_DIR, TACC_DEALII_BIN, and
-TACC_DEALII_LIB for the location
-of the Dealii distribution, documentation, binaries,
+The aspect module defines the following environment variables:
+TACC_ASPECT_DIR, TACC_ASPECT_BIN, and
+TACC_ASPECT_LIB for the location
+of the Aspect distribution, documentation, binaries,
 and libraries.
 
 Version %{version}${versionextra}
 external packages installed: ${packageslisting}
 ]] )
 
-whatis( "Name: Dealii" )
+whatis( "Name: Aspect" )
 whatis( "Version: %{version}${versionextra}${dynamicextra}" )
 whatis( "Version-notes: external packages installed: ${packages}" )
 whatis( "Category: library, mathematics" )
-whatis( "URL: http://www-unix.mcs.anl.gov/dealii/dealii-as/" )
+whatis( "URL: http://www-unix.mcs.anl.gov/aspect/aspect-as/" )
 whatis( "Description: Portable Extendible Toolkit for Scientific Computing, Numerical library for sparse linear algebra" )
 
-local             dealii_arch =    "${architecture}"
-local             dealii_dir =     "%{INSTALL_DIR}/"
+local             aspect_arch =    "${architecture}"
+local             aspect_dir =     "%{INSTALL_DIR}/"
 
-prepend_path("PATH",            pathJoin(dealii_dir,dealii_arch,"bin") )
-prepend_path("LD_LIBRARY_PATH", pathJoin(dealii_dir,dealii_arch,"lib") )
+prepend_path("PATH",            pathJoin(aspect_dir,aspect_arch,"bin") )
+prepend_path("LD_LIBRARY_PATH", pathJoin(aspect_dir,aspect_arch,"lib") )
 
-setenv("DEALII_ARCH",            dealii_arch)
-setenv("DEALII_DIR",             dealii_dir)
-setenv("TACC_DEALII_DIR",        dealii_dir)
-setenv("TACC_DEALII_BIN",        pathJoin(dealii_dir,dealii_arch,"bin") )
-setenv("TACC_DEALII_LIB",        pathJoin(dealii_dir,dealii_arch,"lib") )
-setenv("TACC_DEALII_VER",        %{pkg_version} )
+setenv("ASPECT_ARCH",            aspect_arch)
+setenv("ASPECT_DIR",             aspect_dir)
+setenv("TACC_ASPECT_DIR",        aspect_dir)
+setenv("TACC_ASPECT_BIN",        pathJoin(aspect_dir,aspect_arch,"bin") )
+setenv("TACC_ASPECT_LIB",        pathJoin(aspect_dir,aspect_arch,"lib") )
 
 depends_on("boost-mpi")
 depends_on("gsl")
@@ -295,7 +296,7 @@ EOF
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.${modulefilename} << EOF
 #%Module1.0#################################################
 ##
-## version file for Dealii %version
+## version file for Aspect %version
 ##
 
 set     ModulesVersion      "${modulefilename}"
@@ -378,9 +379,5 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 #
-* Mon Jan 11 2021 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3: adding VER to modulefile
-* Tue Aug 11 2020 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2: up to 9.2.0
-* Mon Oct 15 2018 eijkhout <eijkhout@tacc.utexas.edu>
+* Tue Nov 03 2020 eijkhout <eijkhout@tacc.utexas.edu>
 - release 1: initial release
