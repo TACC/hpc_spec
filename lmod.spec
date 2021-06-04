@@ -1,7 +1,7 @@
 Prefix:    /opt/apps
 Summary:   lmod: Lua based Modules
 Name:      lmod
-Version:   8.4.17
+Version:   8.5.3
 Release:   1%{?dist}
 License:   MIT
 Vendor:    Robert McLay
