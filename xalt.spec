@@ -70,7 +70,7 @@ fi
 if [[ $SYSHOST = "longhorn" ]]; then
   TRANSMISSION=file
   MAKE_OPTS="EXTRA_FLAGS=-I$TACC_CUDA_INC"
-  CONF_OPTS="--with-xaltFilePrefix=/scratch/projects/XALT --with-etcDir=/home/moduleData/--with-trackGPU=nvml CPPFLAGS=-I$TACC_CUDA_INC"
+  CONF_OPTS="--with-xaltFilePrefix=/scratch/projects/XALT --with-etcDir=/home/moduleData/ --with-trackGPU=nvml CPPFLAGS=-I$TACC_CUDA_INC"
   ETC_DIR=/home/moduleData
 fi
 
