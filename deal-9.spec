@@ -113,6 +113,10 @@ consumption.
 %include compiler-load.inc
 %include mpi-load.inc
 
+%if "%{comp_fam}" == "gcc"
+%error "too many problems with mt and petsc"
+%endif
+
 #
 # Set Up Installation Directory and tmp file system
 #
@@ -181,7 +185,9 @@ module load metis
   export MKLFLAG="-mkl"
 %endif
 
-export LAPACK_SPECIFICATION="-DDEAL_II_WITH_LAPACK=ON -D LAPACK_LIBRARIES=\
+export LAPACK_SPECIFICATION="-DDEAL_II_WITH_LAPACK=ON \
+-D LAPACK_INCLUDE_DIRS=${MKLROOT}/include \
+-D LAPACK_LIBRARIES=\
 ${MKLROOT}/lib/intel64_lin/libmkl_intel_lp64.so\
 \;\
 ${MKLROOT}/lib/intel64_lin/libmkl_core.so\
@@ -189,6 +195,8 @@ ${MKLROOT}/lib/intel64_lin/libmkl_core.so\
 ${MKLROOT}/lib/intel64_lin/libmkl_intel_thread.so\
 \;\
 ${MKLROOT}/../compiler/lib/intel64_lin/libiomp5.so\
+\;\
+libm.so\
 "
 ## from the developers:
 ## LAPACK_LIBRARIES=
@@ -298,7 +306,7 @@ rm -f CMakeCache.txt
 
 ##  CC=`which mpicc` CXX=`which mpicxx` F90=`which mpif90`
 
-## https://www.dealii.org/developer/users/cmake.html
+## https://www.dealii.org/developer/users/cmake_dealii.html
 
 ( set | grep pthreads ) || /bin/true
 
@@ -307,7 +315,7 @@ rm -f CMakeCache.txt
   export I_MPI_LINK=opt_mt
 %endif
 
-  cmake -VV \
+cmake -VV \
     -DCMAKE_INSTALL_PREFIX=%{INSTALL_DIR}/${scalar} \
     \
     -DDEAL_II_WITH_CXX11=ON \
@@ -453,7 +461,7 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 # release 4: adding boost-mpi dependency
 * Thu Apr 08 2021 eijkhout <eijkhout@tacc.utexas.edu>
-- release 5: better lapack specification
+- release 5: better lapack specification, real/complex versions
 * Wed Aug 19 2020 eijkhout <eijkhout@tacc.utexas.edu>
 - release 4: update to 9.2.0
 * Fri May 01 2020 eijkhout <eijkhout@tacc.utexas.edu>

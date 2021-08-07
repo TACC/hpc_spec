@@ -126,6 +126,15 @@
   %define comp_module pgi/20.7.0
 %endif
 
+#Added by Kent 7/26/202
+%if "%{is_xl16}" == "1"
+  %define comp_fam      xl
+  %define comp_fam_ver  xl16
+  %define comp_fam_name xl
+  %define is_xl          1
+  %define comp_module   xl/16.1.1
+%endif
+
 
 %if "%{comp_fam}" == "error"
   %{error: You must define which compiler you are using!}
@@ -133,28 +142,33 @@
 %endif
 
 %if "%{comp_fam}" == "gcc"
-  %define TACC_OPT -march=broadwell -mtune=skylake-avx512
-  %define TACC_OPT_CORE_AVX2 -march=broadwell -mtune=broadwell -ftree-vectorize
+  %define TACC_OPT                        -march=broadwell -mtune=skylake-avx512
+  %define TACC_OPT_CORE_AVX2              -march=broadwell -mtune=broadwell -ftree-vectorize
   %define TACC_OPT_CORE_AVX2_NOVEC_NOSIMD -march=broadwell -mtune=broadwell -fno-tree-vectorize
-  %define TACC_OPT_COMMON_AVX512 -march=broadwell -mtune=skylake-avx512 -mavx512f -mavx512cd -ftree-vectorize
-  %define TACC_OPT_CORE_AVX512 -march=skylake-avx512 -mtune=skylake-avx512 -ftree-vectorize
-  %define TACC_OPT_MIC_AVX512 -march=knl -mtune=knl -free-vectorize
+  %define TACC_OPT_COMMON_AVX512          -march=broadwell -mtune=skylake-avx512 -mavx512f -mavx512cd -ftree-vectorize
+  %define TACC_OPT_CORE_AVX512            -march=skylake-avx512 -mtune=skylake-avx512 -ftree-vectorize
+  %define TACC_OPT_MIC_AVX512             -march=knl -mtune=knl -free-vectorize
 %endif
 %if "%{comp_fam}" == "intel"
-  %define TACC_OPT -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512
-  %define TACC_OPT_CORE_AVX2 -xCORE-AVX2
+  %define TACC_OPT                        -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512
+  %define TACC_OPT_CORE_AVX2              -xCORE-AVX2
   %define TACC_OPT_CORE_AVX2_NOVEC_NOSIMD -xCORE-AVX2 -no-vec -no-simd
-  %define TACC_OPT_COMMON_AVX512_ZMM -xCOMMON-AVX512 -qopt-zmm-usage=high
-  %define TACC_OPT_CORE_AVX512_ZMM -xCORE-AVX512 -qopt-zmm-usage=high
-  %define TACC_OPT_MIC_AVX512_ZMM -xMIC-AVX512 -qopt-zmm-usage=high
-  %define TACC_OPT_COMMON_AVX512 -xCOMMON-AVX512
-  %define TACC_OPT_CORE_AVX512 -xCORE-AVX512
-  %define TACC_OPT_MIC_AVX512 -xMIC-AVX512
+  %define TACC_OPT_COMMON_AVX512_ZMM      -xCOMMON-AVX512 -qopt-zmm-usage=high
+  %define TACC_OPT_CORE_AVX512_ZMM        -xCORE-AVX512 -qopt-zmm-usage=high
+  %define TACC_OPT_MIC_AVX512_ZMM         -xMIC-AVX512 -qopt-zmm-usage=high
+  %define TACC_OPT_COMMON_AVX512          -xCOMMON-AVX512
+  %define TACC_OPT_CORE_AVX512            -xCORE-AVX512
+  %define TACC_OPT_MIC_AVX512             -xMIC-AVX512
 %endif
 %if "%{comp_fam}" == "pgi"
   %define TACC_OPT           -tp=px-64  -fast 
   %define TACC_OPT_VEC       -tp=px-64  -fast -Mvect=simd  
   %define TACC_OPT_NOVEC     -tp=px-64  -fast -Mvect=nosimd              
+%endif
+%if "%{comp_fam}" == "xl"
+  %define TACC_OPT           -O3 -qarch=auto -qsimd=auto
+  %define TACC_OPT_VEC       -O3 -qarch=auto -qsimd=auto
+  %define TACC_OPT_NOVEC     -O3 -qarch=auto -qsimd=noauto
 %endif
 
 %{!?suf: %define suf default}
@@ -192,5 +206,11 @@
 %endif
 %if "%{suf}" == "mic-avx512"
   %define TACC_VEC_OPT %{TACC_OPT_MIC_AVX512}
+  %define dovec 1
+%endif
+
+#Added by Kent 7/26/202
+%if "%{suf}" == "vmx"
+  %define TACC_VEC_OPT %{TACC_OPT_VMX}
   %define dovec 1
 %endif

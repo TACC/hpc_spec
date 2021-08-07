@@ -48,6 +48,15 @@ fi
   export F90=pgf90
 %endif
 
+#Added by Kent 7/26/202  #f77 not found
+%if "%{comp_fam}" == "xl"
+  export CC=xlc
+  export CXX=xlc++
+  export FC=xlf90
+  export F77=xlf
+  export F90=xlf90
+%endif
+
 module load %{comp_module}
 
 

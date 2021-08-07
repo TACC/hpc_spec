@@ -20,10 +20,11 @@ Summary: Trilinos install
 %define has_python 1
 # python version needs forcing for boost
 # gcc: 
-##define python_version 3.8.2
+%define python_version 3.8.2
+%define python_version_version 3.8
 # intel:
-%define python_version 3.9.2
-%define python_version_version 3.9
+#% define python_version 3.9.2
+#% define python_version_version 3.9
 
 %include rpm-dir.inc
 %include compiler-defines.inc
@@ -121,9 +122,6 @@ varies with each package.
 %include mpi-load.inc
 
 module load cmake swig 
-module load boost
-## VLE stopgap!
-export BOOST_ROOT=${TACC_BOOST_DIR}
 
 %if "%{has_python}" == "1"
   module load python3/%{python_version}
@@ -132,6 +130,13 @@ export BOOST_ROOT=${TACC_BOOST_DIR}
 %else
   export HAS_PYTHON=OFF
 %endif
+
+#
+# boost needs to be loaded after python
+#
+module load boost
+## VLE stopgap!
+export BOOST_ROOT=${TACC_BOOST_DIR}
 
 #
 # Set Up Installation Directory and tmp file system
@@ -280,19 +285,25 @@ whatis( "Category: library, mathematics" )
 whatis( "URL: http://www-unix.mcs.anl.gov/trilinos/trilinos-as/" )
 whatis( "Description: Portable Extendible Toolkit for Scientific Computing, Numerical library for sparse linear algebra" )
 
-local             trilinos_arch =    "${architecture}"
 local             trilinos_dir =     "%{INSTALL_DIR}/"
 
-prepend_path("PATH",            pathJoin(trilinos_dir,trilinos_arch,"bin") )
-prepend_path("LD_LIBRARY_PATH", pathJoin(trilinos_dir,trilinos_arch,"lib") )
+prepend_path("PATH",            pathJoin(trilinos_dir,"bin") )
+prepend_path("LD_LIBRARY_PATH", pathJoin(trilinos_dir,"lib") )
 
-setenv("TRILINOS_ARCH",            trilinos_arch)
 setenv("TRILINOS_DIR",             trilinos_dir)
 setenv("TACC_TRILINOS_DIR",        trilinos_dir)
-setenv("TACC_TRILINOS_BIN",        pathJoin(trilinos_dir,trilinos_arch,"bin") )
-setenv("TACC_TRILINOS_INC",        pathJoin(trilinos_dir,trilinos_arch,"include") )
-setenv("TACC_TRILINOS_LIB",        pathJoin(trilinos_dir,trilinos_arch,"lib") )
+setenv("TACC_TRILINOS_BIN",        pathJoin(trilinos_dir,"bin") )
+setenv("TACC_TRILINOS_INC",        pathJoin(trilinos_dir,"include") )
+setenv("TACC_TRILINOS_LIB",        pathJoin(trilinos_dir,"lib") )
 EOF
+
+%if "%{has_python}" == "1"
+cat >> $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
+prepend_path("PYTHONPATH",         pathJoin(trilinos_dir,"lib","python%{python_version_version}","site-packages") )
+
+depends_on( "python3" )
+EOF
+%endif
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << EOF
 #%Module1.0#################################################
