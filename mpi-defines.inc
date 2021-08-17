@@ -92,6 +92,22 @@
   %define mpi_module  %{mpi_fam}/%{mpi_module_version}
 %endif
 
+#Added by Kent 7/26/2021
+%if "%{is_spectrum_mpi}" == "1"
+  %if %{undefined mpiV}
+    %define mpi_label 10_3
+    %define mpi_module_version 10.3
+  %endif
+  %if "%{mpiV}" == "10_3"
+    %define mpi_label 10_3
+    %define mpi_module_version 10.3
+  %endif
+  %define mpi_fam     spectrum_mpi
+  %define mpi_fam_ver spectrum_mpi_%{mpi_label}
+  %define mpi_module  %{mpi_fam}/%{mpi_module_version}
+%endif
+
+
 %if "%{mpi_fam}" == "error"
   %{error: You must define which MPI you are using!}
   exit

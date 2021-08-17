@@ -1,11 +1,10 @@
 #
-# Spec file for Gnu Parallel
-# https://www.gnu.org/software/parallel/
+# cxxopts.spec
+# Victor Eijkhout
 #
-# Victor Eijkhout, 2019
-# based on:
+# based on
 #
-# Bar.spec, 
+# Bar.spec
 # W. Cyrus Proctor
 # Antonio Gomez
 # 2015-08-25
@@ -25,16 +24,18 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary:    Set of tools for manipulating geographic and Cartesian data sets
+Summary: A Nice little relocatable skeleton spec file example.
 
 # Give the package a base name
-%define pkg_base_name gnuparallel
-%define MODULE_VAR    GNUPARALLEL
+%define pkg_base_name cxxopts
+%define MODULE_VAR    CXXOPTS
 
-# Version corresponds to when we downloaded the gnu parallel source
-%define major_version git20190729
+# Create some macros (spec file variables)
+%define major_version 2
+%define minor_version 2
+%define micro_version 1
 
-%define pkg_version %{major_version}
+%define pkg_version %{major_version}.%{minor_version}.%{micro_version}
 
 ### Toggle On/Off ###
 %include rpm-dir.inc                  
@@ -44,7 +45,7 @@ Summary:    Set of tools for manipulating geographic and Cartesian data sets
 ### Construct name based on includes ###
 ########################################
 #%include name-defines.inc
-%include name-defines-noreloc.inc
+%include name-defines-noreloc-home1.inc
 #%include name-defines-hidden.inc
 #%include name-defines-hidden-noreloc.inc
 ########################################
@@ -57,31 +58,39 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release:   6%{?dist}
-License:   GNU
+Release:   1
 Group:     Development/Tools
-Vendor:     GNU Foundation
-Source:	    gnuparallel-%{version}.tgz
-URL:	    https://www.gnu.org/software/parallel/
-Packager:   eijkhout@tacc.utexas.edu
+License: GPL
+Url: https://github.com/jarro2783/cxxopts/releases
+Group: TACC
+Packager: eijkhout@tacc.utexas.edu 
+Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
 %define debug_package %{nil}
 %define dbg           %{nil}
-%global _python_bytecompile_errors_terminate_build 0
+
+# Turn off the brp-python-bytecompile script
+%global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
+
 
 %package %{PACKAGE}
-Summary: GNUPARALLEL is a job launcher
+Summary: The package RPM
+Group: Development/Tools
 %description package
 This is the long description for the package RPM...
 
 %package %{MODULEFILE}
-Summary: GNUPARALLEL is a job launcher
+Summary: The modulefile RPM
+Group: Lmod/Modulefiles
 %description modulefile
 This is the long description for the modulefile RPM...
 
 %description
-Summary: GNUPARALLEL is a job launcher
+The longer-winded description of the package that will 
+end in up inside the rpm and is queryable if installed via:
+rpm -qi <rpm-name>
+
 
 #---------------------------------------
 %prep
@@ -122,20 +131,12 @@ Summary: GNUPARALLEL is a job launcher
 # Setup modules
 %include system-load.inc
 module purge
-
 # Load Compiler
 %include compiler-load.inc
-
 # Load MPI Library
 #%include mpi-load.inc
 
 # Insert further module commands
-module load cmake
-echo $MODULEPATH
-#module use /opt/apps/intel19/impi19_0/modulefiles
-module load python3/3.8.1
-#module use /opt/apps/intel19/python3_7/modulefiles/
-module load boost
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
 echo "Building the modulefile?: %{BUILD_MODULEFILE}"
@@ -145,7 +146,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 #------------------------
 
   mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-  
+
   #######################################
   ##### Create TACC Canary Files ########
   #######################################
@@ -158,60 +159,25 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
   
-  # Create some dummy directories and files for fun
-  #mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-  #mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/share
+  mkdir -p %{INSTALL_DIR}
+  mount -t tmpfs tmpfs %{INSTALL_DIR}
   
-#
-# config/make
-#
+module load cmake
+rm -rf /tmp/cxxopts-build
+mkdir -p /tmp/cxxopts-build
+export CXXOPTS_SRC=`pwd`
+pushd  /tmp/cxxopts-build
+cmake \
+    -D CMAKE_INSTALL_PREFIX::PATH=%{INSTALL_DIR} \
+    ${CXXOPTS_SRC}
+make
+make install
+popd
 
-PARALLEL_VERSION=%{major_version}
-PARALLEL_HOME=${WORK}/parallel/
-PARALLEL_SRC=`pwd`
-PARALLEL_BUILD=/tmp/parallel-stuff
-PARALLEL_INSTALL=$RPM_BUILD_ROOT/%{INSTALL_DIR}
-PARALLEL_BIN=${PARALLEL_INSTALL}/bin
-
-####
-#### we only support gcc installation
-####
-export CC=gcc
-export CXX=g++
-export FC=gfortran
-
-#### configure
-export PATH=${PATH}:/usr/bin
-
-#which pod2man
-#(echo foo | pod2man ) || /bin/true
-#alias pod2man="pod2man -errors=pod"
-
-pushd /tmp && rm -rf gnuparallel && mkdir gnuparallel && cd gnuparallel \
-  && git clone https://github.com/ssimms/pdfapi2.git \
-  && export PERLLIB=`pwd`/pdfapi2/lib \
-  && export PERL5LIB=`pwd`/pdfapi2/lib \
-  && git clone https://github.com/gitpan/pod2pdf.git \
-  && cd pod2pdf && perl Makefile.PL && make \
-  && export PATH=`pwd`/blib/script:${PATH} \
-  && export PERLLIB=`pwd`/blib/lib:${PERLLIB} \
-  && export PERL5LIB=`pwd`/blib/lib:${PERL5LIB} \
-  && popd
-which pod2pdf
-
-alias libreoffice='/bin/true'
-./configure --prefix=${PARALLEL_INSTALL} \
-&& make \
-&& ( cd src \
-     && for i in parallel.texi env_parallel.texi sem.texi sql.texi niceload.texi parallel_tutorial.texi parallel_book.texi parallel_design.texi parallel_alternatives.texi parcat.texi parset.texi parallel_cheat.pdf ; do touch $i ; done ) \
-&& ( cd src ; for p in parallel.pdf env_parallel.pdf sem.pdf sql.pdf niceload.pdf parallel_tutorial.pdf parallel_book.pdf parallel_design.pdf parallel_alternatives.pdf parcat.pdf parset.pdf ; do touch $p ; done ) \
-&& ( cd src ; for m in ./parallel_design.7 ; do touch $m ; done ) \
-&& make install
-
-git clone https://github.com/TACC/gnuparallel_scripts.git ${PARALLEL_INSTALL}/scripts
-chmod +x ${PARALLEL_INSTALL}/scripts/pass_env
-rm -rf ${PARALLEL_INSTALL}/scripts/.git
-
+  # Copy everything from tarball over to the installation directory
+  cp -r %{INSTALL_DIR}/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+  umount %{INSTALL_DIR}
+  
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -232,50 +198,52 @@ rm -rf ${PARALLEL_INSTALL}/scripts/.git
   #######################################
   
 # Write out the modulefile associated with the application
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
-help( [[
-Module %{name} loads environmental variables defining
-the location of GNUPARALLEL directory and binaries:
-TACC_GNUPARALLEL_DIR TACC_GNUPARALLEL_BIN
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
+local help_msg=[[
+The %{MODULE_VAR} module defines the following environment variables:
+TACC_%{MODULE_VAR}_DIR, TACC_%{MODULE_VAR}_INC, 
+for the location of the %{MODULE_VAR} distribution, and include files
+respectively.
 
-Executing a file of commandlines:
+Usage:
+  import cxxopts
+and use
+  #include <cxxopts/cxxopts.hpp>"
+in your code.
+]]
 
-gnuparallel_command_file_execute_ssh.sh commands
+--help(help_msg)
+help(help_msg)
 
-Version: %{version}
-]] )
+whatis("Name: %{pkg_base_name}")
+whatis("Version: %{pkg_version}%{dbg}")
+whatis("URL:  https://github.com/jarro2783/cxxopts/releases")
+%if "%{is_debug}" == "1"
+setenv("TACC_%{MODULE_VAR}_DEBUG","1")
+%endif
 
-whatis( "GNUPARALLEL" )
-whatis( "Version: %{version}" )
-whatis( "Category: system" )
-whatis( "Keywords: System, utilities" )
-whatis( "Description: GNU Parallel utility" )
-whatis( "URL: https://www.gnu.org/software/parallel/" )
+-- Create environment variables.
+local cxxopts_dir           = "%{INSTALL_DIR}"
 
-local version =  "%{version}"
-local gnuparallel_dir =  "%{INSTALL_DIR}"
+setenv( "TACC_%{MODULE_VAR}_DIR",       cxxopts_dir)
+setenv( "TACC_%{MODULE_VAR}_INC",       cxxopts_dir)
 
-setenv("TACC_GNUPARALLEL_DIR",gnuparallel_dir)
-setenv("TACC_GNUPARALLEL_BIN",pathJoin( gnuparallel_dir,"bin" ) )
-
-prepend_path ("PATH",pathJoin( gnuparallel_dir,"scripts" ) )
-prepend_path ("PATH",pathJoin( gnuparallel_dir,"bin" ) )
-prepend_path ("MANPATH",pathJoin( gnuparallel_dir,"share","man" ) )
+depends_on( "python3" )
 EOF
-
+  
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
-#%Module1.0####################################################################
+#%Module3.1.1#################################################
 ##
-## Version file for %{name} version %{version}
+## version file for %{BASENAME}%{version}
 ##
-set ModulesVersion "%version"
-EOF
 
+set     ModulesVersion      "%{version}"
+EOF
+  
   # Check the syntax of the generated lua modulefile only if a visible module
   %if %{?VISIBLE}
-    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
+    %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
   %endif
-
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
@@ -328,15 +296,5 @@ export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Sun Jul 25 2021 eijkhout <eijkhout@tacc.utexas.edu>
-- release 6: set manpath
-* Wed Mar 03 2021 eijkhout <eijkhout@tacc.utexas.edu>
-- release 5: corrected module help, script dir in PATH
-* Mon Jul 29 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 4: abandoned use of /tmp. stupid
-* Tue Jul 23 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 3 : actually use pass_env
-* Fri Jun 28 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 2 : include pass_env in our own repository
-* Mon Jun 10 2019 eijkhout <eijkhout@tacc.utexas.edu>
-- release 1: initial release
+* Fri May 29 2020 eijkhout <eijkhout@tacc.utexas.edu>
+- release 1: initial build

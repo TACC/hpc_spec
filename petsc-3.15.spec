@@ -19,6 +19,7 @@ Summary: PETSc install
 %define p4p 1
 # cuda only with intel
 %define cuda 1
+%define cuda_version 11.0
 %define use_elemental 0
 %define use_superlu 1
 
@@ -42,7 +43,7 @@ Version:   %{pkg_version}
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: BSD-like; see src/docs/website/documentation/copyright.html
 Vendor: Argonne National Lab, MCS division
 Group: Development/Numerical-Libraries
@@ -268,6 +269,7 @@ export versionextra="${versionextra}${hdf5versionextra}"
 
 ##
 ## C language
+##
 export clanguage=
 export clanguageversionextra=
 export USECXX=
@@ -292,6 +294,26 @@ export versionextra="${versionextra}${clanguageversionextra}"
 #
 export CHACOSTRING=chaco
 export CHACO_OPTIONS="--with-chaco=1 --download-chaco"
+
+#
+# Cuda
+#
+export CUDA_OPTIONS=
+module unload cuda
+case "${ext}" in
+( *rtx* )
+    module load cuda/%{cuda_version}
+    export CUDA_OPTIONS="--with-cuda=1 \
+        --with-cuda-dir=${TACC_CUDA_DIR} \
+        --with-cudac=/opt/apps/cuda/%{cuda_version}/bin/nvcc \
+        --with-cuda-gencodearch=70"
+
+    ## see precision below
+    ## export precision=--with-precision=single ;
+    ## export packageslisting= ;
+    ## export packages= ;;
+esac
+#    export CUDA_OPTIONS="--with-cuda=yes --with-cudac=nvcc --with-cuda-include=${TACC_CUDA_DIR}/targets/x86_64-linux/include/ --with-cuda-lib=[${TACC_CUDA_DIR}/targets/x86_64-linux/lib/libcufft.so,libcusparse.so,libcusolver.so,libcublas.so,libcuda.so,libcudart.so] --download-cusp=yes CUDAFLAGS=-arch=sm_70 "
 
 #
 # Parmetis/metis
@@ -508,31 +530,24 @@ module list
 
 #
 # single precision
-# (see also the rtx clause)
 #
 export precision=--with-precision=double
 case "${ext}" in
 ( *single* ) 
     export precision=--with-precision=single ;
     export packageslisting= ;
-    export packages= ;;
-esac
-
-#
-# Cuda
-# (see also the XOPTFLAGS)
-#
-export CUDA_OPTIONS=
-case "${ext}" in
+    export packages= 
+    ;;
 ( *rtx* )
-    module load cuda/10.2
-#    export CUDA_OPTIONS="--with-cuda=yes --with-cudac=nvcc --with-cuda-include=${TACC_CUDA_DIR}/targets/x86_64-linux/include/ --with-cuda-lib=[${TACC_CUDA_DIR}/targets/x86_64-linux/lib/libcufft.so,libcusparse.so,libcusolver.so,libcublas.so,libcuda.so,libcudart.so] --download-cusp=yes CUDAFLAGS=-arch=sm_70 "
-    export CUDA_OPTIONS="--with-cuda=1 --with-cuda-dir=${TACC_CUDA_DIR} --with-cudac=/opt/apps/cuda/10.2/bin/nvcc --with-cuda-gencodearch=70"
-    export precision=--with-precision=single ;
-    export packageslisting= ;
-    export packages= ;;
+    export precision=--with-precision=single
+    export packageslisting="cuda support"
+    export packages=
+    ;;
 esac
 
+#
+# 64-bit integers
+#
 case "${ext}" in
 *i64* ) 
     export packageslisting= ;
@@ -752,6 +767,8 @@ ls $RPM_BUILD_ROOT/%{INSTALL_DIR}
 %clean
 rm -rf $RPM_BUILD_ROOT
 %changelog
+* Fri Jun 11 2021 eijkhout <eijkhout@tacc.utexas.edu>
+- release 4: re-enable cuda
 * Tue May 04 2021 eijkhout <eijkhout@tacc.utexas.edu>
 - release 3: temporarily remove elemental
 * Wed Apr 14 2021 eijkhout <eijkhout@tacc.utexas.edu>
