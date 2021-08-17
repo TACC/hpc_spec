@@ -75,6 +75,7 @@ fi
 for i in /usr/bin /opt/apps/lua/lua/bin /usr/local/bin /opt/local/bin ; do
   if [ -x $i/lua ]; then
     luaPath=$i
+    fullPathLua=$i/lua
     break
   fi
 done
@@ -126,7 +127,7 @@ EOF
 
 sed -e "s|@PKG@|%{GENERIC_IDIR}|g"     \
     -e "s|@settarg_cmd@|settarg_cmd|g" \
-    -e "s|@path_to_lua@|$luaPath|g"    \
+    -e "s|@path_to_lua@|$fullPathLua|g"    \
     < MF/settarg.version.lua > $RPM_BUILD_ROOT/%{MODULE_SETTARG}
 
 %files -n %{pkg_name}
@@ -141,7 +142,6 @@ sed -e "s|@PKG@|%{GENERIC_IDIR}|g"     \
 %{ZSH_SITE_FUNC}/ml
 %{ZSH_SITE_FUNC}/module
 %{ZSH_SITE_FUNC}/settarg
-
 
 %post -n %{pkg_name}
 
