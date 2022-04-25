@@ -59,7 +59,7 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 local msg = [[
-The %{INSTALL_NAME} modulefile defines the following environment via
+The %{pkg_base_name} modulefile defines the following environment via
 
 TACC_VALGRIND_DIR, TACC_VALGRIND_LIB, and TACC_VALGRIND_INC
 for the location of the Valgrind %{version} distribution, 
